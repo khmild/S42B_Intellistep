@@ -234,24 +234,24 @@ void test_uart(void)
     
         switch(Rx1_buff[3]){         //
             case 0xA0:
-                    kp = value_Temp;
+                    kp = temp;
                     table1[11]=kp;
                     
                     printf("new kp = %d\r\n",kp);
             break;
             case 0xA1:
-                    ki = value_Temp;
+                    ki = temp;
                     table1[12]=ki;
                     
                     printf("new ki = %d\r\n",ki);
                 break;
-            case 0xA2: kd = value_Temp;
+            case 0xA2: kd = temp;
                     table1[13]=kd;
                     
                     printf("new kd = %d\r\n",kd);
                 break;
             case 0xA3:      //set Current 
-                    Currents = (value_Temp/100)<<3;
+                    Currents = (temp/100)<<3;
                     Menu_Num2_item = Currents>>3;
             
                     table1[1]=Currents;
@@ -261,7 +261,7 @@ void test_uart(void)
             case 0xA4:
                     enmode =0;                      //
                     PID_Cal_value_init();                   /**/
-                    stepangle = 64/value_Temp;
+                    stepangle = 64/temp;
                     //stepangle =Microstep_Set;              //
                     table1[3]=stepangle;                    //
                     switch(stepangle & 0x3e){
@@ -278,9 +278,9 @@ void test_uart(void)
             case 0xA5:
                     enmode =0;                      //
                     PID_Cal_value_init();                               //
-                    if(0xaa == value_Temp){
+                    if(0xaa == temp){
                         Motor_ENmode_flag=0;Menu_Num4_item=1;           //
-                    }else if(0x55 == value_Temp) {
+                    }else if(0x55 == temp) {
                         Motor_ENmode_flag=1;Menu_Num4_item=0;
                     }
                     table1[5]=Motor_ENmode_flag;                        //
@@ -288,9 +288,9 @@ void test_uart(void)
                     
                 break; 
             case 0xA6:                                                  //
-                    if(0x11 == value_Temp){
+                    if(0x11 == temp){
                         Motor_Dir=1;Menu_Num5_item=0;                   //
-                    }else if(0x22 == value_Temp) {
+                    }else if(0x22 == temp) {
                         Motor_Dir=0;Menu_Num5_item=1;
                     }
                     table1[7]=Motor_Dir;                                //
@@ -347,12 +347,12 @@ void test_uart(void)
 }
 void data_Process(void)
 {
-   if(Urat_CRC_Correct_flag){               //
-        Urat_CRC_Correct_flag=0;
+   if(uartCRCCorrectFlag){               //
+        uartCRCCorrectFlag=0;
         if(Rx1_buff[2] ==0x05){                 //
-            value_Temp = Rx1_buff[4];
-            value_Temp<<=8;
-            value_Temp|= Rx1_buff[5];
+            temp = Rx1_buff[4];
+            temp<<=8;
+            temp|= Rx1_buff[5];
             if(Rx1_buff[3]>=0xA0 && Rx1_buff[3]<=0xBF){
                 if((Rx1_buff[3] &0xA0)== 0xA0)
                     flash_store_flag=1;                     //
@@ -381,14 +381,14 @@ void usart_Receive_Process(void)
     uint16_t CRC_val=0;
     if(Communications_Process_flag){
         Communications_Process_flag=0;
-        if(Uart_CRC_flag ){                                   //   
-            Uart_CRC_flag=0;
+        if(uartCRCFlag ){                                   //   
+            uartCRCFlag=0;
             for(t=2;t<Rx1_temp_num-2;t++){//8-2
                 CRC_val+=Rx1_buff[t];
                 if(t==Rx1_temp_num-3) CRC_val=CRC_val & 0xff;//
             } 
             if(Rx1_buff[t]==CRC_val){
-                Urat_CRC_Correct_flag=1;                    //
+                uartCRCCorrectFlag=1;                    //
                 // OK
                 //USART1_SendStr("OK\r\n");
                 printf("OK\r\n");
@@ -445,7 +445,7 @@ void USART1_IRQHandler(void)
             Receive_Count=0;
 //            Communications_flag=1;                      //
             Communications_Process_flag=1;              //
-            Uart_CRC_flag=1;                            //
+            uartCRCFlag=1;                            //
             
 //            value_Temp = (int16_t)Rx1_buff[4];
 //            value_Temp<<=8;
@@ -459,7 +459,7 @@ void USART1_IRQHandler(void)
         else{
             Receive_Count=0;
             //
-             frame_Error_flag=1;   
+             frameErrorFlag=1;   
         }  
     }
     USART_ClearITPendingBit(USART1, USART_IT_RXNE);     //

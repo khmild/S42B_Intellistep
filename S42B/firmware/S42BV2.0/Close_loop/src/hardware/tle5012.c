@@ -364,14 +364,13 @@ loop: if(CAL==0)//
             stepangle=2;//
         }
     }
-    else if((Calibration_flag>>8) == 0xAA && Second_Calibrate_flag ==1){
+    else if(isCalibrated() && Second_Calibrate_flag ==1){
 //      Second_Calibrate_flag=0;
       goto loop;
     }
     if(CLOSE==0 )//|| Motor_mode==0
     {//
         closemode=1;
-          
         r=*(volatile uint16_t*)((ReadValue(READ_ANGLE_VALUE)>>1)*2+SAMPLING_DATA_ADDR); //
         s_sum=r;   //
         y=r;
@@ -589,7 +588,7 @@ void CalibrateEncoder(void)
     }
   }
   FLASH_Unlock();
-  FlashErase32K();
+  flashErase32K();
   for(int32_t i=iStart;i<(iStart+200+1);i++)//
   {
 	ticks=fullStepReadings[(i+1)%200]-fullStepReadings[i%200];
@@ -600,7 +599,7 @@ void CalibrateEncoder(void)
       for(int32_t j=jStart;j<ticks;j++) 
 	  {
         lookupAngle=(8192*i+8192*j/ticks)%1638400/100;
-		FlashWriteHalfWord(address,(uint16_t)lookupAngle);
+		flashWriteHalfWord(address,(uint16_t)lookupAngle);
 		address+=2;
       }
     }
@@ -609,7 +608,7 @@ void CalibrateEncoder(void)
       for(int32_t j=0;j<jStart;j++) 
 	  {
         lookupAngle=((8192*i+8192*j/ticks)%1638400)/100;
-		FlashWriteHalfWord(address,(uint16_t)lookupAngle);
+		flashWriteHalfWord(address,(uint16_t)lookupAngle);
 		address+=2;
       }
     }
@@ -618,7 +617,7 @@ void CalibrateEncoder(void)
       for(int32_t j=0;j<ticks;j++) 
       {
         lookupAngle=((8192*i+8192*j/ticks)%1638400)/100;
-		FlashWriteHalfWord(address,(uint16_t)lookupAngle);
+		flashWriteHalfWord(address,(uint16_t)lookupAngle);
 		address+=2;
       }
     }
@@ -638,7 +637,7 @@ void CalibrateEncoder(void)
   
     Calibration_flag =0xAACC;    //
 //    Second_Menu=1;             // 
-    STMFLASH_Write(Data_Store_Address,table1,14);//
+    flashWrite(Data_Store_Address,table1,14);//
   }
   
   CalibrateEncoder_finish_flag=1; //  

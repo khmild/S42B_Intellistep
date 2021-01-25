@@ -10,21 +10,14 @@
 #define SAMPLING_DATA_ADDR      0x08018000          //
 #define STM32_memory_size       128         // Kb
 
-uint16_t FlashReadHalfWord(uint32_t faddr);
-uint8_t FlashWriteHalfWord(uint32_t faddr,uint16_t dat);
-void STMFLASH_Read(uint32_t ReadAddr,uint16_t *pBuffer,uint16_t NumToRead);
-void STMFLASH_Write_NoCheck(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite);
-void STMFLASH_Write(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite);
+bool isCalibrated();
+uint16_t flashReadHalfWord(uint32_t faddr);
+uint8_t flashWriteHalfWord(uint32_t faddr,uint16_t dat);
+void flashRead(uint32_t ReadAddr,uint16_t *pBuffer,uint16_t NumToRead);
+void flashWriteNoCheck(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite);
+void flashWrite(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite);
 
-void FlashErase32K(void);
-
-
-
-
-
-
-
-
+void flashErase32K(void);
 
 #endif 
 

@@ -1,12 +1,15 @@
 #include "flash.h"
 
+// Check if the stepper is calibrated
+bool isCalibrated() {
+  return ((Calibration_flag>>8) == 0xAA);
+}
 
-
-//
+// Check if the flash is busy
 uint8_t FlashGetStatus(void)
 {
   uint32_t res;
-  res=FLASH->SR;
+  res = FLASH -> SR;
   if(res&(1<<0))//flash busy
     return 1; 
   else if(res&(1<<2))  //Programming error
@@ -49,7 +52,7 @@ uint8_t FlashErasePage(uint32_t paddr)
 }
 
 //
-uint8_t FlashWriteHalfWord(uint32_t faddr,uint16_t dat)
+uint8_t flashWriteHalfWord(uint32_t faddr,uint16_t dat)
 {
   uint8_t  res;
   res=FlashWaitDone(0XFF);
@@ -66,7 +69,7 @@ uint8_t FlashWriteHalfWord(uint32_t faddr,uint16_t dat)
   return res;
 }
 //
-uint16_t FlashReadHalfWord(uint32_t faddr)
+uint16_t flashReadHalfWord(uint32_t faddr)
 {
   return *(volatile uint16_t*)faddr;
 }
@@ -75,12 +78,12 @@ uint16_t FlashReadHalfWord(uint32_t faddr)
 //ReadAddr:
 //pBuffer:
 //NumToWrite:
-void STMFLASH_Read(uint32_t ReadAddr,uint16_t *pBuffer,uint16_t NumToRead)   	
+void flashRead(uint32_t ReadAddr,uint16_t *pBuffer,uint16_t NumToRead)   	
 {
 	uint16_t i;
 	for(i=0;i<NumToRead;i++)
 	{
-        pBuffer[i]=FlashReadHalfWord(ReadAddr);//
+        pBuffer[i]=flashReadHalfWord(ReadAddr);//
 		ReadAddr+=2;//
 	}
 }
@@ -88,7 +91,7 @@ void STMFLASH_Read(uint32_t ReadAddr,uint16_t *pBuffer,uint16_t NumToRead)
 //WriteAddr:
 //pBuffer:
 //NumToWrite:
-void STMFLASH_Write_NoCheck(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)   
+void flashWriteNoCheck(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)   
 { 			 		 
 	uint16_t i;
 	for(i=0;i<NumToWrite;i++)
@@ -108,7 +111,7 @@ void STMFLASH_Write_NoCheck(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToW
 #define STM_SECTOR_SIZE	2048
 #endif		 
 uint16_t STMFLASH_BUF[STM_SECTOR_SIZE/2];//
-void STMFLASH_Write(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)	
+void flashWrite(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)	
 {
 	uint32_t secpos;	   //
 	uint16_t secoff;	   //
@@ -124,7 +127,7 @@ void STMFLASH_Write(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)
 	if(NumToWrite<=secremain)secremain=NumToWrite;//
 	while(1) 
 	{	
-		STMFLASH_Read(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//
+		flashRead(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//
 		for(i=0;i<secremain;i++)//
 		{
 			if(STMFLASH_BUF[secoff+i]!=0XFFFF)break;//  	  
@@ -136,8 +139,8 @@ void STMFLASH_Write(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)
 			{
 				STMFLASH_BUF[i+secoff]=pBuffer[i];	  
 			}
-			STMFLASH_Write_NoCheck(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//  
-		}else STMFLASH_Write_NoCheck(WriteAddr,pBuffer,secremain);//
+			flashWriteNoCheck(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//  
+		}else flashWriteNoCheck(WriteAddr,pBuffer,secremain);//
 		if(NumToWrite==secremain)break;//
 		else//
 		{
@@ -155,7 +158,7 @@ void STMFLASH_Write(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)
 
 
 //FLASH32K
-void FlashErase32K(void)
+void flashErase32K(void)
 {
   FlashErasePage(0x08018000);
   FlashErasePage(0x08018400);

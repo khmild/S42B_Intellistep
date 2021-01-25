@@ -3,7 +3,7 @@
 
 #include "mydef.h"
 
-#define MENU_NUM                7                   //menu item
+#define MENU_NUM 7 // Menu item
 
 #define KEY_Select      PAin(3)
 #define KEY_Back        PBin(0)
@@ -18,20 +18,11 @@ void Key_test(void);
 
 void KeyScan(void);
 
+bool checkSelectKey();
 
+bool checkBackKey();
 
-
-
-
-
-
-
-
-
-
-
-
-
+bool checkConfirmKey();
 
 #endif
 

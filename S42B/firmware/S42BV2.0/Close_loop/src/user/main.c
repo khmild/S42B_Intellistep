@@ -127,13 +127,13 @@ uint8_t Rx1_temp_num=0;                 //
 uint8_t Receive_finish_flag=0;          //
 
 volatile uint8_t  Communications_Process_flag=0;     //
-volatile uint8_t  Uart_CRC_flag=0;                   //  
-volatile uint8_t  frame_Error_flag=0;                //
-volatile uint8_t  Urat_CRC_Correct_flag=0;           //
+volatile uint8_t  uartCRCFlag=0;                   //  
+volatile uint8_t  frameErrorFlag=0;                //
+volatile uint8_t  uartCRCCorrectFlag=0;           //
 volatile uint8_t  info_report_flag=0;
 //uint8_t Receive_statu=0x00;
-volatile int16_t value_Temp=0;
-uint8_t Receiv_pluse =0;
+volatile int16_t temp=0;
+uint8_t receivePulse =0;
 
 /* Private function prototypes -----------------------------------------------*/
 uint16_t table[]={'1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','0'};
@@ -141,24 +141,6 @@ uint16_t table[]={'1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','0
 /* Private functions ---------------------------------------------------------*/
 void flash_test(void);
 void restart_init(void);
-//
-//2019-10-21 
-//2019-10-22 
-//2019-10-23 
-//2019-10-28 
-//2019-10-29 
-//2019-11-02 
-//2019-11-04  
-//2019-11-07 
-//2019-11-11 
-//2019-11-15  
-//2019-11-18 
-//2019-11-19 
-//2020-01-03 
-//2020-01-16 
-//2020-04-20 
-//2020-04-29 
- 
 
 /**
   * @brief  main program
@@ -187,9 +169,9 @@ int main(void)
     delay_ms(100);   
     Key_init();                                     //
     
-#ifdef ENFLASH_TEST    
-    flash_test();                            //flash  
-#endif
+    #ifdef ENFLASH_TEST    
+        flash_test();                            //flash  
+    #endif
 //    SetModeCheck();                          //
 //       while(1);
 #ifdef ENCOLSE_LOOP_CONFIG
@@ -201,9 +183,9 @@ int main(void)
     TIM3_Init();                            //PWM  
     
     FLASH_Unlock();
-    Calibration_flag = FlashReadHalfWord(Data_Store_Address);
+    Calibration_flag = flashReadHalfWord(Data_Store_Address);
     FLASH_Lock();
-    if((Calibration_flag>>8) == 0xAA){
+    if(isCalibrated()){
         OLED_ShowString(0,25,"  Calibration  ");
         OLED_ShowString(40,45,"  OK!");
         delay_ms(500);
@@ -221,7 +203,7 @@ int main(void)
         //Motor_Enable = enmode;                                //
 /*****************************************************/
 
-        STMFLASH_Read(Data_Store_Address,table1,14);            //
+        flashRead(Data_Store_Address,table1,14);            //
         SetModeCheck();                 //
 
         Currents=table1[1];             //
@@ -318,8 +300,8 @@ int main(void)
         data_Process();
         test_uart();
         
-        if(frame_Error_flag){
-            frame_Error_flag =0;
+        if(frameErrorFlag){
+            frameErrorFlag =0;
             USART1_SendStr("Frame Err!\r\n");   
         }
         if(flash_store_flag ==1){
@@ -329,7 +311,7 @@ int main(void)
             USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
             USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
             
-            STMFLASH_Write(Data_Store_Address,table1,14);//
+            flashWrite(Data_Store_Address,table1,14);//
             
             //USART_Cmd(USART1, ENABLE);
             USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);

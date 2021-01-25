@@ -107,10 +107,10 @@ extern uint8_t Receive_Count;
 extern uint8_t Rx1_temp_num;                       
 extern uint8_t Receive_finish_flag;          //
 extern volatile uint8_t  Communications_Process_flag;     //
-extern volatile uint8_t  Uart_CRC_flag;                   //  
-extern volatile uint8_t  frame_Error_flag;                //
-extern volatile uint8_t  Urat_CRC_Correct_flag;           //
-extern volatile int16_t value_Temp;
+extern volatile uint8_t  uartCRCFlag;                   //  
+extern volatile uint8_t  frameErrorFlag;                //
+extern volatile uint8_t  uartCRCCorrectFlag;           //
+extern volatile int16_t temp;
 extern uint8_t Currents_Set;
 extern uint8_t Microstep_Set;            //
 
@@ -118,7 +118,7 @@ extern uint8_t Dir_Enable;           //
 extern uint8_t Motor_Dir;                  //
 extern uint8_t Motor_Enable;               //
 extern uint8_t Motor_mode;              // 
-extern uint8_t Receiv_pluse ;
+extern uint8_t receivePulse ;
 
 extern volatile uint8_t enter1_once_flag ;    //
 extern volatile uint8_t enter2_once_flag ;
