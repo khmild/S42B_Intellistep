@@ -2,6 +2,7 @@
 #include "gpio.h"
 #include "oled.h"
 #include "tle5012.h"
+#include "flash.h"
 
 bool KEY_Select_flag = false;
 bool KEY_Back_flag = false;
@@ -108,7 +109,7 @@ void KeyScan(void) {
         KEY_Select_flag = true;
         Menu_update_flag = true;
         
-        if((Calibration_flag>>8)!=0xAA){
+        if(!isCalibrated()){
             Menu_Num_item++;
             if(Menu_Num_item>1)
                 Menu_Num_item=0;
