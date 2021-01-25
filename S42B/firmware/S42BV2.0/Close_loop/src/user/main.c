@@ -75,8 +75,8 @@ uint16_t hccount=0;//
 uint8_t closemode;//
 uint8_t enmode=0;//
 
-uint16_t Calibration_flag=0;      //
-uint8_t Menu_Num =0;             //
+uint16_t Calibration_flag = 0;
+uint8_t Menu_Num = 0;
 uint8_t Menu_Num_item=0;         //
 uint8_t Menu_move_num=0;         //
 volatile uint8_t Menu_update_flag=1;      //
@@ -201,7 +201,7 @@ int main(void)
     TIM3_Init();                            //PWM  
     
     FLASH_Unlock();
-    Calibration_flag = FlashReadHalfWord(Data_Store_Arrdess);
+    Calibration_flag = FlashReadHalfWord(Data_Store_Address);
     FLASH_Lock();
     if((Calibration_flag>>8) == 0xAA){
         OLED_ShowString(0,25,"  Calibration  ");
@@ -221,7 +221,7 @@ int main(void)
         //Motor_Enable = enmode;                                //
 /*****************************************************/
 
-        STMFLASH_Read(Data_Store_Arrdess,table1,14);            //
+        STMFLASH_Read(Data_Store_Address,table1,14);            //
         SetModeCheck();                 //
 
         Currents=table1[1];             //
@@ -329,7 +329,7 @@ int main(void)
             USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
             USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
             
-            STMFLASH_Write(Data_Store_Arrdess,table1,14);//
+            STMFLASH_Write(Data_Store_Address,table1,14);//
             
             //USART_Cmd(USART1, ENABLE);
             USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);

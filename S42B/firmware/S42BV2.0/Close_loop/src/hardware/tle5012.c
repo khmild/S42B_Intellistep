@@ -638,7 +638,7 @@ void CalibrateEncoder(void)
   
     Calibration_flag =0xAACC;    //
 //    Second_Menu=1;             // 
-    STMFLASH_Write(Data_Store_Arrdess,table1,14);//
+    STMFLASH_Write(Data_Store_Address,table1,14);//
   }
   
   CalibrateEncoder_finish_flag=1; //  
