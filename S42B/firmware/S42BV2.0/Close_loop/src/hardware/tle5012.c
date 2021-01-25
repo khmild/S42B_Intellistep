@@ -350,7 +350,7 @@ void SetModeCheck(void)
 	  delay_ms(200);	
     } 
   }	
-  if((Calibration_flag>>8) !=0xAA){
+  if(!isCalibrated()){
 loop: if(CAL==0)//  
         CalibrateEncoder();
         if(1 != Second_Calibrate_flag){
