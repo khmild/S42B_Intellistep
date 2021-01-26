@@ -98,7 +98,7 @@ extern int16_t wap1;
 extern int16_t wap2;
 extern uint8_t Motor_speed_flag;
 extern volatile bool enableModeFlag;
-extern volatile bool resetStatusFlag;
+extern volatile uint8_t resetStatusFlag;
 
 extern volatile bool flashStoreFlag;
 extern volatile uint8_t info_report_flag;

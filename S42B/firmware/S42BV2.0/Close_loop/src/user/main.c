@@ -113,7 +113,7 @@ volatile bool dir2_once_flag = false;
 
 volatile bool flashStoreFlag = false;    //
 uint16_t table1[14];                    //
-volatile bool resetStatusFlag = false;                    //
+volatile uint8_t resetStatusFlag = 0; // CANNOT be boolean
 
 uint8_t Rx1_buff[9];
 uint8_t Receive_Count=0;                //    
@@ -257,7 +257,7 @@ int main(void)
     #endif    
 //    IWDG_Init(4,625);                 //
  	while(1) {
-        #ifdef ENCLOSE_LOOP 
+        #ifdef CLOSED_LOOP 
             if(enableModeFlag){
                 if(getEnablePin()) {
                     restart_init();              
@@ -298,14 +298,14 @@ int main(void)
                 frameErrorFlag =0;
                 USART1_SendStr("Frame Err!\r\n");   
             }
-            if(flash_store_flag ==1){
-                flash_store_flag =0;
+            if(flashStoreFlag){
+                flashStoreFlag = false;
 
                 //USART_Cmd(USART1, DISABLE);
                 USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
                 USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
                 
-                flashWrite(Data_Store_Address,table1,14);//
+                flashWrite(DATA_STORE_ADDRESS, table1, 14);//
                 
                 //USART_Cmd(USART1, ENABLE);
                 USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);

@@ -451,9 +451,9 @@ void USART1_IRQHandler(void)
 //            value_Temp<<=8;
 //            value_Temp|=(int16_t) Rx1_buff[5];
 //            if((Rx1_buff[3] &0xA0)== 0xA0)
-//                    flash_store_flag=1;                     //
+//                    flashStoreFlag=1;                     //
 //                else
-//                    flash_store_flag=0;
+//                    flashStoreFlag=0;
 //                info_report_flag =1;
         }
         else{
