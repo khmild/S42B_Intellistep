@@ -1,4 +1,4 @@
-#include "spi1.h"
+#include "spi.h"
 
 
 void SPI1_Init(void)

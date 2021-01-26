@@ -1,13 +1,11 @@
 #include "tle5012.h"
-#include "spi1.h"
+#include "spi.h"
 #include "gpio.h"
 #include "oled.h"
 #include "flash.h"
 
-
-
-//sin cos 
-const int16_t sin_1[] = 
+// Sine lookup table (for faster computations)
+const int16_t sinLookup[] = 
 {
     0,      1,      3,      4,      6,      7,      9,     10,     12,     14,     15,     17,     18,     20,     21,     23,  
    25,     26,     28,     29,     31,     32,     34,     36,     37,     39,     40,     42,     43,     45,     47,     48,  
@@ -323,7 +321,8 @@ void OneStep(void)
   else 
     stepNum-=1;
   
-  Output(81.92f*stepNum,80);
+  // Angle of a step times the current step
+  Output(STEP_ANGLE * stepNum, 80);
   delayMs(10);
 }
 //
@@ -369,9 +368,9 @@ void SetModeCheck(void)
       goto loop;
     }
     if(CLOSE == 0)
-    {//
+    {
         closedLoopMode = true;
-        r=*(volatile uint16_t*)((ReadValue(READ_ANGLE_VALUE)>>1)*2+SAMPLING_DATA_ADDR); //
+        r=*(volatile uint16_t*)((ReadValue(CMD_READ_ANGLE_VALUE)>>1)*2+SAMPLING_DATA_ADDR); //
         s_sum=r;   //
         y=r;
         y_1=y;
@@ -400,89 +399,127 @@ void SetModeCheck(void)
 //    }
 }
 
-void Output(int32_t theta, uint8_t effort) 
-{	
-  // Define accumulators
-  int16_t v_coil_A;
-  int16_t v_coil_B;
+// Outputs the angle to the motor with the specified effort
+void Output(int32_t theta, uint8_t effort) {	
 
-  int16_t angle_1;
-  int16_t angle_2;
-      
-  float phase_multiplier=12.5f;
+  // ! Not fully sure what this does
+  int16_t angle_1 = Mod(PHASE_MULTIPLIER * theta, 4096);
 
-  angle_1 = Mod(phase_multiplier * theta, 4096);//
-  angle_2= angle_1 + 1024;
-  if(angle_2>4096)
-      angle_2-=4096;
+  // Shifts the angle 1/4 out of phase (Gets the cos() instead of sin())
+  int16_t angle_2 = angle_1 + 1024;
 
-  v_coil_A = effort * sin_1[angle_1] / 1024;//
-  v_coil_B = effort * sin_1[angle_2] / 1024;//
+  // Make sure that the new angle isn't too big for the sin function
+  if(angle_2 > 4096) {
+    angle_2 -= 4096;
+  }
 
-  if(v_coil_A>=0)  {
-      TIM_SetCompare2(TIM3, v_coil_A);  
+  // Equation comes out to be effort * 0-1 depending on the sine of the angle
+  int16_t v_coil_A = effort * (sinLookup[angle_1] / 1024); 
+  int16_t v_coil_B = effort * (sinLookup[angle_2] / 1024);//
+
+  if(v_coil_A >= 0)  {
+      TIM_SetCompare2(TIM3, v_coil_A);
+      // ! Possibly create and call motor channel objects (for later)
+      // Set first channel for forward movement
       IN1= 1;                         //pb6
       IN2= 0;                         //pb7
   }
   else  {
-      TIM_SetCompare2(TIM3, -v_coil_A);  
-      IN1= 0;     
+      TIM_SetCompare2(TIM3, -v_coil_A);
+
+      // Set first channel for backward movement
+      IN1= 0;
       IN2= 1;  
   } 
   if(v_coil_B >= 0){
       TIM_SetCompare1(TIM3, v_coil_B);  
+
+      // Set second channel for forward movement
       IN3= 1;                        //pb8
       IN4= 0;                        //pb9
   }
   else {
-      TIM_SetCompare1(TIM3, -v_coil_B); 
-      IN3= 0;                         
-      IN4= 1;    
+      TIM_SetCompare1(TIM3, -v_coil_B);
+
+      // Set the second channel for backward movement
+      IN3= 0;
+      IN4= 1;
   }
 }
 
         
 //
-uint16_t ReadValue(uint16_t RegAdd)
-{
-    uint16_t data;
-    TLE012_CS = 0;
-    while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE)==0);
-    SPI_I2S_SendData(SPI1, RegAdd); //
-    while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE)==0);
-    data=SPI_I2S_ReceiveData(SPI1);
-    SPI_TX_OFF;
-    while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE)==0);
-    SPI_I2S_SendData(SPI1,0xFFFF);
-    while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE)==0);
-    data=SPI_I2S_ReceiveData(SPI1)&0x7FFF;
-    TLE012_CS = 1;
-    SPI_TX_ON;
-    return data;
+uint16_t ReadValue(uint16_t RegAdd) {
+
+  // Define an accumulator
+  uint16_t data;
+
+  // Enable the CS pin (logic is inverted, I guess)
+  TLE012_CS = 0;
+
+  // Wait for the chip to be ready
+  while(!SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE));
+
+  // Send the location of the data
+  SPI_I2S_SendData(SPI1, RegAdd);
+
+  // Wait for a response
+  while(!SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE));
+
+  // Read the response
+  data=SPI_I2S_ReceiveData(SPI1);
+  SPI_TX_OFF;
+  while(!SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE));
+  SPI_I2S_SendData(SPI1,0xFFFF);
+  while(!SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE));
+  data=SPI_I2S_ReceiveData(SPI1)&0x7FFF;
+  TLE012_CS = 1;
+  SPI_TX_ON;
+
+  // Return the data that was pulled
+  return data;
 }
 //
-void WriteValue(uint16_t RegAdd,uint16_t RegValue)
-{
+void WriteValue(uint16_t RegAdd,uint16_t RegValue) {
+
+  // Enable CS pin (logic is inverted, I think)
   TLE012_CS = 0;
+
+  // Wait for a transmission available response from the encoder
   while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE)==0);
+
+  // Send the register value to edit
   SPI_I2S_SendData(SPI1,RegAdd);
-  while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_RXNE)==0);
+
+  // Wait for the new info to be received
+  while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE)==0);
+
+  // Read the received data
   SPI_I2S_ReceiveData(SPI1);
+
+  // Wait for the confirmation that the chip is ready for receiving data
   while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE)==0);
+
+  // Send the value that the register should be set to
   SPI_I2S_SendData(SPI1,RegValue);
+
+  // Wait for the response confirmation
   while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_RXNE)==0);
+
+  // Read the response
   SPI_I2S_ReceiveData(SPI1);
+
+  // Disable CS pin (once again, think that the logic is inverted)
   TLE012_CS = 1;
 }
 //
 uint16_t ReadState(void)
 {
-  return (ReadValue(READ_STATUS));
+  return (ReadValue(CMD_READ_STATUS));
 }
-//
-uint16_t ReadAngle(void)
-{
-  return (ReadValue(READ_ANGLE_VALUE)>>1);
+// Reads the value for the 
+uint16_t ReadAngle(void) {
+  return (ReadValue(CMD_READ_ANGLE_VALUE)>>1);
 }
 //
 void CalibrateEncoder(void) 

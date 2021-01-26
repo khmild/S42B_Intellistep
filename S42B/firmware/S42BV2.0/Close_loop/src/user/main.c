@@ -26,7 +26,7 @@
 #include "usart.h"
 #include "oled.h"
 //#include "spi.h"
-#include "spi1.h"
+#include "spi.h"
 #include "time.h"
 #include "exit.h"
 #include "key.h"

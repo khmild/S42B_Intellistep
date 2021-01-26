@@ -216,7 +216,7 @@ void PID_Cal_value_init(void)
     //LL_TIM_SetCounter(TIM1,0);
     
     
-    r=*(volatile uint16_t*)((ReadValue(READ_ANGLE_VALUE)>>1)*2+SAMPLING_DATA_ADDR); //
+    r=*(volatile uint16_t*)((ReadValue(CMD_READ_ANGLE_VALUE)>>1)*2+SAMPLING_DATA_ADDR); //
     s_sum=r;   //
     y=r;
     y_1=y;
@@ -355,9 +355,9 @@ void data_Process(void)
             temp|= Rx1_buff[5];
             if(Rx1_buff[3]>=0xA0 && Rx1_buff[3]<=0xBF){
                 if((Rx1_buff[3] &0xA0)== 0xA0)
-                    flashStoreFlag=1;                     //
+                    flashStoreFlag = true;                     //
                 else
-                    flashStoreFlag=0;
+                    flashStoreFlag = false;
                 info_report_flag =1;
                 //test_uart();
             }else{

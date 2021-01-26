@@ -11,12 +11,14 @@
 #include "math.h"
 #include "stdbool.h"
 
-
+// Motor constants
+#define PHASE_MULTIPLIER 12.5f
+#define STEP_ANGLE 81.92f // ! Check to see for .9 deg motors as well
 
 /* SPI command for TLE5012 */
-#define READ_STATUS				0x8001			//8000
-#define READ_ANGLE_VALUE		0x8021			//8020
-#define READ_SPEED_VALUE		0x8031			//8030
+#define CMD_READ_STATUS				0x8001			//8000
+#define CMD_READ_ANGLE_VALUE		0x8021			//8020
+#define CMD_READ_SPEED_VALUE		0x8031			//8030
 
 #define WRITE_MOD1_VALUE		0x5060			//0_1010_0_000110_0001
 #define MOD1_VALUE	0x0001
@@ -32,6 +34,7 @@
 
 #define WRITE_IFAB_VALUE		0x50B1
 #define IFAB_VALUE 0x000D
+
 /* Functionality mode */
 #define REFERESH_ANGLE		0
 
