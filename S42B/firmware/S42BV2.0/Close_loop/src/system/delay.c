@@ -1,35 +1,33 @@
 #include "delay.h"
 unsigned int fac_us,fac_ms;
 
-//
-//    
 
-void stm32_SysClock72M(u8 PLL)//
-{
-	unsigned char temp=0;
-	RCC->CR=0X00000083;//,
-    #if 0
-        RCC->CR|=0X00010000;// 
-        while(!(RCC->CR>>17));//
-	#endif
-    #if 1
-        while(!(RCC->CR&0x02));//
-    #endif
-    RCC->CFGR=0X00000400;//
-    #if 0                // 
-        PLL-=2;				 
-    #endif
-	RCC->CFGR|=PLL<<18;   //~21
-	RCC->CFGR|=1<<16;		//
-	FLASH->ACR|=0X32;		//
-	RCC->CR|=0X01000000;	//
-	while(!(RCC->CR>>25));	//
-	RCC->CFGR|=0X00000002;	//
-	while(temp!=0x02)		//
-	{
-		temp=RCC->CFGR>>2;
-		temp&=0x03;
-	}
+void overclock(uint32_t PLLMultiplier) {
+
+	// Use PLL as the system clock instead of the HSE (the board's oscillator)
+	RCC -> CFGR |= RCC_CFGR_PLLSRC;
+
+	// Activate the HSE (board's oscillator)
+	RCC -> CR |= RCC_CR_HSEON;
+
+	// Set the multiplier to 6x
+	RCC -> CFGR |= PLLMultiplier;
+
+	// Set the HSE to half speed before the PLL (so effectively 3x speed overall)
+	RCC -> CFGR |= RCC_CFGR_PLLXTPRE_HSE_Div2;
+
+	// Activate the PLL
+	RCC -> CR |= RCC_CR_PLLON;
+
+	// Wait until the PLL is configured
+	while(!(RCC_CR_PLLRDY & RCC -> CR));
+
+	// Use the PLL as the system clock
+	RCC -> CFGR |= RCC_CFGR_SW_PLL;
+
+	// Update the system clock with the new speed
+	SystemCoreClockUpdate();
+
 }
 
 void delay_init(u8 SYSCLK)//
@@ -75,6 +73,7 @@ void delay_ms(u32 nms)//
 void System_Clock_Init(void)
 {
     SystemInit();
+	overclock(RCC_CFGR_PLLMULL12);
 	
 //	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 //	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
