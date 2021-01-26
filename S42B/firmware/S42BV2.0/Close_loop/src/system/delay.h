@@ -1,6 +1,7 @@
 #ifndef __DELAY_H
 #define __DELAY_H
 #include "stm32f10x.h"
+#include "system_stm32f1xx.h"
 
 void stm32_SysClock72M(u8 PLL);//
 void delay_init(u8 SYSCLK);//

@@ -14,9 +14,15 @@
         "**/.DS_Store": true
     },
     "cSpell.words": [
+        "AFIO",
+        "CFGR",
         "GPIO",
         "GPIOA",
         "GPIOB",
-        "OLED"
+        "GPIOC",
+        "NVIC",
+        "OLED",
+        "USART",
+        "Vsion"
     ]
 }
