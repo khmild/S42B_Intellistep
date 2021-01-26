@@ -160,13 +160,13 @@ int main(void)
 //    uint8_t mode=1;//
     
     System_Clock_Init();            //
-    delay_init(72);					// 
+    delayInit();					// 
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
   
 	LED_Init();					                    //
 	OLED_Init();					                //
     OLED_ShowString(0,0,"Oled Init...OK");
-    delay_ms(100);   
+    delayMs(100);   
     Key_init();                                     //
     
     #ifdef ENFLASH_TEST    
@@ -188,7 +188,7 @@ int main(void)
     if(isCalibrated()){
         OLED_ShowString(0,25,"  Calibration  ");
         OLED_ShowString(40,45,"  OK!");
-        delay_ms(500);
+        delayMs(500);
         //
         OLED_Clear();   //
         OLED_ShowString(0,2,"Simp:  0000 RPM");//
@@ -229,7 +229,7 @@ int main(void)
         OLED_ShowString(48,16,"NOT");
         OLED_ShowString(16,32,"Calibration");
         OLED_ShowString(0,48,"Please calibrate");
-        delay_ms(500);
+        delayMs(500);
         //
         OLED_Clear();
         OLED_ShowString(0,0,"->");
@@ -245,7 +245,7 @@ int main(void)
     UART_Configuration(USART1, UART1_DEFAULT_BAUDRATE);     //
     CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_5tq,6,CAN_Mode_LoopBack);// 
     res=CAN1_Send_Msg(canbufTx,8);                      //
-    delay_ms(100);
+    delayMs(100);
     if(res){                                            //
         printf("CAN1 Transport fail!\r\n");
     }

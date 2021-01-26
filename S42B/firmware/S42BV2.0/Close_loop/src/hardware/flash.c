@@ -27,7 +27,7 @@ uint8_t FlashWaitDone(uint16_t time)
     res=FlashGetStatus();
     if(res!=1)
 	  break;
-	delay_us(1);	
+	delayUs(1);	
     time--;
   }while(time);
   if(time==0)

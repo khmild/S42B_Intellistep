@@ -315,7 +315,7 @@ bool checkSelectKey() {
   if(KEY_Select == 0){
 
     // Wait to make sure it wasn't a misread
-    delay_ms(10);
+    delayMs(10);
 
     // Check again
     if(KEY_Select == 0){
@@ -345,7 +345,7 @@ bool checkBackKey() {
   if(KEY_Back == 0){
 
     // Wait to make sure it wasn't a misread
-    delay_ms(10);
+    delayMs(10);
 
     // Check again
     if(KEY_Back == 0){
@@ -375,7 +375,7 @@ bool checkConfirmKey() {
   if(KEY_Confirm == 0){
 
     // Wait to make sure it wasn't a misread
-    delay_ms(10);
+    delayMs(10);
 
     // Check again
     if(KEY_Confirm == 0){

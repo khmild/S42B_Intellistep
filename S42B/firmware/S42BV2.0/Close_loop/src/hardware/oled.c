@@ -275,7 +275,7 @@ void OLED_Init(void)
     #endif
 									  
 	OLED_RST=0;			  		//
-	delay_ms(100);
+	delayMs(100);
 	OLED_RST=1; 
 	OLED_WR_Byte(0xAE,OLED_CMD);//
 	OLED_WR_Byte(0xD5,OLED_CMD);//
@@ -305,6 +305,6 @@ void OLED_Init(void)
 	OLED_WR_Byte(0xA4,OLED_CMD);//;bit0:1,;0,;
 	OLED_WR_Byte(0xA6,OLED_CMD);//;bit0:1,;0,	    						   
 	OLED_WR_Byte(0xAF,OLED_CMD);//
-	delay_ms(100);
+	delayMs(100);
 	OLED_Clear();
 }

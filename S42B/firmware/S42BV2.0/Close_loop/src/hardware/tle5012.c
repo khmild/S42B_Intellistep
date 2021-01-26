@@ -324,7 +324,7 @@ void OneStep(void)
     stepnumber-=1;
   
   Output(81.92f*stepnumber,80);
-  delay_ms(10);
+  delayMs(10);
 }
 //
 int16_t Mod(int32_t xMod,int16_t mMod) 
@@ -345,9 +345,9 @@ void SetModeCheck(void)
   {
     for(uint8_t m=0;m<10;m++){
       led1 = LED_ON;
-	  delay_ms(200);
+	  delayMs(200);
 	  led1 = LED_OFF;
-	  delay_ms(200);	
+	  delayMs(200);	
     } 
   }	
   if(!isCalibrated()){
@@ -389,7 +389,7 @@ loop: if(CAL==0)//
         Prompt_show();               //
         for(;;){                        //
             LED_F;
-            delay_ms(200);
+            delayMs(200);
         }
 //        OLED_Clear();
 //        Menu_update_flag=1;
@@ -509,14 +509,14 @@ void CalibrateEncoder(void)
   for(uint8_t m=0;m<4;m++)
   {
     led1 = LED_ON;
-	delay_ms(250);
+	delayMs(250);
     led1 = LED_OFF;
-	delay_ms(250);	
+	delayMs(250);	
   } 
   for(int16_t x=0;x<=199;x++)//
   {    
     encoderReading=0;
-   	delay_ms(20);                     
+   	delayMs(20);                     
     lastencoderReading=ReadAngle();     
     for(uint8_t reading=0;reading<10;reading++) 
 	{ 
@@ -527,7 +527,7 @@ void CalibrateEncoder(void)
         currentencoderReading-=16384;
  
       encoderReading+=currentencoderReading;
-      delay_ms(10);
+      delayMs(10);
       lastencoderReading=currentencoderReading;
     }
     encoderReading=encoderReading/10;
@@ -537,15 +537,15 @@ void CalibrateEncoder(void)
       encoderReading+=16384;
     fullStepReadings[x]=encoderReading;  
     OneStep();
-	delay_ms(100); 
+	delayMs(100); 
   }
   dir=0; 
   OneStep();
-  delay_ms(1000); 
+  delayMs(1000); 
   for(x=199;x>=0;x--)//
   {    
     encoderReading=0;
-   	delay_ms(20);                     
+   	delayMs(20);                     
     lastencoderReading=ReadAngle();     
     for(uint8_t reading=0;reading<10;reading++) 
 	{ 
@@ -556,7 +556,7 @@ void CalibrateEncoder(void)
         currentencoderReading-=16384;
  
       encoderReading+=currentencoderReading;
-      delay_ms(10);
+      delayMs(10);
       lastencoderReading=currentencoderReading;
     }
     encoderReading=encoderReading/10;
@@ -566,7 +566,7 @@ void CalibrateEncoder(void)
       encoderReading+=16384;
     fullStepReadings[x]=(fullStepReadings[x]+encoderReading)/2;  
     OneStep();
-	delay_ms(100); 
+	delayMs(100); 
   }
   TIM_SetCompare1(TIM3,0);  
   TIM_SetCompare2(TIM3,0); 
