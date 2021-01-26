@@ -209,7 +209,7 @@ void PID_Cal_value_init(void)
     y=0;
     y_1=0;
     yw=0;
-    e=0;
+    error=0;
     u=0;
     dterm=0;
     wrap_count=0;
@@ -279,21 +279,21 @@ void test_uart(void)
                     enmode =0;                      //
                     PID_Cal_value_init();                               //
                     if(0xaa == temp){
-                        Motor_ENmode_flag=0;Menu_Num4_item=1;           //
+                        motorEnabled=0;Menu_Num4_item=1;           //
                     }else if(0x55 == temp) {
-                        Motor_ENmode_flag=1;Menu_Num4_item=0;
+                        motorEnabled=1;Menu_Num4_item=0;
                     }
-                    table1[5]=Motor_ENmode_flag;                        //
+                    table1[5]=motorEnabled;                        //
                     table1[6]=Menu_Num4_item;
                     
                 break; 
             case 0xA6:                                                  //
                     if(0x11 == temp){
-                        Motor_Dir=1;Menu_Num5_item=0;                   //
+                        positiveDirection=1;Menu_Num5_item=0;                   //
                     }else if(0x22 == temp) {
-                        Motor_Dir=0;Menu_Num5_item=1;
+                        positiveDirection=0;Menu_Num5_item=1;
                     }
-                    table1[7]=Motor_Dir;                                //
+                    table1[7]=positiveDirection;                                //
                     table1[8]=Menu_Num5_item;
                    
                 break; 
@@ -322,20 +322,20 @@ void test_uart(void)
                 break;
             case 0xB3: if((Rx1_buff[4]==0xaa) && (Rx1_buff[5]== 0xaa)){                     //
                 
-                        if(1 == Motor_ENmode_flag)
-                            printf(H_ENABLE_STATUS,Motor_ENmode_flag);
-                        if (0== Motor_ENmode_flag)
-                            printf(L_ENABLE_STATUS,Motor_ENmode_flag);
+                        if(1 == motorEnabled)
+                            printf(H_ENABLE_STATUS,motorEnabled);
+                        if (0== motorEnabled)
+                            printf(L_ENABLE_STATUS,motorEnabled);
                     }else{
                         USART1_SendStr("Read enable err\r\n");
                     }
                 break;                           
             case 0xB4: if((Rx1_buff[4]==0xaa) && (Rx1_buff[5]== 0xaa)){                     //
                    
-                        if(0 == Motor_Dir)
-                            printf(CCW_DIR,Motor_Dir);
-                        if(1 == Motor_Dir)
-                            printf(CW_DIR,Motor_Dir);
+                        if(0 == positiveDirection)
+                            printf(CCW_DIR,positiveDirection);
+                        if(1 == positiveDirection)
+                            printf(CW_DIR,positiveDirection);
                     }else{
                         USART1_SendStr("Read Dir err\r\n");
                     }
@@ -355,9 +355,9 @@ void data_Process(void)
             temp|= Rx1_buff[5];
             if(Rx1_buff[3]>=0xA0 && Rx1_buff[3]<=0xBF){
                 if((Rx1_buff[3] &0xA0)== 0xA0)
-                    flash_store_flag=1;                     //
+                    flashStoreFlag=1;                     //
                 else
-                    flash_store_flag=0;
+                    flashStoreFlag=0;
                 info_report_flag =1;
                 //test_uart();
             }else{

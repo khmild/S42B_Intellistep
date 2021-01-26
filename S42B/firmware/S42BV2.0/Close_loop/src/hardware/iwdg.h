@@ -1,7 +1,7 @@
 #ifndef __WDG_H
 #define __WDG_H
 
-#include "mydef.h"	  
+#include "main.h"	  
 
 
 void IWDG_Init(u8 prer,u16 rlr);

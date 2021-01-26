@@ -1,7 +1,7 @@
 #ifndef __OLED_H
 #define __OLED_H
 
-#include "mydef.h"
+#include "main.h"
 #include "stdlib.h"
 
 //

@@ -258,10 +258,9 @@ void TIM4_IRQHandler(void)
         if(enmode==1)
         {
           //SET_BIT(TIM3->CR1, TIM_CR1_CEN);
-          if(closemode==1) 
-          {    
-            y=*(volatile uint16_t*)((ReadValue(READ_ANGLE_VALUE)>>1)*2+0x08008000);//
-            s=TIM_GetCounter(TIM2);//
+          if(closedLoopMode) {    
+            y = *(volatile uint16_t*)((ReadValue(READ_ANGLE_VALUE)>>1)*2+0x08008000);//
+            s = TIM_GetCounter(TIM2);//
             if(s-s_1<-32768)
               s_sum+=stepangle*65536;
             else if(s-s_1>32768)
@@ -274,12 +273,12 @@ void TIM4_IRQHandler(void)
             else if(y-y_1<-8192) 
               wrap_count++; 
             yw=y+16384*wrap_count;//            
-            e=r-yw;//
-            if(e>1638)//
-              e=1638;
-            else if(e<-1638)
-              e=-1638;
-            iterm+=ki*e/32;//
+            error=r-yw;//
+            if(error>1638)//
+              error=1638;
+            else if(error<-1638)
+              error=-1638;
+            iterm+=ki*error/32;//
             if(iterm>UMAXSUM)//
               iterm=UMAXSUM;
             else if(iterm<-UMAXSUM) 
@@ -287,7 +286,7 @@ void TIM4_IRQHandler(void)
         
                
             dterm=LPFA*dterm/128-LPFB*kd*(yw-yw_1)/8;//
-            u=(kp*e+iterm+dterm)/128;//
+            u=(kp*error+iterm+dterm)/128;//
             
             advance=(yw-yw_1)*1.5f;//
             y_1=y;  
@@ -364,7 +363,7 @@ void TIM4_IRQHandler(void)
                   wap2=wrap_count;
     //              Motor_speed = wap2-wap1;//
               }
-            Data_update_flag=1;           
+            dataUpdateFlag=1;           
           }
         }
       }

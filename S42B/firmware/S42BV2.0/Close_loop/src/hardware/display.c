@@ -1,14 +1,13 @@
 #include "display.h"
 #include "oled.h"
-
+#include "flash.h"
 
 
 void Oled_display(void)
 {
 /*********************menu Scanf **********************************************************/
-    if(Menu_update_flag == 1){
-        Menu_update_flag =0;
-//                OLED_Clear();                   //
+    if(menuUpdateFlag){
+        menuUpdateFlag = false;
         switch(Menu_Num){//
             case 0:                             //set menu 
                     switch(Menu_Num_item){      //menu select 
@@ -20,7 +19,7 @@ void Oled_display(void)
                         break ;
                         default:OLED_ShowString(0,0,"->");break ;
                     }
-                    if((Calibration_flag>>8)!=0xAA){                     
+                    if(!isCalibrated()){                     
                         OLED_ShowString(16,0,"Calibration");
                         OLED_ShowString(16,16,"Exit");
                     }
@@ -366,17 +365,17 @@ void Oled_display(void)
                     }
                     else if(Second_Menu == 5){                              //
                         switch(Menu_Num5_item){
-                            case 0: if(dir2_once_flag ==1 ){
-                                        dir2_once_flag=0;
-                                        dir1_once_flag=1;
+                            case 0: if(dir2_once_flag){
+                                        dir2_once_flag = false;
+                                        dir1_once_flag = true;
                                         Dir_Enable =0x11;
                                     }
                                     OLED_ShowString(16,0,"Hight CW ");
                                     OLED_ShowString(16,16,"Hight CCW");
                                 break;
-                            case 1: if(dir1_once_flag == 1){
-                                        dir1_once_flag=0;
-                                        dir2_once_flag=1;
+                            case 1: if(dir1_once_flag){
+                                        dir1_once_flag = false;
+                                        dir2_once_flag = true;
                                         Dir_Enable =0x22;
                                     }
                                     OLED_ShowString(16,0,"Hight CCW");
@@ -427,8 +426,8 @@ void Motor_data_dis(void)
     static int32_t e_temp=0;
     static uint16_t e_a=0,e_b=0;
     
-    if(Data_update_flag ==1 && Menu_Num==1){
-        Data_update_flag=0;
+    if(dataUpdateFlag ==1 && Menu_Num==1){
+        dataUpdateFlag=0;
 /*************SIMP*****************************************************/
         Motor_speed = wap2-wap1;//
         if(Motor_speed>=0)temp[8]=' ';
@@ -443,12 +442,12 @@ void Motor_data_dis(void)
         temp[2]=Motor_speed%100/10;
         temp[3]=Motor_speed%10;
 /*************ERR*************************************************/
-        if(e>=0){
+        if(error>=0){
             temp[4]=' ';
-            e_temp=e;
+            e_temp=error;
         }else{
             temp[4]='-';
-            e_temp=-e;
+            e_temp=-error;
         }
         e_temp=e_temp*0.021972*100;
         e_a =e_temp/100;                    //

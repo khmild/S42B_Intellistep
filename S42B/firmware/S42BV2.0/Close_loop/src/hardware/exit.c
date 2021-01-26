@@ -48,8 +48,8 @@ void EXTIX_Init(void)
 void EXTI1_IRQHandler(void)
 {
 
-     if(DIRIN==1){
-        if(Motor_Dir==1){
+     if(getDirectionPin()){
+        if(positiveDirection){
             TIM_CounterModeConfig(TIM2,  TIM_CounterMode_Up);
         }
         else{
@@ -57,7 +57,7 @@ void EXTI1_IRQHandler(void)
         }
     }
 	else{
-        if(Motor_Dir ==1){
+        if(positiveDirection){
             TIM_CounterModeConfig(TIM2,TIM_CounterMode_Down);
         }
         else{
@@ -67,3 +67,20 @@ void EXTI1_IRQHandler(void)
 	EXTI_ClearITPendingBit(EXTI_Line1);  //
 }
 
+bool getDirectionPin() {
+    if(DIR_PIN == 0) {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+bool getEnablePin() {
+    if(EN_PIN == 0) {
+        return false;
+    }
+    else {
+        return true;
+    }
+}

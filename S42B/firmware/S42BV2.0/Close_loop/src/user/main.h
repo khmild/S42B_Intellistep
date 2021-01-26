@@ -1,5 +1,5 @@
-#ifndef __MYDEF_H
-#define __MYDEF_H
+#ifndef __MAIN_H
+#define __MAIN_H
 
 #include "stm32f10x.h"
 #include "sys.h"
@@ -53,32 +53,32 @@ extern int32_t s_1;
 extern int32_t s_sum;
 extern int32_t r;   
 extern int32_t r_1;   
-extern uint8_t dir; 
+extern bool positiveDir; 
 extern int16_t y;   
 extern int16_t y_1;
 extern int32_t yw;  
 extern int32_t yw_1;
 extern int16_t advance;
 extern int32_t wrap_count; 
-extern int32_t e;  
+extern int32_t error;  
 extern int32_t iterm;
 extern int32_t dterm;
 extern int16_t u;     
-extern int32_t stepnumber;
+extern int32_t stepNum;
 extern uint8_t stepangle;
 
 extern uint16_t hccount;
-extern uint8_t closemode;
+extern bool closedLoopMode;
 extern uint8_t enmode;
 
-extern uint8_t Currents;          //
-extern uint8_t Microstep;            //
-extern uint8_t Motor_Dir;                  //
+extern uint8_t Currents;
+extern uint8_t Microstep;
+extern bool positiveDirection;
 
-extern volatile uint8_t Menu_update_flag;      //
-extern volatile uint8_t Data_update_flag;  
+extern volatile bool menuUpdateFlag;      //
+extern volatile bool dataUpdateFlag;  
 extern volatile uint16_t Data_update_Count;
-extern uint8_t Menu_Num ;             //
+extern uint8_t Menu_Num;             //
 extern uint8_t Menu_Num_item;         //
 extern uint8_t Menu_move_num;         //
 
@@ -90,42 +90,38 @@ extern uint8_t Menu_Num3_item;        //
 extern uint8_t Menu_Num4_item;        //  
 extern uint8_t Menu_Num5_item;        //  
 extern uint8_t Menu_Num6_item;        //  
-extern uint16_t Calibration_flag;      //
-extern int16_t Motor_speed ;
+extern int16_t Motor_speed;
 extern int16_t wap1;
 extern int16_t wap2;
 extern uint8_t Motor_speed_flag;
-extern volatile uint8_t Motor_ENmode_flag; //
-extern volatile uint8_t Reset_status_flag;                    //
+extern volatile bool enableModeFlag;
+extern volatile bool resetStatusFlag;
 
-extern volatile uint8_t  flash_store_flag;
-extern volatile uint8_t  info_report_flag;
+extern volatile bool flashStoreFlag;
+extern volatile uint8_t info_report_flag;
 extern uint16_t table1[14];                    //
 
 extern uint8_t Rx1_buff[9];
 extern uint8_t Receive_Count;
 extern uint8_t Rx1_temp_num;                       
 extern uint8_t Receive_finish_flag;          //
-extern volatile uint8_t  Communications_Process_flag;     //
-extern volatile uint8_t  uartCRCFlag;                   //  
-extern volatile uint8_t  frameErrorFlag;                //
-extern volatile uint8_t  uartCRCCorrectFlag;           //
-extern volatile int16_t temp;
+extern volatile uint8_t Communications_Process_flag;     //
+extern volatile uint8_t uartCRCFlag;                   //  
+extern volatile uint8_t frameErrorFlag;                //
+extern volatile uint8_t uartCRCCorrectFlag;           //
+extern volatile int16_t temp; // ! Fix later
 extern uint8_t Currents_Set;
 extern uint8_t Microstep_Set;            //
 
 extern uint8_t Dir_Enable;           // 
-extern uint8_t Motor_Dir;                  //
-extern uint8_t Motor_Enable;               //
-extern uint8_t Motor_mode;              // 
-extern uint8_t receivePulse ;
+extern bool positiveDirection;                  //
+extern bool motorEnabled;               //
+extern uint8_t receivePulse;
 
-extern volatile uint8_t enter1_once_flag ;    //
-extern volatile uint8_t enter2_once_flag ;
-extern volatile uint8_t dir1_once_flag ;      //
-extern volatile uint8_t dir2_once_flag ;
-extern volatile uint8_t close_loop1_flag ;      //
-extern volatile uint8_t close_loop2_flag ;
+extern volatile uint8_t enter1_once_flag;    //
+extern volatile uint8_t enter2_once_flag;
+extern volatile bool dir1_once_flag;      //
+extern volatile bool dir2_once_flag;
 
 extern void Output(int32_t theta,uint8_t effort);
 extern uint16_t ReadValue(uint16_t RegValue);

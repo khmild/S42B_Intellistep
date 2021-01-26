@@ -274,7 +274,7 @@ uint32_t address= SAMPLING_DATA_ADDR ;//
 
 static void Prompt_show(void);
 
-void tle5012b_init(void)
+void encoderInit(void)
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
  
@@ -300,7 +300,7 @@ void tle5012b_init(void)
 	TLE012_CS=1;
 }
 //Motor IO 
-void Motor_init(void)
+void motorInit(void)
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
  
@@ -318,29 +318,29 @@ void Motor_init(void)
 //
 void OneStep(void)
 {          
-  if(dir) 
-    stepnumber+=1;
+  if(positiveDir) 
+    stepNum+=1;
   else 
-    stepnumber-=1;
+    stepNum-=1;
   
-  Output(81.92f*stepnumber,80);
+  Output(81.92f*stepNum,80);
   delayMs(10);
 }
 //
-int16_t Mod(int32_t xMod,int16_t mMod) 
+int16_t Mod(int32_t value, int16_t modulus) 
 {
-    int16_t temp;
-    temp=xMod%mMod;
-    if(temp<0)
-        return (temp+mMod);
+    int16_t modResult;
+    modResult = value % modulus;
+    if(modResult < 0)
+        return (modResult + modulus);
     else
-        return  temp;
+        return modResult;
 }
 
 void SetModeCheck(void)
 {
-  WriteValue(WRITE_MOD2_VALUE,MOD2_VALUE);
-  uint16_t state=ReadState();//
+  WriteValue(WRITE_MOD2_VALUE, MOD2_VALUE);
+  uint16_t state = ReadState();//
   if(state&0x0080)//
   {
     for(uint8_t m=0;m<10;m++){
@@ -351,8 +351,8 @@ void SetModeCheck(void)
     } 
   }	
   if(!isCalibrated()){
-loop: if(CAL==0)//  
-        CalibrateEncoder();
+  loop: if(CAL==0)//  
+          CalibrateEncoder();
         if(1 != Second_Calibrate_flag){
           if((SET1==1)&&(SET2==1))//
             stepangle=16;//
@@ -368,9 +368,9 @@ loop: if(CAL==0)//
 //      Second_Calibrate_flag=0;
       goto loop;
     }
-    if(CLOSE==0 )//|| Motor_mode==0
+    if(CLOSE == 0)
     {//
-        closemode=1;
+        closedLoopMode = true;
         r=*(volatile uint16_t*)((ReadValue(READ_ANGLE_VALUE)>>1)*2+SAMPLING_DATA_ADDR); //
         s_sum=r;   //
         y=r;
@@ -380,7 +380,7 @@ loop: if(CAL==0)//
 
     }
     else{
-        closemode=0;
+        closedLoopMode = false;
     }
 
     if(CalibrateEncoder_finish_flag ==1){   
@@ -400,50 +400,45 @@ loop: if(CAL==0)//
 //    }
 }
 
-void Output(int32_t theta,uint8_t effort) 
+void Output(int32_t theta, uint8_t effort) 
 {	
+  // Define accumulators
   int16_t v_coil_A;
   int16_t v_coil_B;
 
-  int16_t sin_coil_A;
-  int16_t sin_coil_B;
-	
-    int16_t angle_1;
-    int16_t angle_2;
-        
-    float phase_multiplier=12.5f;//
+  int16_t angle_1;
+  int16_t angle_2;
+      
+  float phase_multiplier=12.5f;
 
-    angle_1=Mod(phase_multiplier*theta,4096);//
-    angle_2=angle_1+1024;
-    if(angle_2>4096)
-        angle_2-=4096;
+  angle_1 = Mod(phase_multiplier * theta, 4096);//
+  angle_2= angle_1 + 1024;
+  if(angle_2>4096)
+      angle_2-=4096;
 
-    sin_coil_A=sin_1[angle_1];
-    sin_coil_B=sin_1[angle_2];
+  v_coil_A = effort * sin_1[angle_1] / 1024;//
+  v_coil_B = effort * sin_1[angle_2] / 1024;//
 
-    v_coil_A=effort*sin_coil_A/1024;//
-    v_coil_B=effort*sin_coil_B/1024;//
-
-    if(v_coil_A>=0)  {
-        TIM_SetCompare2(TIM3,v_coil_A);  
-        IN1= 1;                         //pb6
-        IN2= 0;                         //pb7
-    }
-    else  {
-        TIM_SetCompare2(TIM3,-v_coil_A);  
-        IN1= 0;     
-        IN2= 1;  
-    } 
-    if(v_coil_B>=0){
-        TIM_SetCompare1(TIM3,v_coil_B);  
-        IN3= 1;                        //pb8
-        IN4= 0;                        //pb9
-    }
-    else {
-        TIM_SetCompare1(TIM3,-v_coil_B); 
-        IN3= 0;                         
-        IN4= 1;    
-    }
+  if(v_coil_A>=0)  {
+      TIM_SetCompare2(TIM3, v_coil_A);  
+      IN1= 1;                         //pb6
+      IN2= 0;                         //pb7
+  }
+  else  {
+      TIM_SetCompare2(TIM3, -v_coil_A);  
+      IN1= 0;     
+      IN2= 1;  
+  } 
+  if(v_coil_B >= 0){
+      TIM_SetCompare1(TIM3, v_coil_B);  
+      IN3= 1;                        //pb8
+      IN4= 0;                        //pb9
+  }
+  else {
+      TIM_SetCompare1(TIM3, -v_coil_B); 
+      IN3= 0;                         
+      IN4= 1;    
+  }
 }
 
         
@@ -504,7 +499,7 @@ void CalibrateEncoder(void)
   uint16_t lookupAngle;
   int16_t x=0;
 		
-  dir=1; 
+  positiveDir=1; 
   Output(0,80);//
   for(uint8_t m=0;m<4;m++)
   {
@@ -539,7 +534,7 @@ void CalibrateEncoder(void)
     OneStep();
 	delayMs(100); 
   }
-  dir=0; 
+  positiveDir=0; 
   OneStep();
   delayMs(1000); 
   for(x=199;x>=0;x--)//
@@ -623,9 +618,9 @@ void CalibrateEncoder(void)
     }
   }
   FLASH_Lock();
-  if(Second_Calibrate_flag !=1){                            //
+  if(Second_Calibrate_flag !=1){
     //
-    flash_store_flag =1;            //
+    flashStoreFlag =1;            //
     table1[0] =0xAACC;                //
     table1[1] =128;table1[2] =16;
     table1[3] =4;table1[4] =3;
@@ -635,9 +630,7 @@ void CalibrateEncoder(void)
     table1[12]=ki;
     table1[13]=kd;
   
-    Calibration_flag =0xAACC;    //
-//    Second_Menu=1;             // 
-    flashWrite(Data_Store_Address,table1,14);//
+    flashWrite(DATA_STORE_ADDRESS, table1, 14);//
   }
   
   CalibrateEncoder_finish_flag=1; //  

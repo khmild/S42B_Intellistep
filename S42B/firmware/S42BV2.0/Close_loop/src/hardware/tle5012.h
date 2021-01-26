@@ -2,7 +2,7 @@
 #define __TLE5012_H
 
 
-#include "mydef.h"
+#include "main.h"
 
 #define SPI_TX_OFF   {GPIOA->CRL&=0x0FFFFFFF;GPIOA->CRL|=0x40000000;}
 #define SPI_TX_ON    {GPIOA->CRL&=0x0FFFFFFF;GPIOA->CRL|=0xB0000000;}   
@@ -29,8 +29,8 @@
 #define IN3_LOW     false
 #define IN4_LOW     false
     
-void tle5012b_init(void);
-void Motor_init(void);
+void encoderInit(void);
+void motorInit(void);
 void SetModeCheck(void);
 void Output(int32_t theta,uint8_t effort);
 int16_t Mod(int32_t xMod,int16_t mMod);

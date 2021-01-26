@@ -1,6 +1,6 @@
 #ifndef __SPI1_H
 #define __SPI1_H
-#include "mydef.h"
+#include "main.h"
 
 
 //  

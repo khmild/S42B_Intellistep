@@ -2,7 +2,18 @@
 
 // Check if the stepper is calibrated
 bool isCalibrated() {
-  return ((Calibration_flag>>8) == 0xAA);
+
+  // Unlock the flash for reading
+  FLASH_Unlock();
+
+  // Get the calibration flag
+  uint16_t Calibration_flag = flashReadHalfWord(DATA_STORE_ADDRESS);
+
+  // Lock the flash again
+  FLASH_Lock();
+
+  // Return if the unit is calibrated
+  return ((Calibration_flag >> 8) == 0xAA);
 }
 
 // Check if the flash is busy

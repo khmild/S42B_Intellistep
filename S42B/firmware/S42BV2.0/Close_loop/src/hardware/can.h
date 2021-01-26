@@ -1,7 +1,7 @@
 #ifndef __CAN_H
 #define __CAN_H
 
-#include "mydef.h"
+#include "main.h"
 
 //
 #define CAN1_RX0_INT_ENABLE	1		//.								    

@@ -107,7 +107,7 @@ void KeyScan(void) {
 
         // Set the update flags
         KEY_Select_flag = true;
-        Menu_update_flag = true;
+        menuUpdateFlag = true;
         
         if(!isCalibrated()){
             Menu_Num_item++;
@@ -151,7 +151,7 @@ void KeyScan(void) {
 
       // Update the state flags
       KEY_Back_flag = true;
-      Menu_update_flag = true;
+      menuUpdateFlag = true;
 
       // Clear the OLED for writing
       OLED_Clear();
@@ -190,7 +190,7 @@ void KeyScan(void) {
               case 1: 
                 Enter_exit_flag = 1;
                 Menu_Num = 1;
-                Menu_update_flag = 1;
+                menuUpdateFlag = true;
                 OLED_Clear();
               break ;
               case 2: 
@@ -205,7 +205,7 @@ void KeyScan(void) {
                   break ;
               case 3:
                       OLED_Clear();   //
-                      Menu_update_flag=1;   //
+                      menuUpdateFlag = true;   //
                       enter_num++;
                       if(enter_num==1)
                           Second_Menu=2;        //
@@ -215,59 +215,58 @@ void KeyScan(void) {
                           //
                           //
                           Currents= Currents_Set;//
-                          flash_store_flag =1;
+                          flashStoreFlag = true;
                           table1[1]=Currents;
                           table1[2]=Menu_Num2_item;
                       }
                   break ;
               case 4: OLED_Clear();   //
-                      Menu_update_flag=1;   //
+                      menuUpdateFlag = true;   //
                       enter_num++;
                       if(enter_num==1)
                           Second_Menu=3;        //
                       if(enter_num==2){
                           enter_num=0;
                           Second_Menu=1;
-                          enmode =0;                      //
-                          PID_Cal_value_init();           /**/
-                          //Reset_status_flag=0xff;
-                          //
-                          stepangle =Microstep_Set;   //
+                          enmode =0;
+                          PID_Cal_value_init();
+
+                          stepangle = Microstep_Set;
                           
-                          flash_store_flag =1;        //
-                          table1[3]=stepangle;        //
+                          flashStoreFlag = true;
+                          table1[3]=stepangle;
                           table1[4]=Menu_Num3_item;
                       }
                   break ;
               case 5: OLED_Clear();   //
-                      Menu_update_flag=1;   //
+                      menuUpdateFlag = true;   //
                       enter_num++;
                       if(enter_num==1)
                           Second_Menu=4;        //
                       if(enter_num==2){
                           enter_num=0;
                           Second_Menu=1;
-                          enmode =0;                          //
-                          PID_Cal_value_init();               //
-                          //
+                          enmode =0;
+                          PID_Cal_value_init();
+                          
                           if(Dir_Enable == 0xaa ){
                               //enmode =1;
-                            Motor_ENmode_flag=0;
+                            motorEnabled = false;
                           }else if(Dir_Enable == 0x55  ){
-                              Motor_ENmode_flag=1;
+                              motorEnabled = true;
                               //enmode =0;
                           }
-                          if(Dir_Enable==0x55 || Dir_Enable ==0xAA){
+                          if(Dir_Enable == 0x55 || Dir_Enable == 0xAA){
                               Dir_Enable =0;
-                              flash_store_flag =1;//
-                              table1[5]=Motor_ENmode_flag;        //
+                              flashStoreFlag = true;//
+                              table1[5] = motorEnabled;
                               table1[6]=Menu_Num4_item;
                               
                           }
                       }
                   break ;
               case 6: OLED_Clear();   //
-                      Menu_update_flag=1;   //
+                      menuUpdateFlag = true;   //
                       enter_num++;
                       if(enter_num==1)
                           Second_Menu=5;        //
@@ -278,21 +277,19 @@ void KeyScan(void) {
                           //
                           //Dir_Enable  ;
                           if(Dir_Enable ==0x11){
-                              Motor_Dir =1;
+                              positiveDirection = true;
                           }else if(Dir_Enable == 0x22){
-                              Motor_Dir=0;
+                              positiveDirection = false;
                           }
-                          //if(Dir_Enable ==0x11 || Dir_Enable==0x22){
-                              Dir_Enable=0;
-                          //}
-                          flash_store_flag =1;//
-                          table1[7]=Motor_Dir;                    //
-                          table1[8]=Menu_Num5_item;
+                          Dir_Enable=0;
+                          flashStoreFlag = true;
+                          table1[7] = positiveDirection;
+                          table1[8] = Menu_Num5_item;
                       }
                   break ;
               case 7:Enter_exit_flag=1;    //
                       Menu_Num=1;           //  
-                      Menu_update_flag=1;   //
+                      menuUpdateFlag = true;   //
                       OLED_Clear();         //
                   break;
               default:break;
