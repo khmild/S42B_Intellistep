@@ -1,5 +1,7 @@
 #include "delay.h"
 unsigned int fac_us,fac_ms;
+static volatile uint32_t DelayCounter;
+
 
 
 void overclock(uint32_t PLLMultiplier) {
@@ -41,20 +43,30 @@ void delayInit(u8 SYSCLK)//
 
 void delayInit(void)
 {
-    /* Disable TRC */
+    /* Disable TRC 
     CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk; // ~0x01000000;
-    /* Enable TRC */
+    // Enable TRC 
     CoreDebug->DEMCR |=  CoreDebug_DEMCR_TRCENA_Msk; // 0x01000000;
-    /* Disable clock cycle counter */
+    // Disable clock cycle counter
     DWT->CTRL &= ~DWT_CTRL_CYCCNTENA_Msk; //~0x00000001;
-    /* Enable  clock cycle counter */
+    // Enable  clock cycle counter
     DWT->CTRL |=  DWT_CTRL_CYCCNTENA_Msk; //0x00000001;
-    /* Reset the clock cycle counter value */
+    // Reset the clock cycle counter value
     DWT->CYCCNT = 0;
-    /* 3 NO OPERATION instructions */
+    // 3 NO OPERATION instructions 
     __ASM volatile ("NOP");
     __ASM volatile ("NOP");
     __ASM volatile ("NOP");
+	*/
+
+	// Set reload register to generate an interrupt every millisecond.
+	SysTick->LOAD = (uint32_t)((SystemCoreClock / 1000000) - 1);
+	
+	// Reset the SysTick counter value.
+	SysTick->VAL = 0UL;
+
+	// Set SysTick source and IRQ.
+	SysTick->CTRL = (SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk);
 
 	/*
     // Check if clock cycle counter has started
@@ -86,12 +98,29 @@ void delayUs(u32 nus)//
 	SysTick->VAL=0x00;
 }
 */
+/*
 void delayUs(volatile uint32_t au32_microseconds)
 {
   uint32_t au32_initial_ticks = DWT->CYCCNT;
   uint32_t au32_ticks = (SystemCoreClock / 1000000);
   au32_microseconds *= au32_ticks;
   while ((DWT->CYCCNT - au32_initial_ticks) < au32_microseconds - au32_ticks);
+}
+*/
+void delayUs(uint32_t microseconds) {
+	// Enable the SysTick timer
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
+
+	// Wait for a specified number of milliseconds
+	DelayCounter = 0;
+	while (DelayCounter < microseconds);
+
+	// Disable the SysTick timer
+	SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
+}
+
+void SysTick_Handler() {
+	DelayCounter++;
 }
 
 void delayMs(volatile uint32_t au32_milliseconds)
