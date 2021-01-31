@@ -1,6 +1,7 @@
 #include "time.h"
 #include "gpio.h"
 #include "iwdg.h"
+#include "oled.h"
 
 
 void TIM2_Cap_Init(u16 timerPeriod,u16 prescalar)
@@ -95,7 +96,7 @@ void TIM4_Init(u16 arr,u16 psc)
 		
 	// TIM4	 
 	TIM_TimeBaseStructure.TIM_Period = arr; // 
-	TIM_TimeBaseStructure.TIM_Prescaler =psc; 	//   
+	TIM_TimeBaseStructure.TIM_Prescaler = psc; 	//   
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1; //
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure); //
@@ -106,21 +107,25 @@ void TIM4_Init(u16 arr,u16 psc)
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;  //
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //
 	NVIC_Init(&NVIC_InitStructure);  // 
-//	
-	TIM_ITConfig(TIM4,TIM_IT_Update,ENABLE);// 
-	
-    TIM_Cmd(TIM4,ENABLE ); 	//
+
+  // Register the interrupt handler
+  // ! Throws errors (internal errors, not shown on the compiler)
+  //NVIC_SetVector(TIM4_IRQn, (uint32_t) &TIM4_IRQHandler);
+
+	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+  NVIC_EnableIRQ(TIM4_IRQn);
 }
-//	 
+
+// Handles the update of the stepper motor 
 void TIM4_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET){	    
 //            led1=!led1;
-        IWDG_Feed();//
+        //IWDG_Feed();//
         if(enmode==1)
         {
           //SET_BIT(TIM3->CR1, TIM_CR1_CEN);
-          if(closedLoopMode) {    
+          if(closedLoopMode) {
             y = *(volatile uint16_t*)((ReadValue(CMD_READ_ANGLE_VALUE)>>1)*2+0x08008000);//
             s = TIM_GetCounter(TIM2);//
             if(s-s_1<-32768)
