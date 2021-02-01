@@ -89,19 +89,22 @@ void TIM3_Init(void) {
 void TIM4_Init(u16 arr,u16 psc)
 {	 
 //	GPIO_InitTypeDef GPIO_InitStructure;
-	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
- 	NVIC_InitTypeDef NVIC_InitStructure;
 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);	//
 		
-	// TIM4	 
+	// TIM4	setup
+  TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_TimeBaseStructure.TIM_Period = arr; // 
 	TIM_TimeBaseStructure.TIM_Prescaler = psc; 	//   
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1; //
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+  TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure); //
-     
-	//
+  TIM_Cmd(TIM4, ENABLE);
+	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+
+	// Interrupt setup
+ 	NVIC_InitTypeDef NVIC_InitStructure;
 	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;  //
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  //
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;  //
@@ -111,15 +114,13 @@ void TIM4_Init(u16 arr,u16 psc)
   // Register the interrupt handler
   // ! Throws errors (internal errors, not shown on the compiler)
   //NVIC_SetVector(TIM4_IRQn, (uint32_t) &TIM4_IRQHandler);
-
-	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+  
   NVIC_EnableIRQ(TIM4_IRQn);
 }
 
 // Handles the update of the stepper motor 
-void TIM4_IRQHandler(void)
-{
-    if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET){	    
+void TIM4_IRQHandler(void) {
+    if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET){
 //            led1=!led1;
         //IWDG_Feed();//
         if(enmode==1)

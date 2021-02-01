@@ -40,6 +40,7 @@
 #define CLOSED_LOOP
 #define CLOSED_LOOP_CONFIG
 //#define TEST_FLASH
+#define STEPPER_UPDATE_FREQ 5
 
 //
 int16_t kp=30;     
@@ -253,7 +254,20 @@ int main(void)
             printf("CAN1 Transport OK!\r\n");
         }
         TIM2_Cap_Init(0xFFFF,0);          //
-        TIM4_Init(7200-1, 0);             //
+
+        TIM4_Init(10000, 65000);
+        /*
+        // Calculate the values for the timer given the interrupt frequency (tests the maximum prescalar available)
+        for(int prescalarDivisor = 1; SystemCoreClock / (STEPPER_UPDATE_FREQ * prescalarDivisor) > 65536; prescalarDivisor = prescalarDivisor * 10) {
+
+            // Check if the timer can be initialized with the values before the loop exits
+            if (SystemCoreClock / (STEPPER_UPDATE_FREQ * prescalarDivisor) < 65536) {
+                TIM4_Init(prescalarDivisor-1, SystemCoreClock / (STEPPER_UPDATE_FREQ * prescalarDivisor));
+            }
+        }
+        */
+
+        
     #endif    
 //    IWDG_Init(4,625);                 //
  	while(1) {

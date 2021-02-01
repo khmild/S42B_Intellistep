@@ -7,7 +7,8 @@
 
 void TIM2_Cap_Init(u16 arr,u16 psc);
 void TIM4_Init(u16 arr,u16 psc);
-void TIM3_IRQHandler(void);//	 
+void TIM3_IRQHandler(void);
+void TIM4_IRQHandler(void);	 
 //void TIM3_Init(u16 arr,u16 psc);//
 void TIM3_Init(void);
 void TIM1_Init(uint16_t Arr,uint16_t Psc);//
