@@ -21,43 +21,43 @@ uint8_t FlashGetStatus(void)
 {
   uint32_t res;
   res = FLASH -> SR;
-  if(res&(1<<0))//flash busy
+  if(res&(1<<0)) // Flash busy
     return 1; 
-  else if(res&(1<<2))  //Programming error
-	return 2; 
-  else if(res&(1<<4))  //
-	return 3; 
+  else if(res&(1<<2)) //Programming error
+	  return 2; 
+  else if(res&(1<<4))
+	  return 3; 
   return 0;     
 }
 
 uint8_t FlashWaitDone(uint16_t time)
 {
   uint8_t res;
-  do
-  {
-    res=FlashGetStatus();
-    if(res!=1)
-	  break;
-	delayUs(1);	
+  do {
+    res = FlashGetStatus();
+    if(res != 1)
+	    break;
+	  delayUs(1);	
     time--;
-  }while(time);
-  if(time==0)
-    res=0xff;
+  } while(time);
+  if(time == 0)
+    res = 0xff;
   return res;
 }
-//
+
+
 uint8_t FlashErasePage(uint32_t paddr)
 {
-  uint8_t res=0;
-  res=FlashWaitDone(0X5FFF);
-  if(res==0)
-  {
-    FLASH->CR|=1<<1; 
-    FLASH->AR=paddr; 
-    FLASH->CR|=1<<6; 
-    res=FlashWaitDone(0X5FFF); 
-    if(res!=1) 
-      FLASH->CR&=~(1<<1); 
+  uint8_t res = 0;
+  res = FlashWaitDone(0X5FFF);
+  if(res == 0) {
+    FLASH -> CR |= 1<<1; 
+    FLASH -> AR = paddr; 
+    FLASH -> CR |= 1<<6; 
+    res = FlashWaitDone(0X5FFF); 
+    if(res != 1) {
+      FLASH->CR&=~(1<<1);
+    }
   }
   return res;
 }
@@ -65,15 +65,13 @@ uint8_t FlashErasePage(uint32_t paddr)
 //
 uint8_t flashWriteHalfWord(uint32_t faddr,uint16_t dat)
 {
-  uint8_t  res;
-  res=FlashWaitDone(0XFF);
-  if(res==0)
-  {
-    FLASH->CR|=1<<0;
-    *(volatile uint16_t*)faddr=dat; 
-    res=FlashWaitDone(0XFF);
-	if(res!=1)
-    {
+  uint8_t res;
+  res = FlashWaitDone(0XFF);
+  if(res == 0) {
+    FLASH -> CR |= 1<<0;
+    *(volatile uint16_t*) faddr = dat; 
+    res = FlashWaitDone(0XFF);
+	  if(res != 1){
       FLASH->CR&=~(1<<0); 
     }
   }
@@ -89,26 +87,26 @@ uint16_t flashReadHalfWord(uint32_t faddr)
 //ReadAddr:
 //pBuffer:
 //NumToWrite:
-void flashRead(uint32_t ReadAddr,uint16_t *pBuffer,uint16_t NumToRead)   	
+void flashRead(uint32_t ReadAddr,uint16_t *pBuffer)   	
 {
 	uint16_t i;
-	for(i=0;i<NumToRead;i++)
-	{
-        pBuffer[i]=flashReadHalfWord(ReadAddr);//
-		ReadAddr+=2;//
+  uint16_t arrayLength = sizeof(pBuffer)/sizeof(pBuffer[0]);
+	for(i = 0; i < arrayLength; i++) {
+    pBuffer[i]=flashReadHalfWord(ReadAddr);
+		ReadAddr+=2;
 	}
 }
 //
 //WriteAddr:
 //pBuffer:
 //NumToWrite:
-void flashWriteNoCheck(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)   
+void flashWriteNoCheck(uint32_t WriteAddr, uint16_t *pBuffer)   
 { 			 		 
 	uint16_t i;
-	for(i=0;i<NumToWrite;i++)
-	{
-		FLASH_ProgramHalfWord(WriteAddr,pBuffer[i]);
-	    WriteAddr+=2;//
+  uint16_t arrayLength = sizeof(pBuffer) / sizeof(pBuffer[0]);
+	for(i = 0; i < arrayLength; i++) {
+		FLASH_ProgramHalfWord(WriteAddr, pBuffer[i]);
+	  WriteAddr += 2;
 	}  
 } 
 
@@ -116,29 +114,33 @@ void flashWriteNoCheck(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)
 //pBuffer:
 //NumToWrite:
 #define STM32_FLASH_SIZE STM32_memory_size
-#if STM32_FLASH_SIZE<256
+#if STM32_FLASH_SIZE < 256
 #define STM_SECTOR_SIZE 1024 //
 #else 
 #define STM_SECTOR_SIZE	2048
 #endif		 
-uint16_t STMFLASH_BUF[STM_SECTOR_SIZE/2];//
-void flashWrite(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)	
+
+uint16_t STMFLASH_BUF[STM_SECTOR_SIZE / 2];
+
+void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer)	
 {
-	uint32_t secpos;	   //
-	uint16_t secoff;	   //
-	uint16_t secremain; //
+	uint32_t secpos;	   // Sector position
+	uint16_t secoff;	   // Sector offset
+	uint16_t secremain; // 
  	uint16_t i;    
-	uint32_t offaddr;   //
+	uint32_t offaddr;   // Offset address
+  uint16_t arrayLength = sizeof(pBuffer)/sizeof(pBuffer[0]);
+  
 	if(WriteAddr<STM32_FLASH_BASE||(WriteAddr>=(STM32_FLASH_BASE+1024*STM32_FLASH_SIZE)))return;//
 	FLASH_Unlock();						//
-	offaddr=WriteAddr-STM32_FLASH_BASE;		//
-	secpos=offaddr/STM_SECTOR_SIZE;			//  0~63 for STM32F030
+	offaddr = WriteAddr - STM32_FLASH_BASE;		//
+	secpos = offaddr / STM_SECTOR_SIZE; //  0~63 for STM32F030
 	secoff=(offaddr%STM_SECTOR_SIZE)/2;		//
-	secremain=STM_SECTOR_SIZE/2-secoff;		//   
-	if(NumToWrite<=secremain)secremain=NumToWrite;//
+	secremain = STM_SECTOR_SIZE / 2 - secoff;		//   
+	if(arrayLength<=secremain)secremain=arrayLength;//
 	while(1) 
 	{	
-		flashRead(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//
+		flashRead(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF);//
 		for(i=0;i<secremain;i++)//
 		{
 			if(STMFLASH_BUF[secoff+i]!=0XFFFF)break;//  	  
@@ -150,18 +152,18 @@ void flashWrite(uint32_t WriteAddr,uint16_t *pBuffer,uint16_t NumToWrite)
 			{
 				STMFLASH_BUF[i+secoff]=pBuffer[i];	  
 			}
-			flashWriteNoCheck(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);//  
-		}else flashWriteNoCheck(WriteAddr,pBuffer,secremain);//
-		if(NumToWrite==secremain)break;//
+			flashWriteNoCheck(secpos*STM_SECTOR_SIZE+STM32_FLASH_BASE,STMFLASH_BUF);//  
+		} else flashWriteNoCheck(WriteAddr, pBuffer);
+		if(arrayLength==secremain)break;//
 		else//
 		{
 			secpos++;				//
 			secoff=0;				// 	 
 		   	pBuffer+=secremain;  	
 			WriteAddr+=secremain*2;	
-		   	NumToWrite-=secremain;	//
-			if(NumToWrite>(STM_SECTOR_SIZE/2))secremain=STM_SECTOR_SIZE/2;//
-			else secremain=NumToWrite;//
+		   	arrayLength-=secremain;	//
+			if(arrayLength>(STM_SECTOR_SIZE/2))secremain=STM_SECTOR_SIZE/2;//
+			else secremain=arrayLength;//
 		}	 
 	};	
 	FLASH_Lock();//

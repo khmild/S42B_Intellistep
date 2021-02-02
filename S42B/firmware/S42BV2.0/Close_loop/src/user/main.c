@@ -36,12 +36,6 @@
 #include "tle5012.h"
 #include "iwdg.h"
 
-
-#define CLOSED_LOOP
-#define CLOSED_LOOP_CONFIG
-//#define TEST_FLASH
-#define STEPPER_UPDATE_FREQ 5
-
 //
 int16_t kp=30;     
 int16_t ki=10;  
@@ -56,7 +50,7 @@ int32_t s_1 = 0;
 int32_t s_sum = 0;//
 int32_t r = 0;//
 int32_t r_1 = 0;
-bool positiveDir = true; // if the shaft is to be spun in a positive direction
+bool positiveDir = true; // If the shaft is to be spun in a positive direction
 int16_t y = 0;//
 int16_t y_1 = 0;
 int32_t yw = 0;//
@@ -204,7 +198,7 @@ int main(void)
             //Motor_Enable = enmode;                                //
     /*****************************************************/
 
-            flashRead(DATA_STORE_ADDRESS, table1, 14);            //
+            flashRead(DATA_STORE_ADDRESS, table1);            //
             SetModeCheck();                 //
 
             Currents=table1[1];             //
@@ -255,7 +249,7 @@ int main(void)
         }
         TIM2_Cap_Init(0xFFFF,0);          //
 
-        TIM4_Init(10000, 65000);
+        TIM4_Init(10000, 7200);
         /*
         // Calculate the values for the timer given the interrupt frequency (tests the maximum prescalar available)
         for(int prescalarDivisor = 1; SystemCoreClock / (STEPPER_UPDATE_FREQ * prescalarDivisor) > 65536; prescalarDivisor = prescalarDivisor * 10) {
@@ -319,7 +313,7 @@ int main(void)
                 USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
                 USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
                 
-                flashWrite(DATA_STORE_ADDRESS, table1, 14);//
+                flashWrite(DATA_STORE_ADDRESS, table1);//
                 
                 //USART_Cmd(USART1, ENABLE);
                 USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);

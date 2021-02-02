@@ -274,48 +274,48 @@ static void Prompt_show(void);
 
 void encoderInit(void)
 {
-    GPIO_InitTypeDef  GPIO_InitStructure;
+  GPIO_InitTypeDef  GPIO_InitStructure;
  
  	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO, ENABLE);	 //
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);	//SWD
     //
     
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;				 //PA4  
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;				 //PA4  
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //
  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
  	GPIO_Init(GPIOA, &GPIO_InitStructure);
 		
-    GPIO_InitStructure.GPIO_Pin =GPIO_Pin_15;				 //
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;				 //
     
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; 		 //
  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
  	GPIO_Init(GPIOA, &GPIO_InitStructure);  
     
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_10|GPIO_Pin_11;
-    GPIO_Init(GPIOB, &GPIO_InitStructure); 
-    SPI1_Init();											//SPI
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_10|GPIO_Pin_11;
+  GPIO_Init(GPIOB, &GPIO_InitStructure); 
+  SPI1_Init();											//SPI
 									
-	TLE012_CS=1;
+	TLE012_CS = 1;
 }
 //Motor IO 
 void motorInit(void)
 {
-    GPIO_InitTypeDef  GPIO_InitStructure;
+  GPIO_InitTypeDef  GPIO_InitStructure;
  
  	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);	 //
 //	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);	//SWD
-    
-    
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9;				 // 
+  
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9;				 // 
     
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //
  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
  	GPIO_Init(GPIOB, &GPIO_InitStructure);
 		
 }
-//
+
+// Move one step
 void OneStep(void)
-{          
+{
   if(positiveDir) 
     stepNum+=1;
   else 
@@ -323,9 +323,12 @@ void OneStep(void)
   
   // Angle of a step times the current step
   Output(STEP_ANGLE * stepNum, 80);
+
+  // Delay for the motor to move
   delayMs(10);
 }
-//
+
+// Mod operation
 int16_t Mod(int32_t value, int16_t modulus) 
 {
     int16_t modResult;
@@ -413,7 +416,7 @@ void Output(int32_t theta, uint8_t effort) {
     angle_2 -= 4096;
   }
 
-  // Equation comes out to be effort * 0-1 depending on the sine of the angle
+  // Equation comes out to be (effort * 0-1) depending on the sine of the angle
   int16_t v_coil_A = effort * (sinLookup[angle_1] / 1024); 
   int16_t v_coil_B = effort * (sinLookup[angle_2] / 1024);//
 
@@ -512,94 +515,160 @@ void WriteValue(uint16_t RegAdd,uint16_t RegValue) {
   // Disable CS pin (once again, think that the logic is inverted)
   TLE012_CS = 1;
 }
-//
+
+// Reads the state of the encoder
 uint16_t ReadState(void)
 {
   return (ReadValue(CMD_READ_STATUS));
 }
-// Reads the value for the 
+
+// Reads the value for the angle of the encoder
 uint16_t ReadAngle(void) {
   return (ReadValue(CMD_READ_ANGLE_VALUE)>>1);
 }
-//
-void CalibrateEncoder(void) 
-{   
-  int32_t encoderReading=0;    
-  int32_t currentencoderReading=0;
-  int32_t lastencoderReading=0;        
 
-  int32_t iStart=0;    
-  int32_t jStart=0;
-  int32_t stepNo=0;
+// Runs through a bunch of motor movements to calibrate the encoder
+void CalibrateEncoder(void) {
+
+  // Disable all interrupts so the calibration isn't interrupted
+  __disable_irq();
+
+  // Declare relevant variables
+  int32_t encoderReading = 0;    
+  int32_t currentReading = 0;
+  int32_t lastReading = 0;        
+
+  int32_t iStart = 0;    
+  int32_t jStart = 0;
+  int32_t stepNo = 0;
   
-  int32_t ticks=0;	
+  int32_t ticks = 0;	
   uint16_t lookupAngle;
-  int16_t x=0;
-		
-  positiveDir=1; 
-  Output(0,80);//
-  for(uint8_t m=0;m<4;m++)
-  {
+  int16_t x = 0;
+	
+  // Set that the motor should move in a positive direction
+  positiveDir = true;
+
+  // Energize the coils
+  Output(0,80);
+
+  // Flash LED on and off 4 times, waiting a quarter of a second between each change of the LED
+  for(uint8_t m = 0; m < 4; m++) {
     led1 = LED_ON;
-	delayMs(250);
+	  delayMs(250);
     led1 = LED_OFF;
-	delayMs(250);	
+	  delayMs(250);	
   } 
-  for(int16_t x=0;x<=199;x++)//
-  {    
-    encoderReading=0;
-   	delayMs(20);                     
-    lastencoderReading=ReadAngle();     
-    for(uint8_t reading=0;reading<10;reading++) 
-	{ 
-      currentencoderReading=ReadAngle(); 
-      if(currentencoderReading-lastencoderReading<-8192)
-        currentencoderReading+=16384;
-      else if(currentencoderReading-lastencoderReading>8192)
-        currentencoderReading-=16384;
+
+  // Loop through 200 motor movements (calibration should take around 2 seconds per direction)
+  for(int16_t loopIndex = 0; loopIndex <= 199; loopIndex++) {   
+
+    // Zero the encoder's value
+    encoderReading = 0;
+
+    // ! Wait 20 ms (prevents loop from running too fast, not entirely sure about this)
+   	//delayMs(20);
+
+    // Setup the last angle from the encoder
+    lastReading = ReadAngle();     
+
+    // ! Loop through readings so they can stabilize (not entirely sure)
+    for(uint8_t reading = 0; reading < 10; reading++) { 
+
+      // Read the encoder's angle
+      currentReading = ReadAngle();
+
+      // Make sure that the results are within the value limits of a 14 bit value
+      if(currentReading - lastReading < -8192)
+        currentReading += 16384;
+      else if(currentReading - lastReading > 8192)
+        currentReading -= 16384;
  
-      encoderReading+=currentencoderReading;
-      delayMs(10);
-      lastencoderReading=currentencoderReading;
+      encoderReading += currentReading;
+      //delayMs(10);
+      lastReading = currentReading;
     }
-    encoderReading=encoderReading/10;
-    if(encoderReading>16384)
-      encoderReading-=16384;
-    else if(encoderReading<0)
-      encoderReading+=16384;
-    fullStepReadings[x]=encoderReading;  
-    OneStep();
-	delayMs(100); 
-  }
-  positiveDir=0; 
-  OneStep();
-  delayMs(1000); 
-  for(x=199;x>=0;x--)//
-  {    
-    encoderReading=0;
-   	delayMs(20);                     
-    lastencoderReading=ReadAngle();     
-    for(uint8_t reading=0;reading<10;reading++) 
-	{ 
-      currentencoderReading=ReadAngle(); 
-      if(currentencoderReading-lastencoderReading<-8192)
-        currentencoderReading+=16384;
-      else if(currentencoderReading-lastencoderReading>8192)
-        currentencoderReading-=16384;
- 
-      encoderReading+=currentencoderReading;
-      delayMs(10);
-      lastencoderReading=currentencoderReading;
+
+    // ! Divide the encoder value by 10 (not fully sure why)
+    encoderReading = encoderReading / 10;
+
+    // Constrain the encoder reading between 0 and 16384
+    if(encoderReading > 16384) {
+      encoderReading -= 16384;
     }
-    encoderReading=encoderReading/10;
-    if(encoderReading>16384)
-      encoderReading-=16384;
-    else if(encoderReading<0)
-      encoderReading+=16384;
-    fullStepReadings[x]=(fullStepReadings[x]+encoderReading)/2;  
+    else if(encoderReading < 0) {
+      encoderReading += 16384;
+    }
+
+    // Save the value to the list of encoder reading
+    fullStepReadings[loopIndex] = encoderReading;
+
+    // Move the motor one step
     OneStep();
-	delayMs(100); 
+
+    // Delay so the motor can move
+	  //delayMs(10); 
   }
+
+  // Move in the negative direction
+  positiveDir = false;
+
+  // Give a little delay before the motor begins moving again
+  delayMs(100); 
+
+  // Loop through 200 motor movements
+  for(x = 199; x >= 0; x--) {
+
+    // Zero the encoder reading
+    encoderReading = 0;
+
+    // ! Wait 20 ms (prevents loop from running too fast, not entirely sure about this)
+   	//delayMs(20);
+
+    // Read the encoder's angle
+    lastReading = ReadAngle();
+
+    // ! Loop through readings so they can stabilize (not entirely sure)
+    for(uint8_t reading = 0; reading < 10; reading++) {
+
+      // Read the encoder's angle
+      currentReading = ReadAngle();
+
+      // Constrain value in the range of a 14-bit integer
+      if(currentReading-lastReading < -8192) {
+        currentReading += 16384;
+      }
+      else if(currentReading-lastReading > 8192) {
+        currentReading -= 16384;
+      }
+        
+      encoderReading += currentReading;
+      //delayMs(10);
+      lastReading = currentReading;
+    }
+
+    // ! Divide the encoder value by 10 (not fully sure why)
+    encoderReading = encoderReading / 10;
+
+    // Constrain the encoder's value between 0 and 16384
+    if(encoderReading > 16384) {
+      encoderReading -= 16384;
+    }
+    else if(encoderReading < 0) {
+      encoderReading += 16384;
+    }
+
+    // Take the average of the encoder change. Basically (first reading + second reading)/2
+    fullStepReadings[x]=(fullStepReadings[x]+encoderReading)/2;
+    
+    // Move the motor one step
+    OneStep();
+
+    // Allow the motor time to move
+	  //delayMs(10); 
+  }
+
+
   TIM_SetCompare1(TIM3,0);  
   TIM_SetCompare2(TIM3,0); 
   for(uint8_t i=0;i<200;i++)//
@@ -654,32 +723,38 @@ void CalibrateEncoder(void)
       }
     }
   }
-  FLASH_Lock();
-  if(Second_Calibrate_flag !=1){
-    //
-    flashStoreFlag =1;            //
-    table1[0] =0xAACC;                //
-    table1[1] =128;table1[2] =16;
-    table1[3] =4;table1[4] =3;
-    table1[5] =0;table1[6] =1;
-    table1[7] =1;table1[8] =1;
-    table1[11]=kp;                  //
-    table1[12]=ki;
-    table1[13]=kd;
+  if(Second_Calibrate_flag != 1) {
+    // Create an array with the values that were obtained
+    flashStoreFlag = true;
+    table1[0] = 0xAACC;
+    table1[1] = 128;
+    table1[2] = 16;
+    table1[3] = 4;
+    table1[4] = 3;
+    table1[5] = 0;
+    table1[6] = 1;
+    table1[7] = 1;
+    table1[8] = 1;
+    table1[11] = kp;
+    table1[12] = ki;
+    table1[13] = kd;
   
-    flashWrite(DATA_STORE_ADDRESS, table1, 14);//
+    // Write the array to flash
+    flashWrite(DATA_STORE_ADDRESS, table1);
   }
   
+  // Lock the flash against writing
+  FLASH_Lock();
+
   CalibrateEncoder_finish_flag=1; //  
 }
 
 
 //
-static void Prompt_show(void)
-{
+static void Prompt_show(void) {
     OLED_Clear();
     //OLED_ShowString(0,0,"              ");
-    OLED_ShowString(0,16,"   finished!  ");
+    OLED_ShowString(0,16,"   Finished!  ");
     OLED_ShowString(0,32,"  Please press ");
     OLED_ShowString(0,48,"Reset Key reboot");
 }

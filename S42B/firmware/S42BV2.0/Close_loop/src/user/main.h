@@ -11,6 +11,11 @@
 #include "math.h"
 #include "stdbool.h"
 
+#define CLOSED_LOOP
+#define CLOSED_LOOP_CONFIG
+//#define TEST_FLASH
+#define STEPPER_UPDATE_FREQ 5
+
 // Motor constants
 #define PHASE_MULTIPLIER 12.5f
 #define STEP_ANGLE 81.92f // ! Check to see for .9 deg motors as well
