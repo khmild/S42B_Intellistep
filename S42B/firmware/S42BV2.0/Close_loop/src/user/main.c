@@ -238,8 +238,8 @@ int main(void)
         EXTIX_Init();                       //
         NVIC_EnableIRQ(EXTI1_IRQn);         //
         UART_Configuration(USART1, UART1_DEFAULT_BAUDRATE);     //
-        CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_5tq,6,CAN_Mode_LoopBack);// 
-        res=CAN1_Send_Msg(canbufTx,8);                      //
+        CAN1_Mode_Init(CAN_SJW_1tq, CAN_BS2_6tq, CAN_BS1_5tq, 6, CAN_Mode_LoopBack);// 
+        res = CAN1_Send_Msg(canbufTx, 8);                      //
         delayMs(100);
         if(res){                                            //
             printf("CAN1 Transport fail!\r\n");
@@ -249,7 +249,8 @@ int main(void)
         }
         TIM2_Cap_Init(0xFFFF,0);          //
 
-        TIM4_Init(10000, 7200);
+        // ! Add logic checking to make sure that this is always a whole number 
+        //TIM4_Init(10000 / STEPPER_UPDATE_FREQ, 7200);
         /*
         // Calculate the values for the timer given the interrupt frequency (tests the maximum prescalar available)
         for(int prescalarDivisor = 1; SystemCoreClock / (STEPPER_UPDATE_FREQ * prescalarDivisor) > 65536; prescalarDivisor = prescalarDivisor * 10) {
@@ -325,6 +326,9 @@ int main(void)
             KeyScan();                                      //
             Oled_display();                                 //
             Motor_data_dis();                               //
+            //TIM4_IRQHandler();
+            dataUpdateFlag = true;
+            OneStep();
     #endif
 #if 0
         if(KEY_Select==0){

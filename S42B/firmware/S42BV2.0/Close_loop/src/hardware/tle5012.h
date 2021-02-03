@@ -14,20 +14,15 @@
 #define SET1        PBin(10)
 #define SET2        PBin(11)
 
-#define IN1         PBout(6)
-#define IN2         PBout(7)
-#define IN3         PBout(8)
-#define IN4         PBout(9)
+#define DRIVER1_DIR_1         PBout(6)
+#define DRIVER1_DIR_2         PBout(7)
+#define DRIVER2_DIR_1         PBout(8)
+#define DRIVER2_DIR_2         PBout(9)
 
-#define IN1_HIGH    true
-#define IN2_HIGH    true
-#define IN3_HIGH    true
-#define IN4_HIGH    true
-    
-#define IN1_LOW     false
-#define IN2_LOW     false
-#define IN3_LOW     false
-#define IN4_LOW     false
+#define ON    true
+#define OFF   false
+
+extern uint32_t PHASE_MULTIPLIER;
     
 void encoderInit(void);
 void motorInit(void);

@@ -268,7 +268,7 @@ const int16_t sinLookup[] =
 
 int32_t fullStepReadings[200];//
 uint32_t address= SAMPLING_DATA_ADDR ;//
-
+uint32_t PHASE_MULTIPLIER = 12.5f;
 
 static void Prompt_show(void);
 
@@ -418,38 +418,44 @@ void Output(int32_t theta, uint8_t effort) {
 
   // Equation comes out to be (effort * 0-1) depending on the sine of the angle
   int16_t v_coil_A = effort * (sinLookup[angle_1] / 1024); 
-  int16_t v_coil_B = effort * (sinLookup[angle_2] / 1024);//
+  int16_t v_coil_B = effort * (sinLookup[angle_2] / 1024);
 
-  if(v_coil_A >= 0)  {
+  if(v_coil_A > 0)  {
       TIM_SetCompare2(TIM3, v_coil_A);
       // ! Possibly create and call motor channel objects (for later)
       // Set first channel for forward movement
-      IN1= 1;                         //pb6
-      IN2= 0;                         //pb7
+      DRIVER1_DIR_1 = ON;    //pb6
+      DRIVER1_DIR_2 = OFF;   //pb7
   }
-  else  {
+  else if (v_coil_A < 0) {
       TIM_SetCompare2(TIM3, -v_coil_A);
 
       // Set first channel for backward movement
-      IN1= 0;
-      IN2= 1;  
-  } 
-  if(v_coil_B >= 0){
+      DRIVER1_DIR_1 = OFF; 
+      DRIVER1_DIR_2 = ON;
+  }
+  else {
+    TIM_SetCompare2(TIM3, 0);
+  }
+
+  if(v_coil_B > 0){
       TIM_SetCompare1(TIM3, v_coil_B);  
 
       // Set second channel for forward movement
-      IN3= 1;                        //pb8
-      IN4= 0;                        //pb9
+      DRIVER2_DIR_1 = ON;   //pb8
+      DRIVER2_DIR_2 = OFF;  //pb9
   }
-  else {
+  else if (v_coil_B < 0) {
       TIM_SetCompare1(TIM3, -v_coil_B);
 
       // Set the second channel for backward movement
-      IN3= 0;
-      IN4= 1;
+      DRIVER2_DIR_1 = OFF;
+      DRIVER2_DIR_2 = ON;
+  }
+  else {
+    TIM_SetCompare1(TIM3, 0);
   }
 }
-
         
 //
 uint16_t ReadValue(uint16_t RegAdd) {

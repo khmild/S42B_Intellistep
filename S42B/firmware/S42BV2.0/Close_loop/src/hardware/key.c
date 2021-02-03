@@ -99,6 +99,13 @@ void KeyScan(void) {
   // Check the select key
   if(checkSelectKey()){
 
+    if(!KEY_Select_flag){
+      PHASE_MULTIPLIER--;
+      dataUpdateFlag = true;
+      delayMs(100);
+    }
+    /*
+
     // Check if we're in the menu
     if(Menu_Num == 0){
       
@@ -142,6 +149,7 @@ void KeyScan(void) {
         }
       }
     }
+    */
   }
   // Check the back key
   else if(checkBackKey()){
@@ -167,6 +175,7 @@ void KeyScan(void) {
           if(Menu_Num >1 ){
               Menu_Num=0;
           }
+          dataUpdateFlag = true;
       }
     }
   }
@@ -176,6 +185,11 @@ void KeyScan(void) {
 
     // Make sure that we're not already dealing with a key
     if(!KEY_Confirm_flag){
+      PHASE_MULTIPLIER++;
+      dataUpdateFlag = true;
+      delayMs(100);
+
+      /*
 
       // Set the flags to the correct state
       KEY_Confirm_flag = true;
@@ -296,12 +310,13 @@ void KeyScan(void) {
             }
         break;
         }
+        */
       }
     }
-    else{
-        KEY_Select_flag=0;       //
-        KEY_Back_flag=0;         //
-        KEY_Confirm_flag=0;
+    else {
+        KEY_Select_flag = false;       //
+        KEY_Back_flag = false;         //
+        KEY_Confirm_flag = false;
     }
 }
 

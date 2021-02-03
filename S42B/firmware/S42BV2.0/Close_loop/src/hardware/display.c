@@ -1,6 +1,7 @@
 #include "display.h"
 #include "oled.h"
 #include "flash.h"
+#include "tle5012.h"
 
 
 void Oled_display(void)
@@ -426,9 +427,16 @@ void Motor_data_dis(void)
     static int32_t e_temp=0;
     static uint16_t e_a=0,e_b=0;
     
-    if(dataUpdateFlag ==1 && Menu_Num==1){
+    if(dataUpdateFlag == 1 && Menu_Num==1){
         dataUpdateFlag=0;
 /*************SIMP*****************************************************/
+
+        temp[0]=PHASE_MULTIPLIER/1000;
+        temp[1]=PHASE_MULTIPLIER%1000/100;
+        temp[2]=PHASE_MULTIPLIER%100/10;
+        temp[3]=PHASE_MULTIPLIER%10;
+
+/*
         Motor_speed = wap2-wap1;//
         if(Motor_speed>=0)temp[8]=' ';
         else{
@@ -441,6 +449,7 @@ void Motor_data_dis(void)
         temp[1]=Motor_speed%1000/100;
         temp[2]=Motor_speed%100/10;
         temp[3]=Motor_speed%10;
+*/
 /*************ERR*************************************************/
         if(error>=0){
             temp[4]=' ';

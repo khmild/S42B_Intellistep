@@ -48,20 +48,20 @@ void EXTIX_Init(void)
 void EXTI1_IRQHandler(void)
 {
 
-     if(getDirectionPin()){
+    if(getDirectionPin()){
         if(positiveDirection){
-            TIM_CounterModeConfig(TIM2,  TIM_CounterMode_Up);
+            TIM_CounterModeConfig(TIM2, TIM_CounterMode_Up);
         }
         else{
-            TIM_CounterModeConfig(TIM2,TIM_CounterMode_Down);
+            TIM_CounterModeConfig(TIM2, TIM_CounterMode_Down);
         }
     }
 	else{
         if(positiveDirection){
-            TIM_CounterModeConfig(TIM2,TIM_CounterMode_Down);
+            TIM_CounterModeConfig(TIM2, TIM_CounterMode_Down);
         }
         else{
-            TIM_CounterModeConfig(TIM2,TIM_CounterMode_Up);
+            TIM_CounterModeConfig(TIM2, TIM_CounterMode_Up);
         }
     }
 	EXTI_ClearITPendingBit(EXTI_Line1);  //

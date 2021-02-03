@@ -14,10 +14,10 @@
 #define CLOSED_LOOP
 #define CLOSED_LOOP_CONFIG
 //#define TEST_FLASH
-#define STEPPER_UPDATE_FREQ 5
+#define STEPPER_UPDATE_FREQ 10
 
 // Motor constants
-#define PHASE_MULTIPLIER 12.5f
+//#define PHASE_MULTIPLIER 12.5f // ! Tune this
 #define STEP_ANGLE 81.92f // ! Check to see for .9 deg motors as well
 
 /* SPI command for TLE5012 */

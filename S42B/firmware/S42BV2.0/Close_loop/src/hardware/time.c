@@ -4,7 +4,7 @@
 #include "oled.h"
 
 
-void TIM2_Cap_Init(u16 timerPeriod,u16 prescalar)
+void TIM2_Cap_Init(u16 timerPeriod, u16 prescalar)
 {	 
   TIM_DeInit(TIM2);
     
@@ -120,7 +120,7 @@ void TIM4_Init(u16 arr,u16 psc)
 
 // Handles the update of the stepper motor 
 void TIM4_IRQHandler(void) {
-    if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET){
+    //if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET){
 //            led1=!led1;
         //IWDG_Feed();//
         if(enmode==1)
@@ -234,8 +234,8 @@ void TIM4_IRQHandler(void) {
             dataUpdateFlag=1;           
           }
         }
-      }
-    TIM_ClearITPendingBit(TIM4, TIM_IT_Update); //
+      //}
+    //TIM_ClearITPendingBit(TIM4, TIM_IT_Update); //
 }
 
 

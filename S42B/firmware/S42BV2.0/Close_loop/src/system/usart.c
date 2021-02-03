@@ -459,7 +459,7 @@ void USART1_IRQHandler(void)
         else{
             Receive_Count=0;
             //
-             frameErrorFlag=1;   
+            frameErrorFlag=1;   
         }  
     }
     USART_ClearITPendingBit(USART1, USART_IT_RXNE);     //
