@@ -327,8 +327,6 @@ int main(void)
             Oled_display();                                 //
             Motor_data_dis();                               //
             //TIM4_IRQHandler();
-            dataUpdateFlag = true;
-            OneStep();
     #endif
 #if 0
         if(KEY_Select==0){

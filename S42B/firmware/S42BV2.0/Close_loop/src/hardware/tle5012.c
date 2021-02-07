@@ -266,8 +266,8 @@ const int16_t sinLookup[] =
     0,
 };
 
-int32_t fullStepReadings[200];//
-uint32_t address= SAMPLING_DATA_ADDR ;//
+int32_t fullStepReadings[200];
+uint32_t address = SAMPLING_DATA_ADDR;
 uint32_t PHASE_MULTIPLIER = 12.5f;
 
 static void Prompt_show(void);
@@ -276,24 +276,23 @@ void encoderInit(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
  
- 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO, ENABLE);	 //
+ 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO, ENABLE);
 	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);	//SWD
-    //
     
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;				 //PA4  
- 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;	//PA4  
+ 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
  	GPIO_Init(GPIOA, &GPIO_InitStructure);
 		
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;				 //
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
     
- 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; 		 //
+ 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
  	GPIO_Init(GPIOA, &GPIO_InitStructure);  
     
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_10|GPIO_Pin_11;
   GPIO_Init(GPIOB, &GPIO_InitStructure); 
-  SPI1_Init();											//SPI
+  SPI1_Init();	//SPI
 									
 	TLE012_CS = 1;
 }
@@ -302,8 +301,8 @@ void motorInit(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
  
- 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);	 //
-//	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);	//SWD
+ 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+  //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);	//SWD
   
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9;				 // 
     
@@ -316,6 +315,7 @@ void motorInit(void)
 // Move one step
 void OneStep(void)
 {
+  // Increment the current step number in the direction specified
   if(positiveDir) 
     stepNum+=1;
   else 
@@ -327,6 +327,8 @@ void OneStep(void)
   // Delay for the motor to move
   delayMs(10);
 }
+
+
 
 // Mod operation
 int16_t Mod(int32_t value, int16_t modulus) 
@@ -342,8 +344,8 @@ int16_t Mod(int32_t value, int16_t modulus)
 void SetModeCheck(void)
 {
   WriteValue(WRITE_MOD2_VALUE, MOD2_VALUE);
-  uint16_t state = ReadState();//
-  if(state&0x0080)//
+  uint16_t state = ReadState();
+  if(state&0x0080)
   {
     for(uint8_t m=0;m<10;m++){
       led1 = LED_ON;
@@ -488,8 +490,9 @@ uint16_t ReadValue(uint16_t RegAdd) {
   // Return the data that was pulled
   return data;
 }
-//
-void WriteValue(uint16_t RegAdd,uint16_t RegValue) {
+
+// Writes a value to a register
+void WriteValue(uint16_t RegAdd, uint16_t RegValue) {
 
   // Enable CS pin (logic is inverted, I think)
   TLE012_CS = 0;

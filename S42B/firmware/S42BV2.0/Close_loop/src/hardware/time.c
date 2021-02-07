@@ -4,8 +4,7 @@
 #include "oled.h"
 
 
-void TIM2_Cap_Init(u16 timerPeriod, u16 prescalar)
-{	 
+void TIM2_Cap_Init(u16 timerPeriod, u16 prescalar) {
   TIM_DeInit(TIM2);
     
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -26,12 +25,12 @@ void TIM2_Cap_Init(u16 timerPeriod, u16 prescalar)
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  
 	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure); //
   
-  TIM_ARRPreloadConfig(TIM2,DISABLE);
+  TIM_ARRPreloadConfig(TIM2, DISABLE);
   TIM2 -> SMCR |= TIM_AutomaticOutput_Enable; // ! Not fully sure about this one
     
   TIM_ETRClockMode2Config(TIM2, TIM_ExtTRGPSC_OFF, TIM_ExtTRGPolarity_NonInverted, 7);
   TIM_SelectOutputTrigger(TIM2, TIM_TRGOSource_Reset);
-  TIM_SelectMasterSlaveMode(TIM2,TIM_MasterSlaveMode_Disable);
+  TIM_SelectMasterSlaveMode(TIM2, TIM_MasterSlaveMode_Disable);
     
   TIM_SetCounter(TIM2, 0);
   TIM_Cmd(TIM2, ENABLE);
@@ -49,9 +48,9 @@ void TIM3_Init(void) {
 //    GPIO_AFIODeInit();
     
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO, ENABLE);
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3,ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
-  GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);
+  GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
   GPIO_PinRemapConfig(GPIO_PartialRemap_TIM3, ENABLE);
     
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF_PP;
@@ -85,21 +84,22 @@ void TIM3_Init(void) {
   TIM_CtrlPWMOutputs(TIM3, ENABLE);
 	TIM_Cmd(TIM3,ENABLE);
 }
+
 //
 void TIM4_Init(u16 arr,u16 psc)
 {	 
 //	GPIO_InitTypeDef GPIO_InitStructure;
 
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);	//
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 		
 	// TIM4	setup
-  TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-	TIM_TimeBaseStructure.TIM_Period = arr; // 
-	TIM_TimeBaseStructure.TIM_Prescaler = psc; 	//   
-	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1; //
+  TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+	TIM_TimeBaseStructure.TIM_Period = arr;
+	TIM_TimeBaseStructure.TIM_Prescaler = psc;
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
   TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure); //
+	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
   TIM_Cmd(TIM4, ENABLE);
 	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
 
@@ -118,9 +118,10 @@ void TIM4_Init(u16 arr,u16 psc)
   NVIC_EnableIRQ(TIM4_IRQn);
 }
 
+
 // Handles the update of the stepper motor 
 void TIM4_IRQHandler(void) {
-    //if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET){
+    if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET){
 //            led1=!led1;
         //IWDG_Feed();//
         if(enmode==1)
@@ -235,7 +236,8 @@ void TIM4_IRQHandler(void) {
           }
         }
       //}
-    //TIM_ClearITPendingBit(TIM4, TIM_IT_Update); //
+    TIM_ClearITPendingBit(TIM4, TIM_IT_Update); //
+  }
 }
 
 

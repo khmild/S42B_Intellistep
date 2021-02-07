@@ -510,26 +510,3 @@ void Motor_data_dis(void)
         OLED_ShowChar( 96, 42, '0'+temp[11], 16, 1);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
