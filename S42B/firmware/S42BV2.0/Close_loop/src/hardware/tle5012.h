@@ -1,7 +1,7 @@
 #ifndef __TLE5012_H
 #define __TLE5012_H
 
-
+/*
 #include "main.h"
 
 #define SPI_TX_OFF   {GPIOA->CRL&=0x0FFFFFFF;GPIOA->CRL|=0x40000000;}
@@ -41,6 +41,6 @@ void CalibrateEncoder(void);
 
 
 
-
+*/
 #endif
 

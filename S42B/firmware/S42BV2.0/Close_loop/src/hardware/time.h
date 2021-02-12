@@ -1,6 +1,7 @@
 #ifndef __TIME_H
 #define __TIME_H
 
+/*
 #include "main.h"
 
 
@@ -16,7 +17,7 @@ void SetT1Pwm1(uint16_t Duty);
 
 void TIM_Init(void);
 void Pulse_Control(u16 cycle, u16 pulse_num);
-
+*/
 #endif
 
 

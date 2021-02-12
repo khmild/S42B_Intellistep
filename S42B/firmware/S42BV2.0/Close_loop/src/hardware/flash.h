@@ -1,6 +1,6 @@
 #ifndef __FLASH_H
 #define __FLASH_H
-
+/*
 #include "main.h"
 
 
@@ -17,7 +17,7 @@ void flashWriteNoCheck(uint32_t WriteAddr,uint16_t *pBuffer);
 void flashWrite(uint32_t WriteAddr,uint16_t *pBuffer);
 
 void flashErase32K(void);
-
+*/
 #endif 
 
 
