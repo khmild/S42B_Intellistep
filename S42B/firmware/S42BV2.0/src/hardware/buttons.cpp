@@ -31,7 +31,7 @@ void checkButtons(void) {
   else if(checkButtonState(DOWN_BUTTON_PIN)) {
 
     // Move down
-    cursorDown();
+    moveCursor();
 
   }
   // Check the back button

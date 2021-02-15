@@ -7,7 +7,7 @@
 
 void Oled_display(void)
 {
-/*********************menu Scanf **********************************************************/ /*
+// *********************menu Scanf **********************************************************/ /*
     if(menuUpdateFlag){
         menuUpdateFlag = false;
         switch(Menu_Num){//

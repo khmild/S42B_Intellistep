@@ -7,6 +7,7 @@
 #include "cstring"
 #include "motor.h"
 #include "encoder.h"
+#include "main.h"
 
 // Variables
 extern String topLevelMenuItems[];
@@ -19,7 +20,7 @@ void clearOLED();
 void updateDisplay();
 void displayMotorData();
 void selectMenuItem();
-void cursorDown();
+void moveCursor();
 void exitCurrentMenu();
 
 #endif

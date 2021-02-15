@@ -1,6 +1,7 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
+#include "motor.h"
 #include "Arduino.h"
 #include "stdint.h"
 #include "pinMapping.h"
@@ -34,13 +35,11 @@
 #define WRITE_IFAB_VALUE		0x50B1
 #define IFAB_VALUE 0x000D
 
-extern int16_t pTerm;     
-extern int16_t iTerm;
-extern int16_t dTerm;
-
 extern void Output(int32_t theta,uint8_t effort);
 extern uint16_t ReadAngle(void);
 extern void overclock(uint32_t PLLMultiplier);
+
+extern StepperMotor motor;
 
 #endif
 

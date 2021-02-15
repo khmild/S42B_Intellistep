@@ -28,19 +28,16 @@
 #include "display.h"
 #include "flash.h"
 #include "encoder.h"
-#include "motor.h"
 #include "iwdg.h"
 #include "oled.h"
 #include "stm32yyxx_ll_rcc.h"
 #include "SSD1306.h"
 
-// Declare the PID terms
-int16_t pTerm = 30;     
-int16_t iTerm = 10;  
-int16_t dTerm = 250; 
-
 // Setup the table for parameters
-uint16_t parameterTable[] = {'1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','0'};
+uint16_t savedParameters[] = {'1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','0'};
+
+// Create a new motor instance
+StepperMotor motor = StepperMotor();
 
 // Run the setup
 void setup() {
@@ -49,6 +46,9 @@ void setup() {
     
     // Setup the system clock (includes overclocking)
 	overclock(RCC_CFGR_PLLMULL12);
+
+    // Load all of the values saved in flash
+    loadSavedValues();
 
     // Initialize the LED
     pinMode(LED_PIN, OUTPUT);
@@ -123,9 +123,9 @@ void setup() {
     //        Menu_Num5_item =table1[10];
             */
 
-            pTerm = parameterTable[11]; // P term of PID
-            iTerm = parameterTable[12]; // I term of PID
-            dTerm = parameterTable[13]; // D term of PID
+            motor.setPValue(savedParameters[11]); // P term of PID
+            motor.setIValue(savedParameters[12]); // I term of PID
+            motor.setDValue(savedParameters[13]); // D term of PID
         // ! }
         // ! else {
 

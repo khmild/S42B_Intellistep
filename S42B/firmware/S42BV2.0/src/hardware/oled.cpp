@@ -1,6 +1,7 @@
 #include "oled.h"
 #include "SPI.h"
 #include "cstring"
+#include "math.h"
 
 // The index of the current top level menu item
 int topLevelMenuIndex = 0;
@@ -45,6 +46,7 @@ void updateDisplay() {
             // In the top level of the menu. Make sure that the set top level menu index is within the range of the menu length
             // Values must first be determined using the mod function in order to prevent overflow errors
             // Then the strings are converted into character arrays by giving the address of the first character in the string
+            clearOLED();
             writeOLEDString(0, 0,  &topLevelMenuItems[(topLevelMenuIndex)     % topLevelMenuLength][0]);
             writeOLEDString(0, 16, &topLevelMenuItems[(topLevelMenuIndex + 1) % topLevelMenuLength][0]);
             writeOLEDString(0, 32, &topLevelMenuItems[(topLevelMenuIndex + 2) % topLevelMenuLength][0]);
@@ -55,12 +57,14 @@ void updateDisplay() {
             // We should be in a sub menu, this is where we have to figure out which submenu that should be
             switch(topLevelMenuIndex) {
                 case 0:
-                    // In the first menu, the calibration one. No need to do anything here, besides maybe displaying an progress bar (later?)
+                    // In the first menu, the calibration one. No need to do anything here, besides maybe displaying an progress bar or PID values (later?)
                     break;
 
                 case 1:
                     // In the second menu, the motor mAs. This is dynamically generated and has increments every 100 mA from 0 mA (testing only) to 3500 mA
                     // ! Write yet
+                    clearOLED();
+                    //writeOLEDString(0, 0, "");
                     break;
 
                 case 2:
@@ -87,12 +91,15 @@ void updateDisplay() {
 // Gets the latest parameters from the motor and puts them on screen
 void displayMotorData() {
 
+    // Clear the old data off of the display
+    clearOLED();
+
     // RPM of the motor (RPM is capped at 2 decimal places)
-    float currentRPM = getMotorRPM();
+    float currentRPM = motor.getMotorRPM();
     writeOLEDString(0, 0, &(String("RPM: ") + String(currentRPM))[0]);
 
     // PID loop error
-    float PIDError = getPIDError();
+    float PIDError = motor.getPIDError();
     writeOLEDString(0, 16, &(String("Err: ") + String(PIDError))[0]);
 
     // Current angle of the motor
@@ -106,20 +113,75 @@ void displayMotorData() {
 
 // Function for moving the cursor up
 void selectMenuItem() {
-    // ! Write yet
+
+    // Go down in the menu index if we're not at the bottom already
+    if (menuDepthIndex < 2) {
+        menuDepthIndex++;
+    }
+
+    // If we're in certain menus, the cursor should start at their current value
+    if (menuDepthIndex == 2) {
+        // Cursor settings are only needed in the submenus
+
+        // Check the submenus available
+        switch(topLevelMenuIndex) {
+
+            case 0:
+                // Nothing to see here, just the calibration display.
+                break;
+
+            case 1:
+                // Motor mAs. Need to get the current motor mAs, then convert that to a cursor value
+                currentCursorIndex = motor.getCurrent() / 100;
+                break;
+            
+            case 2:
+                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value
+                currentCursorIndex = log2(motor.getMicrostepping());
+                break;
+
+            case 3:
+                // Get if the enable pin is inverted
+                // ! Write yet
+                break;
+
+            case 4:
+                // Get if the direction pin is inverted
+                // ! Write yet
+                break;
+
+
+        }
+
+    }
 }
 
 
 // Function for moving the cursor down
-void cursorDown() {
-    // ! Check over yet
-    currentCursorIndex++;
+void moveCursor() {
+
+    // If we're on the motor display menu, do nothing for now
+    if (menuDepthIndex == 0) {
+        // Do nothing (maybe add a feature later?)
+    }
+    else if (menuDepthIndex == 1) {
+        // We're in the top level menu, change the topLevelMenuIndex
+        topLevelMenuIndex++;
+    }
+    else {
+        // We have to be in the submenu, increment the cursor index (submenus handle the display themselves)
+        currentCursorIndex++;
+    }    
 }
 
 
 // Function for exiting the current menu
 void exitCurrentMenu() {
-    // ! Write yet
+
+    // Go up in the menu index if we're not already at the motor data screen
+    if (menuDepthIndex > 0) {
+        menuDepthIndex--;
+    }
 }
 
 
