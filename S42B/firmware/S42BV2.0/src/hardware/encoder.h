@@ -38,9 +38,9 @@ void WriteValue(uint16_t RegAdd,uint16_t RegValue);
 uint16_t ReadState(void);
 uint16_t ReadAngle(void);
 void CalibrateEncoder(void);
-
-
-
 */
+
+float getAngle();
+
 #endif
 

@@ -59,9 +59,9 @@
 #define OLED_DC_GPIO_PORT GPIOB
 
 // Button mappings
-#define SELECT_BUTTON_PIN      PA3
+#define DOWN_BUTTON_PIN        PA3
 #define BACK_BUTTON_PIN        PB0
-#define CONFIRM_BUTTON_PIN     PB1
+#define SELECT_BUTTON_PIN     PB1
 
 // LED pin
 #define LED_PIN PC13

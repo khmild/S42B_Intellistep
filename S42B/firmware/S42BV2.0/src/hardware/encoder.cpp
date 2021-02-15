@@ -1,6 +1,6 @@
+#include "encoder.h"
+
 /*
-#include "tle5012.h"
-#include "spi.h"
 #include "gpio.h"
 #include "oled.h"
 #include "flash.h"
@@ -771,11 +771,7 @@ static void Prompt_show(void) {
 
 */
 
-
-
-
-
-
-
-
-
+float getAngle() {
+    // ! Write yet
+    return 0;
+}
