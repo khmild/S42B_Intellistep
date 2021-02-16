@@ -2,6 +2,8 @@
 #ifndef __MOTOR_H__
 #define __MOTOR_H__
 
+#include "Arduino.h"
+
 // Stepper motor class (defined to make life a bit easier when dealing with the motor)
 class StepperMotor {
 
@@ -47,11 +49,14 @@ class StepperMotor {
         // Sets the microstepping mode of the motor
         void setMicrostepping(int setMicrostepping);
 
+        // Sets the angle of a full step of the motor
+        void setFullStepAngle(float newStepAngle);
+
         // Moves the set point one step in the respective direction
         void step(bool positiveDirection);
 
         // Computes the next output of the motor
-        void compute(float feedback);
+        float compute(float feedback);
 
     // Things that shouldn't be accessed by the outside
     private:
@@ -64,12 +69,29 @@ class StepperMotor {
         float iTerm = 0;
         float dTerm = 0;
 
+        // Motor PID variables (to help with computations)
+        float currentTime;
+        float previousTime;
+        float elapsedTime;
+
         // Performance measurements (updated on compute)
-        float error = 0;
+        float error;
+        float lastError;
+        float cumulativeError;
+        float rateError;
+
+        // Maximum value for the output of the motor
+        float maxOutput = 1;
 
         // Motor characteristics
+        // Current (in mA)
         int current = 0;
+
+        // Microstepping divisor
         int microstepping = 1;
+
+        // Angle of a full step
+        float fullStepAngle = 1.8;
 };
 
 

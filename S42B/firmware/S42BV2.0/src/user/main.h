@@ -13,7 +13,7 @@
 
 // Motor constants
 //#define PHASE_MULTIPLIER 12.5f // ! Tune this
-#define STEP_ANGLE 81.92f // ! Check to see for .9 deg motors as well
+#define STEP_ANGLE 0.9 // ! Check to see for .9 deg motors as well
 
 /* SPI command for TLE5012 */
 #define CMD_READ_STATUS				0x8001			//8000
