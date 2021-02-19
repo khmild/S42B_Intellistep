@@ -8,7 +8,9 @@
         "spi.h": "c",
         "array": "cpp",
         "cmath": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "arduino.h": "c",
+        "pins_arduino.h": "c"
     },
     "files.exclude": {
         "**/.git": true,

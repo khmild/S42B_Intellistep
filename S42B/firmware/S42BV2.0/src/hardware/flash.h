@@ -5,7 +5,7 @@
 #include "stm32f103xb.h"
 
 // Where the parameters are saved
-#define DATA_STORE_ADDRESS      0x08017C00
+#define CALIBRATION_ADDRESS      0x08017C00
 
 // Parameter for locking the flash
 #define CR_LOCK_SET              ((uint32_t)0x00000080)

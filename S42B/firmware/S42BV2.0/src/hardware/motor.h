@@ -43,6 +43,9 @@ class StepperMotor {
         // Gets the current of the motor (in mA)
         int getCurrent();
 
+        // Sets the current of the motor (in mA)
+        void setCurrent(int current);
+
         // Gets the microstepping mode of the motor
         int getMicrostepping();
 
@@ -52,6 +55,15 @@ class StepperMotor {
         // Sets the angle of a full step of the motor
         void setFullStepAngle(float newStepAngle);
 
+        // Set if the motor should be reversed
+        void setReversed(bool reversed);
+
+        // Set if the motor enable pin should be inverted
+        void setEnableInversion(bool inverted);
+
+        // Get if the motor enable pin is inverted
+        bool getEnableInversion();
+
         // Moves the set point one step in the respective direction
         void step(bool positiveDirection);
 
@@ -60,6 +72,9 @@ class StepperMotor {
 
     // Things that shouldn't be accessed by the outside
     private:
+
+        // Function for turning booleans into -1 for true and 1 for false
+        float invertDirection(bool invert);
 
         // Variable to keep the desired angle of the motor
         float desiredAngle = 0;
@@ -92,6 +107,12 @@ class StepperMotor {
 
         // Angle of a full step
         float fullStepAngle = 1.8;
+
+        // If the motor direction is inverted
+        bool reversed = false;
+
+        // If the motor enable is inverted
+        bool enableInverted = false;
 };
 
 
