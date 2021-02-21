@@ -279,7 +279,7 @@ void loadSavedValues() {
 
     // Setup the table for parameters
     // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value)
-    uint16_t savedParameters[16];
+    uint16_t savedParameters[8];
 
     // Load the table from memory
     flashRead(CALIBRATION_ADDRESS, savedParameters);
