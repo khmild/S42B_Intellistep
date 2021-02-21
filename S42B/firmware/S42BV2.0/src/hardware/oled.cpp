@@ -22,7 +22,7 @@ void initOLEDSPI() {
 }
 
 // Convience function for writing a specific string to the OLED panel
-void writeOLEDString(uint8_t x, uint8_t y, char* string) {
+void writeOLEDString(uint8_t x, uint8_t y, char *string) {
     SSD1306_SetCursor(x, y);
     SSD1306_WriteString(string, Font_7x10, WHITE);
 }

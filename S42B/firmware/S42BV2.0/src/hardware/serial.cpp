@@ -36,17 +36,17 @@ void runSerialParser() {
     //   - M500 (ex M500) - Saves the currently loaded parameters into flash
     //   - M907 (ex M907 V3000) - Sets the current in mA
 
-    // Load the string for modification
+    // Load the string into a buffer for modification
     String buffer = readBuffer();
 
     // Make sure that the first value is the command letter
-    if (buffer.charAt(0) == (char)"M" || buffer.charAt(0) == (char)"m") {
+    if (buffer.charAt(0) == 'M' || buffer.charAt(0) == 'm') {
 
         // Create an accumulator for the number
         int commandNumber;
 
         // If it is, we can proceed by reading the number of the code
-        if (buffer.charAt(3) == (char)" ") {
+        if (buffer.charAt(3) == ' ') {
 
             // The command number only has two numbers (first index is the letter)
             commandNumber = atoi(buffer.substring(1, 2).c_str());
@@ -60,7 +60,7 @@ void runSerialParser() {
         // Switch statement the command number
         switch (commandNumber) {
 
-            case 93: 
+            case 93:
                 // M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
                 break;
 

@@ -4,7 +4,7 @@
 // Imports
 #include "main.h"
 #include "string.h"
-#include <cstdlib> 
+#include <cstdlib>
 
 void initSerial();
 void sendMessage(String message);
