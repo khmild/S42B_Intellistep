@@ -10,7 +10,8 @@
         "cmath": "cpp",
         "functional": "cpp",
         "arduino.h": "c",
-        "pins_arduino.h": "c"
+        "pins_arduino.h": "c",
+        "ssd1306.h": "c"
     },
     "files.exclude": {
         "**/.git": true,

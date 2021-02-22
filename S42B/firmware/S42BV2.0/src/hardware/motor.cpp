@@ -10,6 +10,14 @@ StepperMotor::StepperMotor(float P, float I, float D) {
 
     // Set the previous time to the current system time
     this -> previousTime = millis();
+
+    // Setup the pins as outputs
+    pinMode(COIL_A_DIR_1, OUTPUT);
+    pinMode(COIL_A_DIR_2, OUTPUT);
+    pinMode(COIL_B_DIR_1, OUTPUT);
+    pinMode(COIL_B_DIR_2, OUTPUT);
+    pinMode(COIL_A_POWER_OUTPUT, OUTPUT);
+    pinMode(COIL_B_POWER_OUTPUT, OUTPUT);
 }
 
 // Constructor without PID terms
@@ -17,6 +25,14 @@ StepperMotor::StepperMotor() {
 
     // Just set the previous time to the current system time
     this -> previousTime = millis();
+
+    // Setup the pins as outputs
+    pinMode(COIL_A_DIR_1, OUTPUT);
+    pinMode(COIL_A_DIR_2, OUTPUT);
+    pinMode(COIL_B_DIR_1, OUTPUT);
+    pinMode(COIL_B_DIR_2, OUTPUT);
+    pinMode(COIL_A_POWER_OUTPUT, OUTPUT);
+    pinMode(COIL_B_POWER_OUTPUT, OUTPUT);
 }
 
 
@@ -77,7 +93,9 @@ int StepperMotor::getCurrent() {
 
 // Sets the current of the motor (in mA)
 void StepperMotor::setCurrent(int current) {
-    this -> current = current;
+
+    // Make sure that the current is within the current bounds of the motor, if so set it
+    this -> current = constrain(current, 0, 3500);
 }
 
 
@@ -128,13 +146,104 @@ bool StepperMotor::getEnableInversion() {
 
 
 // Moves the set point one step in the respective direction
-void StepperMotor::step(bool positiveDirection) {
+void StepperMotor::incrementAngle(bool positiveDirection) {
 
     // Main angle change (any inversions * angle of microstep)
     float angleChange = StepperMotor::invertDirection(!positiveDirection) * StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
 
     // Set the desired angle to itself + the change in angle
     this -> desiredAngle += angleChange;
+}
+
+// Computes the coil values for the next step position
+void StepperMotor::step() {
+
+    /* Explanation of how the stepping calculations work:
+       1. Current angle is received from the encoder
+       2. The mod of the current angle and the full step angle is found. This will return the progress through a step cycle for that angle (4 full steps for a step cycle).
+       The sin and cos functions show the current needed at each coil at a given angle through the step cycle.
+       3. Check to see if the motor need to move in the positive direction or the negative
+       4. Since a phase angle's period is equal to 2pi, we can divide the angle by 4 (to get the full step angle) and then again by the microstepping divisor (to split the microsteps)
+       5. Effectively round the phase angle to the closest "high torque" one. The motor is most powerful when closest to fractional radian values.
+       6. Current is calculated using the new angle and the current in the motor
+       7. Both coils currents are checked. If the current is reversed, then the respective driver is assigned to move backward. The current output is set using the PWM frequency of the power output pins
+    */
+
+    // Get the current angle of the motor
+    float currentAngle = getEncoderAngle();
+
+    // Mod the current angle by total phase angle to estimate the phase angle of the motor
+    float phaseAngle = fmod(currentAngle, ((this -> fullStepAngle) * 4));
+
+    // Calculate if the motor should move in positive or negative direction
+    if (currentAngle < (this -> desiredAngle)) {
+        // Motor should move in the positive direction by the angle of a step (2pi / microstep divisor)
+        phaseAngle += (2*PI / ((this -> microstepping) * 4));
+
+        // Round the phase angle to be set to the closest perfect angles (increases torque on the output)
+        phaseAngle -= fmod(phaseAngle, (2*PI / ((this -> microstepping) * 4)));
+    }
+    else {
+        // Motor should move in the negative direction by the angle of a step (2pi / microstep divisor)
+        phaseAngle -= (2*PI / ((this -> microstepping) * 4));
+
+        // Round the phase angle to be set to the closest perfect angles (increases torque on the output)
+        phaseAngle += fmod(-phaseAngle, (2*PI / ((this -> microstepping) * 4)));
+    }
+
+    // Equation comes out to be (effort * 0-1) depending on the sine/cosine of the phase angle
+    int16_t coilAPower = round((this -> current) * sin(phaseAngle));
+    int16_t coilBPower = round((this -> current) * cos(phaseAngle));
+
+    // Check the if the coil should be energized to move backward or forward
+    if(coilAPower > 0)  {
+
+        // Set the power on the output pin
+        analogWrite(COIL_A_POWER_OUTPUT, map(coilAPower, 0, 3500, 0, 255));
+
+        // Set first channel for forward movement
+        digitalWrite(COIL_A_DIR_1, HIGH);
+        digitalWrite(COIL_A_DIR_2, LOW);
+    }
+    else if (coilAPower < 0) {
+
+        // Set the power on the output pin
+        analogWrite(COIL_A_POWER_OUTPUT, map(-coilAPower, 0, 3500, 0, 255));
+
+        // Set first channel for forward movement
+        digitalWrite(COIL_A_DIR_1, LOW);
+        digitalWrite(COIL_A_DIR_2, HIGH);
+    }
+    else {
+
+        // Turn off the coil, no current needed
+        analogWrite(COIL_A_POWER_OUTPUT, 0);
+    }
+
+    // Check the if the coil should be energized to move backward or forward
+    if(coilBPower > 0)  {
+
+        // Set the power on the output pin
+        analogWrite(COIL_B_POWER_OUTPUT, map(coilBPower, 0, 3500, 0, 255));
+
+        // Set second channel for forward movement
+        digitalWrite(COIL_B_DIR_1, HIGH);
+        digitalWrite(COIL_B_DIR_2, LOW);
+    }
+    else if (coilBPower < 0) {
+
+        // Set the power on the output pin
+        analogWrite(COIL_B_POWER_OUTPUT, map(-coilBPower, 0, 3500, 0, 255));
+
+        // Set second channel for forward movement
+        digitalWrite(COIL_B_DIR_1, LOW);
+        digitalWrite(COIL_B_DIR_2, HIGH);
+    }
+    else {
+
+        // Turn off the coil, no current needed
+        analogWrite(COIL_B_POWER_OUTPUT, 0);
+    }
 }
 
 

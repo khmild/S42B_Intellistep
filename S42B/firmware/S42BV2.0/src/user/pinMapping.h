@@ -66,5 +66,18 @@
 // LED pin
 #define LED_PIN PC13
 
+// Motor mappings
+#define COIL_A_DIR_1 PB6
+#define COIL_A_DIR_2 PB7
+#define COIL_B_DIR_1 PB8
+#define COIL_B_DIR_2 PB9
+#define COIL_A_POWER_OUTPUT PB4
+#define COIL_B_POWER_OUTPUT PB5
+
+// Encoder SPI interface
+#define ENCODER_SS   PA4 // SPI1_SS
+#define ENCODER_SCK  PA5 // SPI1_SCK
+#define ENCODER_MISO PA6 // SPI1_MISO
+#define ENCODER_MOSI PA7 // SPI1_MOSI
 
 #endif //__PINMAPPING_H

@@ -133,7 +133,7 @@ void SSD1306_TestPolyline() {
 }
 
 void SSD1306_TestAll() {
-    SSD1306_Init();
+    SSD1306_Init(OLED_PANEL_SPI);
     SSD1306_TestFPS();
     HAL_Delay(3000);
     SSD1306_TestBorder();

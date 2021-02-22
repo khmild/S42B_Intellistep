@@ -3,6 +3,14 @@
 #define __MOTOR_H__
 
 #include "Arduino.h"
+#include "encoder.h"
+
+// For sin() and fmod() function
+#include "cmath"
+#include <math.h>
+
+// Import the pin mapping
+#include "pinMapping.h"
 
 // Stepper motor class (defined to make life a bit easier when dealing with the motor)
 class StepperMotor {
@@ -65,7 +73,10 @@ class StepperMotor {
         bool getEnableInversion();
 
         // Moves the set point one step in the respective direction
-        void step(bool positiveDirection);
+        void incrementAngle(bool positiveDirection);
+
+        // Calculates the coil values for the motor
+        void step();
 
         // Computes the next output of the motor
         float compute(float feedback);

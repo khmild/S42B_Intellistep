@@ -1,4 +1,5 @@
 #include "encoder.h"
+#include "SSD1306.h"
 
 /*
 #include "gpio.h"
@@ -272,76 +273,26 @@ uint32_t address = SAMPLING_DATA_ADDR;
 uint32_t PHASE_MULTIPLIER = 12.5f;
 
 static void Prompt_show(void);
+*/
 
-void encoderInit(void)
-{
-  GPIO_InitTypeDef  GPIO_InitStructure;
- 
- 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO, ENABLE);
-	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);	//SWD
-    
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;	//PA4  
- 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
- 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
- 	GPIO_Init(GPIOA, &GPIO_InitStructure);
-		
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
-    
- 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
- 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
- 	GPIO_Init(GPIOA, &GPIO_InitStructure);  
-    
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_10|GPIO_Pin_11;
-  GPIO_Init(GPIOB, &GPIO_InitStructure); 
-  SPI1_Init();	//SPI
-									
-	TLE012_CS = 1;
-}
-//Motor IO 
-void motorInit(void)
-{
-  GPIO_InitTypeDef  GPIO_InitStructure;
- 
- 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
-  //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);	//SWD
-  
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6|GPIO_Pin_7|GPIO_Pin_8|GPIO_Pin_9;				 // 
-    
- 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //
- 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
- 	GPIO_Init(GPIOB, &GPIO_InitStructure);
-		
+SPIClass encoderSPI = SPIClass();
+
+void encoderInit() {
+
+    encoderSPI = SPIClass(ENCODER_MOSI, ENCODER_MISO, ENCODER_SCK, ENCODER_SS);
+
+    SSD1306_Init(encoderSPI);
+
+    //GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
+
+ 	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+ 	//GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 	//GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+    //GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_10|GPIO_Pin_11;
 }
 
-// Move one step
-void OneStep(void)
-{
-  // Increment the current step number in the direction specified
-  if(positiveDir) 
-    stepNum+=1;
-  else 
-    stepNum-=1;
-  
-  // Angle of a step times the current step
-  Output(STEP_ANGLE * stepNum, 80);
-
-  // Delay for the motor to move
-  delayMs(10);
-}
-
-
-
-// Mod operation
-int16_t Mod(int32_t value, int16_t modulus) 
-{
-    int16_t modResult;
-    modResult = value % modulus;
-    if(modResult < 0)
-        return (modResult + modulus);
-    else
-        return modResult;
-}
-
+/*
 void SetModeCheck(void)
 {
   WriteValue(WRITE_MOD2_VALUE, MOD2_VALUE);
@@ -459,84 +410,54 @@ void Output(int32_t theta, uint8_t effort) {
     TIM_SetCompare1(TIM3, 0);
   }
 }
-        
-//
-uint16_t ReadValue(uint16_t RegAdd) {
+*/
 
-  // Define an accumulator
-  uint16_t data;
+// Read the value of the encoder
+uint16_t readEncoderValue(uint16_t registerAddress) {
 
-  // Enable the CS pin (logic is inverted, I guess)
-  TLE012_CS = 0;
+    // Define an accumulator
+    uint16_t data;
 
-  // Wait for the chip to be ready
-  while(!SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE));
+    // Send the register address
+    data = encoderSPI.transfer16(registerAddress);
 
-  // Send the location of the data
-  SPI_I2S_SendData(SPI1, RegAdd);
+    //SPI_TX_OFF;
 
-  // Wait for a response
-  while(!SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE));
+    // Read the value at that address
+    data = encoderSPI.transfer16(0xFFFF)&0x7FFF;
 
-  // Read the response
-  data=SPI_I2S_ReceiveData(SPI1);
-  SPI_TX_OFF;
-  while(!SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE));
-  SPI_I2S_SendData(SPI1,0xFFFF);
-  while(!SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE));
-  data=SPI_I2S_ReceiveData(SPI1)&0x7FFF;
-  TLE012_CS = 1;
-  SPI_TX_ON;
+    //SPI_TX_ON;
 
-  // Return the data that was pulled
-  return data;
+    // Return the data that was pulled
+    return data;
 }
+
 
 // Writes a value to a register
-void WriteValue(uint16_t RegAdd, uint16_t RegValue) {
+void writeEncoderValue(uint16_t registerAddress, uint16_t registerValue) {
 
-  // Enable CS pin (logic is inverted, I think)
-  TLE012_CS = 0;
+    // Send the register value to edit
+    encoderSPI.transfer16(registerAddress);
 
-  // Wait for a transmission available response from the encoder
-  while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE)==0);
-
-  // Send the register value to edit
-  SPI_I2S_SendData(SPI1,RegAdd);
-
-  // Wait for the new info to be received
-  while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE)==0);
-
-  // Read the received data
-  SPI_I2S_ReceiveData(SPI1);
-
-  // Wait for the confirmation that the chip is ready for receiving data
-  while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE)==0);
-
-  // Send the value that the register should be set to
-  SPI_I2S_SendData(SPI1,RegValue);
-
-  // Wait for the response confirmation
-  while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_RXNE)==0);
-
-  // Read the response
-  SPI_I2S_ReceiveData(SPI1);
-
-  // Disable CS pin (once again, think that the logic is inverted)
-  TLE012_CS = 1;
+    // Send the value that the register should be set to
+    encoderSPI.transfer16(registerValue);
 }
+
 
 // Reads the state of the encoder
-uint16_t ReadState(void)
-{
-  return (ReadValue(CMD_READ_STATUS));
+uint16_t readEncoderState() {
+    return (readEncoderValue(CMD_READ_STATUS));
 }
+
 
 // Reads the value for the angle of the encoder
-uint16_t ReadAngle(void) {
-  return (ReadValue(CMD_READ_ANGLE_VALUE)>>1);
+float getEncoderAngle() {
+
+    // ! As of right now the angle is returned incorrectly, needs fixed. Also, need a mounting offset to make sure that the correct angles are read by motor.
+    return (readEncoderValue(CMD_READ_ANGLE_VALUE) >> 1);
 }
 
+/*
 // Runs through a bunch of motor movements to calibrate the encoder
 void CalibrateEncoder(void) {
 
@@ -544,18 +465,18 @@ void CalibrateEncoder(void) {
   __disable_irq();
 
   // Declare relevant variables
-  int32_t encoderReading = 0;    
+  int32_t encoderReading = 0;
   int32_t currentReading = 0;
-  int32_t lastReading = 0;        
+  int32_t lastReading = 0;
 
-  int32_t iStart = 0;    
+  int32_t iStart = 0;
   int32_t jStart = 0;
   int32_t stepNo = 0;
-  
-  int32_t ticks = 0;	
+
+  int32_t ticks = 0;
   uint16_t lookupAngle;
   int16_t x = 0;
-	
+
   // Set that the motor should move in a positive direction
   positiveDir = true;
 
@@ -567,11 +488,11 @@ void CalibrateEncoder(void) {
     led1 = LED_ON;
 	  delayMs(250);
     led1 = LED_OFF;
-	  delayMs(250);	
-  } 
+	  delayMs(250);
+  }
 
   // Loop through 200 motor movements (calibration should take around 2 seconds per direction)
-  for(int16_t loopIndex = 0; loopIndex <= 199; loopIndex++) {   
+  for(int16_t loopIndex = 0; loopIndex <= 199; loopIndex++) {
 
     // Zero the encoder's value
     encoderReading = 0;
@@ -580,10 +501,10 @@ void CalibrateEncoder(void) {
    	//delayMs(20);
 
     // Setup the last angle from the encoder
-    lastReading = ReadAngle();     
+    lastReading = ReadAngle();
 
     // ! Loop through readings so they can stabilize (not entirely sure)
-    for(uint8_t reading = 0; reading < 10; reading++) { 
+    for(uint8_t reading = 0; reading < 10; reading++) {
 
       // Read the encoder's angle
       currentReading = ReadAngle();
@@ -593,7 +514,7 @@ void CalibrateEncoder(void) {
         currentReading += 16384;
       else if(currentReading - lastReading > 8192)
         currentReading -= 16384;
- 
+
       encoderReading += currentReading;
       //delayMs(10);
       lastReading = currentReading;
@@ -651,7 +572,7 @@ void CalibrateEncoder(void) {
       else if(currentReading-lastReading > 8192) {
         currentReading -= 16384;
       }
-        
+
       encoderReading += currentReading;
       //delayMs(10);
       lastReading = currentReading;
@@ -670,28 +591,27 @@ void CalibrateEncoder(void) {
 
     // Take the average of the encoder change. Basically (first reading + second reading)/2
     fullStepReadings[x]=(fullStepReadings[x]+encoderReading)/2;
-    
+
     // Move the motor one step
     OneStep();
 
     // Allow the motor time to move
-	  //delayMs(10); 
+	  //delayMs(10);
   }
 
-
-  TIM_SetCompare1(TIM3,0);  
-  TIM_SetCompare2(TIM3,0); 
+  TIM_SetCompare1(TIM3,0);
+  TIM_SetCompare2(TIM3,0);
   for(uint8_t i=0;i<200;i++)//
   {
     ticks=fullStepReadings[(i+1)%200]-fullStepReadings[i%200];
-    if(ticks<-15000) 
+    if(ticks<-15000)
       ticks+=16384;
-    else if(ticks>15000)	
-	  ticks-=16384;	
-    for(int32_t j=0;j<ticks;j++) 
+    else if(ticks>15000)
+	  ticks-=16384;
+    for(int32_t j=0;j<ticks;j++)
 	{
       stepNo=(fullStepReadings[i]+j)%16384;
-      if(stepNo==0) 
+      if(stepNo==0)
       {
         iStart=i;
         jStart=j;
@@ -703,29 +623,29 @@ void CalibrateEncoder(void) {
   for(int32_t i=iStart;i<(iStart+200+1);i++)//
   {
 	ticks=fullStepReadings[(i+1)%200]-fullStepReadings[i%200];
-    if(ticks<-15000) 
-      ticks+=16384;         
-    if(i==iStart) 
-	{ 
-      for(int32_t j=jStart;j<ticks;j++) 
+    if(ticks<-15000)
+      ticks+=16384;
+    if(i==iStart)
+	{
+      for(int32_t j=jStart;j<ticks;j++)
 	  {
         lookupAngle=(8192*i+8192*j/ticks)%1638400/100;
 		flashWriteHalfWord(address,(uint16_t)lookupAngle);
 		address+=2;
       }
     }
-    else if(i==(iStart+200)) 
-	{ 
-      for(int32_t j=0;j<jStart;j++) 
+    else if(i==(iStart+200))
+	{
+      for(int32_t j=0;j<jStart;j++)
 	  {
         lookupAngle=((8192*i+8192*j/ticks)%1638400)/100;
 		flashWriteHalfWord(address,(uint16_t)lookupAngle);
 		address+=2;
       }
     }
-    else 
+    else
 	{                        //this is the general case
-      for(int32_t j=0;j<ticks;j++) 
+      for(int32_t j=0;j<ticks;j++)
       {
         lookupAngle=((8192*i+8192*j/ticks)%1638400)/100;
 		flashWriteHalfWord(address,(uint16_t)lookupAngle);
@@ -748,15 +668,15 @@ void CalibrateEncoder(void) {
     table1[11] = kp;
     table1[12] = ki;
     table1[13] = kd;
-  
+
     // Write the array to flash
     flashWrite(DATA_STORE_ADDRESS, table1);
   }
-  
+
   // Lock the flash against writing
   FLASH_Lock();
 
-  CalibrateEncoder_finish_flag=1; //  
+  CalibrateEncoder_finish_flag=1; //
 }
 
 
@@ -770,8 +690,3 @@ static void Prompt_show(void) {
 }
 
 */
-
-float getAngle() {
-    // ! Write yet
-    return 0;
-}

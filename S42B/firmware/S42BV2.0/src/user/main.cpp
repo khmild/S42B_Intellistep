@@ -26,7 +26,7 @@ void setup() {
     pinMode(LED_PIN, OUTPUT);
 
     // Initialize the OLED
-    SSD1306_Init();
+    initOLED();
 
     // Give the user feeback that OLED starting has been successful
     writeOLEDString(0, 0, "Oled Init...OK");
@@ -43,7 +43,7 @@ void setup() {
     /*
     // Test the flash if specified
     #ifdef TEST_FLASH
-        flash_test(); 
+        flash_test();
     #endif
     */
 
@@ -97,7 +97,6 @@ void setup() {
             updateDisplay();
         }
     // ! }
-    /*
     EXTIX_Init();                       //
     NVIC_EnableIRQ(EXTI1_IRQn);         //
     UART_Configuration(USART1, UART1_DEFAULT_BAUDRATE);     //

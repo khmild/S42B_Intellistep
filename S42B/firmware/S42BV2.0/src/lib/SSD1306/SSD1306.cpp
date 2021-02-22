@@ -36,7 +36,7 @@ void SSD1306_Reset(void) {
 void SSD1306_WriteCommand(uint8_t byte) {
     HAL_GPIO_WritePin(SSD1306_CS_Port, SSD1306_CS_Pin, GPIO_PIN_RESET); // select OLED
     HAL_GPIO_WritePin(SSD1306_DC_Port, SSD1306_DC_Pin, GPIO_PIN_RESET); // command
-    SPI.transfer(byte);
+    OLED_PANEL_SPI.transfer(byte);
     HAL_GPIO_WritePin(SSD1306_CS_Port, SSD1306_CS_Pin, GPIO_PIN_SET); // un-select OLED
 }
 
@@ -44,7 +44,7 @@ void SSD1306_WriteCommand(uint8_t byte) {
 void SSD1306_WriteData(uint8_t buffer, size_t buff_size) {
     HAL_GPIO_WritePin(SSD1306_CS_Port, SSD1306_CS_Pin, GPIO_PIN_RESET); // select OLED
     HAL_GPIO_WritePin(SSD1306_DC_Port, SSD1306_DC_Pin, GPIO_PIN_SET); // data
-    SPI.transfer(buffer);
+    OLED_PANEL_SPI.transfer(buffer);
     HAL_GPIO_WritePin(SSD1306_CS_Port, SSD1306_CS_Pin, GPIO_PIN_SET); // un-select OLED
 }
 
@@ -59,6 +59,9 @@ static uint8_t SSD1306_Buffer[SSD1306_BUFFER_SIZE];
 // Screen object
 static SSD1306_t SSD1306;
 
+// SPI Interface Object
+SPIClass OLED_PANEL_SPI = SPIClass();
+
 /* Fills the Screenbuffer with values from a given buffer of a fixed length */
 SSD1306_Error_t SSD1306_FillBuffer(uint8_t* buf, uint32_t len) {
     SSD1306_Error_t ret = SSD1306_ERR;
@@ -70,7 +73,10 @@ SSD1306_Error_t SSD1306_FillBuffer(uint8_t* buf, uint32_t len) {
 }
 
 // Initialize the oled screen
-void SSD1306_Init(void) {
+void SSD1306_Init(SPIClass &OLED_PANEL_SPI) {
+
+    // Set the interface of the OLED panel
+    OLED_PANEL_SPI.begin();
 
     // Reset OLED
     SSD1306_Reset();
@@ -161,14 +167,14 @@ void SSD1306_Init(void) {
 
     // Clear screen
     SSD1306_Fill(BLACK);
-    
+
     // Flush buffer to screen
     SSD1306_UpdateScreen();
-    
+
     // Set default values for screen object
     SSD1306.CurrentX = 0;
     SSD1306.CurrentY = 0;
-    
+
     SSD1306.Initialized = 1;
 }
 
@@ -207,16 +213,16 @@ void SSD1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
         // Don't write outside the buffer
         return;
     }
-    
+
     // Check if pixel should be inverted
     if(SSD1306.Inverted) {
         color = (SSD1306_COLOR)!color;
     }
-    
+
     // Draw in the right color
     if(color == WHITE) {
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] |= 1 << (y % 8);
-    } else { 
+    } else {
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
     }
 }
@@ -227,11 +233,11 @@ void SSD1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
 // color    => Black or White
 char SSD1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
     uint32_t i, b, j;
-    
+
     // Check if character is valid
     if (ch < 32 || ch > 126)
         return 0;
-    
+
     // Check remaining space on current line
     if (SSD1306_WIDTH < (SSD1306.CurrentX + Font.FontWidth) ||
         SSD1306_HEIGHT < (SSD1306.CurrentY + Font.FontHeight))
@@ -239,7 +245,7 @@ char SSD1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
         // Not enough space on current line
         return 0;
     }
-    
+
     // Use the font to write
     for(i = 0; i < Font.FontHeight; i++) {
         b = Font.data[(ch - 32) * Font.FontHeight + i];
@@ -251,27 +257,27 @@ char SSD1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
             }
         }
     }
-    
+
     // The current space is now taken
     SSD1306.CurrentX += Font.FontWidth;
-    
+
     // Return written char for validation
     return ch;
 }
 
 // Write full string to screenbuffer
-char SSD1306_WriteString(char* str, FontDef Font, SSD1306_COLOR color) {
+char SSD1306_WriteString(char *str, FontDef Font, SSD1306_COLOR color) {
     // Write until null-byte
     while (*str) {
         if (SSD1306_WriteChar(*str, Font, color) != *str) {
             // Char could not be written
             return *str;
         }
-        
+
         // Next char
         str++;
     }
-    
+
     // Everything ok
     return *str;
 }
@@ -290,7 +296,7 @@ void SSD1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR 
   int32_t signY = ((y1 < y2) ? 1 : -1);
   int32_t error = deltaX - deltaY;
   int32_t error2;
-    
+
   SSD1306_DrawPixel(x2, y2, color);
     while((x1 != x2) || (y1 != y2))
     {

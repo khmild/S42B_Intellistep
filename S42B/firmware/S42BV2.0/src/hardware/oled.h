@@ -14,8 +14,8 @@ extern String topLevelMenuItems[];
 extern const int topLevelMenuLength;
 
 
-void initOLEDSPI();
-void writeOLEDString(uint8_t x, uint8_t y, char* string);
+void initOLED();
+void writeOLEDString(uint8_t x, uint8_t y, String string);
 void clearOLED();
 void updateDisplay();
 void displayMotorData();

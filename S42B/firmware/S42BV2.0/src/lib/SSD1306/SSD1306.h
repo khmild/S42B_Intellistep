@@ -128,7 +128,7 @@ typedef struct {
 } SSD1306_VERTEX;
 
 // Procedure definitions
-void SSD1306_Init(void);
+void SSD1306_Init(SPIClass &OLED_SPI);
 void SSD1306_Fill(SSD1306_COLOR color);
 void SSD1306_UpdateScreen(void);
 void SSD1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color);
@@ -164,6 +164,8 @@ void SSD1306_Reset(void);
 void SSD1306_WriteCommand(uint8_t byte);
 void SSD1306_WriteData(uint8_t* buffer, size_t buff_size);
 SSD1306_Error_t SSD1306_FillBuffer(uint8_t* buf, uint32_t len);
+
+extern SPIClass OLED_PANEL_SPI;
 
 _END_STD_C
 
