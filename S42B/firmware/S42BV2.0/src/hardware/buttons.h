@@ -13,6 +13,7 @@ void checkButtons();
 bool checkButtonState(uint32_t buttonPin);
 void readDipMicrostepping();
 void setDipInverted(bool inverted);
+bool getDipInverted();
 
 #endif
 

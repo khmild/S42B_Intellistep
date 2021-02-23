@@ -69,19 +69,31 @@ float StepperMotor::getDValue() {
 
 // Sets the Proportional term of the PID loop
 void StepperMotor::setPValue(float newP) {
-    this -> pTerm = newP;
+
+    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
+    if (newP != -1) {
+        this -> pTerm = newP;
+    }
 }
 
 
 // Sets the Integral term of the PID loop
 void StepperMotor::setIValue(float newI) {
-    this -> iTerm = newI;
+
+    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
+    if (newI != -1) {
+        this -> iTerm = newI;
+    }
 }
 
 
 // Sets the Derivative of the PID loop
 void StepperMotor::setDValue(float newD) {
-    this -> dTerm = newD;
+
+    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
+    if (newD != -1) {
+        this -> dTerm = newD;
+    }
 }
 
 
@@ -94,8 +106,12 @@ int StepperMotor::getCurrent() {
 // Sets the current of the motor (in mA)
 void StepperMotor::setCurrent(int current) {
 
-    // Make sure that the current is within the current bounds of the motor, if so set it
-    this -> current = constrain(current, 0, 3500);
+    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
+    if (current != -1) {
+
+        // Make sure that the current is within the current bounds of the motor, if so set it
+        this -> current = constrain(current, 0, 3500);
+    }
 }
 
 
@@ -107,17 +123,31 @@ int StepperMotor::getMicrostepping() {
 
 // Set the microstepping divisor of the motor
 void StepperMotor::setMicrostepping(int setMicrostepping) {
-    this -> microstepping = setMicrostepping;
+
+    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
+    if (setMicrostepping != -1) {
+        this -> microstepping = setMicrostepping;
+    }
 }
 
 
 // Set the full step angle of the motor (in degrees)
 void StepperMotor::setFullStepAngle(float newStepAngle) {
 
-    // Make sure that the value is one of the 2 common types (maybe remove later?)
-    if ((newStepAngle == 1.8) || (newStepAngle == 0.9)) {
-        this -> fullStepAngle = newStepAngle;
+    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
+    if (newStepAngle != -1) {
+
+        // Make sure that the value is one of the 2 common types (maybe remove later?)
+        if ((newStepAngle == 1.8) || (newStepAngle == 0.9)) {
+            this -> fullStepAngle = newStepAngle;
+        }
     }
+}
+
+
+// Get the full step angle of the motor object
+float StepperMotor::getFullStepAngle() {
+    return (this -> fullStepAngle);
 }
 
 
@@ -126,6 +156,12 @@ void StepperMotor::setReversed(bool reversed) {
 
     // Set if the motor should be reversed
     this -> reversed = reversed;
+}
+
+
+// Get if the motor direction is reversed
+bool StepperMotor::getReversed() {
+    return (this -> reversed);
 }
 
 

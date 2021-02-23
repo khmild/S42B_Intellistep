@@ -63,8 +63,14 @@ class StepperMotor {
         // Sets the angle of a full step of the motor
         void setFullStepAngle(float newStepAngle);
 
+        // Gets the full step angle of the motor
+        float getFullStepAngle();
+
         // Set if the motor should be reversed
         void setReversed(bool reversed);
+
+        // Get if the motor direction is reversed
+        bool getReversed();
 
         // Set if the motor enable pin should be inverted
         void setEnableInversion(bool inverted);

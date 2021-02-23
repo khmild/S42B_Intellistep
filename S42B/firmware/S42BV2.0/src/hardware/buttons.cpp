@@ -152,3 +152,8 @@ void readDipMicrostepping() {
 void setDipInverted(bool inverted) {
     dipInverted = inverted;
 }
+
+// Function for getting if the dip switches should be inverted
+bool getDipInverted() {
+    return dipInverted;
+}

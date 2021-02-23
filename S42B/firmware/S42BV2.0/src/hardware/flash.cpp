@@ -270,3 +270,42 @@ void loadSavedValues() {
     // If the dip switches were installed incorrectly
     setDipInverted(savedParameters[8]);
 }
+
+
+// Writes the currently saved parameters to flash memory for long term storage
+void saveParametersToFlash() {
+
+    // Setup the table for parameters
+    // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value, dip switches inverted)
+    uint16_t savedParameters[9];
+
+    // Get the motor current
+    savedParameters[0] = motor.getCurrent();
+
+    // Motor stepping angle
+    savedParameters[1] = motor.getFullStepAngle();
+
+    // Microstepping divisor
+    savedParameters[2] = motor.getMicrostepping();
+
+    // Motor Direction Reversed
+    savedParameters[3] = motor.getReversed();
+
+    // Motor Enable Inverted
+    savedParameters[4] = motor.getEnableInversion();
+
+    // P term of PID
+    savedParameters[5] = motor.getPValue();
+
+    // I term of PID
+    savedParameters[6] = motor.getIValue();
+
+    // D term of PID
+    savedParameters[7] = motor.getDValue();
+
+    // If the dip switches were installed incorrectly
+    savedParameters[8] = getDipInverted();
+
+    // Save the array to flash
+    flashWrite(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));
+}

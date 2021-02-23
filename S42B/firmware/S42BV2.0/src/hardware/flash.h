@@ -27,6 +27,7 @@ void unlockFlash();
 void lockFlash();
 
 void loadSavedValues();
+void saveParametersToFlash();
 
 #endif
 
