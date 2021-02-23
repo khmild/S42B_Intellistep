@@ -54,10 +54,11 @@ void updateDisplay() {
             // Values must first be determined using the mod function in order to prevent overflow errors
             // Then the strings are converted into character arrays by giving the address of the first character in the string
             clearOLED();
-            writeOLEDString(0, 0,  &topLevelMenuItems[(topLevelMenuIndex)     % topLevelMenuLength][0]);
-            writeOLEDString(0, 16, &topLevelMenuItems[(topLevelMenuIndex + 1) % topLevelMenuLength][0]);
-            writeOLEDString(0, 32, &topLevelMenuItems[(topLevelMenuIndex + 2) % topLevelMenuLength][0]);
-            writeOLEDString(0, 48, &topLevelMenuItems[(topLevelMenuIndex + 3) % topLevelMenuLength][0]);
+            writeOLEDString(0, 0, "->");
+            writeOLEDString(2, 0,  &topLevelMenuItems[(topLevelMenuIndex)     % topLevelMenuLength][0]);
+            writeOLEDString(2, 16, &topLevelMenuItems[(topLevelMenuIndex + 1) % topLevelMenuLength][0]);
+            writeOLEDString(2, 32, &topLevelMenuItems[(topLevelMenuIndex + 2) % topLevelMenuLength][0]);
+            writeOLEDString(2, 48, &topLevelMenuItems[(topLevelMenuIndex + 3) % topLevelMenuLength][0]);
             break;
 
         case 2:
@@ -77,16 +78,19 @@ void updateDisplay() {
                 case 2:
                     // In the microstep menu, this is also dynamically generated. Get the current stepping of the motor, then display all of the values around it
                     // ! Write yet
+                    clearOLED();
                     break;
 
                 case 3:
                     // In the enable logic menu, a very simple menu. Just need to invert the displayed state
                     // ! Write yet
+                    clearOLED();
                     break;
 
                 case 4:
                     // Another easy menu, just the direction pin. Once again, just need to invert the state
                     // ! Write yet
+                    clearOLED();
                     break;
             }
             break;

@@ -274,13 +274,16 @@ uint32_t PHASE_MULTIPLIER = 12.5f;
 
 static void Prompt_show(void);
 */
-
+// Main SPI interface for the encoder
 SPIClass encoderSPI = SPIClass();
 
+// Function to setup the encoder
 void encoderInit() {
 
+    // Declare the SPI interface
     encoderSPI = SPIClass(ENCODER_MOSI, ENCODER_MISO, ENCODER_SCK, ENCODER_SS);
 
+    // Initialize the OLED library with the SPI interface
     SSD1306_Init(encoderSPI);
 
     //GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
@@ -354,61 +357,6 @@ void SetModeCheck(void)
 //        NVIC_EnableIRQ(EXTI0_1_IRQn);
 //        NVIC_EnableIRQ(EXTI2_3_IRQn);
 //    }
-}
-
-// Outputs the angle to the motor with the specified effort
-void Output(int32_t theta, uint8_t effort) {	
-
-  // ! Not fully sure what this does
-  int16_t angle_1 = Mod(PHASE_MULTIPLIER * theta, 4096);
-
-  // Shifts the angle 1/4 out of phase (Gets the cos() instead of sin())
-  int16_t angle_2 = angle_1 + 1024;
-
-  // Make sure that the new angle isn't too big for the sin function
-  if(angle_2 > 4096) {
-    angle_2 -= 4096;
-  }
-
-  // Equation comes out to be (effort * 0-1) depending on the sine of the angle
-  int16_t v_coil_A = effort * (sinLookup[angle_1] / 1024); 
-  int16_t v_coil_B = effort * (sinLookup[angle_2] / 1024);
-
-  if(v_coil_A > 0)  {
-      TIM_SetCompare2(TIM3, v_coil_A);
-      // ! Possibly create and call motor channel objects (for later)
-      // Set first channel for forward movement
-      DRIVER1_DIR_1 = ON;    //pb6
-      DRIVER1_DIR_2 = OFF;   //pb7
-  }
-  else if (v_coil_A < 0) {
-      TIM_SetCompare2(TIM3, -v_coil_A);
-
-      // Set first channel for backward movement
-      DRIVER1_DIR_1 = OFF; 
-      DRIVER1_DIR_2 = ON;
-  }
-  else {
-    TIM_SetCompare2(TIM3, 0);
-  }
-
-  if(v_coil_B > 0){
-      TIM_SetCompare1(TIM3, v_coil_B);  
-
-      // Set second channel for forward movement
-      DRIVER2_DIR_1 = ON;   //pb8
-      DRIVER2_DIR_2 = OFF;  //pb9
-  }
-  else if (v_coil_B < 0) {
-      TIM_SetCompare1(TIM3, -v_coil_B);
-
-      // Set the second channel for backward movement
-      DRIVER2_DIR_1 = OFF;
-      DRIVER2_DIR_2 = ON;
-  }
-  else {
-    TIM_SetCompare1(TIM3, 0);
-  }
 }
 */
 

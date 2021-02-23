@@ -5,7 +5,7 @@
 
 void SSD1306_TestBorder() {
     SSD1306_Fill(BLACK);
-   
+
     uint32_t start = HAL_GetTick();
     uint32_t end = start;
     uint8_t x = 0;
@@ -24,14 +24,14 @@ void SSD1306_TestBorder() {
 
         SSD1306_DrawPixel(x, y, WHITE);
         SSD1306_UpdateScreen();
-    
+
         HAL_Delay(5);
         end = HAL_GetTick();
     } while((end - start) < 8000);
-   
+
     HAL_Delay(1000);
 }
-
+/*
 void SSD1306_TestFonts() {
     SSD1306_Fill(BLACK);
     SSD1306_SetCursor(2, 0);
@@ -44,7 +44,7 @@ void SSD1306_TestFonts() {
     SSD1306_WriteString("Font 6x8", Font_6x8, WHITE);
     SSD1306_UpdateScreen();
 }
-
+*/
 void SSD1306_TestFPS() {
     SSD1306_Fill(WHITE);
    
@@ -54,7 +54,7 @@ void SSD1306_TestFPS() {
     char message[] = "ABCDEFGHIJK";
    
     SSD1306_SetCursor(2,0);
-    SSD1306_WriteString("Testing...", Font_11x18, BLACK);
+    //SSD1306_WriteString("Testing...", Font_11x18, BLACK);
    
     do {
         SSD1306_SetCursor(2, 18);

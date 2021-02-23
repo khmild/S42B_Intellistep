@@ -22,9 +22,12 @@ void checkButtons(void) {
 
   // Check the select buttons
   if(checkButtonState(SELECT_BUTTON_PIN)) {
-    
+
     // Select the current menu item
     selectMenuItem();
+
+    // Update the display
+    updateDisplay();
   }
 
   // Check the down button
@@ -33,12 +36,18 @@ void checkButtons(void) {
     // Move down
     moveCursor();
 
+    // Update the screen
+    updateDisplay();
   }
+
   // Check the back button
   else if(checkButtonState(BACK_BUTTON_PIN)) {
 
     // Back up
     exitCurrentMenu();
+
+    // Update the screen
+    updateDisplay();
   }
 }
 

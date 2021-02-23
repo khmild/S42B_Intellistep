@@ -28,7 +28,7 @@ void TIM2_Cap_Init(u16 timerPeriod, u16 prescalar) {
 	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure); //
   
   TIM_ARRPreloadConfig(TIM2, DISABLE);
-  TIM2 -> SMCR |= TIM_AutomaticOutput_Enable; // ! Not fully sure about this one
+  TIM2 -> SMCR |= TIM_AutomaticOutput_Enable;
     
   TIM_ETRClockMode2Config(TIM2, TIM_ExtTRGPSC_OFF, TIM_ExtTRGPolarity_NonInverted, 7);
   TIM_SelectOutputTrigger(TIM2, TIM_TRGOSource_Reset);

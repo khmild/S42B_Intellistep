@@ -57,7 +57,19 @@ void setup() {
     //TIM3_Init();
 
     if (!isCalibrated()) {
-        // ! Write yet
+        // ! Write yet, displaying that calibration needs to occur and tell the user that the calibration will start in after select key is pressed
+
+        // Display that the motor is not calibrated
+        writeOLEDString(48, 16, "NOT");
+        writeOLEDString(16, 32, "Calibrated!");
+        writeOLEDString(0, 48, "Please calibrate");
+        delay(500);
+
+        // Display that the select key can be clicked to run calibration
+        // ! Write
+
+        // Continously check to see if the select key is clicked
+        // ! Write
     }
     else {
         // There is a calibration, load it and move on to the loop
@@ -81,12 +93,6 @@ void setup() {
     // ! }
     // ! else {
 
-        // Display that the motor is not calibrated
-        writeOLEDString(48, 16, "NOT");
-        writeOLEDString(16, 32, "Calibrated!");
-        writeOLEDString(0, 48, "Please calibrate");
-        delay(500);
-
         // ! Comment
         clearOLED();
         writeOLEDString(0, 0, "->");
@@ -97,7 +103,7 @@ void setup() {
             updateDisplay();
         }
     // ! }
-    EXTIX_Init();                       //
+    EXTIX_Init();
     NVIC_EnableIRQ(EXTI1_IRQn);         //
     UART_Configuration(USART1, UART1_DEFAULT_BAUDRATE);     //
     CAN1_Mode_Init(CAN_SJW_1tq, CAN_BS2_6tq, CAN_BS1_5tq, 6, CAN_Mode_LoopBack);// 

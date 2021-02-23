@@ -24,51 +24,49 @@ uint8_t flashGetStatus(void) {
     // Check if the flash state
     uint32_t state = FLASH -> SR;
 
-    if(state & (1<<0)) 
+    if (state & (1<<0)) {
         // Flash busy
-        return 1; 
-
-    else if(state & (1<<2)) 
+        return 1;
+    }
+    else if (state & (1<<2)) {
         // Programming error
         return 2;
-
-    else if(state & (1<<4))
+    }
+    else if (state & (1<<4)) {
         // ! Fix, unknown
         return 3;
-
+    }
     // No result found
-    return 0;     
+    return 0;
 }
 
 
 // Function to delay execution until the flash is able to to be read again
-bool flashWaitDone(uint16_t time) {
-
-    // ! Function needs fixing, it should check the actual system time instead of waiting
+bool flashWaitDone(uint16_t microseconds) {
 
     // Create an accumulator for the result
     uint8_t result;
+
+    // Mark the start time
+    uint32_t startTime = micros();
 
     // Loop forever, checking the value each time
     do {
         // Get the status of the flash
         result = flashGetStatus();
 
-        // If the flash isn't busy, exit the loop
-        if(result != 1) {
+        // If the flash isn't busy or time is up, exit the loop
+        if(result != 1 || (micros() - startTime) > microseconds) {
             break;
         }
 
         // Delay for a microsecond
         delayMicroseconds(1);
 
-        // Increment the time counter
-        time--;
-
-    } while(time);
+    } while(true);
 
     // If we ran out of time, return a fail
-    if(time == 0) {
+    if((micros() - startTime) > microseconds) {
         return false;
     }
 
@@ -82,9 +80,9 @@ bool flashErasePage(uint32_t address) {
 
     // Wait until the flash is available,  if so, begin writing
     if(flashWaitDone(0X5FFF)) {
-        FLASH -> CR |= 1 << 1; 
-        FLASH -> AR = address; 
-        FLASH -> CR |= 1 << 6; 
+        FLASH -> CR |= 1 << 1;
+        FLASH -> AR = address;
+        FLASH -> CR |= 1 << 6;
 
         // If the writing operation succeeded 
         if(flashWaitDone(0X5FFF)) {
@@ -104,123 +102,84 @@ bool flashErasePage(uint32_t address) {
 }
 
 
-// ! Write half 
-uint8_t flashWriteHalfWord(uint32_t address, uint16_t data)
-{
-    // Result of the operation
-    uint8_t result;
-
-    // Wait until the flash is available
-    result = flashWaitDone(0XFF);
-
-    // If we didn't time out, we can proceed
-    if(result == 0) {
-
-        // 
-        FLASH -> CR |= 1 << 0;
-
-        // Write the data to the address
-        *(volatile uint16_t*) address = data; 
-
-        // Wait until the data is written
-        result = flashWaitDone(0XFF);
-        if(result != 1){
-            FLASH -> CR &= ~(1 << 0); 
-        }
-    }
-    return result;
-}
-
-
-uint16_t flashReadHalfWord(uint32_t address)
-{
+uint16_t flashReadHalfWord(uint32_t address) {
     return *(volatile uint16_t*) address;
 }
-    
 
-void flashRead(uint32_t address,uint16_t *pBuffer)   	
-{
-    uint16_t i;
-    uint16_t arrayLength = sizeof(pBuffer) / sizeof(pBuffer[0]);
-    for(i = 0; i < arrayLength; i++) {
-        pBuffer[i]=flashReadHalfWord(address);
+
+void flashRead(uint32_t address, uint16_t *pBuffer, uint16_t arrayLength) {
+    for(uint16_t i = 0; i < arrayLength; i++) {
+        pBuffer[i] = flashReadHalfWord(address);
         address +=2;
     }
 }
 
 
-void flashWriteNoCheck(uint32_t WriteAddr, uint16_t *pBuffer)   
-{ 			 		 
-    uint16_t i;
-    uint16_t arrayLength = sizeof(pBuffer) / sizeof(pBuffer[0]);
-    for(i = 0; i < arrayLength; i++) {
+void flashWriteNoCheck(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
+    for(uint16_t i = 0; i < arrayLength; i++) {
         // ! FLASH_ProgramHalfWord(WriteAddr, pBuffer[i]);
         WriteAddr += 2;
-    }  
-} 
+    }
+}
 
 
 #define STM32_FLASH_SIZE STM32_memory_size
 #if STM32_FLASH_SIZE < 256
-#define STM_SECTOR_SIZE 1024 //
-#else 
-#define STM_SECTOR_SIZE	2048
-#endif		 
+    #define STM_SECTOR_SIZE 1024
+#else
+    #define STM_SECTOR_SIZE	2048
+#endif
 
 uint16_t STMFLASH_BUF[STM_SECTOR_SIZE / 2];
 
 
-void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer)	
-{
+void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
     uint32_t secpos;	   // Sector position
     uint16_t secoff;	   // Sector offset
-    uint16_t secremain; // 
-     uint16_t i;    
-    uint32_t offaddr;   // Offset address
-    uint16_t arrayLength = sizeof(pBuffer)/sizeof(pBuffer[0]);
-    
+    uint16_t secremain;    //
+    uint16_t i;
+    uint32_t offaddr;      // Offset address
+
     if(WriteAddr < FLASH_BASE||(WriteAddr>=(FLASH_BASE+1024*STM32_FLASH_SIZE)))return;//
-    unlockFlash();						//
-    offaddr = WriteAddr - FLASH_BASE;		//
+    unlockFlash();
+    offaddr = WriteAddr - FLASH_BASE;
     secpos = offaddr / STM_SECTOR_SIZE; //  0~63 for STM32F030
-    secoff=(offaddr%STM_SECTOR_SIZE)/2;		//
-    secremain = STM_SECTOR_SIZE / 2 - secoff;		//   
-    if(arrayLength<=secremain)secremain=arrayLength;//
-    while(1) 
-    {	
-        flashRead(secpos*STM_SECTOR_SIZE+FLASH_BASE,STMFLASH_BUF);//
-        for(i=0;i<secremain;i++)//
+    secoff=(offaddr%STM_SECTOR_SIZE)/2;
+    secremain = STM_SECTOR_SIZE / 2 - secoff;
+    if(arrayLength<=secremain)secremain=arrayLength;
+    while(1) {
+        flashRead(secpos*STM_SECTOR_SIZE+FLASH_BASE,STMFLASH_BUF);
+        for(i=0;i<secremain;i++)
         {
-            if(STMFLASH_BUF[secoff+i]!=0XFFFF)break;//  	  
+            if(STMFLASH_BUF[secoff+i]!=0XFFFF)break;
         }
-        if(i<secremain)//
+        if(i<secremain)
         {
-            flashErasePage(secpos*STM_SECTOR_SIZE+FLASH_BASE);//
-            for(i=0;i<secremain;i++)//
+            flashErasePage(secpos*STM_SECTOR_SIZE+FLASH_BASE);
+            for(i=0;i<secremain;i++)
             {
-                STMFLASH_BUF[i+secoff]=pBuffer[i];	  
+                STMFLASH_BUF[i+secoff]=pBuffer[i];
             }
-            flashWriteNoCheck(secpos*STM_SECTOR_SIZE+FLASH_BASE,STMFLASH_BUF);//  
+            flashWriteNoCheck(secpos*STM_SECTOR_SIZE+FLASH_BASE,STMFLASH_BUF);
         } else flashWriteNoCheck(WriteAddr, pBuffer);
-        if(arrayLength==secremain)break;//
-        else//
+        if(arrayLength==secremain)break;
+        else
         {
-            secpos++;				//
-            secoff=0;				// 	 
-                 pBuffer+=secremain;  	
-            WriteAddr+=secremain*2;	
-                 arrayLength-=secremain;	//
-            if(arrayLength>(STM_SECTOR_SIZE/2))secremain=STM_SECTOR_SIZE/2;//
-            else secremain=arrayLength;//
-        }	 
-    };	
-    lockFlash();//
+            secpos++;
+            secoff=0;
+                 pBuffer+=secremain;
+            WriteAddr+=secremain*2;
+                 arrayLength-=secremain;
+            if(arrayLength>(STM_SECTOR_SIZE/2))secremain=STM_SECTOR_SIZE/2;
+            else secremain=arrayLength;
+        }
+    };
+    lockFlash();
 }
 
 
 // Erase all of the data stored
-void flashErase32K(void)
-{
+void flashErase32K(void) {
     flashErasePage(0x08018000);
     flashErasePage(0x08018400);
     flashErasePage(0x08018800);
@@ -282,7 +241,7 @@ void loadSavedValues() {
     uint16_t savedParameters[8];
 
     // Load the table from memory
-    flashRead(CALIBRATION_ADDRESS, savedParameters);
+    flashRead(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));
 
     // Set the motor current
     motor.setCurrent(savedParameters[0]);
