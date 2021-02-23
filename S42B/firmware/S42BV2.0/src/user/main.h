@@ -12,8 +12,8 @@
 #define STEPPER_UPDATE_FREQ 10
 
 // Motor constants
-//#define PHASE_MULTIPLIER 12.5f // ! Tune this
-#define STEP_ANGLE 0.9 // ! Check to see for .9 deg motors as well
+#define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
+#define MAX_CURRENT 3500 // Maximum current in mA
 
 extern void Output(int32_t theta,uint8_t effort);
 extern uint16_t ReadAngle(void);

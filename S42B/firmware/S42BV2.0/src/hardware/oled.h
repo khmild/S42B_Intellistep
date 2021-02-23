@@ -8,6 +8,7 @@
 #include "motor.h"
 #include "encoder.h"
 #include "main.h"
+#include <algorithm>
 
 // Variables
 extern String topLevelMenuItems[];

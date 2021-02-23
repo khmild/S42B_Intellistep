@@ -284,6 +284,16 @@ float StepperMotor::compute(float currentAngle) {
 }
 
 
+// Calibrates the encoder and the PID loop
+void StepperMotor::calibrate() {
+    // ! Write yet
+
+    // Calibrate encoder offset
+
+    // Calibrate PID loop
+}
+
+
 // Returns a -1 for true and a 1 for false
 float StepperMotor::invertDirection(bool invert) {
     if (invert) {

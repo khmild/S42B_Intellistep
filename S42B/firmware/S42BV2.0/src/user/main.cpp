@@ -66,10 +66,14 @@ void setup() {
         delay(500);
 
         // Display that the select key can be clicked to run calibration
-        // ! Write
+        writeOLEDString(9, 16, "Use the");
+        writeOLEDString(6, 32, "select key");
+        writeOLEDString(4, 48, "to calibrate");
 
-        // Continously check to see if the select key is clicked
-        // ! Write
+        // Continuously check to see if the select key is clicked (depth index would increase when clicked)
+        if (getMenuDepth() > 0) {
+            motor.calibrate();
+        }
     }
     else {
         // There is a calibration, load it and move on to the loop
@@ -87,7 +91,6 @@ void setup() {
         writeOLEDString(0, 2, "Simp:  0000 RPM");
         writeOLEDString(0, 22, " Err:  000.00 ");
         writeOLEDString(0, 42, " Deg:  0000.0");
-
     }
     /*
     // ! }

@@ -59,18 +59,24 @@
 #define OLED_DC_GPIO_PORT GPIOB
 
 // Button mappings
-#define DOWN_BUTTON_PIN        PA3
-#define BACK_BUTTON_PIN        PB0
-#define SELECT_BUTTON_PIN     PB1
+#define DOWN_BUTTON_PIN         PA3
+#define BACK_BUTTON_PIN         PB0
+#define SELECT_BUTTON_PIN       PB1
+
+// Dip switch mappings
+#define DIP_CALIBRATED          PA15
+#define DIP_CLOSED_LOOP         PB3
+#define DIP_MICRO_1             PB10
+#define DIP_MICRO_2             PB11
 
 // LED pin
 #define LED_PIN PC13
 
 // Motor mappings
-#define COIL_A_DIR_1 PB6
-#define COIL_A_DIR_2 PB7
-#define COIL_B_DIR_1 PB8
-#define COIL_B_DIR_2 PB9
+#define COIL_A_DIR_1        PB6
+#define COIL_A_DIR_2        PB7
+#define COIL_B_DIR_1        PB8
+#define COIL_B_DIR_2        PB9
 #define COIL_A_POWER_OUTPUT PB4
 #define COIL_B_POWER_OUTPUT PB5
 

@@ -3,13 +3,16 @@
 
 #include "main.h"
 
-//#define MENU_NUM 7 // Menu item
+// Variable definitions
+// Boolean for storing if the dip switches were installed the wrong way
+extern bool dipInverted;
 
+// Function definitions
 void initButtons();
-
 void checkButtons();
-
 bool checkButtonState(uint32_t buttonPin);
+void readDipMicrostepping();
+void setDipInverted(bool inverted);
 
 #endif
 

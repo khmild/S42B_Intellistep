@@ -3,6 +3,10 @@
 #include "Arduino.h"
 #include "oled.h"
 
+// Variable definitions
+// Boolean for storing if the dip switches were installed the wrong way
+bool dipInverted = false;
+
 // Initialize the button pins as inputs
 void initButtons() {
 
@@ -15,6 +19,14 @@ void initButtons() {
   // Back pin (opens menu and also backs out of menus)
   pinMode(BACK_BUTTON_PIN, INPUT_PULLUP);
 
+  // All of the dip switches
+  pinMode(DIP_CALIBRATED, INPUT_PULLUP);
+  pinMode(DIP_CLOSED_LOOP, INPUT_PULLUP);
+  pinMode(DIP_MICRO_1, INPUT_PULLUP);
+  pinMode(DIP_MICRO_2, INPUT_PULLUP);
+
+  // Read the microstepping of the dip switches
+  readDipMicrostepping();
 }
 
 // Scan each of the buttons
@@ -79,4 +91,64 @@ bool checkButtonState(uint32_t buttonPin) {
     // Button was never clicked
     return false;
   }
+}
+
+
+// Function for reading the microstepping set via the dip switches
+void readDipMicrostepping() {
+
+    // Check if the dip switches are inverted
+    if (dipInverted) {
+
+        // If they were installed incorrectly, they have to be read opposite
+        if (digitalRead(DIP_MICRO_2) && digitalRead(DIP_MICRO_1)) {
+
+            // Set the microstepping to 1/32 if both dips are on
+            motor.setMicrostepping(32);
+        }
+        else if (!digitalRead(DIP_MICRO_2) && digitalRead(DIP_MICRO_1)) {
+
+            // Set the microstepping to 1/16 if the left dip is off and the right is on
+            motor.setMicrostepping(16);
+        }
+        else if (digitalRead(DIP_MICRO_2) && !digitalRead(DIP_MICRO_1)) {
+
+            // Set the microstepping to 1/8 if the right dip is off and the left on
+            motor.setMicrostepping(8);
+        }
+        else {
+
+            // Both are off, just revert to using quarter stepping
+            motor.setMicrostepping(4);
+        }
+    }
+    else {
+        // Dips are not inverted, they are installed correctly
+        if (digitalRead(DIP_MICRO_1) && digitalRead(DIP_MICRO_2)) {
+
+            // Set the microstepping to 1/32 if both dips are on
+            motor.setMicrostepping(32);
+        }
+        else if (!digitalRead(DIP_MICRO_1) && digitalRead(DIP_MICRO_2)) {
+
+            // Set the microstepping to 1/16 if the left dip is off and the right is on
+            motor.setMicrostepping(16);
+        }
+        else if (digitalRead(DIP_MICRO_1) && !digitalRead(DIP_MICRO_2)) {
+
+            // Set the microstepping to 1/8 if the right dip is off and the left on
+            motor.setMicrostepping(8);
+        }
+        else {
+
+            // Both are off, just revert to using quarter stepping
+            motor.setMicrostepping(4);
+        }
+    }
+}
+
+
+// Function for setting if the dip switches should be inverted
+void setDipInverted(bool inverted) {
+    dipInverted = inverted;
 }

@@ -70,15 +70,30 @@ void updateDisplay() {
 
                 case 1:
                     // In the second menu, the motor mAs. This is dynamically generated and has increments every 100 mA from 0 mA (testing only) to 3500 mA
-                    // ! Write yet
                     clearOLED();
-                    //writeOLEDString(0, 0, "");
+
+                    // Constrain the current setting within 0 and the maximum current
+                    if (currentCursorIndex > MAX_CURRENT/100) {
+                        // Loop back to the start of the list
+                        currentCursorIndex = 0;
+                    }
+
+                    // Write the pointer
+                    writeOLEDString(0, 0, "->");
+
+                    // Write the first string
+                    writeOLEDString(2, 0, String(currentCursorIndex * 100));
+
+                    // Make sure that the next current values are within the range of values
+                    // ! Write yet
+
                     break;
 
                 case 2:
                     // In the microstep menu, this is also dynamically generated. Get the current stepping of the motor, then display all of the values around it
                     // ! Write yet
                     clearOLED();
+                    writeOLEDString(0, 0, "->");
                     break;
 
                 case 3:
@@ -137,27 +152,51 @@ void selectMenuItem() {
         switch(topLevelMenuIndex) {
 
             case 0:
-                // Nothing to see here, just the calibration display.
+                // Nothing to see here, just the calibration.
+                motor.calibrate();
                 break;
 
             case 1:
                 // Motor mAs. Need to get the current motor mAs, then convert that to a cursor value
-                currentCursorIndex = motor.getCurrent() / 100;
+                if (motor.getCurrent() % 100 == 0) {
+                    // Motor current is one of the menu items, we can check it to get the cursor index
+                    currentCursorIndex = motor.getCurrent() / 100;
+                }
+                else {
+                    // Non-standard value (probably set with serial or CAN)
+                    currentCursorIndex = 0;
+                }
                 break;
 
             case 2:
-                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value
-                currentCursorIndex = log2(motor.getMicrostepping());
+                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
+                currentCursorIndex = log2(motor.getMicrostepping()) - 2;
                 break;
 
             case 3:
                 // Get if the enable pin is inverted
-                // ! Write yet
+                if (currentCursorIndex % 2 == 0) {
+
+                    // The index is even, the logic is inverted
+                    motor.setEnableInversion(true);
+                }
+                else {
+                    // Index is odd, the logic is normal
+                    motor.setEnableInversion(false);
+                }
                 break;
 
             case 4:
                 // Get if the direction pin is inverted
-                // ! Write yet
+                if (currentCursorIndex % 2 == 0) {
+
+                    // The index is even, the direction is inverted
+                    motor.setReversed(true);
+                }
+                else {
+                    // Index is odd, the direction is normal
+                    motor.setReversed(false);
+                }
                 break;
 
 
@@ -181,7 +220,7 @@ void moveCursor() {
     else {
         // We have to be in the submenu, increment the cursor index (submenus handle the display themselves)
         currentCursorIndex++;
-    }    
+    }
 }
 
 
@@ -192,6 +231,12 @@ void exitCurrentMenu() {
     if (menuDepthIndex > 0) {
         menuDepthIndex--;
     }
+}
+
+
+// Returns the depth of the menu (helpful for watching the select button)
+int getMenuDepth() {
+    return menuDepthIndex;
 }
 
 

@@ -210,7 +210,7 @@ void flashErase32K(void) {
     flashErasePage(0x0801EC00);
     flashErasePage(0x0801F000);
     flashErasePage(0x0801F400);
-    flashErasePage(0x0801F800); 
+    flashErasePage(0x0801F800);
     flashErasePage(0x0801FC00);
 }
 
@@ -237,8 +237,8 @@ void lockFlash() {
 void loadSavedValues() {
 
     // Setup the table for parameters
-    // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value)
-    uint16_t savedParameters[8];
+    // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value, dip switches inverted)
+    uint16_t savedParameters[9];
 
     // Load the table from memory
     flashRead(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));
@@ -266,4 +266,7 @@ void loadSavedValues() {
 
     // D term of PID
     motor.setDValue(savedParameters[7]);
+
+    // If the dip switches were installed incorrectly
+    setDipInverted(savedParameters[8]);
 }

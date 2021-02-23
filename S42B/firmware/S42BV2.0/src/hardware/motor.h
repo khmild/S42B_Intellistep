@@ -81,6 +81,9 @@ class StepperMotor {
         // Computes the next output of the motor
         float compute(float feedback);
 
+        // Calibrates the encoder and PID loop
+        void calibrate();
+
     // Things that shouldn't be accessed by the outside
     private:
 
