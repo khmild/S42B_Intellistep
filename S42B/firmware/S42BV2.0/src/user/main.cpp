@@ -5,7 +5,6 @@
 #include "buttons.h"
 #include "can.h"
 #include "serial.h"
-#include "display.h"
 #include "flash.h"
 #include "encoder.h"
 #include "iwdg.h"
