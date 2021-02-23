@@ -23,5 +23,6 @@ void displayMotorData();
 void selectMenuItem();
 void moveCursor();
 void exitCurrentMenu();
+int getMenuDepth();
 
 #endif

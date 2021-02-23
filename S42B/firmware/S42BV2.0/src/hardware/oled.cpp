@@ -13,6 +13,7 @@ int currentCursorIndex = 0;
 int menuDepthIndex = 0;
 
 // The SPI interface for the OLED
+// ! Fix
 SPIClass OLED_SPI = SPIClass(1, 2, 3, OLED_CS_PIN);
 
 
