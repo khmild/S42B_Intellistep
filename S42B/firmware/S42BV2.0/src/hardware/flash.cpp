@@ -57,7 +57,7 @@ bool flashWaitDone(uint16_t microseconds) {
 
         // If the flash isn't busy or time is up, exit the loop
         if(result != 1 || (micros() - startTime) > microseconds) {
-            break;
+            return false;
         }
 
         // Delay for a microsecond
@@ -65,12 +65,7 @@ bool flashWaitDone(uint16_t microseconds) {
 
     } while(true);
 
-    // If we ran out of time, return a fail
-    if((micros() - startTime) > microseconds) {
-        return false;
-    }
-
-    // Return the result
+    // Return true if we made it through the time and flash state check
     return true;
 }
 
@@ -114,14 +109,46 @@ void flashRead(uint32_t address, uint16_t *pBuffer, uint16_t arrayLength) {
     }
 }
 
-
+// ! Maybe add a return to see if the function completed successfully
 void flashWriteNoCheck(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
     for(uint16_t i = 0; i < arrayLength; i++) {
-        // ! FLASH_ProgramHalfWord(WriteAddr, pBuffer[i]);
+        FLASH_ProgramHalfWord(WriteAddr, pBuffer[i]);
         WriteAddr += 2;
     }
 }
 
+// Function from the stm32f10x_flash library
+/**
+  * @brief  Programs a half word at a specified address.
+  * @note   This function can be used for all STM32F10x devices.
+  * @param  Address: specifies the address to be programmed.
+  * @param  Data: specifies the data to be programmed.
+  * @retval FLASH Status: The returned value can be: true for operation success, false for fail 
+  */
+bool FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data) {
+
+    // Declare an accumulator
+    bool flashAvailable = false;
+
+    /* Wait for last operation to be completed */
+    flashAvailable = flashWaitDone(FLASH_PROGRAM_TIMEOUT);
+    
+    if(flashAvailable) {
+        /* if the previous operation is completed, proceed to program the new data */
+        FLASH->CR |= CR_PG_Set;
+    
+        *(__IO uint16_t*)Address = Data;
+
+        /* Wait for last operation to be completed */
+        flashAvailable = flashWaitDone(FLASH_PROGRAM_TIMEOUT);
+        
+        /* Disable the PG Bit */
+        FLASH->CR &= CR_PG_Reset;
+    } 
+    
+    /* Return the Program Status */
+    return flashAvailable;
+}
 
 #define STM32_FLASH_SIZE STM32_memory_size
 #if STM32_FLASH_SIZE < 256
@@ -180,7 +207,9 @@ void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
 
 // Erase all of the data stored
 void flashErase32K(void) {
-    flashErasePage(0x08018000);
+    //for (int i = 0, i <= )
+    flashErasePage(CALIBRATION_ADDRESS);
+    flashErasePage(0x08018000); // CALIBRATION_ADDRESS + 1024
     flashErasePage(0x08018400);
     flashErasePage(0x08018800);
     flashErasePage(0x08018C00);

@@ -6,6 +6,7 @@
 #include "string.h"
 #include <cstdlib>
 #include "flash.h"
+#include <cctype>
 
 // Defines for strings that are used repeatedly
 #define noValue "No value specified! Make sure to specify a value with a V before it"

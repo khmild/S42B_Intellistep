@@ -26,7 +26,7 @@ bool checkSerialData() {
 
 // Parse the buffer for commands
 void runSerialParser() {
-    // ! Write yet (use Marlin's parser for reference)
+    // ! Add more gcodes to be able to set inversion through the serial interface
 
     // GCode Table
     //   - M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
@@ -43,7 +43,7 @@ void runSerialParser() {
     buffer.toUpperCase();
 
     // Make sure that the first value is the command letter
-    if (buffer.charAt(0) == 'M') {
+    if (parseValue(buffer, 'M') != "-1") {
 
         // Switch statement the command number
         switch (parseValue(buffer, 'M').toInt()) {
@@ -90,7 +90,7 @@ void runSerialParser() {
 String parseValue(String buffer, char letter) {
 
     // Search the input string for a V (for the value measurement)
-    int charIndex = buffer.indexOf(letter);
+    int charIndex = buffer.indexOf(toupper(letter));
 
     // If the index came back with a value, we can convert the value to an integer and set it
     if (charIndex != -1) {
