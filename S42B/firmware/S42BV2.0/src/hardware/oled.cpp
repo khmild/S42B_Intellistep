@@ -62,7 +62,7 @@ void updateDisplay() {
             writeOLEDString(2, 48, &topLevelMenuItems[(topLevelMenuIndex + 3) % topLevelMenuLength][0]);
             break;
 
-        case 2:
+        case 2: {
             // We should be in a sub menu, this is where we have to figure out which submenu that should be
             switch(topLevelMenuIndex) {
                 case 0:
@@ -74,7 +74,7 @@ void updateDisplay() {
                     clearOLED();
 
                     // Constrain the current setting within 0 and the maximum current
-                    if (currentCursorIndex > MAX_CURRENT/100) {
+                    if (currentCursorIndex > MAX_CURRENT / 100) {
                         // Loop back to the start of the list
                         currentCursorIndex = 0;
                     }
@@ -82,34 +82,73 @@ void updateDisplay() {
                     // Write the pointer
                     writeOLEDString(0, 0, "->");
 
-                    // Write the first string
-                    writeOLEDString(2, 0, String(currentCursorIndex * 100));
+                    // Write each of the strings
+                    for (int stringIndex = 0; stringIndex <= 3; stringIndex++) {
 
-                    // Make sure that the next current values are within the range of values
-                    // ! Write yet
+                        // Check to make sure that the current isn't out of range of the max current
+                        if (!((currentCursorIndex + stringIndex) * 100 > MAX_CURRENT)) {
 
+                            // Value is in range, display the current on that line
+                            writeOLEDString(2, stringIndex * 16, String((currentCursorIndex + stringIndex) * 100) + String(" mA"));
+                        }
+                        // else {
+                            // Value is out of range, display a blank line for this line
+                        // }
+                    }
                     break;
 
                 case 2:
                     // In the microstep menu, this is also dynamically generated. Get the current stepping of the motor, then display all of the values around it
-                    // ! Write yet
                     clearOLED();
                     writeOLEDString(0, 0, "->");
+
+                    // Loop the currentCursor index back if it's out of range
+                    if (currentCursorIndex > log2(MAX_MICROSTEP_DIVISOR)) {
+                        currentCursorIndex = 2;
+                    }
+                    else if (currentCursorIndex < 2) {
+
+                        // Make sure that the cursor index is in valid range
+                        currentCursorIndex = 2;
+                    }
+                    }
+
+                    // Write each of the strings
+                    for (int stringIndex = 0; stringIndex <= 3; stringIndex++) {
+
+                        // Check to make sure that the current isn't out of range of the max current
+                        if (!(pow(2, currentCursorIndex + stringIndex) > MAX_MICROSTEP_DIVISOR)) {
+
+                            // Value is in range, display the current on that line
+                            writeOLEDString(2, stringIndex * 16, String("1/") + String(pow(2, currentCursorIndex + stringIndex)) + String(" th"));
+                        }
+                        // else {
+                            // Value is out of range, display a blank line for this line
+                        // }
+                    }
                     break;
 
-                case 3:
+                case 3: {
                     // In the enable logic menu, a very simple menu. Just need to invert the displayed state
-                    // ! Write yet
+                    // Clear the OLED
                     clearOLED();
-                    break;
 
-                case 4:
+                    // Title
+                    writeOLEDString(0, 0, "Enable logic:");
+
+                    // Write the string to the screen
+                    // ! writeOLEDString(0, 24, )
+
+                    break;
+                }
+                case 4: {
                     // Another easy menu, just the direction pin. Once again, just need to invert the state
                     // ! Write yet
                     clearOLED();
                     break;
-            }
+                }
             break;
+        }
     }
 }
 

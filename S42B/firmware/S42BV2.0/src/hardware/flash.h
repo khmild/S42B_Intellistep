@@ -13,7 +13,7 @@
 
 // Flash control register bits
 #define CR_PG_Set                ((uint32_t)0x00000001)
-#define CR_PG_Reset              ((uint32_t)0x00001FFE) 
+#define CR_PG_Reset              ((uint32_t)0x00001FFE)
 
 // Flash timeout period
 #define FLASH_PROGRAM_TIMEOUT    ((uint32_t)0x00002000)
