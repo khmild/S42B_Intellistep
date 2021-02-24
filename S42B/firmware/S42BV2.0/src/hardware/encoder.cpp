@@ -278,6 +278,12 @@ static void Prompt_show(void);
 //SPIClass3W encoderSPI = SPIClass3W();
 Tle5012b encoder = Tle5012Ino(ENCODER_SS);
 
+// Angle estimation
+#ifdef ENCODER_ESTIMATION
+    double lastAngleReading = 0;
+    uint32_t lastAngleReadingTime = 0;
+#endif
+
 // Function to setup the encoder
 void encoderInit() {
 
@@ -323,20 +329,38 @@ double getEncoderAngle() {
     return angle;
 }
 
+#ifdef ENCODER_ESTIMATION
 
-// Reads the speed of the encoder
-double getEncoderSpeed() {
+    // Function for estimating the speed of the encoder (takes much less flash memory)
+    double estimateEncoderSpeed() {
 
-    // Declare a variable for the speed to be stored in
-    double speed = 0;
+        // Calculate the speed
+        double angularSpeed = (getEncoderAngle() - lastAngleReading) / (millis() - lastAngleReadingTime);
 
-    // Read the speed value
-    encoder.getAngleSpeed(speed);
+        // Update the last variables for the next estimation
+        lastAngleReading = getEncoderAngle();
+        lastAngleReadingTime = millis();
 
-    // Return the speed from the sensor
-    return speed;
-}
+        // Return the RPMs
+        return (angularSpeed / 360);
+    }
 
+#else
+
+    // Reads the speed of the encoder
+    double getEncoderSpeed() {
+
+        // Declare a variable for the speed to be stored in
+        double speed = 0;
+
+        // Read the speed value
+        encoder.getAngleSpeed(speed);
+
+        // Return the speed from the sensor
+        return speed;
+    }
+
+#endif
 
 // Reads the temperature of the encoder
 double getEncoderTemp() {

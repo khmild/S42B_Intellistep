@@ -13,8 +13,7 @@ int currentCursorIndex = 0;
 int menuDepthIndex = 0;
 
 // The SPI interface for the OLED
-// ! Fix
-SPIClass OLED_SPI = SPIClass(1, 2, 3, OLED_CS_PIN);
+SPIClass OLED_SPI = SPIClass(OLED_DC_PIN, OLED_SDIN_PIN, OLED_SCLK_PIN, OLED_CS_PIN);
 
 
 // Main SPI setup function
@@ -137,14 +136,34 @@ void updateDisplay() {
                     writeOLEDString(0, 0, "Enable logic:");
 
                     // Write the string to the screen
-                    // ! writeOLEDString(0, 24, )
+                    if (currentCursorIndex % 2 == 0) {
 
+                        // The index is even, the logic is inverted
+                        writeOLEDString(0, 24, "Inverted");
+                    }
+                    else {
+                        // Index is odd, the logic is normal
+                        writeOLEDString(0, 24, "Normal");
+                    }
                     break;
                 }
                 case 4: {
                     // Another easy menu, just the direction pin. Once again, just need to invert the state
-                    // ! Write yet
                     clearOLED();
+
+                    // Title
+                    writeOLEDString(0, 0, "Dir logic:");
+
+                    // Write the string to the screen
+                    if (currentCursorIndex % 2 == 0) {
+
+                        // The index is even, the logic is inverted
+                        writeOLEDString(0, 24, "Inverted");
+                    }
+                    else {
+                        // Index is odd, the logic is normal
+                        writeOLEDString(0, 24, "Normal");
+                    }
                     break;
                 }
             break;

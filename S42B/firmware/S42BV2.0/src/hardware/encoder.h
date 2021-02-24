@@ -29,6 +29,13 @@ extern Tle5012b encoder;
 uint16_t readEncoderValue(uint16_t registerValue);
 uint16_t readEncoderState();
 double getEncoderAngle();
+
+#ifdef ENCODER_ESTIMATION
+    double estimateEncoderSpeed();
+#else
+    double getEncoderSpeed();
+#endif
+
 double getEncoderTemp();
 
 #endif

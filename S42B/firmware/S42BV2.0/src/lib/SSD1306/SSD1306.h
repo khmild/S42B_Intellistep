@@ -130,7 +130,7 @@ typedef struct {
 // Procedure definitions
 void SSD1306_Init(SPIClass &OLED_SPI);
 void SSD1306_Fill(SSD1306_COLOR color);
-void SSD1306_UpdateScreen(void);
+void SSD1306_UpdateScreen(SPIClass &OLED_PANEL_SPI);
 void SSD1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color);
 char SSD1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color);
 char SSD1306_WriteString(char* str, FontDef Font, SSD1306_COLOR color);
@@ -146,12 +146,12 @@ void SSD1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
  * @note Contrast increases as the value increases.
  * @note RESET = 7Fh.
  */
-void SSD1306_SetContrast(const uint8_t value);
+void SSD1306_SetContrast(SPIClass &OLED_PANEL_SPI, const uint8_t value);
 /**
  * @brief Set Display ON/OFF.
  * @param[in] on 0 for OFF, any for ON.
  */
-void SSD1306_SetDisplayOn(const uint8_t on);
+void SSD1306_SetDisplayOn(SPIClass &OLED_PANEL_SPI, const uint8_t on);
 /**
  * @brief Reads DisplayOn state.
  * @return  0: OFF.
@@ -161,11 +161,9 @@ uint8_t SSD1306_GetDisplayOn();
 
 // Low-level procedures
 void SSD1306_Reset(void);
-void SSD1306_WriteCommand(uint8_t byte);
-void SSD1306_WriteData(uint8_t* buffer, size_t buff_size);
+void SSD1306_WriteCommand(SPIClass &OLED_PANEL_SPI, uint8_t byte);
+void SSD1306_WriteData(SPIClass &OLED_PANEL_SPI, uint8_t* buffer, size_t buff_size);
 SSD1306_Error_t SSD1306_FillBuffer(uint8_t* buf, uint32_t len);
-
-extern SPIClass OLED_PANEL_SPI;
 
 _END_STD_C
 

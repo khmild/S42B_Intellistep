@@ -33,7 +33,7 @@ void SSD1306_Reset(void) {
 }
 
 // Send a byte to the command register
-void SSD1306_WriteCommand(uint8_t byte) {
+void SSD1306_WriteCommand(SPIClass &OLED_PANEL_SPI, uint8_t byte) {
     HAL_GPIO_WritePin(SSD1306_CS_Port, SSD1306_CS_Pin, GPIO_PIN_RESET); // select OLED
     HAL_GPIO_WritePin(SSD1306_DC_Port, SSD1306_DC_Pin, GPIO_PIN_RESET); // command
     OLED_PANEL_SPI.transfer(byte);
@@ -41,7 +41,7 @@ void SSD1306_WriteCommand(uint8_t byte) {
 }
 
 // Send data
-void SSD1306_WriteData(uint8_t buffer, size_t buff_size) {
+void SSD1306_WriteData(SPIClass &OLED_PANEL_SPI, uint8_t buffer, size_t buff_size) {
     HAL_GPIO_WritePin(SSD1306_CS_Port, SSD1306_CS_Pin, GPIO_PIN_RESET); // select OLED
     HAL_GPIO_WritePin(SSD1306_DC_Port, SSD1306_DC_Pin, GPIO_PIN_SET); // data
     OLED_PANEL_SPI.transfer(buffer);
@@ -60,7 +60,7 @@ static uint8_t SSD1306_Buffer[SSD1306_BUFFER_SIZE];
 static SSD1306_t SSD1306;
 
 // SPI Interface Object
-SPIClass OLED_PANEL_SPI = SPIClass();
+//SPIClass OLED_PANEL_SPI = SPIClass();
 
 /* Fills the Screenbuffer with values from a given buffer of a fixed length */
 SSD1306_Error_t SSD1306_FillBuffer(uint8_t* buf, uint32_t len) {
@@ -85,91 +85,91 @@ void SSD1306_Init(SPIClass &OLED_PANEL_SPI) {
     HAL_Delay(100);
 
     // Init OLED
-    SSD1306_SetDisplayOn(0); //display off
+    SSD1306_SetDisplayOn(OLED_PANEL_SPI, 0); //display off
 
-    SSD1306_WriteCommand(0x20); //Set Memory Addressing Mode
-    SSD1306_WriteCommand(0x00); // 00b,Horizontal Addressing Mode; 01b,Vertical Addressing Mode;
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x20); //Set Memory Addressing Mode
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x00); // 00b,Horizontal Addressing Mode; 01b,Vertical Addressing Mode;
                                 // 10b,Page Addressing Mode (RESET); 11b,Invalid
 
-    SSD1306_WriteCommand(0xB0); //Set Page Start Address for Page Addressing Mode,0-7
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xB0); //Set Page Start Address for Page Addressing Mode,0-7
 
 #ifdef SSD1306_MIRROR_VERT
-    SSD1306_WriteCommand(0xC0); // Mirror vertically
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xC0); // Mirror vertically
 #else
-    SSD1306_WriteCommand(0xC8); //Set COM Output Scan Direction
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xC8); //Set COM Output Scan Direction
 #endif
 
-    SSD1306_WriteCommand(0x00); //---set low column address
-    SSD1306_WriteCommand(0x10); //---set high column address
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x00); //---set low column address
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x10); //---set high column address
 
-    SSD1306_WriteCommand(0x40); //--set start line address - CHECK
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x40); //--set start line address - CHECK
 
-    SSD1306_SetContrast(0xFF);
+    SSD1306_SetContrast(OLED_PANEL_SPI, 0xFF);
 
 #ifdef SSD1306_MIRROR_HORIZ
-    SSD1306_WriteCommand(0xA0); // Mirror horizontally
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xA0); // Mirror horizontally
 #else
-    SSD1306_WriteCommand(0xA1); //--set segment re-map 0 to 127 - CHECK
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xA1); //--set segment re-map 0 to 127 - CHECK
 #endif
 
 #ifdef SSD1306_INVERSE_COLOR
-    SSD1306_WriteCommand(0xA7); //--set inverse color
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xA7); //--set inverse color
 #else
-    SSD1306_WriteCommand(0xA6); //--set normal color
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xA6); //--set normal color
 #endif
 
 // Set multiplex ratio.
 #if (SSD1306_HEIGHT == 128)
     // Found in the Luma Python lib for SH1106.
-    SSD1306_WriteCommand(0xFF);
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xFF);
 #else
-    SSD1306_WriteCommand(0xA8); //--set multiplex ratio(1 to 64) - CHECK
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xA8); //--set multiplex ratio(1 to 64) - CHECK
 #endif
 
 #if (SSD1306_HEIGHT == 32)
-    SSD1306_WriteCommand(0x1F); //
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x1F); //
 #elif (SSD1306_HEIGHT == 64)
-    SSD1306_WriteCommand(0x3F); //
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x3F); //
 #elif (SSD1306_HEIGHT == 128)
-    SSD1306_WriteCommand(0x3F); // Seems to work for 128px high displays too.
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x3F); // Seems to work for 128px high displays too.
 #else
 #error "Only 32, 64, or 128 lines of height are supported!"
 #endif
 
-    SSD1306_WriteCommand(0xA4); //0xa4,Output follows RAM content;0xa5,Output ignores RAM content
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xA4); //0xa4,Output follows RAM content;0xa5,Output ignores RAM content
 
-    SSD1306_WriteCommand(0xD3); //-set display offset - CHECK
-    SSD1306_WriteCommand(0x00); //-not offset
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xD3); //-set display offset - CHECK
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x00); //-not offset
 
-    SSD1306_WriteCommand(0xD5); //--set display clock divide ratio/oscillator frequency
-    SSD1306_WriteCommand(0xF0); //--set divide ratio
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xD5); //--set display clock divide ratio/oscillator frequency
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xF0); //--set divide ratio
 
-    SSD1306_WriteCommand(0xD9); //--set pre-charge period
-    SSD1306_WriteCommand(0x22); //
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xD9); //--set pre-charge period
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x22); //
 
-    SSD1306_WriteCommand(0xDA); //--set com pins hardware configuration - CHECK
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xDA); //--set com pins hardware configuration - CHECK
 #if (SSD1306_HEIGHT == 32)
-    SSD1306_WriteCommand(0x02);
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x02);
 #elif (SSD1306_HEIGHT == 64)
-    SSD1306_WriteCommand(0x12);
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x12);
 #elif (SSD1306_HEIGHT == 128)
-    SSD1306_WriteCommand(0x12);
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x12);
 #else
 #error "Only 32, 64, or 128 lines of height are supported!"
 #endif
 
-    SSD1306_WriteCommand(0xDB); //--set vcomh
-    SSD1306_WriteCommand(0x20); //0x20,0.77xVcc
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0xDB); //--set vcomh
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x20); //0x20,0.77xVcc
 
-    SSD1306_WriteCommand(0x8D); //--set DC-DC enable
-    SSD1306_WriteCommand(0x14); //
-    SSD1306_SetDisplayOn(1); //--turn on SSD1306 panel
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x8D); //--set DC-DC enable
+    SSD1306_WriteCommand(OLED_PANEL_SPI, 0x14); //
+    SSD1306_SetDisplayOn(OLED_PANEL_SPI, 1); //--turn on SSD1306 panel
 
     // Clear screen
     SSD1306_Fill(BLACK);
 
     // Flush buffer to screen
-    SSD1306_UpdateScreen();
+    SSD1306_UpdateScreen(OLED_PANEL_SPI);
 
     // Set default values for screen object
     SSD1306.CurrentX = 0;
@@ -189,7 +189,7 @@ void SSD1306_Fill(SSD1306_COLOR color) {
 }
 
 // Write the screenbuffer with changed to the screen
-void SSD1306_UpdateScreen(void) {
+void SSD1306_UpdateScreen(SPIClass &OLED_PANEL_SPI) {
     // Write data to each page of RAM. Number of pages
     // depends on the screen height:
     //
@@ -197,10 +197,10 @@ void SSD1306_UpdateScreen(void) {
     //  * 64px   ==  8 pages
     //  * 128px  ==  16 pages
     for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
-        SSD1306_WriteCommand(0xB0 + i); // Set the current RAM page address.
-        SSD1306_WriteCommand(0x00);
-        SSD1306_WriteCommand(0x10);
-        SSD1306_WriteData(SSD1306_Buffer[SSD1306_WIDTH*i],SSD1306_WIDTH);
+        SSD1306_WriteCommand(OLED_PANEL_SPI, 0xB0 + i); // Set the current RAM page address.
+        SSD1306_WriteCommand(OLED_PANEL_SPI, 0x00);
+        SSD1306_WriteCommand(OLED_PANEL_SPI, 0x10);
+        SSD1306_WriteData(OLED_PANEL_SPI, SSD1306_Buffer[SSD1306_WIDTH*i],SSD1306_WIDTH);
     }
 }
 
@@ -451,13 +451,13 @@ void SSD1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
   return;
 }
 
-void SSD1306_SetContrast(const uint8_t value) {
+void SSD1306_SetContrast(SPIClass &OLED_PANEL_SPI, const uint8_t value) {
     const uint8_t kSetContrastControlRegister = 0x81;
-    SSD1306_WriteCommand(kSetContrastControlRegister);
-    SSD1306_WriteCommand(value);
+    SSD1306_WriteCommand(OLED_PANEL_SPI, kSetContrastControlRegister);
+    SSD1306_WriteCommand(OLED_PANEL_SPI, value);
 }
 
-void SSD1306_SetDisplayOn(const uint8_t on) {
+void SSD1306_SetDisplayOn(SPIClass &OLED_PANEL_SPI, const uint8_t on) {
     uint8_t value;
     if (on) {
         value = 0xAF;   // Display on
@@ -466,7 +466,7 @@ void SSD1306_SetDisplayOn(const uint8_t on) {
         value = 0xAE;   // Display off
         SSD1306.DisplayOn = 0;
     }
-    SSD1306_WriteCommand(value);
+    SSD1306_WriteCommand(OLED_PANEL_SPI, value);
 }
 
 uint8_t SSD1306_GetDisplayOn() {

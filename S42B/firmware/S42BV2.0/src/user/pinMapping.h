@@ -50,13 +50,12 @@
 // OLED Mappings
 #define OLED_CS_PIN   PB12
 #define OLED_RST_PIN  PA8
-#define OLED_RS_PIN   PB13
-#define OLED_SCLK_PIN PB15 // D0
+#define OLED_SCLK_PIN PB13
 #define OLED_SDIN_PIN PB14 // D1
 #define OLED_DC_PIN   PB15 // ! Needs checked!
-#define OLED_CS_GPIO_PORT GPIOB
-#define OLED_RS_GPIO_PORT GPIOB
-#define OLED_DC_GPIO_PORT GPIOB
+#define OLED_CS_GPIO_PORT  GPIOB
+#define OLED_RST_GPIO_PORT GPIOB
+#define OLED_DC_GPIO_PORT  GPIOB
 
 // Button mappings
 #define DOWN_BUTTON_PIN         PA3
@@ -85,5 +84,30 @@
 #define ENCODER_SCK  PA5 // SPI1_SCK
 #define ENCODER_MISO PA6 // SPI1_MISO
 #define ENCODER_MOSI PA7 // SPI1_MOSI
+
+// Stepping interface
+#define STEP_PIN      PA1 // ! according to the previous files, but this is the same as the dir pin
+#define ENABLE_PIN    PA2
+#define DIRECTION_PIN PA1
+
+// CAN bus pins
+#define CAN_IN_PIN  PA11
+#define CAN_OUT_PIN PA12
+
+
+
+// Options
+#define CLOSED_LOOP
+#define CLOSED_LOOP_CONFIG
+//#define TEST_FLASH
+#define STEPPER_UPDATE_FREQ 10
+
+// Encoder speed estimation instead of actual value (saves memory)
+//#define ENCODER_ESTIMATION
+
+// Motor constants
+#define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
+#define MAX_CURRENT 3500 // Maximum current in mA
+#define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
 
 #endif //__PINMAPPING_H

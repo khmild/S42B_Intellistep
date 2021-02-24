@@ -79,7 +79,7 @@ class StepperMotor {
         bool getEnableInversion();
 
         // Moves the set point one step in the respective direction
-        void incrementAngle(bool positiveDirection);
+        void incrementAngle();
 
         // Calculates the coil values for the motor
         void step();

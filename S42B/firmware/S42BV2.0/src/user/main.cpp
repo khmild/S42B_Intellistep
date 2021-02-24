@@ -1,13 +1,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "time.h"
-#include "exit.h"
 #include "buttons.h"
 #include "can.h"
 #include "serial.h"
 #include "flash.h"
 #include "encoder.h"
-#include "iwdg.h"
 #include "oled.h"
 #include "stm32yyxx_ll_rcc.h"
 #include "SSD1306.h"
@@ -70,8 +67,15 @@ void setup() {
         writeOLEDString(4, 48, "to calibrate");
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
-        if (getMenuDepth() > 0) {
-            motor.calibrate();
+        while(true) {
+            if (getMenuDepth() > 0) {
+
+                // Calibrate the motor
+                motor.calibrate();
+
+                // Reboot the chip
+                NVIC_SystemReset();
+            }
         }
     }
     else {
@@ -87,24 +91,24 @@ void setup() {
 
         // Start displaying the motor data
         clearOLED();
-        writeOLEDString(0, 2, "Simp:  0000 RPM");
+        writeOLEDString(0, 2, "RPM:  0000 RPM");
         writeOLEDString(0, 22, " Err:  000.00 ");
         writeOLEDString(0, 42, " Deg:  0000.0");
-    }
-    /*
-    // ! }
-    // ! else {
 
-        // ! Comment
-        clearOLED();
-        writeOLEDString(0, 0, "->");
+        // Attach the interupt to the step pin
+        attachInterrupt(digitalPinToInterrupt(STEP_PIN), incrementMotor, CHANGE);
 
         // Loop forever, checking the keys and updating the display
         while(true) {
             checkButtons();
-            updateDisplay();
+
+            // Only update the display if the motor data is being displayed, buttons update the display when clicked
+            if (getMenuDepth() == 0) {
+                updateDisplay();
+            }
         }
-    // ! }
+    }
+    /*
     EXTIX_Init();
     NVIC_EnableIRQ(EXTI1_IRQn);         //
     UART_Configuration(USART1, UART1_DEFAULT_BAUDRATE);     //
@@ -119,20 +123,6 @@ void setup() {
     }
     TIM2_Cap_Init(0xFFFF,0);          //
 
-    // ! Add logic checking to make sure that this is always a whole number 
-    //TIM4_Init(10000 / STEPPER_UPDATE_FREQ, 7200);
-    // Calculate the values for the timer given the interrupt frequency (tests the maximum prescalar available)
-    for(int prescalarDivisor = 1; SystemCoreClock / (STEPPER_UPDATE_FREQ * prescalarDivisor) > 65536; prescalarDivisor = prescalarDivisor * 10) {
-
-        // Check if the timer can be initialized with the values before the loop exits
-        if (SystemCoreClock / (STEPPER_UPDATE_FREQ * prescalarDivisor) < 65536) {
-            TIM4_Init(prescalarDivisor-1, SystemCoreClock / (STEPPER_UPDATE_FREQ * prescalarDivisor));
-        }
-    }
-
-    */
-    /*
-//    IWDG_Init(4,625);                 //
      while(1) {
         #ifdef CLOSED_LOOP
             if(enableModeFlag){
@@ -316,4 +306,10 @@ void overclock(uint32_t PLLMultiplier) {
 
     // Update the system clock with the new speed
     SystemCoreClockUpdate();
+}
+
+
+// Need to declare a function to increment the motor for the ISR
+void incrementMotor() {
+    motor.incrementAngle();
 }

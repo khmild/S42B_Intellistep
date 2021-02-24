@@ -38,8 +38,11 @@ StepperMotor::StepperMotor() {
 
 // Returns the current RPM of the motor to two decimal places
 float StepperMotor::getMotorRPM() {
-    // ! Write yet
-    return 0;
+    #ifdef ENCODER_ESTIMATION
+        return (estimateEncoderSpeed() / 360);
+    #else
+        return (getEncoderSpeed() / 360);
+    #endif
 }
 
 
@@ -182,10 +185,10 @@ bool StepperMotor::getEnableInversion() {
 
 
 // Moves the set point one step in the respective direction
-void StepperMotor::incrementAngle(bool positiveDirection) {
+void StepperMotor::incrementAngle() {
 
     // Main angle change (any inversions * angle of microstep)
-    float angleChange = StepperMotor::invertDirection(!positiveDirection) * StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
+    float angleChange = StepperMotor::invertDirection(!(digitalRead(DIRECTION_PIN) == HIGH)) * StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
 
     // Set the desired angle to itself + the change in angle
     this -> desiredAngle += angleChange;
