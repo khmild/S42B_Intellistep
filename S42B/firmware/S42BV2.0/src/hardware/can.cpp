@@ -129,23 +129,4 @@ uint8_t CAN1_Receive_Msg(uint8_t *buf)
 	return RxMessage.DLC;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 */
