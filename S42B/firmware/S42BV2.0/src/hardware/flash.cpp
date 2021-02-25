@@ -266,8 +266,8 @@ void lockFlash() {
 void loadSavedValues() {
 
     // Setup the table for parameters
-    // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value, dip switches inverted)
-    uint16_t savedParameters[9];
+    // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value, CAN ID, dip switches inverted)
+    uint16_t savedParameters[10];
 
     // Load the table from memory
     flashRead(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));
@@ -296,8 +296,11 @@ void loadSavedValues() {
     // D term of PID
     motor.setDValue(savedParameters[7]);
 
+    // The CAN ID of the motor
+    setCANID(savedParameters[8]);
+
     // If the dip switches were installed incorrectly
-    setDipInverted(savedParameters[8]);
+    setDipInverted(savedParameters[9]);
 }
 
 
@@ -305,8 +308,8 @@ void loadSavedValues() {
 void saveParametersToFlash() {
 
     // Setup the table for parameters
-    // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value, dip switches inverted)
-    uint16_t savedParameters[9];
+    // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value, CAN ID, dip switches inverted)
+    uint16_t savedParameters[10];
 
     // Get the motor current
     savedParameters[0] = motor.getCurrent();
@@ -332,8 +335,11 @@ void saveParametersToFlash() {
     // D term of PID
     savedParameters[7] = motor.getDValue();
 
+    // CAN ID of the motor controller
+    savedParameters[8] = getCANID();
+
     // If the dip switches were installed incorrectly
-    savedParameters[8] = getDipInverted();
+    savedParameters[9] = getDipInverted();
 
     // Save the array to flash
     flashWrite(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));

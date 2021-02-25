@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include "stm32yyxx_ll_spi.h"
 #include "stm32yyxx_ll_gpio.h"
-#include "pinMapping.h"
+#include "config.h"
 #include "SPI.h"
 #include "TLE5012-ino.hpp"
 

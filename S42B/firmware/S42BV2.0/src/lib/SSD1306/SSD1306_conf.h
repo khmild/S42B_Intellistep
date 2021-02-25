@@ -7,7 +7,7 @@
 #define __SSD1306_CONF_H__
 
 // Import pin mappings
-#include "pinMapping.h"
+#include "config.h"
 
 // Choose a microcontroller family
 //#define STM32F0

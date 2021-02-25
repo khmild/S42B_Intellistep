@@ -4,6 +4,7 @@
 #include "main.h"
 #include "stm32f103xb.h"
 #include "buttons.h"
+#include "canMessaging.h"
 
 // Where the parameters are saved
 #define CALIBRATION_ADDRESS      0x08017C00

@@ -1,5 +1,5 @@
 #include "buttons.h"
-#include "pinMapping.h"
+#include "config.h"
 #include "Arduino.h"
 #include "oled.h"
 

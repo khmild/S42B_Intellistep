@@ -4,7 +4,7 @@
 #include "motor.h"
 #include "Arduino.h"
 #include "stdint.h"
-#include "pinMapping.h"
+#include "config.h"
 
 extern void Output(int32_t theta,uint8_t effort);
 extern uint16_t ReadAngle(void);

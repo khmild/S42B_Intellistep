@@ -1,5 +1,5 @@
-#ifndef __PINMAPPING_H
-#define __PINMAPPING_H
+#ifndef __CONFIG_H
+#define __CONFIG_H
 
 /*
 // * = F103C8-CB    | DIGITAL | ANALOG | USART      | TWI       | SPI        | SPECIAL   |
@@ -102,6 +102,10 @@
 //#define TEST_FLASH
 #define STEPPER_UPDATE_FREQ 10
 
+// The CAN ID of this board
+// X:1, Y:2, Z:3, Z2:4..., E0:10, E1:11...
+#define DEFAULT_CAN_ID 1
+
 // Encoder speed estimation instead of actual value (saves memory)
 //#define ENCODER_ESTIMATION
 
@@ -110,4 +114,4 @@
 #define MAX_CURRENT 3500 // Maximum current in mA
 #define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
 
-#endif //__PINMAPPING_H
+#endif //__CONFIG_H

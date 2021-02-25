@@ -17,7 +17,7 @@ void parseString(String buffer) {
 
     // ! Check to see if the string contains another set of gcode, if so call the function recursively
 
-    // Make sure that the first value is the command letter
+    // Check to see if the letter is an M (only supported gcode at this point)
     if (parseValue(buffer, 'M') != "-1") {
 
         // Switch statement the command number
@@ -56,9 +56,10 @@ void parseString(String buffer) {
                 break;
             }
         }
-
     }
+    
 }
+
 
 // Returns the substring of the value after the letter parameter
 String parseValue(String buffer, char letter) {

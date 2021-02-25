@@ -25,6 +25,7 @@ bool checkSerialData() {
 }
 
 // Parse the buffer for commands
+// ! Fix to use start and end characters
 void runSerialParser() {
     parseString(readSerialBuffer());
 }

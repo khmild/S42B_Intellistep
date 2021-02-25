@@ -1,7 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "buttons.h"
-#include "can.h"
+#include "canMessaging.h"
 #include "serial.h"
 #include "flash.h"
 #include "encoder.h"
@@ -35,6 +35,9 @@ void setup() {
 
     // Initialize the serial bus
     initSerial();
+
+    // Initialize the CAN bus
+    initCAN();
 
     /*
     // Test the flash if specified

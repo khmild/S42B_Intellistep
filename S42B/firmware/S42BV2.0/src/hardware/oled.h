@@ -2,7 +2,7 @@
 #define __OLED_H__
 
 // Imports
-#include "pinMapping.h"
+#include "config.h"
 #include "SSD1306.h"
 #include "cstring"
 #include "motor.h"

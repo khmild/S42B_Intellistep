@@ -10,7 +10,7 @@
 #include <math.h>
 
 // Import the pin mapping
-#include "pinMapping.h"
+#include "config.h"
 
 // Stepper motor class (defined to make life a bit easier when dealing with the motor)
 class StepperMotor {
