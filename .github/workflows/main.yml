@@ -29,4 +29,4 @@ jobs:
         pip install --upgrade platformio
     - name: Run PlatformIO
       run: |
-        platformio run -d S42B/firmware/S42BV2.0
+        platformio run

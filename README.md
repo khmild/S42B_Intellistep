@@ -1,13 +1,17 @@
-# Intellistep
-A rework of the terribly coded firmware from the BTT S42B v2 boards
+# BIGTREETECH-S42B-V1.0
+The closed-loop drive is to feedback the rotation angle of the stepping motor to the control panel, compare the distance that needs to be rotated with the distance of the actual rotation, calculate the error value, and then compensate, so as to prevent the problem of multi-step and lost step. The closed-loop drive can completely overcome the lost step of the open-loop stepping motor, and can also significantly improve the performance of the motor at high speed
 
-I am currently working on redoing a lot of the functions found in the firmware. A list of the current things that are being worked on is in the Projects tab. If you don't see your issue there, then please let me know.
+MCU: STM32F030C8T6, Crotex-M0,48MHz
 
-New Features:
 
-Future Features:
-  - Redone stepping setup
-  - Redone serial commands (based on gcode)
-  - Manual tuning utility for manual tuning
-  - Much better stepper calibration
-  - New menu items for setting PID parameters
+# BIGTREETECH-S42B-V2.0  ---      BIGTREETECH-S57B-V2.0
+MCU: STM32F103C8T6, Crotex-M3,72MHz
+Firmware is compatible with S42Bv2.0.
+
+You can download the firmware for S42B directly and update it
+
+
+
+
+Firmware update method:
+  1、STlink、Jlink Or another emulator。
