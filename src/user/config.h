@@ -101,6 +101,7 @@
 #define CLOSED_LOOP_CONFIG
 //#define TEST_FLASH
 #define STEPPER_SPEED_UPDATE_RATE 10
+#define MAX_MOTOR_SPEED 50 // deg/s
 
 // The CAN ID of this board
 // X:1, Y:2, Z:3, Z2:4..., E0:10, E1:11...

@@ -335,10 +335,10 @@ float StepperMotor::compute(float currentAngle) {
     float output = ((this -> pTerm) * (this -> error)) + ((this -> iTerm) * (this -> cumulativeError)) + ((this -> dTerm) * (this -> rateError));
 
     // Constrain the output to the maximum set output
-    if (abs(output) > maxOutput) {
+    if (abs(output) > MAX_MOTOR_SPEED) {
 
         // Set the new output to the maximum output with the sign of the original output
-        output = maxOutput * (output / abs(output));
+        output = MAX_MOTOR_SPEED * (output / abs(output));
     }
 
     // Update the last computation parameters

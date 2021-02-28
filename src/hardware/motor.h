@@ -125,9 +125,6 @@ class StepperMotor {
         float cumulativeError;
         float rateError;
 
-        // Maximum value for the output of the motor
-        float maxOutput = 1;
-
         // Motor characteristics
         // Current (in mA)
         int current = 0;
