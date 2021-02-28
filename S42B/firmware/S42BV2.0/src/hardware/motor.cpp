@@ -194,6 +194,7 @@ void StepperMotor::incrementAngle() {
     this -> desiredAngle += angleChange;
 }
 
+
 // Computes the coil values for the next step position
 void StepperMotor::step() {
 
@@ -286,7 +287,33 @@ void StepperMotor::step() {
 }
 
 
-// Computes the output of the motor
+// Sets the speed of the motor (basically sets the speed at which the step function is called)
+float StepperMotor::speedToHz(float angularSpeed) {
+
+    // Calculate the step angle (including microsteps)
+    float stepAngle = (this -> fullStepAngle) / (this -> microstepping);
+
+    // Calculate the time between step calls
+    return (angularSpeed / stepAngle);
+}
+
+
+// Disables the motor, freeing the coils
+void StepperMotor::disable() {
+
+    // Set the A driver to coast
+    digitalWrite(COIL_A_DIR_1, LOW);
+    digitalWrite(COIL_A_DIR_2, LOW);
+    analogWrite(COIL_A_POWER_OUTPUT, 0);
+
+    // Set the B driver to coast
+    digitalWrite(COIL_B_DIR_1, LOW);
+    digitalWrite(COIL_B_DIR_2, LOW);
+    analogWrite(COIL_B_POWER_OUTPUT, 0);
+}
+
+
+// Computes the speed of the motor
 float StepperMotor::compute(float currentAngle) {
 
     // Update the current time
@@ -330,6 +357,25 @@ void StepperMotor::calibrate() {
     // Calibrate encoder offset
 
     // Calibrate PID loop
+}
+
+
+// Motor loop (called on a regular basis by the timer)
+float StepperMotor::computeStepHz() {
+
+    // Check the enable pin (nothing should happen if off)
+    if (digitalRead(ENABLE_PIN) == (this -> enableInverted)) {
+        
+        // Motor should be disabled
+        disable();
+
+        // Set the update rate to a 10th of a second (no need to be on a special update if not necessary)
+        return 10; // -1 is the signal for disable the interrupt
+    }
+    else {
+        // The motor needs moved at the specified speed
+        return speedToHz(compute(getEncoderAngle()));
+    }
 }
 
 

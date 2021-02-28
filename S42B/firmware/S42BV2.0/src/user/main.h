@@ -9,8 +9,14 @@
 extern void Output(int32_t theta,uint8_t effort);
 extern uint16_t ReadAngle(void);
 extern void overclock(uint32_t PLLMultiplier);
+
+// Motor interrupts
+extern void setupMotorTimers();
 extern void incrementMotor();
+extern void stepInterrupt();
+extern void stepIntervalInterrupt();
 
 extern StepperMotor motor;
+
 
 #endif

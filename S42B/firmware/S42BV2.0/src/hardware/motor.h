@@ -3,6 +3,7 @@
 #define __MOTOR_H__
 
 #include "Arduino.h"
+#include "HardwareTimer.h"
 #include "encoder.h"
 
 // For sin() and fmod() function
@@ -84,7 +85,16 @@ class StepperMotor {
         // Calculates the coil values for the motor
         void step();
 
-        // Computes the next output of the motor
+        // Sets the speed of the motor (angular speed is in deg/s)
+        float speedToHz(float angularSpeed);
+
+        // Computes the update frequency of the motor based on PID calculations
+        float computeStepHz();
+
+        // Releases the coils, allowing the motor to freewheel
+        void disable();
+
+        // Computes the next speed of the motor
         float compute(float feedback);
 
         // Calibrates the encoder and PID loop
@@ -133,6 +143,9 @@ class StepperMotor {
 
         // If the motor enable is inverted
         bool enableInverted = false;
+
+        // The stepping interval (in millis)
+        float stepInterval = 10;
 };
 
 

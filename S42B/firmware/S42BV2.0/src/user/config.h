@@ -100,7 +100,7 @@
 #define CLOSED_LOOP
 #define CLOSED_LOOP_CONFIG
 //#define TEST_FLASH
-#define STEPPER_UPDATE_FREQ 10
+#define STEPPER_SPEED_UPDATE_RATE 10
 
 // The CAN ID of this board
 // X:1, Y:2, Z:3, Z2:4..., E0:10, E1:11...

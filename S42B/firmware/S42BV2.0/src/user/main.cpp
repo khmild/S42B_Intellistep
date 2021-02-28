@@ -12,6 +12,13 @@
 // Create a new motor instance
 StepperMotor motor = StepperMotor();
 
+// Create a new timer instance
+HardwareTimer *stepTimer = new HardwareTimer(TIM1);
+HardwareTimer *stepIntervalTimer = new HardwareTimer(TIM2);
+
+// If the motor should move on step update
+bool acceptStep = true;
+
 // Run the setup
 void setup() {
 
@@ -98,8 +105,8 @@ void setup() {
         writeOLEDString(0, 22, " Err:  000.00 ");
         writeOLEDString(0, 42, " Deg:  0000.0");
 
-        // Attach the interupt to the step pin
-        attachInterrupt(digitalPinToInterrupt(STEP_PIN), incrementMotor, CHANGE);
+        // Setup the motor timers and interrupts
+        setupMotorTimers();
 
         // Loop forever, checking the keys and updating the display
         while(true) {
@@ -312,7 +319,61 @@ void overclock(uint32_t PLLMultiplier) {
 }
 
 
-// Need to declare a function to increment the motor for the ISR
+// Sets up the motor update timer
+void setupMotorTimers() {
+
+    // Attach the interupt to the step pin
+    attachInterrupt(digitalPinToInterrupt(STEP_PIN), incrementMotor, CHANGE);
+
+    // Setup the timer for steps
+    stepTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    stepTimer -> setOverflow(motor.computeStepHz(), HERTZ_FORMAT);
+    stepTimer -> attachInterrupt(stepInterrupt);
+    stepTimer -> resume();
+
+    // Setup the timer for step intervals
+    stepIntervalTimer -> setMode(2, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    stepIntervalTimer -> setOverflow(STEPPER_SPEED_UPDATE_RATE, HERTZ_FORMAT);
+    stepIntervalTimer -> attachInterrupt(stepIntervalInterrupt);
+    stepIntervalTimer -> resume();
+}
+
+
+// Need to declare a function to increment the motor for the step interrupt
 void incrementMotor() {
     motor.incrementAngle();
+}
+
+
+// Steps the motor
+void stepInterrupt() {
+
+    // If the motor should actually accept the stepping routine
+    if (acceptStep) {
+
+        // Step the motor
+        motor.step();
+    }
+}
+
+
+// Update the interval on the step timer
+void stepIntervalInterrupt() {
+
+    // Calculate the step update frequency
+    float stepFreq = motor.computeStepHz();
+
+    // Compute the next update time
+    if (stepFreq != -1) {
+
+        // Timer is valid, set it to the computed amount
+        acceptStep = true;
+        stepTimer -> setOverflow(stepFreq, HERTZ_FORMAT);
+    }
+    else {
+        
+        // Timer is invalid, flag it not to step
+        acceptStep = false;
+        stepTimer -> setOverflow(1, HERTZ_FORMAT);
+    }
 }
