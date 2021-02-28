@@ -8,6 +8,7 @@ void parseString(String buffer) {
     //   - M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
     //   - M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
     //   - M307 (ex M307) - Runs an autotune sequence for the PID loop
+    //   - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
     //   - M350 (ex M350 V16) - Sets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32
     //   - M500 (ex M500) - Saves the currently loaded parameters into flash
     //   - M907 (ex M907 V3000) - Sets the current in mA
@@ -39,6 +40,20 @@ void parseString(String buffer) {
                 // M307 (ex M307) - Runs a automatic calibration sequence for the PID loop and encoder
                 motor.calibrate();
                 break;
+            }
+            case 308: {
+                // M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
+
+                // Print a notice to the user that the PID tuning is starting
+                Serial.println("Notice: The manual PID tuning is now starting. To exit, send any serial data.");
+
+                // Wait for the user to read it
+                delay(1000);
+
+                // Loop forever, until a new value is sent
+                while (!Serial.available()) {
+                    Serial.println(getEncoderAngle());
+                }
             }
             case 350: {
                 // M350 (ex M350 V16) - Sets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32
