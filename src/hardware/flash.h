@@ -27,8 +27,8 @@ bool isCalibrated();
 uint16_t flashReadHalfWord(uint32_t address);
 uint8_t flashWriteHalfWord(uint32_t address, uint16_t data);
 void flashRead(uint32_t address, uint16_t *pBuffer);
-void flashWriteNoCheck(uint32_t address, uint16_t *pBuffer);
-bool FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data);
+bool flashWriteNoCheck(uint32_t address, uint16_t *pBuffer);
+bool flashProgramHalfWord(uint32_t Address, uint16_t Data);
 void flashWrite(uint32_t address, uint16_t *pBuffer);
 void flashErase32K();
 

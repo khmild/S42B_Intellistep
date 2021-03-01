@@ -4,6 +4,8 @@ A rework of the terribly coded firmware from the BTT S42B v2 boards
 
 I am currently working on redoing a lot of the functions found in the firmware. A list of the current things that are being worked on is in the Projects tab. If you don't see your issue there, then please let me know.
 
+***Note: For the time being, all serial and CAN messages should start with "<" and end with ">"***
+
 New Features:
 
 - Redone stepping setup

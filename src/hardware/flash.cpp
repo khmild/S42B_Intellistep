@@ -110,11 +110,28 @@ void flashRead(uint32_t address, uint16_t *pBuffer, uint16_t arrayLength) {
 }
 
 // ! Maybe add a return to see if the function completed successfully
-void flashWriteNoCheck(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
+bool flashWriteNoCheck(uint32_t address, uint16_t *pBuffer, uint16_t arrayLength) {
+
+    // Result accumulator, so the boolean doesn't have to be redeclared with each loop
+    bool flashOpSuccess;
+
+    // Loop through the buffer, writing each of the values
     for(uint16_t i = 0; i < arrayLength; i++) {
-        FLASH_ProgramHalfWord(WriteAddr, pBuffer[i]);
-        WriteAddr += 2;
+
+        // Perform the write operation
+        flashOpSuccess = flashProgramHalfWord(address, pBuffer[i]);
+
+        // Check if it failed. If so, return a fail
+        if (!flashOpSuccess) {
+            return false;
+        }
+
+        // Increment the address that we're writing to by 2
+        address += 2;
     }
+
+    // If we made it this far, all the of the writes were successful
+    return true;
 }
 
 // Function from the stm32f10x_flash library
@@ -125,7 +142,7 @@ void flashWriteNoCheck(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLeng
   * @param  Data: specifies the data to be programmed.
   * @retval FLASH Status: The returned value can be: true for operation success, false for fail 
   */
-bool FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data) {
+bool flashProgramHalfWord(uint32_t Address, uint16_t Data) {
 
     // Declare an accumulator
     bool flashAvailable = false;

@@ -61,7 +61,7 @@ String readSerialBuffer() {
     
     }
 
-    // If we made it this far, the read failed and we should return a -1 (parser ignores the string)
+    // If we made it this far, the read failed and we should return a -1 (will be ignored)
     return String(-1);
 }
 

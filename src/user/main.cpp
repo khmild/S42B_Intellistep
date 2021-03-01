@@ -62,8 +62,8 @@ void setup() {
     //motorInit();
     //TIM3_Init();
 
+    // Check if the board is calibrated. Need to force calibration if the board isn't calibrated
     if (!isCalibrated()) {
-        // ! Write yet, displaying that calibration needs to occur and tell the user that the calibration will start in after select key is pressed
 
         // Display that the motor is not calibrated
         writeOLEDString(48, 16, "NOT");
@@ -78,6 +78,9 @@ void setup() {
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
         while(true) {
+            // ! Only here for testing
+            runSerialParser();
+
             if (getMenuDepth() > 0) {
 
                 // Calibrate the motor
@@ -110,6 +113,9 @@ void setup() {
 
         // Loop forever, checking the keys and updating the display
         while(true) {
+            // ! Only here for testing
+            runSerialParser();
+            
             checkButtons();
 
             // Only update the display if the motor data is being displayed, buttons update the display when clicked
