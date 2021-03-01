@@ -29,7 +29,7 @@ uint8_t flashWriteHalfWord(uint32_t address, uint16_t data);
 void flashRead(uint32_t address, uint16_t *pBuffer);
 bool flashWriteNoCheck(uint32_t address, uint16_t *pBuffer);
 bool flashProgramHalfWord(uint32_t Address, uint16_t Data);
-void flashWrite(uint32_t address, uint16_t *pBuffer);
+void flashWrite(uint32_t address, uint16_t *pBuffer, uint16_t arrayLength);
 void flashErase32K();
 
 void unlockFlash();

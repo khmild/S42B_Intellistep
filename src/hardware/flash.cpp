@@ -192,7 +192,7 @@ void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
     secremain = STM_SECTOR_SIZE / 2 - secoff;
     if(arrayLength<=secremain)secremain=arrayLength;
     while(1) {
-        flashRead(secpos*STM_SECTOR_SIZE+FLASH_BASE,STMFLASH_BUF);
+        flashRead(secpos*STM_SECTOR_SIZE+FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);
         for(i=0;i<secremain;i++)
         {
             if(STMFLASH_BUF[secoff+i]!=0XFFFF)break;
@@ -204,8 +204,8 @@ void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
             {
                 STMFLASH_BUF[i+secoff]=pBuffer[i];
             }
-            flashWriteNoCheck(secpos*STM_SECTOR_SIZE+FLASH_BASE,STMFLASH_BUF);
-        } else flashWriteNoCheck(WriteAddr, pBuffer);
+            flashWriteNoCheck(secpos*STM_SECTOR_SIZE+FLASH_BASE,STMFLASH_BUF,STM_SECTOR_SIZE/2);
+        } else flashWriteNoCheck(WriteAddr, pBuffer,secremain);
         if(arrayLength==secremain)break;
         else
         {

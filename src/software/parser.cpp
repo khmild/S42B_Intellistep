@@ -73,7 +73,7 @@ String parseString(String buffer) {
             }
         }
     }
-    
+
     // Nothing here, nothing to do
     return "No command specified";
 }
