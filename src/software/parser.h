@@ -6,10 +6,11 @@
 #include "flash.h"
 
 // Defines for strings that are used repeatedly
-#define noValue "No value specified! Make sure to specify a value with a letter before it"
+#define FEEDBACK_NO_VALUE "No value specified! Make sure to specify a value with a letter before it"
+#define FEEDBACK_OK "ok"
 
-// Parse a string for commands
-void parseString(String buffer);
+// Parse a string for commands, returning the feedback on the command
+String parseString(String buffer);
 
 // Parse a string for a value after a letter
 String parseValue(String buffer, char letter);

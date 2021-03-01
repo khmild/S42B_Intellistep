@@ -1,7 +1,7 @@
 #include "parser.h"
 
 // Parses an entire string for any commands
-void parseString(String buffer) {
+String parseString(String buffer) {
     // ! Add more gcodes to be able to set inversion
 
     // GCode Table
@@ -27,19 +27,19 @@ void parseString(String buffer) {
             case 93: {
                 // M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
                 motor.setFullStepAngle(parseValue(buffer, 'V').toFloat());
-                break;
+                return FEEDBACK_OK;
             }
             case 306: {
                 // M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
                 motor.setPValue(parseValue(buffer, 'P').toFloat());
                 motor.setIValue(parseValue(buffer, 'I').toFloat());
                 motor.setDValue(parseValue(buffer, 'D').toFloat());
-                break;
+                return FEEDBACK_OK;
             }
             case 307: {
                 // M307 (ex M307) - Runs a automatic calibration sequence for the PID loop and encoder
                 motor.calibrate();
-                break;
+                return FEEDBACK_OK;
             }
             case 308: {
                 // M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
@@ -54,25 +54,28 @@ void parseString(String buffer) {
                 while (!Serial.available()) {
                     Serial.println(getEncoderAngle());
                 }
+                return FEEDBACK_OK;
             }
             case 350: {
                 // M350 (ex M350 V16) - Sets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32
                 motor.setMicrostepping(parseValue(buffer, 'V').toInt());
-                break;
+                return FEEDBACK_OK;
             }
             case 500: {
                 // M500 (ex M500) - Saves the currently loaded parameters into flash
                 saveParametersToFlash();
-                break;
+                return FEEDBACK_OK;
             }
             case 907: {
                 // M907 (ex M907 V3000) - Sets the current in mA
                 motor.setCurrent(parseValue(buffer, 'V').toInt());
-                break;
+                return FEEDBACK_OK;
             }
         }
     }
     
+    // Nothing here, nothing to do
+    return "No command specified";
 }
 
 
@@ -98,7 +101,7 @@ String parseValue(String buffer, char letter) {
     }
     else {
         // Index is invalid, V doesn't exist. Print an output message, then return a null
-        Serial.println(noValue);
+        Serial.println(FEEDBACK_NO_VALUE);
         return "-1";
     }
 }

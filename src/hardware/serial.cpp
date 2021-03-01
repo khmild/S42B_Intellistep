@@ -13,8 +13,8 @@ void initSerial() {
 }
 
 // Sends a string to the host
-void sendMessage(char* message) {
-    Serial.write(message);
+void sendMessage(String message) {
+    Serial.write(message.c_str());
 }
 
 // Reads the string in the buffer
@@ -67,5 +67,14 @@ String readSerialBuffer() {
 
 // Parse the buffer for commands
 void runSerialParser() {
-    parseString(readSerialBuffer());
+
+    // Save the value as the result is resource intensive to produce
+    String serialCommand = readSerialBuffer();
+
+    // Check that it is an actual command, then proceed
+    if (serialCommand != "-1") {
+
+        // Send the feedback from the serial command
+        sendMessage(parseString(serialCommand));
+    }
 }
