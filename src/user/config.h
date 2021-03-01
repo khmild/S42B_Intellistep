@@ -102,6 +102,9 @@
 //#define TEST_FLASH
 #define STEPPER_SPEED_UPDATE_RATE 10
 #define MAX_MOTOR_SPEED 50 // deg/s
+#define SERIAL_BUFFER_LENGTH 32 // Number of characters max in buffer
+#define STRING_START_MARKER '<'
+#define STRING_END_MARKER '>'
 
 // The CAN ID of this board
 // X:1, Y:2, Z:3, Z2:4..., E0:10, E1:11...

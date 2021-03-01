@@ -18,22 +18,54 @@ void sendMessage(char* message) {
 }
 
 // Reads the string in the buffer
-// ! Needs work, should clear buffer and only return if string end character is found
 String readSerialBuffer() {
 
-    // Check if there is serial data to be read
-    if (Serial.available()) {
+    // Local variables for storing relevant information
+    char receivedChars[SERIAL_BUFFER_LENGTH];
+    static int newIndex = 0;
+    char readChar;
 
-        // Add the latest serial data to the buffer
-        serialBuffer += Serial.read();
+    // Check if there is serial data available to read
+    if (Serial.available() > 0) {
+
+        // Read the first character. If the first is the string start indicator, then we can continue with the read
+        if (Serial.read() == STRING_START_MARKER) {
+
+            // Loop forever, until the entire string is read
+            while (Serial.available() > 0) {
+
+                // Read the character out of the buffer
+                readChar = Serial.read();
+
+                // If the character isn't the end, add it to the received characters
+                if (readChar != STRING_END_MARKER) {
+
+                    // Add it to the character list
+                    receivedChars[newIndex] = readChar;
+
+                    // Increment the counter
+                    newIndex++;
+
+                    // Make sure that the serial buffer isn't overrun
+                    if (newIndex >= SERIAL_BUFFER_LENGTH) {
+                        newIndex = SERIAL_BUFFER_LENGTH - 1;
+                    }
+                }
+                else {
+                    // End character reached, terminate the string and return
+                    receivedChars[newIndex] = '\0';
+                    return String(receivedChars);
+                }
+            }
+        }
+    
     }
 
-    // Return the buffer if it's full
-    return serialBuffer;
+    // If we made it this far, the read failed and we should return a -1 (parser ignores the string)
+    return String(-1);
 }
 
 // Parse the buffer for commands
-// ! Fix to use start and end characters
 void runSerialParser() {
     parseString(readSerialBuffer());
 }
