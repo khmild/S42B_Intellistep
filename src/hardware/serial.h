@@ -11,7 +11,6 @@
 void initSerial();
 void sendSerialMessage(String message);
 String readSerialBuffer();
-bool checkSerialData();
 void runSerialParser();
 
 #endif

@@ -45,7 +45,7 @@ void sendCANString(uint16_t ID, String string) {
 
             // Add the terminator to the end
             message.data[string.length()] = '>';
-            
+
             // Send the message over the CAN bus
             CANSend(message);
         }
@@ -77,7 +77,6 @@ void receieveCANMsg() {
                 CANCommandString = "";
             }
         }
-        
     }
 }
 

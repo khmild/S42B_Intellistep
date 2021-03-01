@@ -4,6 +4,9 @@
 // Arduino library
 #include "Arduino.h"
 
+// The buffer for serial data between serial reads
+String serialBuffer;
+
 // Initializes serial bus
 void initSerial() {
     Serial.begin(115200);
@@ -15,13 +18,18 @@ void sendMessage(char* message) {
 }
 
 // Reads the string in the buffer
+// ! Needs work, should clear buffer and only return if string end character is found
 String readSerialBuffer() {
-    return Serial.readString();
-}
 
-// Returns if there is serial data to be read
-bool checkSerialData() {
-    return (Serial.available() > 0);
+    // Check if there is serial data to be read
+    if (Serial.available()) {
+
+        // Add the latest serial data to the buffer
+        serialBuffer += Serial.read();
+    }
+
+    // Return the buffer if it's full
+    return serialBuffer;
 }
 
 // Parse the buffer for commands
