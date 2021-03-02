@@ -13,7 +13,7 @@ void initSerial() {
 }
 
 // Sends a string to the host
-void sendMessage(String message) {
+void sendSerialMessage(String message) {
     Serial.write(message.c_str());
 }
 
@@ -69,6 +69,9 @@ void runSerialParser() {
     if (serialCommandBuffer != "-1") {
 
         // Send the feedback from the serial command
-        sendMessage(parseString(serialCommandBuffer));
+        sendSerialMessage(parseString(serialCommandBuffer));
     }
+
+    // ! Test print
+    sendSerialMessage("Serial working");
 }
