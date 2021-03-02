@@ -8,13 +8,13 @@ bool isCalibrated() {
     unlockFlash();
 
     // Get the calibration flag
-    uint16_t Calibration_flag = flashReadHalfWord(CALIBRATION_ADDRESS);
+    uint16_t calibrationFlag = flashReadHalfWord(CALIBRATION_ADDRESS);
 
     // Lock the flash again
     lockFlash();
 
     // Return if the unit is calibrated
-    return ((Calibration_flag >> 8) == 0xAA);
+    return ((calibrationFlag >> 8) == 0xAA);
 }
 
 
