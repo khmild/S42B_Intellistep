@@ -9,11 +9,11 @@ String serialBuffer;
 
 // Initializes serial bus
 void initSerial() {
-    Serial.begin(115200);
+    Serial.begin(SERIAL_BAUD);
 }
 
 // Sends a string to the host
-void sendMessage(String message) {
+void sendSerialMessage(String message) {
     Serial.write(message.c_str());
 }
 
@@ -21,8 +21,7 @@ void sendMessage(String message) {
 String readSerialBuffer() {
 
     // Local variables for storing relevant information
-    char receivedChars[SERIAL_BUFFER_LENGTH];
-    static int newIndex = 0;
+    String receivedString;
     char readChar;
 
     // Check if there is serial data available to read
@@ -41,40 +40,38 @@ String readSerialBuffer() {
                 if (readChar != STRING_END_MARKER) {
 
                     // Add it to the character list
-                    receivedChars[newIndex] = readChar;
-
-                    // Increment the counter
-                    newIndex++;
-
-                    // Make sure that the serial buffer isn't overrun
-                    if (newIndex >= SERIAL_BUFFER_LENGTH) {
-                        newIndex = SERIAL_BUFFER_LENGTH - 1;
-                    }
+                    receivedString.concat(readChar);
                 }
                 else {
                     // End character reached, terminate the string and return
-                    receivedChars[newIndex] = '\0';
-                    return String(receivedChars);
+                    return receivedString;
                 }
+
+                // ! Maybe remove at a later date due to performance concerns
+                // Delay to allow next serial character to come in (1 second / time to send 1 character) (baud rate is bits/s, a character is 8 bits)
+                delay(1000/(SERIAL_BAUD/8));
             }
         }
     
     }
 
     // If we made it this far, the read failed and we should return a -1 (will be ignored)
-    return String(-1);
+    return "-1";
 }
 
 // Parse the buffer for commands
 void runSerialParser() {
 
     // Save the value as the result is resource intensive to produce
-    String serialCommand = readSerialBuffer();
+    String serialCommandBuffer = readSerialBuffer();
 
     // Check that it is an actual command, then proceed
-    if (serialCommand != "-1") {
+    if (serialCommandBuffer != "-1") {
 
         // Send the feedback from the serial command
-        sendMessage(parseString(serialCommand));
+        sendSerialMessage(parseString(serialCommandBuffer));
     }
+
+    // ! Test print
+    sendSerialMessage("Serial working");
 }

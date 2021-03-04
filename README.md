@@ -24,5 +24,8 @@ GCode Table
 - M307 (ex M307) - Runs an autotune sequence for the PID loop
 - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
 - M350 (ex M350 V16) - Sets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32
+- M352 (ex M320 S1) - Sets the direction pin inversion for the motor (0 is standard, 1 is inverted)
+- M353 (ex M353 S1) - Sets the enable pin inversion for the motor (0 is standard, 1 is inverted)
+- M354 (ex M354 S1) - Sets if the motor dip switches were installed incorrectly (reversed) (0 is standard, 1 is inverted)
 - M500 (ex M500) - Saves the currently loaded parameters into flash
 - M907 (ex M907 V3000) - Sets the current in mA
