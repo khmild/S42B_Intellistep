@@ -184,19 +184,14 @@ bool StepperMotor::getEnableInversion() {
 }
 
 
-// Moves the set point one step in the respective direction
-void StepperMotor::incrementAngle() {
+// Computes the coil values for the next step position and increments the set angle
+void StepperMotor::step() {
 
     // Main angle change (any inversions * angle of microstep)
-    float angleChange = StepperMotor::invertDirection(!(digitalRead(DIRECTION_PIN) == HIGH)) * StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
+    float angleChange = StepperMotor::invertDirection(digitalRead(DIRECTION_PIN) == LOW) * StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
 
     // Set the desired angle to itself + the change in angle
     this -> desiredAngle += angleChange;
-}
-
-
-// Computes the coil values for the next step position
-void StepperMotor::step() {
 
     /* Explanation of how the stepping calculations work:
        1. Current angle is received from the encoder
@@ -230,6 +225,14 @@ void StepperMotor::step() {
         // Round the phase angle to be set to the closest perfect angles (increases torque on the output)
         phaseAngle += fmod(-phaseAngle, (2*PI / ((this -> microstepping) * 4)));
     }
+
+    // Drive the coils to the new phase angle
+    driveCoils(phaseAngle);
+}
+
+
+// Sets the coils of the motor based on the phase angle
+void StepperMotor::driveCoils(float phaseAngle) {
 
     // Equation comes out to be (effort * 0-1) depending on the sine/cosine of the phase angle
     int16_t coilAPower = round((this -> current) * sin(phaseAngle));
@@ -298,18 +301,40 @@ float StepperMotor::speedToHz(float angularSpeed) {
 }
 
 
+// Enables the motor, powering the coils
+void StepperMotor::enable() {
+
+    // Check if the motor is enabled yet. No need to set all of the coils if they're already set
+    if (!(this -> enabled)) {
+
+        // Mod the current angle by total phase angle to estimate the phase angle of the motor, then set the coils to the current position
+        driveCoils(fmod(getEncoderAngle(), ((this -> fullStepAngle) * 4)));
+
+        // Set the motor to be enabled
+        this -> enabled = true;
+    }
+}
+
+
 // Disables the motor, freeing the coils
 void StepperMotor::disable() {
 
-    // Set the A driver to coast
-    digitalWrite(COIL_A_DIR_1, LOW);
-    digitalWrite(COIL_A_DIR_2, LOW);
-    analogWrite(COIL_A_POWER_OUTPUT, 0);
+    // Check if the motor is not enabled yet. No need to disable the coils if they're already off
+    if (this -> enabled) {
 
-    // Set the B driver to coast
-    digitalWrite(COIL_B_DIR_1, LOW);
-    digitalWrite(COIL_B_DIR_2, LOW);
-    analogWrite(COIL_B_POWER_OUTPUT, 0);
+        // Set the A driver to coast
+        digitalWrite(COIL_A_DIR_1, LOW);
+        digitalWrite(COIL_A_DIR_2, LOW);
+        analogWrite(COIL_A_POWER_OUTPUT, 0);
+
+        // Set the B driver to coast
+        digitalWrite(COIL_B_DIR_1, LOW);
+        digitalWrite(COIL_B_DIR_2, LOW);
+        analogWrite(COIL_B_POWER_OUTPUT, 0);
+
+        // Set the enabled to false so we don't repeat
+        this -> enabled = false;
+    }
 }
 
 
@@ -357,25 +382,6 @@ void StepperMotor::calibrate() {
     // Calibrate encoder offset
 
     // Calibrate PID loop
-}
-
-
-// Motor loop (called on a regular basis by the timer)
-float StepperMotor::computeStepHz() {
-
-    // Check the enable pin (nothing should happen if off)
-    if (digitalRead(ENABLE_PIN) == (this -> enableInverted)) {
-        
-        // Motor should be disabled
-        disable();
-
-        // Set the update rate to a 10th of a second (no need to be on a special update if not necessary)
-        return 10; // -1 is the signal for disable the interrupt
-    }
-    else {
-        // The motor needs moved at the specified speed
-        return speedToHz(compute(getEncoderAngle()));
-    }
 }
 
 

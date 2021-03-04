@@ -13,8 +13,8 @@
 StepperMotor motor = StepperMotor();
 
 // Create a new timer instance
-HardwareTimer *stepTimer = new HardwareTimer(TIM1);
-HardwareTimer *stepIntervalTimer = new HardwareTimer(TIM2);
+HardwareTimer *stepCorrectionTimer = new HardwareTimer(TIM1);
+HardwareTimer *stepSkipCheckTimer = new HardwareTimer(TIM2);
 
 // If the motor should move on step update
 bool acceptStep = true;
@@ -115,7 +115,7 @@ void setup() {
         while(true) {
             // ! Only here for testing
             runSerialParser();
-            
+
             checkButtons();
 
             // Only update the display if the motor data is being displayed, buttons update the display when clicked
@@ -328,58 +328,57 @@ void overclock(uint32_t PLLMultiplier) {
 // Sets up the motor update timer
 void setupMotorTimers() {
 
+    // Setup the step pin
+    pinMode(STEP_PIN, INPUT_PULLDOWN);
+
     // Attach the interupt to the step pin
-    attachInterrupt(digitalPinToInterrupt(STEP_PIN), incrementMotor, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, CHANGE);
 
     // Setup the timer for steps
-    stepTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    stepTimer -> setOverflow(motor.computeStepHz(), HERTZ_FORMAT);
-    stepTimer -> attachInterrupt(stepInterrupt);
-    stepTimer -> resume();
+    stepCorrectionTimer -> pause();
+    stepCorrectionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
+    stepCorrectionTimer -> attachInterrupt(stepMotor);
 
     // Setup the timer for step intervals
-    stepIntervalTimer -> setMode(2, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    stepIntervalTimer -> setOverflow(STEPPER_SPEED_UPDATE_RATE, HERTZ_FORMAT);
-    stepIntervalTimer -> attachInterrupt(stepIntervalInterrupt);
-    stepIntervalTimer -> resume();
+    stepSkipCheckTimer -> pause();
+    stepSkipCheckTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    stepSkipCheckTimer -> setOverflow(STEPPER_SKIP_CHECK_RATE, HERTZ_FORMAT);
+    stepSkipCheckTimer -> attachInterrupt(stepSkipCheckInterrupt);
+    stepSkipCheckTimer -> resume();
 }
 
 
 // Need to declare a function to increment the motor for the step interrupt
-void incrementMotor() {
-    motor.incrementAngle();
-}
-
-
-// Steps the motor
-void stepInterrupt() {
-
-    // If the motor should actually accept the stepping routine
-    if (acceptStep) {
-
-        // Step the motor
-        motor.step();
-    }
+void stepMotor() {
+    motor.step();
 }
 
 
 // Update the interval on the step timer
-void stepIntervalInterrupt() {
+void stepSkipCheckInterrupt() {
 
-    // Calculate the step update frequency
-    float stepFreq = motor.computeStepHz();
+    // Check to see the state of the enable pin
+    if (digitalRead(ENABLE_PIN) == motor.getEnableInversion()) {
 
-    // Compute the next update time
-    if (stepFreq != -1) {
-
-        // Timer is valid, set it to the computed amount
-        acceptStep = true;
-        stepTimer -> setOverflow(stepFreq, HERTZ_FORMAT);
+        // The enable pin is off, the motor should be disabled
+        motor.disable();
     }
     else {
-        
-        // Timer is invalid, flag it not to step
-        acceptStep = false;
-        stepTimer -> setOverflow(1, HERTZ_FORMAT);
+
+        // Enable the motor (just energizes the coils to hold it in position)
+        motor.enable();
+
+        // Check to make sure that the motor is in range (it hasn't skipped steps)
+        if (abs(getEncoderAngle() - motor.desiredAngle) > (motor.getFullStepAngle() / motor.getMicrostepping())) {
+
+            // Timer needs to be enabled, set it to the computed amount
+            stepCorrectionTimer -> resume();
+            stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
+        }
+        else {
+            // Disable the timer for step correction, no need for it to run as we're in bounds
+            stepCorrectionTimer -> pause();
+        }
     }
 }

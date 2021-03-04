@@ -79,17 +79,17 @@ class StepperMotor {
         // Get if the motor enable pin is inverted
         bool getEnableInversion();
 
-        // Moves the set point one step in the respective direction
-        void incrementAngle();
-
-        // Calculates the coil values for the motor
+        // Calculates the coil values for the motor and updates the set angle
         void step();
+
+        // Sets the coils to hold the motor at the desired phase angle
+        void driveCoils(float phaseAngle);
 
         // Sets the speed of the motor (angular speed is in deg/s)
         float speedToHz(float angularSpeed);
 
-        // Computes the update frequency of the motor based on PID calculations
-        float computeStepHz();
+        // Enables the coils, preventing motor movement
+        void enable();
 
         // Releases the coils, allowing the motor to freewheel
         void disable();
@@ -100,14 +100,14 @@ class StepperMotor {
         // Calibrates the encoder and PID loop
         void calibrate();
 
+        // Variable to keep the desired angle of the motor
+        float desiredAngle = 0;
+
     // Things that shouldn't be accessed by the outside
     private:
 
         // Function for turning booleans into -1 for true and 1 for false
         float invertDirection(bool invert);
-
-        // Variable to keep the desired angle of the motor
-        float desiredAngle = 0;
 
         // Motor PID controller values
         float pTerm = 0;
@@ -134,6 +134,9 @@ class StepperMotor {
 
         // Angle of a full step
         float fullStepAngle = 1.8;
+
+        // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
+        bool enabled = false;
 
         // If the motor direction is inverted
         bool reversed = false;
