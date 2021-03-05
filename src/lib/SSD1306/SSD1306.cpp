@@ -1,3 +1,4 @@
+/*
 #include "SSD1306.h"
 #include <math.h>
 #include <stdlib.h>
@@ -6,7 +7,7 @@
 #if defined(SSD1306_USE_I2C)
 
 void SSD1306_Reset(void) {
-    /* for I2C - do nothing */
+    // for I2C - do nothing
 }
 
 // Send a byte to the command register
@@ -62,7 +63,7 @@ static SSD1306_t SSD1306;
 // SPI Interface Object
 //SPIClass OLED_PANEL_SPI = SPIClass();
 
-/* Fills the Screenbuffer with values from a given buffer of a fixed length */
+// Fills the Screenbuffer with values from a given buffer of a fixed length
 SSD1306_Error_t SSD1306_FillBuffer(uint8_t* buf, uint32_t len) {
     SSD1306_Error_t ret = SSD1306_ERR;
     if (len <= SSD1306_BUFFER_SIZE) {
@@ -180,7 +181,7 @@ void SSD1306_Init(SPIClass &OLED_PANEL_SPI) {
 
 // Fill the whole screen with the given color
 void SSD1306_Fill(SSD1306_COLOR color) {
-    /* Set memory */
+    // Set memory
     uint32_t i;
 
     for(i = 0; i < sizeof(SSD1306_Buffer); i++) {
@@ -309,9 +310,9 @@ void SSD1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR 
     }
     else
     {
-    /*nothing to do*/
+    // nothing to do
     }
-        
+
     if(error2 < deltaX)
     {
       error += deltaX;
@@ -319,7 +320,7 @@ void SSD1306_Line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR 
     }
     else
     {
-    /*nothing to do*/
+    // nothing to do
     }
   }
   return;
@@ -334,15 +335,15 @@ void SSD1306_Polyline(const SSD1306_VERTEX *par_vertex, uint16_t par_size, SSD13
   }
   else
   {
-    /*nothing to do*/
+    // nothing to do
   }
   return;
 }
-/*Convert Degrees to Radians*/
+// Convert Degrees to Radians
 static float SSD1306_DegToRad(float par_deg) {
     return par_deg * 3.14 / 180.0;
 }
-/*Normalize degree to [0;360]*/
+// Normalize degree to [0;360]
 static uint16_t SSD1306_NormalizeTo0_360(uint16_t par_deg) {
   uint16_t loc_angle;
   if(par_deg <= 360)
@@ -356,10 +357,10 @@ static uint16_t SSD1306_NormalizeTo0_360(uint16_t par_deg) {
   }
   return loc_angle;
 }
-/*DrawArc. Draw angle is beginning from 4 quart of trigonometric circle (3pi/2)
+//*DrawArc. Draw angle is beginning from 4 quart of trigonometric circle (3pi/2)
  * start_angle in degree
  * sweep in degree
- */
+ * /
 void SSD1306_DrawArc(uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color) {
     #define CIRCLE_APPROXIMATION_SEGMENTS 36
     float approx_degree;
@@ -421,12 +422,12 @@ void SSD1306_DrawCircle(uint8_t par_x,uint8_t par_y,uint8_t par_r,SSD1306_COLOR 
             }
             else
             {
-              /*nothing to do*/
+              // nothing to do
             }
         }
         else
         {
-          /*nothing to do*/
+          // nothing to do
         }
         if(e2 > x) {
           x++;
@@ -434,7 +435,7 @@ void SSD1306_DrawCircle(uint8_t par_x,uint8_t par_y,uint8_t par_r,SSD1306_COLOR 
         }
         else
         {
-          /*nothing to do*/
+          // nothing to do
         }
     } while(x <= 0);
 
@@ -472,3 +473,4 @@ void SSD1306_SetDisplayOn(SPIClass &OLED_PANEL_SPI, const uint8_t on) {
 uint8_t SSD1306_GetDisplayOn() {
     return SSD1306.DisplayOn;
 }
+*/

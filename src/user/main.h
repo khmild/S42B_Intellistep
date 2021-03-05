@@ -17,5 +17,6 @@ extern void stepSkipCheckInterrupt();
 
 extern StepperMotor motor;
 
+extern void blink();
 
 #endif

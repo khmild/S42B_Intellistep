@@ -7,14 +7,14 @@
 #include "encoder.h"
 #include "oled.h"
 #include "stm32yyxx_ll_rcc.h"
-#include "SSD1306.h"
+//#include "SSD1306.h"
 
 // Create a new motor instance
 StepperMotor motor = StepperMotor();
 
 // Create a new timer instance
-HardwareTimer *stepCorrectionTimer = new HardwareTimer(TIM1);
-HardwareTimer *stepSkipCheckTimer = new HardwareTimer(TIM2);
+//HardwareTimer *stepCorrectionTimer = new HardwareTimer(TIM1);
+//HardwareTimer *stepSkipCheckTimer = new HardwareTimer(TIM2);
 
 // If the motor should move on step update
 bool acceptStep = true;
@@ -23,11 +23,12 @@ bool acceptStep = true;
 void setup() {
 
     // Setup the system clock (includes overclocking)
-    overclock(RCC_CFGR_PLLMULL12);
+    //overclock(RCC_CFGR_PLLMULL12);
 
     // Initialize the LED
     pinMode(LED_PIN, OUTPUT);
-
+    blink();
+    /*
     // Initialize the OLED
     initOLED();
 
@@ -46,12 +47,12 @@ void setup() {
     // Initialize the CAN bus
     initCAN();
 
-    /*
+
     // Test the flash if specified
-    #ifdef TEST_FLASH
-        flash_test();
-    #endif
-    */
+    //#ifdef TEST_FLASH
+    //    flash_test();
+    //#endif
+
 
     // Clear the display, then write that we're using the closed loop mode
     clearOLED();
@@ -293,7 +294,7 @@ void flash_test(void)
 
 */
 void loop() {
-
+    blink();
 }
 
 
@@ -335,17 +336,17 @@ void setupMotorTimers() {
     attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, CHANGE);
 
     // Setup the timer for steps
-    stepCorrectionTimer -> pause();
-    stepCorrectionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
-    stepCorrectionTimer -> attachInterrupt(stepMotor);
+    //stepCorrectionTimer -> pause();
+    //stepCorrectionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    //stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
+    //stepCorrectionTimer -> attachInterrupt(stepMotor);
 
     // Setup the timer for step intervals
-    stepSkipCheckTimer -> pause();
-    stepSkipCheckTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    stepSkipCheckTimer -> setOverflow(STEPPER_SKIP_CHECK_RATE, HERTZ_FORMAT);
-    stepSkipCheckTimer -> attachInterrupt(stepSkipCheckInterrupt);
-    stepSkipCheckTimer -> resume();
+    //stepSkipCheckTimer -> pause();
+    //stepSkipCheckTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    //stepSkipCheckTimer -> setOverflow(STEPPER_SKIP_CHECK_RATE, HERTZ_FORMAT);
+    //stepSkipCheckTimer -> attachInterrupt(stepSkipCheckInterrupt);
+    //stepSkipCheckTimer -> resume();
 }
 
 
@@ -373,12 +374,21 @@ void stepSkipCheckInterrupt() {
         if (abs(getEncoderAngle() - motor.desiredAngle) > (motor.getFullStepAngle() / motor.getMicrostepping())) {
 
             // Timer needs to be enabled, set it to the computed amount
-            stepCorrectionTimer -> resume();
-            stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
+            //stepCorrectionTimer -> resume();
+            //stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
         }
         else {
             // Disable the timer for step correction, no need for it to run as we're in bounds
-            stepCorrectionTimer -> pause();
+            //stepCorrectionTimer -> pause();
         }
     }
+}
+
+void blink() {
+
+    //pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, HIGH);
+    delay(250);
+    digitalWrite(LED_PIN, LOW);
+    delay(250);
 }

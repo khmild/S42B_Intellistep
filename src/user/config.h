@@ -50,12 +50,13 @@
 // OLED Mappings
 #define OLED_CS_PIN   PB12
 #define OLED_RST_PIN  PA8
-#define OLED_SCLK_PIN PB13
+#define OLED_RS_PIN   PB13
+#define OLED_SCLK_PIN PB15
 #define OLED_SDIN_PIN PB14 // D1
-#define OLED_DC_PIN   PB15 // ! Needs checked!
-#define OLED_CS_GPIO_PORT  GPIOB
-#define OLED_RST_GPIO_PORT GPIOB
-#define OLED_DC_GPIO_PORT  GPIOB
+//#define OLED_DC_PIN   PB15 // ! Needs checked!
+//#define OLED_CS_GPIO_PORT  GPIOB
+//#define OLED_RST_GPIO_PORT GPIOB
+//#define OLED_DC_GPIO_PORT  GPIOB
 
 // Button mappings
 #define DOWN_BUTTON_PIN         PA3
