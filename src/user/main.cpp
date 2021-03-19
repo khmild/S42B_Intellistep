@@ -22,13 +22,17 @@ bool acceptStep = true;
 // Run the setup
 void setup() {
 
+    // Set everything up
+    SystemInit();
+
     // Setup the system clock (includes overclocking)
     //overclock(RCC_CFGR_PLLMULL12);
+    overclock(RCC_CFGR_PLLMULL16);
 
     // Initialize the LED
     pinMode(LED_PIN, OUTPUT);
-    blink();
-    /*
+    digitalWrite(LED_PIN, HIGH);
+
     // Initialize the OLED
     initOLED();
 
@@ -82,6 +86,9 @@ void setup() {
             // ! Only here for testing
             runSerialParser();
 
+            // ! Only for testing
+            blink();
+
             if (getMenuDepth() > 0) {
 
                 // Calibrate the motor
@@ -99,18 +106,19 @@ void setup() {
         loadSavedValues();
 
         // Let the user know that the calibration was successfully loaded
-        writeOLEDString(0, 25, "  Calibration");
-        writeOLEDString(40, 45, "  OK!");
+        clearOLED();
+        writeOLEDString(0, 15, "  Calibration");
+        writeOLEDString(40, 35, "  OK!");
         delay(500);
 
         // Start displaying the motor data
         clearOLED();
-        writeOLEDString(0, 2, "RPM:  0000 RPM");
-        writeOLEDString(0, 22, " Err:  000.00 ");
-        writeOLEDString(0, 42, " Deg:  0000.0");
+        writeOLEDString(0, 0,  "RPM: 0.00");
+        writeOLEDString(0, 16, "Err: 0.00");
+        writeOLEDString(0, 32, "Deg: 0.00");
 
         // Setup the motor timers and interrupts
-        setupMotorTimers();
+        // ! setupMotorTimers();
 
         // Loop forever, checking the keys and updating the display
         while(true) {
@@ -126,10 +134,11 @@ void setup() {
         }
     }
     /*
+
     EXTIX_Init();
     NVIC_EnableIRQ(EXTI1_IRQn);         //
     UART_Configuration(USART1, UART1_DEFAULT_BAUDRATE);     //
-    CAN1_Mode_Init(CAN_SJW_1tq, CAN_BS2_6tq, CAN_BS1_5tq, 6, CAN_Mode_LoopBack);// 
+    CAN1_Mode_Init(CAN_SJW_1tq, CAN_BS2_6tq, CAN_BS1_5tq, 6, CAN_Mode_LoopBack);//
     res = CAN1_Send_Msg(canbufTx, 8);                      //
     delayMs(100);
     if(res){                                            //
@@ -221,7 +230,7 @@ void setup() {
             delay_ms(10);
             if(KEY_Confirm==0){
                 if(k4_flag == 0){
-                    k4_flag =1; 
+                    k4_flag =1;
                     mode=!mode;
                     CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_5tq,6,mode);	//
 
@@ -298,6 +307,7 @@ void loop() {
 }
 
 
+// Overclocks the processor to the desired value
 void overclock(uint32_t PLLMultiplier) {
 
     // Use PLL as the system clock instead of the HSE (the board's oscillator)
@@ -306,11 +316,11 @@ void overclock(uint32_t PLLMultiplier) {
     // Activate the HSE (board's oscillator)
     RCC -> CR |= RCC_CR_HSEON;
 
-    // Set the multiplier to 6x
+    // Set the multiplier to desired
     RCC -> CFGR |= PLLMultiplier;
 
     // Set the HSE to half speed before the PLL (so effectively multiplier/2 speed overall)
-    RCC -> CFGR |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
+    RCC -> CFGR |= RCC_CFGR_PLLXTPRE_HSE;
 
     // Activate the PLL
     RCC -> CR |= RCC_CR_PLLON;
@@ -325,7 +335,7 @@ void overclock(uint32_t PLLMultiplier) {
     SystemCoreClockUpdate();
 }
 
-
+/*
 // Sets up the motor update timer
 void setupMotorTimers() {
 
@@ -348,14 +358,14 @@ void setupMotorTimers() {
     //stepSkipCheckTimer -> attachInterrupt(stepSkipCheckInterrupt);
     //stepSkipCheckTimer -> resume();
 }
-
-
+*/
+/*
 // Need to declare a function to increment the motor for the step interrupt
 void stepMotor() {
     motor.step();
 }
-
-
+*/
+/*
 // Update the interval on the step timer
 void stepSkipCheckInterrupt() {
 
@@ -383,12 +393,12 @@ void stepSkipCheckInterrupt() {
         }
     }
 }
-
+*/
 void blink() {
 
     //pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, HIGH);
-    delay(250);
+    delay(500);
     digitalWrite(LED_PIN, LOW);
-    delay(250);
+    delay(500);
 }

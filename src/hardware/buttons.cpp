@@ -6,6 +6,7 @@
 // Variable definitions
 // Boolean for storing if the dip switches were installed the wrong way
 bool dipInverted = false;
+uint32_t lastButtonClickTime = 0;
 
 // Initialize the button pins as inputs
 void initButtons() {
@@ -32,34 +33,47 @@ void initButtons() {
 // Scan each of the buttons
 void checkButtons(void) {
 
-  // Check the select buttons
-  if(checkButtonState(SELECT_BUTTON_PIN)) {
+  // Make sure that the buttons don't repeat too fast
+  if (millis() - lastButtonClickTime > BUTTON_REPEAT_INTERVAL) {
 
-    // Select the current menu item
-    selectMenuItem();
+    // Check the select buttons
+    if(checkButtonState(SELECT_BUTTON_PIN)) {
 
-    // Update the display
-    updateDisplay();
-  }
+      // Update the last click time
+      lastButtonClickTime = millis();
 
-  // Check the down button
-  else if(checkButtonState(DOWN_BUTTON_PIN)) {
+      // Select the current menu item
+      selectMenuItem();
 
-    // Move down
-    moveCursor();
+      // Update the display
+      updateDisplay();
+    }
 
-    // Update the screen
-    updateDisplay();
-  }
+    // Check the down button
+    else if(checkButtonState(DOWN_BUTTON_PIN)) {
 
-  // Check the back button
-  else if(checkButtonState(BACK_BUTTON_PIN)) {
+      // Update the last click time
+      lastButtonClickTime = millis();
 
-    // Back up
-    exitCurrentMenu();
+      // Move down
+      moveCursor();
 
-    // Update the screen
-    updateDisplay();
+      // Update the screen
+      updateDisplay();
+    }
+
+    // Check the back button
+    else if(checkButtonState(BACK_BUTTON_PIN)) {
+
+      // Update the last click time
+      lastButtonClickTime = millis();
+
+      // Back up
+      exitCurrentMenu();
+
+      // Update the screen
+      updateDisplay();
+    }
   }
 }
 

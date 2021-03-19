@@ -5,12 +5,14 @@
 
 // The index of the current top level menu item
 int topLevelMenuIndex = 0;
+int lastTopLevelMenuIndex = 0;
 
 // The current value of the cursor
 int currentCursorIndex = 0;
 
 // The current menu depth. 0 would be the motor data, 1 the main menu, and 2 any submenus
 int menuDepthIndex = 0;
+int lastMenuDepthIndex = 0;
 
 // The SPI interface for the OLED
 //SPIClass OLED_SPI = SPIClass(OLED_DC_PIN, OLED_SDIN_PIN, OLED_SCLK_PIN, OLED_CS_PIN);
@@ -18,6 +20,9 @@ int menuDepthIndex = 0;
 
 // Main SPI setup function
 void initOLED() {
+
+    // Start the OLED (BTT way for now)
+    OLED_Init();
 
     // Start the OLED SPI
     //OLED_SPI.begin();
@@ -37,6 +42,7 @@ void writeOLEDString(uint8_t x, uint8_t y, String string) {
 
 // Convience function to clear the OLED display
 void clearOLED() {
+    OLED_Clear();
     //SSD1306_Fill(BLACK);
 }
 
@@ -56,13 +62,13 @@ void updateDisplay() {
             // Then the strings are converted into character arrays by giving the address of the first character in the string
             clearOLED();
             writeOLEDString(0, 0, "->");
-            writeOLEDString(2, 0,  &topLevelMenuItems[(topLevelMenuIndex)     % topLevelMenuLength][0]);
-            writeOLEDString(2, 16, &topLevelMenuItems[(topLevelMenuIndex + 1) % topLevelMenuLength][0]);
-            writeOLEDString(2, 32, &topLevelMenuItems[(topLevelMenuIndex + 2) % topLevelMenuLength][0]);
-            writeOLEDString(2, 48, &topLevelMenuItems[(topLevelMenuIndex + 3) % topLevelMenuLength][0]);
+            writeOLEDString(25, 0,  &topLevelMenuItems[(topLevelMenuIndex)     % topLevelMenuLength][0]);
+            writeOLEDString(25, 16, &topLevelMenuItems[(topLevelMenuIndex + 1) % topLevelMenuLength][0]);
+            writeOLEDString(25, 32, &topLevelMenuItems[(topLevelMenuIndex + 2) % topLevelMenuLength][0]);
+            writeOLEDString(25, 48, &topLevelMenuItems[(topLevelMenuIndex + 3) % topLevelMenuLength][0]);
             break;
 
-        case 2: {
+        case 2:
             // We should be in a sub menu, this is where we have to figure out which submenu that should be
             switch(topLevelMenuIndex) {
                 case 0:
@@ -89,7 +95,7 @@ void updateDisplay() {
                         if (!((currentCursorIndex + stringIndex) * 100 > MAX_CURRENT)) {
 
                             // Value is in range, display the current on that line
-                            writeOLEDString(2, stringIndex * 16, String((currentCursorIndex + stringIndex) * 100) + String(" mA"));
+                            writeOLEDString(25, stringIndex * 16, String((int) ((currentCursorIndex + stringIndex) * 100)) + String("mA"));
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
@@ -111,7 +117,6 @@ void updateDisplay() {
                         // Make sure that the cursor index is in valid range
                         currentCursorIndex = 2;
                     }
-                    }
 
                     // Write each of the strings
                     for (int stringIndex = 0; stringIndex <= 3; stringIndex++) {
@@ -120,7 +125,7 @@ void updateDisplay() {
                         if (!(pow(2, currentCursorIndex + stringIndex) > MAX_MICROSTEP_DIVISOR)) {
 
                             // Value is in range, display the current on that line
-                            writeOLEDString(2, stringIndex * 16, String("1/") + String(pow(2, currentCursorIndex + stringIndex)) + String(" th"));
+                            writeOLEDString(25, stringIndex * 16, String("1/") + String((int) pow(2, currentCursorIndex + stringIndex)) + String("th"));
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
@@ -128,7 +133,7 @@ void updateDisplay() {
                     }
                     break;
 
-                case 3: {
+                case 3:
                     // In the enable logic menu, a very simple menu. Just need to invert the displayed state
                     // Clear the OLED
                     clearOLED();
@@ -147,8 +152,8 @@ void updateDisplay() {
                         writeOLEDString(0, 24, "Normal");
                     }
                     break;
-                }
-                case 4: {
+
+                case 4:
                     // Another easy menu, just the direction pin. Once again, just need to invert the state
                     clearOLED();
 
@@ -166,18 +171,24 @@ void updateDisplay() {
                         writeOLEDString(0, 24, "Normal");
                     }
                     break;
-                }
+            } // Top level menu switch
             break;
-        }
-    }
-}
+    } // Main switch
+
+    // Save the last set value (for display functions that don't need to clear the OLED all of the time)
+    lastMenuDepthIndex = menuDepthIndex;
+    lastTopLevelMenuIndex = topLevelMenuIndex;
+
+} // Display menu function
 
 
 // Gets the latest parameters from the motor and puts them on screen
 void displayMotorData() {
 
-    // Clear the old data off of the display
-    clearOLED();
+    // Clear the old menu off of the display
+    if (!(lastMenuDepthIndex == 0)) {
+        clearOLED();
+    }
 
     // RPM of the motor (RPM is capped at 2 decimal places)
     float currentRPM = motor.getMotorRPM();
@@ -205,7 +216,7 @@ void selectMenuItem() {
     }
 
     // If we're in certain menus, the cursor should start at their current value
-    if (menuDepthIndex == 2) {
+    else if (menuDepthIndex == 2) {
         // Cursor settings are only needed in the submenus
 
         // Check the submenus available
@@ -214,6 +225,10 @@ void selectMenuItem() {
             case 0:
                 // Nothing to see here, just the calibration.
                 motor.calibrate();
+
+                // Exit the menu
+                menuDepthIndex--;
+
                 break;
 
             case 1:
@@ -226,11 +241,19 @@ void selectMenuItem() {
                     // Non-standard value (probably set with serial or CAN)
                     currentCursorIndex = 0;
                 }
+
+                // Exit the menu
+                menuDepthIndex--;
+
                 break;
 
             case 2:
                 // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
                 currentCursorIndex = log2(motor.getMicrostepping()) - 2;
+
+                // Exit the menu
+                menuDepthIndex--;
+
                 break;
 
             case 3:
@@ -244,6 +267,10 @@ void selectMenuItem() {
                     // Index is odd, the logic is normal
                     motor.setEnableInversion(false);
                 }
+
+                // Exit the menu
+                menuDepthIndex--;
+
                 break;
 
             case 4:
@@ -257,9 +284,11 @@ void selectMenuItem() {
                     // Index is odd, the direction is normal
                     motor.setReversed(false);
                 }
+
+                // Exit the menu
+                menuDepthIndex--;
+
                 break;
-
-
         }
 
     }
@@ -305,7 +334,7 @@ String topLevelMenuItems[] = {
     "Calibrate",
     "Motor mA",
     "Microstep",
-    "Enable Logic"
+    "En Logic",
     "Dir. Logic"
 };
 
@@ -319,72 +348,71 @@ const int topLevelMenuLength = sizeof(topLevelMenuItems) / sizeof(topLevelMenuIt
 // Old OLED display commands from BTT (will be replaced later)
 #include "oled.h"
 #include "stdlib.h"
-#include "oledfont.h"  	 
+#include "oledfont.h"
 //#include "gpio.h"
-//////////////////////////////////////////////////////////////////////////////////	
+//////////////////////////////////////////////////////////////////////////////////
+
+#define u8 uint8_t
+#define u32 uint32_t
 
 //
 //
-//[0]0 1 2 3 ... 127	
-//[1]0 1 2 3 ... 127	
-//[2]0 1 2 3 ... 127	
-//[3]0 1 2 3 ... 127	
-//[4]0 1 2 3 ... 127	
-//[5]0 1 2 3 ... 127	
-//[6]0 1 2 3 ... 127	
-//[7]0 1 2 3 ... 127 		   
-uint8_t OLED_GRAM[128][8];
+//[0]0 1 2 3 ... 127
+//[1]0 1 2 3 ... 127
+//[2]0 1 2 3 ... 127
+//[3]0 1 2 3 ... 127
+//[4]0 1 2 3 ... 127
+//[5]0 1 2 3 ... 127
+//[6]0 1 2 3 ... 127
+//[7]0 1 2 3 ... 127
+u8 OLED_GRAM[128][8];
 
-//		 
+//
 void OLED_Refresh_Gram(void)//
 {
-	uint8_t i,n;		    
-	for(i=0;i<8;i++)  
-	{  
-		OLED_WR_Byte (0xb0+i, OLED_CMD);    //
+	u8 i,n;
+	for(i=0;i<8;i++)
+	{
+		OLED_WR_Byte (0xb0+i,OLED_CMD);    //
 		OLED_WR_Byte (0x00,OLED_CMD);      //
-		OLED_WR_Byte (0x10,OLED_CMD);      //   
+		OLED_WR_Byte (0x10,OLED_CMD);      //
 		for(n=0;n<128;n++)
-		OLED_WR_Byte(OLED_GRAM[n][i], OLED_DATA); 
-	}   
+		OLED_WR_Byte(OLED_GRAM[n][i],OLED_DATA);
+	}
 }
 #if OLED_MODE==1
 //
 //dat:
 //cmd:/ 0;1;
-void OLED_WR_Byte(uint8_t dat,uint8_t cmd)
+void OLED_WR_Byte(u8 dat,u8 cmd)
 {
-	DATAOUT(dat);	    
+	DATAOUT(dat);
  	OLED_RS=cmd;
-	OLED_CS=0;	   
-	OLED_WR=0;	 
+	OLED_CS=0;
+	OLED_WR=0;
 	OLED_WR=1;
-	OLED_CS=1;	  
-	OLED_RS=1;	 
-} 	    	    
+	OLED_CS=1;
+	OLED_RS=1;
+}
 #else
 //
 //dat:
 //cmd:
-void OLED_WR_Byte(uint8_t dat,uint8_t cmd)
+void OLED_WR_Byte(u8 dat,u8 cmd)
 {
-	uint8_t i;
-	digitalWrite(OLED_RS_PIN, cmd); //
-	digitalWrite(OLED_CS_PIN, LOW);
+	u8 i;
+	OLED_RS=cmd; //
+	OLED_CS=0;
 	for(i=0;i<8;i++)
 	{
-		digitalWrite(OLED_SCLK_PIN, LOW);
-		if(dat&0x80) {
-            digitalWrite(OLED_SDIN_PIN, HIGH);
-        }
-		else {
-            digitalWrite(OLED_SDIN_PIN, LOW);
-        }
-		digitalWrite(OLED_SCLK_PIN, HIGH);
+		OLED_SCLK=0;
+		if(dat&0x80)OLED_SDIN=1;
+		else OLED_SDIN=0;
+		OLED_SCLK=1;
 		dat<<=1;
 	}
-	digitalWrite(OLED_CS_PIN, HIGH);
-	digitalWrite(OLED_RS_PIN, HIGH);
+	OLED_CS=1;
+	OLED_RS=1;
 }
 #endif
 //
@@ -397,60 +425,60 @@ void OLED_Display_On(void)
 //
 void OLED_Display_Off(void)
 {
-	OLED_WR_Byte(0X8D,OLED_CMD);  //SET 
+	OLED_WR_Byte(0X8D,OLED_CMD);  //SET
 	OLED_WR_Byte(0X10,OLED_CMD);  //DCDC OFF
 	OLED_WR_Byte(0XAE,OLED_CMD);  //DISPLAY OFF
 }
 //!!!
-void OLED_Clear(void)  
-{  
-	uint8_t i,n;  
+void OLED_Clear(void)
+{
+	u8 i,n;
 	for(i=0;i<8;i++)
 	for(n=0;n<128;n++)
-	OLED_GRAM[n][i]=0X00;  
-	OLED_Refresh_Gram();//
-}
-// 
-//x:0~127
-//y:0~63
-//t:1  0,
-///
-void OLED_DrawPoint(uint8_t x,uint8_t y,uint8_t t)
-{
-	uint8_t pos,bx,temp=0;
-	if(x>127||y>63)return;//.
-	pos=7-y/8;		//
-	bx=y%8;			//
-	temp=1<<(7-bx);	//
-	if(t)OLED_GRAM[x][pos]|=temp;
-	else OLED_GRAM[x][pos]&=~temp;	    
-}
-//x1,y1,x2,y2 
-//<=x2;y1<=y2 0<=x1<=127 0<=y1<=63	 	 
-//dot:0,;1,	  
-void OLED_Fill(uint8_t x1,uint8_t y1,uint8_t x2,uint8_t y2,uint8_t dot)  
-{  
-	uint8_t x,y;  
-	for(x=x1;x<=x2;x++)
-	{
-		for(y=y1;y<=y2;y++)OLED_DrawPoint(x,y,dot);
-	}													    
+	OLED_GRAM[n][i]=0X00;
 	OLED_Refresh_Gram();//
 }
 //
 //x:0~127
 //y:0~63
-//mode:0,;1,				 
-//size: 16/12 
-void OLED_ShowChar(uint8_t x,uint8_t y,uint8_t chr,uint8_t size,uint8_t mode)
-{      			    
-	uint8_t temp,t,t1;
-	uint8_t y0=y;
-	chr=chr-' ';//				   
+//t:1  0,
+///
+void OLED_DrawPoint(u8 x,u8 y,u8 t)
+{
+	u8 pos,bx,temp=0;
+	if(x>127||y>63)return;//.
+	pos=7-y/8;		//
+	bx=y%8;			//
+	temp=1<<(7-bx);	//
+	if(t)OLED_GRAM[x][pos]|=temp;
+	else OLED_GRAM[x][pos]&=~temp;
+}
+//x1,y1,x2,y2
+//<=x2;y1<=y2 0<=x1<=127 0<=y1<=63
+//dot:0,;1,
+void OLED_Fill(u8 x1,u8 y1,u8 x2,u8 y2,u8 dot)
+{
+	u8 x,y;
+	for(x=x1;x<=x2;x++)
+	{
+		for(y=y1;y<=y2;y++)OLED_DrawPoint(x,y,dot);
+	}
+	OLED_Refresh_Gram();//
+}
+//
+//x:0~127
+//y:0~63
+//mode:0,;1,
+//size: 16/12
+void OLED_ShowChar(u8 x,u8 y,u8 chr,u8 size,u8 mode)
+{
+	u8 temp,t,t1;
+	u8 y0=y;
+	chr=chr-' ';//
     for(t=0;t<size;t++)
-    {   
+    {
 		if(size==12)temp=oled_asc2_1206[chr][t];  //
-		else temp=oled_asc2_1608[chr][t];		 // 	                          
+		else temp=oled_asc2_1608[chr][t];		 //
         for(t1=0;t1<8;t1++)
 		{
 			if(temp&0x80)OLED_DrawPoint(x,y,mode);
@@ -463,12 +491,12 @@ void OLED_ShowChar(uint8_t x,uint8_t y,uint8_t chr,uint8_t size,uint8_t mode)
 				x++;
 				break;
 			}
-		}  	 
-    } 
-	OLED_Refresh_Gram();//	
+		}
+    }
+	OLED_Refresh_Gram();//
 }
 //m^n
-uint32_t oled_pow(uint8_t m,uint8_t n)
+uint32_t oled_pow(u8 m,u8 n)
 {
 	uint32_t result=1;
 	while(n--)result*=m;
@@ -480,10 +508,10 @@ uint32_t oled_pow(uint8_t m,uint8_t n)
 //size:
 //mode:;1,
 //num:(0~4294967295);
-void OLED_ShowNum(uint8_t x,uint8_t y,uint32_t num,uint8_t len,uint8_t size)
+void OLED_ShowNum(u8 x,u8 y,u32 num,u8 len,u8 size)
 {
-	uint8_t t,temp;
-	uint8_t enshow=0;
+	u8 t,temp;
+	u8 enshow=0;
 	for(t=0;t<len;t++)
 	{
 		temp=(num/oled_pow(10,len-t-1))%10;
@@ -493,14 +521,14 @@ void OLED_ShowNum(uint8_t x,uint8_t y,uint32_t num,uint8_t len,uint8_t size)
 			{
 				OLED_ShowChar(x+(size/2)*t,y,' ',size,1);
 				continue;
-			}else enshow=1;  
+			}else enshow=1;
 		}
-	 	OLED_ShowChar(x+(size/2)*t,y,temp+'0',size,1); 
+	 	OLED_ShowChar(x+(size/2)*t,y,temp+'0',size,1);
 	}
-} 
+}
 //
 
-void OLED_ShowString(uint8_t x,uint8_t y,const char *p)
+void OLED_ShowString(u8 x,u8 y,const char *p)
 {
 #define MAX_CHAR_POSX 122
 #define MAX_CHAR_POSY 58
@@ -508,24 +536,23 @@ void OLED_ShowString(uint8_t x,uint8_t y,const char *p)
     {
         if(x>MAX_CHAR_POSX){x=0;y+=16;}
         if(y>MAX_CHAR_POSY){y=x=0;OLED_Clear();}
-        OLED_ShowChar(x,y,*p,16,1);	 
+        OLED_ShowChar(x,y,*p,16,1);
         x+=8;
         p++;
     }
 }
-
 
 //SSD1306
 void OLED_Init(void)
 {
 
     #if 1
-	RCC->APB2ENR|=1<<3;
-	RCC->APB2ENR |=1<<2;
+	RCC->APB2ENR|=1<<3;    //
+	RCC->APB2ENR |=1<<2;		//
 
-    GPIOA->CRH &=0XFFFffFF0;
+    GPIOA->CRH &=0XFFFffFF0;	//
     GPIOA->CRH |=0X00000003;
-    GPIOA->ODR |=1<<8;
+    GPIOA->ODR |=1<<8;		    //
 
   	GPIOB->CRH&=0X0000FFFF;//PB
   	GPIOB->CRH|=0X33330000;
@@ -533,8 +560,8 @@ void OLED_Init(void)
 
 	#endif
     #if 0
-    	RCC->APB2ENR|=1<<3;
-        RCC->APB2ENR |=1<<2;
+    	RCC->APB2ENR|=1<<3;    //
+        RCC->APB2ENR |=1<<2;		//
 
         GPIOB->CRL&=0X00FFFFFF;//PB6,7
         GPIOB->CRL|=0X33000000;
@@ -543,15 +570,15 @@ void OLED_Init(void)
         GPIOB->CRH|=0X00000003;
         GPIOB->ODR|=1<<8;
 
-        GPIOA->CRH &=0XFFF00FFF;
+        GPIOA->CRH &=0XFFF00FFF;	//
         GPIOA->CRH |=0X00033000;
-        GPIOA->ODR |=1<<11;
+        GPIOA->ODR |=1<<11;		    //
 
     #endif
 
-	digitalWrite(OLED_RST_PIN, LOW);
+	OLED_RST=0;			  		//
 	delay(100);
-	digitalWrite(OLED_RST_PIN, HIGH);
+	OLED_RST=1;
 	OLED_WR_Byte(0xAE,OLED_CMD);//
 	OLED_WR_Byte(0xD5,OLED_CMD);//
 	OLED_WR_Byte(80,OLED_CMD);  //[3:0],;[7:4],

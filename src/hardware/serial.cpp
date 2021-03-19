@@ -52,7 +52,6 @@ String readSerialBuffer() {
                 delay(1000/(SERIAL_BAUD/8));
             }
         }
-    
     }
 
     // If we made it this far, the read failed and we should return a -1 (will be ignored)

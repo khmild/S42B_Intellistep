@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "stm32f1xx_ll_gpio.h": "c"
     }
 }

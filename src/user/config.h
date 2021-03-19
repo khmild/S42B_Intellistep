@@ -100,6 +100,7 @@
 // Options
 #define CLOSED_LOOP
 #define CLOSED_LOOP_CONFIG
+#define BUTTON_REPEAT_INTERVAL 1000 // millis
 //#define TEST_FLASH
 #define STEPPER_SKIP_CHECK_RATE 10
 #define MAX_MOTOR_SPEED 50 // deg/s

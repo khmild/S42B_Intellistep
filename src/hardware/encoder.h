@@ -5,7 +5,7 @@
 #include "stm32yyxx_ll_spi.h"
 #include "stm32yyxx_ll_gpio.h"
 #include "config.h"
-#include "SPI.h"
+//#include "SPI.h"
 #include "TLE5012-ino.hpp"
 
 /*
@@ -24,7 +24,7 @@ void CalibrateEncoder(void);
 */
 
 //extern SPIClass3W encoderSPI;
-extern Tle5012b encoder;
+//extern Tle5012b encoder;
 
 uint16_t readEncoderValue(uint16_t registerValue);
 uint16_t readEncoderState();
