@@ -26,24 +26,24 @@ String parseString(String buffer) {
         // Switch statement the command number
         switch (parseValue(buffer, 'M').toInt()) {
 
-            case 93: {
+            case 93:
                 // M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
                 motor.setFullStepAngle(parseValue(buffer, 'V').toFloat());
                 return FEEDBACK_OK;
-            }
-            case 306: {
+
+            case 306:
                 // M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
                 motor.setPValue(parseValue(buffer, 'P').toFloat());
                 motor.setIValue(parseValue(buffer, 'I').toFloat());
                 motor.setDValue(parseValue(buffer, 'D').toFloat());
                 return FEEDBACK_OK;
-            }
-            case 307: {
+
+            case 307:
                 // M307 (ex M307) - Runs a automatic calibration sequence for the PID loop and encoder
                 motor.calibrate();
                 return FEEDBACK_OK;
-            }
-            case 308: {
+
+            case 308:
                 // M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
 
                 // Print a notice to the user that the PID tuning is starting
@@ -57,37 +57,37 @@ String parseString(String buffer) {
                     Serial.println(getEncoderAngle());
                 }
                 return FEEDBACK_OK;
-            }
-            case 350: {
+
+            case 350:
                 // M350 (ex M350 V16) - Sets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32
                 motor.setMicrostepping(parseValue(buffer, 'V').toInt());
                 return FEEDBACK_OK;
-            }
-            case 352: {
+
+            case 352:
                 // M352 (ex M320 S1) - Sets the direction pin inversion for the motor (0 is standard, 1 is inverted)
                 motor.setReversed(parseValue(buffer, 'S').compareTo("1"));
                 return FEEDBACK_OK;
-            }
-            case 353: {
+
+            case 353:
                 // M353 (ex M353 S1) - Sets the enable pin inversion for the motor (0 is standard, 1 is inverted)
                 motor.setEnableInversion(parseValue(buffer, 'S').compareTo("1"));
                 return FEEDBACK_OK;
-            }
-            case 354: {
+
+            case 354:
                 // M354 (ex M354 S1) - Sets if the motor dip switches were installed incorrectly (reversed) (0 is standard, 1 is inverted)
                 setDipInverted(parseValue(buffer, 'S').compareTo("1"));
                 return FEEDBACK_OK;
-            }
-            case 500: {
+
+            case 500:
                 // M500 (ex M500) - Saves the currently loaded parameters into flash
                 saveParametersToFlash();
                 return FEEDBACK_OK;
-            }
-            case 907: {
+
+            case 907:
                 // M907 (ex M907 V3000) - Sets the current in mA
                 motor.setCurrent(parseValue(buffer, 'V').toInt());
                 return FEEDBACK_OK;
-            }
+
         }
     }
 

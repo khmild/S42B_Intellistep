@@ -70,7 +70,4 @@ void runSerialParser() {
         // Send the feedback from the serial command
         sendSerialMessage(parseString(serialCommandBuffer));
     }
-
-    // ! Test print
-    sendSerialMessage("Serial working");
 }

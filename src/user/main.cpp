@@ -7,7 +7,6 @@
 #include "encoder.h"
 #include "oled.h"
 #include "stm32yyxx_ll_rcc.h"
-//#include "SSD1306.h"
 
 // Create a new motor instance
 StepperMotor motor = StepperMotor();
@@ -40,7 +39,7 @@ void setup() {
     writeOLEDString(0, 0, "Oled Init...OK");
 
     // Wait for .1 seconds so everything can boot
-    delay(100);
+    delay(1000);
 
     // Initialize the buttons (for menu)
     initButtons();
@@ -74,7 +73,7 @@ void setup() {
         writeOLEDString(48, 16, "NOT");
         writeOLEDString(16, 32, "Calibrated!");
         writeOLEDString(0, 48, "Please calibrate");
-        delay(500);
+        delay(1000);
 
         // Display that the select key can be clicked to run calibration
         writeOLEDString(9, 16, "Use the");
@@ -109,7 +108,7 @@ void setup() {
         clearOLED();
         writeOLEDString(0, 15, "  Calibration");
         writeOLEDString(40, 35, "  OK!");
-        delay(500);
+        delay(1000);
 
         // Start displaying the motor data
         clearOLED();
@@ -122,9 +121,11 @@ void setup() {
 
         // Loop forever, checking the keys and updating the display
         while(true) {
-            // ! Only here for testing
+
+            // Check to see if serial data is available to read
             runSerialParser();
 
+            // Check the buttons
             checkButtons();
 
             // Only update the display if the motor data is being displayed, buttons update the display when clicked
@@ -394,9 +395,9 @@ void stepSkipCheckInterrupt() {
     }
 }
 */
-void blink() {
 
-    //pinMode(LED_PIN, OUTPUT);
+// ! Only here for testing
+void blink() {
     digitalWrite(LED_PIN, HIGH);
     delay(500);
     digitalWrite(LED_PIN, LOW);

@@ -14,36 +14,9 @@ int currentCursorIndex = 0;
 int menuDepthIndex = 0;
 int lastMenuDepthIndex = 0;
 
-// The SPI interface for the OLED
-//SPIClass OLED_SPI = SPIClass(OLED_DC_PIN, OLED_SDIN_PIN, OLED_SCLK_PIN, OLED_CS_PIN);
-
-
-// Main SPI setup function
-void initOLED() {
-
-    // Start the OLED (BTT way for now)
-    OLED_Init();
-
-    // Start the OLED SPI
-    //OLED_SPI.begin();
-
-    //SSD1306_Init(OLED_SPI);
-
-    // Set all of the menu values back to their defaults (for if the screen needs to be reinitialized)
-    topLevelMenuIndex = 0;
-}
-
 // Convience function for writing a specific string to the OLED panel
 void writeOLEDString(uint8_t x, uint8_t y, String string) {
-    //SSD1306_SetCursor(x, y);
-    //SSD1306_WriteString(&string[0], Font_7x10, WHITE);
     OLED_ShowString(x, y, string.c_str());
-}
-
-// Convience function to clear the OLED display
-void clearOLED() {
-    OLED_Clear();
-    //SSD1306_Fill(BLACK);
 }
 
 // Function for displaying relevant data on the OLED panel, such as motor data or menu data
@@ -220,7 +193,7 @@ void selectMenuItem() {
         // Cursor settings are only needed in the submenus
 
         // Check the submenus available
-        switch(topLevelMenuIndex) {
+        switch(topLevelMenuIndex % topLevelMenuLength) {
 
             case 0:
                 // Nothing to see here, just the calibration.
@@ -303,8 +276,13 @@ void moveCursor() {
         // Do nothing (maybe add a feature later?)
     }
     else if (menuDepthIndex == 1) {
-        // We're in the top level menu, change the topLevelMenuIndex
-        topLevelMenuIndex++;
+        // We're in the top level menu, change the topLevelMenuIndex (as long as we haven't exceeded the length of the list)
+        if (topLevelMenuIndex + 1 > topLevelMenuLength) {
+            topLevelMenuIndex = 1;
+        }
+        else {
+            topLevelMenuIndex++;
+        }
     }
     else {
         // We have to be in the submenu, increment the cursor index (submenus handle the display themselves)
@@ -430,7 +408,7 @@ void OLED_Display_Off(void)
 	OLED_WR_Byte(0XAE,OLED_CMD);  //DISPLAY OFF
 }
 //!!!
-void OLED_Clear(void)
+void clearOLED(void)
 {
 	u8 i,n;
 	for(i=0;i<8;i++)
@@ -535,7 +513,7 @@ void OLED_ShowString(u8 x,u8 y,const char *p)
     while(*p!='\0')
     {
         if(x>MAX_CHAR_POSX){x=0;y+=16;}
-        if(y>MAX_CHAR_POSY){y=x=0;OLED_Clear();}
+        if(y>MAX_CHAR_POSY){y=x=0;clearOLED();}
         OLED_ShowChar(x,y,*p,16,1);
         x+=8;
         p++;
@@ -543,8 +521,10 @@ void OLED_ShowString(u8 x,u8 y,const char *p)
 }
 
 //SSD1306
-void OLED_Init(void)
+void initOLED(void)
 {
+    // Set all of the menu values back to their defaults (for if the screen needs to be reinitialized)
+    topLevelMenuIndex = 0;
 
     #if 1
 	RCC->APB2ENR|=1<<3;    //
@@ -608,5 +588,5 @@ void OLED_Init(void)
 	OLED_WR_Byte(0xA6,OLED_CMD);//;bit0:1,;0,
 	OLED_WR_Byte(0xAF,OLED_CMD);//
 	delay(100);
-	OLED_Clear();
+	clearOLED();
 }
