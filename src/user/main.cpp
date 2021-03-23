@@ -12,8 +12,8 @@
 StepperMotor motor = StepperMotor();
 
 // Create a new timer instance
-//HardwareTimer *stepCorrectionTimer = new HardwareTimer(TIM1);
-//HardwareTimer *stepSkipCheckTimer = new HardwareTimer(TIM2);
+HardwareTimer *stepCorrectionTimer = new HardwareTimer(TIM1);
+HardwareTimer *stepSkipCheckTimer = new HardwareTimer(TIM2);
 
 // If the motor should move on step update
 bool acceptStep = true;
@@ -38,8 +38,8 @@ void setup() {
     // Give the user feeback that OLED starting has been successful
     writeOLEDString(0, 0, "Oled Init...OK");
 
-    // Wait for .1 seconds so everything can boot
-    delay(1000);
+    // Wait for 3 seconds so everything can boot and user can read the LCD
+    delay(3000);
 
     // Initialize the buttons (for menu)
     initButtons();
@@ -58,8 +58,8 @@ void setup() {
 
 
     // Clear the display, then write that we're using the closed loop mode
-    clearOLED();
-    writeOLEDString(0, 0, "Close Loop Mode");
+    //clearOLED();
+    //writeOLEDString(0, 0, "Close Loop Mode");
 
     // Initialize the encoder, motor, and the PWM timer
     //encoderInit();
@@ -70,15 +70,17 @@ void setup() {
     if (!isCalibrated()) {
 
         // Display that the motor is not calibrated
-        writeOLEDString(48, 16, "NOT");
-        writeOLEDString(16, 32, "Calibrated!");
-        writeOLEDString(0, 48, "Please calibrate");
-        delay(1000);
+        clearOLED();
+        writeOLEDString(0, 0, "NOT");
+        writeOLEDString(0, 16, "Calibrated!");
+        writeOLEDString(0, 32, "Please calibrate");
+        delay(3000);
 
         // Display that the select key can be clicked to run calibration
-        writeOLEDString(9, 16, "Use the");
-        writeOLEDString(6, 32, "select key");
-        writeOLEDString(4, 48, "to calibrate");
+        clearOLED();
+        writeOLEDString(0, 0, "Use the");
+        writeOLEDString(0, 16, "select key");
+        writeOLEDString(0, 32, "to calibrate");
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
         while(true) {
@@ -86,8 +88,12 @@ void setup() {
             runSerialParser();
 
             // ! Only for testing
-            blink();
+            //blink();
 
+            // Check to see if any of the buttons are pressed
+            checkButtons(false);
+
+            // Check to see if the menu button has been clicked
             if (getMenuDepth() > 0) {
 
                 // Calibrate the motor
@@ -106,8 +112,8 @@ void setup() {
 
         // Let the user know that the calibration was successfully loaded
         clearOLED();
-        writeOLEDString(0, 15, "  Calibration");
-        writeOLEDString(40, 35, "  OK!");
+        writeOLEDString(0, 0, "Calibration");
+        writeOLEDString(0, 16, "OK!");
         delay(1000);
 
         // Start displaying the motor data
@@ -126,7 +132,7 @@ void setup() {
             runSerialParser();
 
             // Check the buttons
-            checkButtons();
+            checkButtons(true);
 
             // Only update the display if the motor data is being displayed, buttons update the display when clicked
             if (getMenuDepth() == 0) {
@@ -336,7 +342,7 @@ void overclock(uint32_t PLLMultiplier) {
     SystemCoreClockUpdate();
 }
 
-/*
+
 // Sets up the motor update timer
 void setupMotorTimers() {
 
@@ -347,26 +353,26 @@ void setupMotorTimers() {
     attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, CHANGE);
 
     // Setup the timer for steps
-    //stepCorrectionTimer -> pause();
-    //stepCorrectionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    //stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
-    //stepCorrectionTimer -> attachInterrupt(stepMotor);
+    stepCorrectionTimer -> pause();
+    stepCorrectionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
+    stepCorrectionTimer -> attachInterrupt(stepMotor);
 
     // Setup the timer for step intervals
-    //stepSkipCheckTimer -> pause();
-    //stepSkipCheckTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    //stepSkipCheckTimer -> setOverflow(STEPPER_SKIP_CHECK_RATE, HERTZ_FORMAT);
-    //stepSkipCheckTimer -> attachInterrupt(stepSkipCheckInterrupt);
-    //stepSkipCheckTimer -> resume();
+    stepSkipCheckTimer -> pause();
+    stepSkipCheckTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    stepSkipCheckTimer -> setOverflow(STEPPER_SKIP_CHECK_RATE, HERTZ_FORMAT);
+    stepSkipCheckTimer -> attachInterrupt(stepSkipCheckInterrupt);
+    stepSkipCheckTimer -> resume();
 }
-*/
-/*
+
+
 // Need to declare a function to increment the motor for the step interrupt
 void stepMotor() {
     motor.step();
 }
-*/
-/*
+
+
 // Update the interval on the step timer
 void stepSkipCheckInterrupt() {
 
@@ -385,16 +391,15 @@ void stepSkipCheckInterrupt() {
         if (abs(getEncoderAngle() - motor.desiredAngle) > (motor.getFullStepAngle() / motor.getMicrostepping())) {
 
             // Timer needs to be enabled, set it to the computed amount
-            //stepCorrectionTimer -> resume();
-            //stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
+            stepCorrectionTimer -> resume();
+            stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
         }
         else {
             // Disable the timer for step correction, no need for it to run as we're in bounds
-            //stepCorrectionTimer -> pause();
+            stepCorrectionTimer -> pause();
         }
     }
 }
-*/
 
 // ! Only here for testing
 void blink() {

@@ -31,7 +31,7 @@ void initButtons() {
 }
 
 // Scan each of the buttons
-void checkButtons(void) {
+void checkButtons(bool updateScreen) {
 
   // Make sure that the buttons don't repeat too fast
   if (millis() - lastButtonClickTime > BUTTON_REPEAT_INTERVAL) {
@@ -46,7 +46,9 @@ void checkButtons(void) {
       selectMenuItem();
 
       // Update the display
-      updateDisplay();
+      if (updateScreen) {
+        updateDisplay();
+      }
     }
 
     // Check the down button
@@ -59,7 +61,9 @@ void checkButtons(void) {
       moveCursor();
 
       // Update the screen
-      updateDisplay();
+      if (updateScreen){
+        updateDisplay();
+      }
     }
 
     // Check the back button
@@ -72,7 +76,9 @@ void checkButtons(void) {
       exitCurrentMenu();
 
       // Update the screen
-      updateDisplay();
+      if (updateScreen) {
+        updateDisplay();
+      }
     }
   }
 }

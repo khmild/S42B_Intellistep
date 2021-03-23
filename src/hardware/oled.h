@@ -4,7 +4,6 @@
 // Imports
 #include "config.h"
 #include "cstring"
-#include "motor.h"
 #include "encoder.h"
 #include "main.h"
 #include <algorithm>
@@ -13,6 +12,7 @@
 // Variables
 extern String topLevelMenuItems[];
 extern const int topLevelMenuLength;
+class StepperMotor;
 
 void initOLED();
 void writeOLEDString(uint8_t x, uint8_t y, String string);

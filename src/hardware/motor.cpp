@@ -1,4 +1,5 @@
 #include "motor.h"
+#include "oled.h"
 
 // Main constructor (with PID terms)
 StepperMotor::StepperMotor(float P, float I, float D) {
@@ -378,6 +379,12 @@ float StepperMotor::compute(float currentAngle) {
 // Calibrates the encoder and the PID loop
 void StepperMotor::calibrate() {
     // ! Write yet
+
+    // Display that calibration is coming soon
+    clearOLED();
+    writeOLEDString(0, 0, "Calibration");
+    writeOLEDString(0, 16, "coming soon");
+    delay(5000);
 
     // Calibrate encoder offset
 

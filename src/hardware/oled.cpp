@@ -45,6 +45,10 @@ void updateDisplay() {
             switch(topLevelMenuIndex) {
                 case 0:
                     // In the first menu, the calibration one. No need to do anything here, besides maybe displaying an progress bar or PID values (later?)
+                    clearOLED();
+                    writeOLEDString(0, 0, "Are you sure?");
+                    writeOLEDString(0, 16, "Press select");
+                    writeOLEDString(0, 32, "to confirm");
                     break;
 
                 case 1:
