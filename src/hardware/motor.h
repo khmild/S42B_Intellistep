@@ -14,13 +14,13 @@
 // Import the pin mapping
 #include "config.h"
 
-// Enumeration for bridge states
+// Enumeration for coil states
 typedef enum {
     FORWARD = 0,
     BACKWARD = 1,
     BRAKE = 2,
     COAST = 3
-} BRIDGE_STATE;
+} COIL_STATE;
 
 // Stepper motor class (defined to make life a bit easier when dealing with the motor)
 class StepperMotor {
@@ -95,10 +95,10 @@ class StepperMotor {
         void driveCoils(float angle);
 
         // Sets the state of the A coil
-        void setADirection(BRIDGE_STATE desiredState);
+        void setADirection(COIL_STATE desiredState);
 
         // Sets the state of the B coil
-        void setBDirection(BRIDGE_STATE desiredState);
+        void setBDirection(COIL_STATE desiredState);
 
         // Sets the current of the coils
         void setCoilCurrent(int ACurrent, int BCurrent);

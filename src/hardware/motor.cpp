@@ -282,9 +282,9 @@ void StepperMotor::driveCoils(float angle) {
 }
 
 
-// Function for setting the A bridge state
+// Function for setting the A coil state
 // ! Maybe change to faster pin writing
-void setADirection(BRIDGE_STATE desiredState) {
+void setADirection(COIL_STATE desiredState) {
     if (desiredState == FORWARD) {
         digitalWrite(COIL_A_DIR_1, HIGH);
         digitalWrite(COIL_A_DIR_2, LOW);
@@ -306,9 +306,9 @@ void setADirection(BRIDGE_STATE desiredState) {
 }
 
 
-// Function for setting the B bridge state
+// Function for setting the B coil state
 // ! Maybe change to faster pin writing
-void setBDirection(BRIDGE_STATE desiredState) {
+void setBDirection(COIL_STATE desiredState) {
     if (desiredState == FORWARD) {
         digitalWrite(COIL_B_DIR_1, HIGH);
         digitalWrite(COIL_B_DIR_2, LOW);
