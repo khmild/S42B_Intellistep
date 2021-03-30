@@ -206,8 +206,9 @@ void StepperMotor::step() {
     */
 
     // Get the current angle of the motor
-    float currentAngle = getEncoderAngle();
+    //float currentAngle = getEncoderAngle();
 
+    /*
     // Mod the current angle by total phase angle to estimate the phase angle of the motor
     float phaseAngle = fmod(currentAngle, ((this -> fullStepAngle) * 4));
 
@@ -226,68 +227,113 @@ void StepperMotor::step() {
         // Round the phase angle to be set to the closest perfect angles (increases torque on the output)
         phaseAngle += fmod(-phaseAngle, (2*PI / ((this -> microstepping) * 4)));
     }
+    */
 
     // Drive the coils to the new phase angle
-    driveCoils(phaseAngle);
+    driveCoils(desiredAngle);
 }
 
 
-// Sets the coils of the motor based on the phase angle
-void StepperMotor::driveCoils(float phaseAngle) {
+// Sets the coils of the motor based on the angle
+void StepperMotor::driveCoils(float angle) {
 
-    // Equation comes out to be (effort * 0-1) depending on the sine/cosine of the phase angle
-    int16_t coilAPower = round((this -> current) * sin(phaseAngle));
-    int16_t coilBPower = round((this -> current) * cos(phaseAngle));
+    // Make sure that the phase angle doesn't ex
+    angle = fmod(angle, SINE_STEPS);
+
+    // Calculate the sine and cosine of the angle
+    int32_t angleSin = fastSine(angle);
+    int32_t angleCos = fastCosine(angle);
+
+    // If in reverse, we swap the sign of one of the angles
+    if (StepperMotor::invertDirection(digitalRead(DIRECTION_PIN) == LOW) == 1) {
+        angleCos = -angleCos;
+    }
+
+    // Equation comes out to be (effort * -1 to 1) depending on the sine/cosine of the phase angle
+    int32_t coilAPower = ((int32_t)(this -> current) * (int64_t)abs(angleSin))/SINE_MAX;
+    int32_t coilBPower = ((int32_t)(this -> current) * (int64_t)abs(angleCos))/SINE_MAX;
 
     // Check the if the coil should be energized to move backward or forward
-    if(coilAPower > 0)  {
-
-        // Set the power on the output pin
-        analogWrite(COIL_A_POWER_OUTPUT, map(coilAPower, 0, 3500, 0, 255));
+    if(angleSin > 0)  {
 
         // Set first channel for forward movement
+        setADirection(FORWARD);
+    }
+    else if (angleSin < 0) {
+
+        // Set first channel for backward movement
+        setADirection(BACKWARD);
+    }
+
+    // Check the if the coil should be energized to move backward or forward
+    if(angleCos > 0)  {
+
+        // Set second channel for forward movement
+        setBDirection(FORWARD);
+    }
+    else if (angleCos < 0) {
+
+        // Set second channel for backward movement
+        setBDirection(BACKWARD);
+    }
+    
+    // Set the current of the coils
+    setCoilCurrent(abs(coilAPower), abs(coilBPower));
+}
+
+
+// Function for setting the A bridge state
+// ! Maybe change to faster pin writing
+void setADirection(BRIDGE_STATE desiredState) {
+    if (desiredState == FORWARD) {
         digitalWrite(COIL_A_DIR_1, HIGH);
         digitalWrite(COIL_A_DIR_2, LOW);
     }
-    else if (coilAPower < 0) {
-
-        // Set the power on the output pin
-        analogWrite(COIL_A_POWER_OUTPUT, map(-coilAPower, 0, 3500, 0, 255));
-
-        // Set first channel for forward movement
+    else if (desiredState == BACKWARD) {
         digitalWrite(COIL_A_DIR_1, LOW);
         digitalWrite(COIL_A_DIR_2, HIGH);
     }
-    else {
-
-        // Turn off the coil, no current needed
+    else if (desiredState == BRAKE) {
+        digitalWrite(COIL_A_DIR_1, HIGH);
+        digitalWrite(COIL_A_DIR_2, HIGH);
         analogWrite(COIL_A_POWER_OUTPUT, 0);
     }
+    else if (desiredState == COAST) {
+        digitalWrite(COIL_A_DIR_1, LOW);
+        digitalWrite(COIL_A_DIR_2, LOW);
+        analogWrite(COIL_A_POWER_OUTPUT, 0);
+    }
+}
 
-    // Check the if the coil should be energized to move backward or forward
-    if(coilBPower > 0)  {
 
-        // Set the power on the output pin
-        analogWrite(COIL_B_POWER_OUTPUT, map(coilBPower, 0, 3500, 0, 255));
-
-        // Set second channel for forward movement
+// Function for setting the B bridge state
+// ! Maybe change to faster pin writing
+void setBDirection(BRIDGE_STATE desiredState) {
+    if (desiredState == FORWARD) {
         digitalWrite(COIL_B_DIR_1, HIGH);
         digitalWrite(COIL_B_DIR_2, LOW);
     }
-    else if (coilBPower < 0) {
-
-        // Set the power on the output pin
-        analogWrite(COIL_B_POWER_OUTPUT, map(-coilBPower, 0, 3500, 0, 255));
-
-        // Set second channel for forward movement
+    else if (desiredState == BACKWARD) {
         digitalWrite(COIL_B_DIR_1, LOW);
         digitalWrite(COIL_B_DIR_2, HIGH);
     }
-    else {
-
-        // Turn off the coil, no current needed
+    else if (desiredState == BRAKE) {
+        digitalWrite(COIL_B_DIR_1, HIGH);
+        digitalWrite(COIL_B_DIR_2, HIGH);
         analogWrite(COIL_B_POWER_OUTPUT, 0);
     }
+    else if (desiredState == COAST) {
+        digitalWrite(COIL_B_DIR_1, LOW);
+        digitalWrite(COIL_B_DIR_2, LOW);
+        analogWrite(COIL_B_POWER_OUTPUT, 0);
+    }
+}
+
+
+// Sets the current of each of the coils (with mapping)
+void setCoilCurrent(int ACurrent, int BCurrent) {
+    analogWrite(COIL_A_POWER_OUTPUT, map(ACurrent, 0, MAX_CURRENT, 0, 255));
+    analogWrite(COIL_B_POWER_OUTPUT, map(BCurrent, 0, MAX_CURRENT, 0, 255));
 }
 
 
@@ -323,15 +369,14 @@ void StepperMotor::disable() {
     // Check if the motor is not enabled yet. No need to disable the coils if they're already off
     if (this -> enabled) {
 
-        // Set the A driver to coast
-        digitalWrite(COIL_A_DIR_1, LOW);
-        digitalWrite(COIL_A_DIR_2, LOW);
-        analogWrite(COIL_A_POWER_OUTPUT, 0);
+        // Set the A driver to brake
+        setADirection(COAST);
 
-        // Set the B driver to coast
-        digitalWrite(COIL_B_DIR_1, LOW);
-        digitalWrite(COIL_B_DIR_2, LOW);
-        analogWrite(COIL_B_POWER_OUTPUT, 0);
+        // Set the B driver to brake
+        setBDirection(COAST);
+
+        // Set the coils
+        setCoilCurrent(0, 0);
 
         // Set the enabled to false so we don't repeat
         this -> enabled = false;

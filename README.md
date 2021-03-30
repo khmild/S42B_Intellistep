@@ -29,3 +29,9 @@ GCode Table
 - M354 (ex M354 S1) - Sets if the motor dip switches were installed incorrectly (reversed) (0 is standard, 1 is inverted)
 - M500 (ex M500) - Saves the currently loaded parameters into flash
 - M907 (ex M907 V3000) - Sets the current in mA
+
+## Credits
+
+- BTT - Original code
+- CAP1Sup - Main rewrite of code
+- Misfittech - The Smart Stepper [project](https://github.com/Misfittech/nano_stepper). This was a large help when writing the correct stepping code.

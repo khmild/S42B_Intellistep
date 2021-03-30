@@ -9,9 +9,18 @@
 // For sin() and fmod() function
 #include "cmath"
 #include <math.h>
+#include "fastSine.h"
 
 // Import the pin mapping
 #include "config.h"
+
+// Enumeration for bridge states
+typedef enum {
+    FORWARD = 0,
+    BACKWARD = 1,
+    BRAKE = 2,
+    COAST = 3
+} BRIDGE_STATE;
 
 // Stepper motor class (defined to make life a bit easier when dealing with the motor)
 class StepperMotor {
@@ -83,7 +92,16 @@ class StepperMotor {
         void step();
 
         // Sets the coils to hold the motor at the desired phase angle
-        void driveCoils(float phaseAngle);
+        void driveCoils(float angle);
+
+        // Sets the state of the A coil
+        void setADirection(BRIDGE_STATE desiredState);
+
+        // Sets the state of the B coil
+        void setBDirection(BRIDGE_STATE desiredState);
+
+        // Sets the current of the coils
+        void setCoilCurrent(int ACurrent, int BCurrent);
 
         // Sets the speed of the motor (angular speed is in deg/s)
         float speedToHz(float angularSpeed);

@@ -1,6 +1,15 @@
 {
     "files.associations": {
         "*.tcc": "cpp",
-        "stm32f1xx_ll_gpio.h": "c"
+        "stm32f1xx_ll_gpio.h": "c",
+        "bit": "cpp",
+        "cstddef": "cpp",
+        "string": "cpp",
+        "optional": "cpp",
+        "limits": "cpp",
+        "memory": "cpp",
+        "new": "cpp",
+        "functional": "cpp",
+        "cmath": "cpp"
     }
 }

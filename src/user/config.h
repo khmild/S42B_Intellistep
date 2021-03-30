@@ -118,8 +118,8 @@
 #define MAX_CURRENT 3500 // Maximum current in mA
 #define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
 
-
-
+#define SINE_STEPS ((int16_t)(1024L))
+#define SINE_MAX ((int32_t)(32768L))
 
 
 // Low level GPIO configuration (for quicker manipulations than digitalWrites)
