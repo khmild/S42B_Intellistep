@@ -141,7 +141,8 @@ void StepperMotor::setFullStepAngle(float newStepAngle) {
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (newStepAngle != -1) {
 
-        // Make sure that the value is one of the 2 common types (maybe remove later?)
+        // Make sure that the value is one of the 2 common types
+        // ! Maybe remove later?
         if ((newStepAngle == 1.8) || (newStepAngle == 0.9)) {
             this -> fullStepAngle = newStepAngle;
         }
@@ -230,7 +231,7 @@ void StepperMotor::step() {
     */
 
     // Drive the coils to the new phase angle
-    driveCoils(desiredAngle);
+    this -> driveCoils(desiredAngle);
 }
 
 
@@ -284,7 +285,7 @@ void StepperMotor::driveCoils(float angle) {
 
 // Function for setting the A coil state
 // ! Maybe change to faster pin writing
-void setADirection(COIL_STATE desiredState) {
+void StepperMotor::setADirection(COIL_STATE desiredState) {
     if (desiredState == FORWARD) {
         digitalWrite(COIL_A_DIR_1, HIGH);
         digitalWrite(COIL_A_DIR_2, LOW);
@@ -308,7 +309,7 @@ void setADirection(COIL_STATE desiredState) {
 
 // Function for setting the B coil state
 // ! Maybe change to faster pin writing
-void setBDirection(COIL_STATE desiredState) {
+void StepperMotor::setBDirection(COIL_STATE desiredState) {
     if (desiredState == FORWARD) {
         digitalWrite(COIL_B_DIR_1, HIGH);
         digitalWrite(COIL_B_DIR_2, LOW);
@@ -331,7 +332,7 @@ void setBDirection(COIL_STATE desiredState) {
 
 
 // Sets the current of each of the coils (with mapping)
-void setCoilCurrent(int ACurrent, int BCurrent) {
+void StepperMotor::setCoilCurrent(int ACurrent, int BCurrent) {
     analogWrite(COIL_A_POWER_OUTPUT, map(ACurrent, 0, MAX_CURRENT, 0, 255));
     analogWrite(COIL_B_POWER_OUTPUT, map(BCurrent, 0, MAX_CURRENT, 0, 255));
 }
@@ -355,7 +356,8 @@ void StepperMotor::enable() {
     if (!(this -> enabled)) {
 
         // Mod the current angle by total phase angle to estimate the phase angle of the motor, then set the coils to the current position
-        driveCoils(fmod(getEncoderAngle(), ((this -> fullStepAngle) * 4)));
+        // ! Possibly make this round the angle to the nearest nice microstep
+        this -> driveCoils(getEncoderAngle());
 
         // Set the motor to be enabled
         this -> enabled = true;

@@ -280,8 +280,8 @@ void moveCursor() {
     }
     else if (menuDepthIndex == 1) {
         // We're in the top level menu, change the topLevelMenuIndex (as long as we haven't exceeded the length of the list)
-        if (topLevelMenuIndex + 1 > topLevelMenuLength) {
-            topLevelMenuIndex = 1;
+        if (topLevelMenuIndex + 3 > topLevelMenuLength) {
+            topLevelMenuIndex = 0;
         }
         else {
             topLevelMenuIndex++;
@@ -316,7 +316,8 @@ String topLevelMenuItems[] = {
     "Motor mA",
     "Microstep",
     "En Logic",
-    "Dir. Logic"
+    "Dir. Logic",
+    ""
 };
 
 // Length of the list of top menu items (found by dividing the length of the list by how much space a single element takes up)

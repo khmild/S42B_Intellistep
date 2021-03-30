@@ -49,13 +49,14 @@ void setup() {
 
     // Initialize the CAN bus
     initCAN();
-
+    
+    // Setup the motor for use
+    motor.enable();
 
     // Test the flash if specified
     //#ifdef TEST_FLASH
     //    flash_test();
     //#endif
-
 
     // Clear the display, then write that we're using the closed loop mode
     //clearOLED();
