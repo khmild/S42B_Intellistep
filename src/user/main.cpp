@@ -15,8 +15,8 @@ StepperMotor motor = StepperMotor();
 HardwareTimer *stepCorrectionTimer = new HardwareTimer(TIM1);
 HardwareTimer *stepSkipCheckTimer = new HardwareTimer(TIM2);
 
-// If the motor should move on step update
-bool acceptStep = true;
+// If the motor should move CCW or CW on next step update
+STEP_DIR correctionStepDir = COUNTER_CLOCKWISE;
 
 // Run the setup
 void setup() {
@@ -359,7 +359,7 @@ void setupMotorTimers() {
     // Setup the timer for steps
     stepCorrectionTimer -> pause();
     stepCorrectionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
+    stepCorrectionTimer -> setOverflow(CORRECTION_STEP_FREQ  /*motor.speedToHz(motor.compute(getEncoderAngle()))*/, HERTZ_FORMAT);
     stepCorrectionTimer -> attachInterrupt(stepMotor);
 
     // Setup the timer for step intervals
@@ -373,7 +373,7 @@ void setupMotorTimers() {
 
 // Need to declare a function to increment the motor for the step interrupt
 void stepMotor() {
-    motor.step();
+    motor.step(correctionStepDir);
 }
 
 
@@ -381,7 +381,7 @@ void stepMotor() {
 void stepSkipCheckInterrupt() {
 
     // Check to see the state of the enable pin
-    if (digitalRead(ENABLE_PIN) == motor.getEnableInversion()) {
+    if (digitalRead(ENABLE_PIN) != motor.getEnableInversion()) {
 
         // The enable pin is off, the motor should be disabled
         motor.disable();
@@ -391,12 +391,26 @@ void stepSkipCheckInterrupt() {
         // Enable the motor (just energizes the coils to hold it in position)
         motor.enable();
 
+        // Calculate the angular deviation
+        float angularDeviation = getEncoderAngle() - motor.desiredAngle;
+
         // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (abs(getEncoderAngle() - motor.desiredAngle) > (motor.getFullStepAngle() / motor.getMicrostepping())) {
+        if (abs(angularDeviation) > (motor.getFullStepAngle() / motor.getMicrostepping())) {
+
+            // Set the stepper to move in the correct direction
+            if (angularDeviation > (motor.getFullStepAngle() / motor.getMicrostepping())) {
+
+                // Motor is at a position larger than the desired one
+                correctionStepDir = CLOCKWISE;
+            }
+            else {
+                // Motor is at a position larger than the desired one
+                correctionStepDir = COUNTER_CLOCKWISE;
+            }
 
             // Timer needs to be enabled, set it to the computed amount
             stepCorrectionTimer -> resume();
-            stepCorrectionTimer -> setOverflow(motor.speedToHz(motor.compute(getEncoderAngle())), HERTZ_FORMAT);
+            stepCorrectionTimer -> setOverflow(CORRECTION_STEP_FREQ, HERTZ_FORMAT);
         }
         else {
             // Disable the timer for step correction, no need for it to run as we're in bounds

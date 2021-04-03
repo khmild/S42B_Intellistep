@@ -60,10 +60,15 @@
 #define SELECT_BUTTON_PIN       PB1
 
 // Dip switch mappings
-#define DIP_CALIBRATED          PA15
-#define DIP_CLOSED_LOOP         PB3
-#define DIP_MICRO_1             PB10
-#define DIP_MICRO_2             PB11
+// PIN     |    Normal             |  Reversed
+// DIP_1   |    Microstep 1        |  Calibration mode
+// DIP_2   |    Microstep 2        |  Closed/Open loop
+// DIP_3   |    Closed/Open loop   |  Microstep 2
+// DIP_4   |    Calibration mode   |  Microstep 1
+#define DIP_1  PB10
+#define DIP_2  PB11
+#define DIP_3  PB3
+#define DIP_4  PA15
 
 // LED pin
 #define LED_PIN PC13
@@ -120,6 +125,7 @@
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
 #define MAX_CURRENT 3500 // Maximum current in mA
 #define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
+#define CORRECTION_STEP_FREQ 4 // in Hz, to step the motor back to the correct position
 
 #define SINE_STEPS ((int16_t)(1024L))
 #define SINE_MAX ((int32_t)(32768L))

@@ -187,10 +187,24 @@ bool StepperMotor::getEnableInversion() {
 
 
 // Computes the coil values for the next step position and increments the set angle
-void StepperMotor::step() {
+void StepperMotor::step(STEP_DIR dir = PIN) {
 
     // Main angle change (any inversions * angle of microstep)
-    float angleChange = StepperMotor::invertDirection(digitalRead(DIRECTION_PIN) == LOW) * StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
+    float angleChange = StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
+    
+    // Invert the change based on the direction
+    if (dir == PIN) {
+
+        // Use the DIR_PIN state
+        angleChange *= StepperMotor::invertDirection(digitalRead(DIRECTION_PIN) == LOW);
+    }
+    //else if (dir == COUNTER_CLOCKWISE) {
+        // Nothing to do here, the value is already positive
+    //}
+    else if (dir == CLOCKWISE) {
+        // Make the angle change in the negative direction
+        angleChange *= -1;
+    }
 
     // Set the desired angle to itself + the change in angle
     this -> desiredAngle += angleChange;
@@ -245,14 +259,14 @@ void StepperMotor::driveCoils(float degAngle) {
     microstepAngle = round(microstepAngle);
 
     // Make sure that the phase angle doesn't exceeed the maximum
-    microstepAngle = fmod(microstepAngle, SINE_STEPS);
+    microstepAngle = (uint16_t)microstepAngle % SINE_STEPS;
 
     // Calculate the sine and cosine of the angle
     int32_t angleSin = fastSine(microstepAngle);
     int32_t angleCos = fastCosine(microstepAngle);
 
     // If in reverse, we swap the sign of one of the angles
-    if (StepperMotor::invertDirection(digitalRead(DIRECTION_PIN) == LOW) == 1) {
+    if ((bool)digitalRead(DIRECTION_PIN) != (this -> reversed)) {
         angleCos = -angleCos;
     }
 
@@ -391,7 +405,7 @@ void StepperMotor::disable() {
     }
 }
 
-
+/*
 // Computes the speed of the motor
 float StepperMotor::compute(float currentAngle) {
 
@@ -427,7 +441,7 @@ float StepperMotor::compute(float currentAngle) {
     // Return the output of the PID loop
     return output;
 }
-
+*/
 
 // Calibrates the encoder and the PID loop
 void StepperMotor::calibrate() {

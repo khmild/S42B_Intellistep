@@ -7,8 +7,8 @@
 #include "encoder.h"
 
 // For sin() and fmod() function
-#include "cmath"
-#include <math.h>
+//#include "cmath"
+//#include <math.h>
 #include "fastSine.h"
 
 // Import the pin mapping
@@ -16,11 +16,18 @@
 
 // Enumeration for coil states
 typedef enum {
-    FORWARD = 0,
-    BACKWARD = 1,
-    BRAKE = 2,
-    COAST = 3
+    FORWARD,
+    BACKWARD,
+    BRAKE,
+    COAST
 } COIL_STATE;
+
+// Enumeration for stepping direction
+typedef enum {
+    PIN,
+    COUNTER_CLOCKWISE,
+    CLOCKWISE
+} STEP_DIR;
 
 // Stepper motor class (defined to make life a bit easier when dealing with the motor)
 class StepperMotor {
@@ -88,8 +95,8 @@ class StepperMotor {
         // Get if the motor enable pin is inverted
         bool getEnableInversion();
 
-        // Calculates the coil values for the motor and updates the set angle
-        void step();
+        // Calculates the coil values for the motor and updates the set angle. 
+        void step(STEP_DIR dir);
 
         // Sets the coils to hold the motor at the desired phase angle
         void driveCoils(float angle);
