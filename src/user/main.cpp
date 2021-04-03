@@ -65,11 +65,6 @@ void setup() {
     //clearOLED();
     //writeOLEDString(0, 0, "Close Loop Mode");
 
-    // Initialize the encoder, motor, and the PWM timer
-    //encoderInit();
-    //motorInit();
-    //TIM3_Init();
-
     // Check if the board is calibrated. Need to force calibration if the board isn't calibrated
     if (!isCalibrated()) {
 

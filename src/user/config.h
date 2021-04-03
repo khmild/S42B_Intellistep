@@ -1,6 +1,9 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+// Need the Arduino library for pin conversion
+#include "Arduino.h"
+
 /*
 // * = F103C8-CB    | DIGITAL | ANALOG | USART      | TWI       | SPI        | SPECIAL   |
 //                  |---------|--------|------------|-----------|------------|-----------|
@@ -55,9 +58,9 @@
 #define OLED_SDIN PBout(14)	//(D1)
 
 // Button mappings
-#define DOWN_BUTTON_PIN         PA3
-#define BACK_BUTTON_PIN         PB0
-#define SELECT_BUTTON_PIN       PB1
+#define DOWN_BUTTON_PIN         PA_3
+#define BACK_BUTTON_PIN         PB_0
+#define SELECT_BUTTON_PIN       PB_1
 
 // Dip switch mappings
 // PIN     |    Normal             |  Reversed
@@ -65,36 +68,36 @@
 // DIP_2   |    Microstep 2        |  Closed/Open loop
 // DIP_3   |    Closed/Open loop   |  Microstep 2
 // DIP_4   |    Calibration mode   |  Microstep 1
-#define DIP_1  PB10
-#define DIP_2  PB11
-#define DIP_3  PB3
-#define DIP_4  PA15
+#define DIP_1  PB_10
+#define DIP_2  PB_11
+#define DIP_3  PB_3
+#define DIP_4  PA_15
 
 // LED pin
 #define LED_PIN PC13
 
 // Motor mappings
-#define COIL_A_DIR_1        PB6
-#define COIL_A_DIR_2        PB7
-#define COIL_B_DIR_1        PB8
-#define COIL_B_DIR_2        PB9
-#define COIL_A_POWER_OUTPUT PB4
-#define COIL_B_POWER_OUTPUT PB5
+#define COIL_A_DIR_1        PB_6
+#define COIL_A_DIR_2        PB_7
+#define COIL_B_DIR_1        PB_8
+#define COIL_B_DIR_2        PB_9
+#define COIL_A_POWER_OUTPUT PB_4
+#define COIL_B_POWER_OUTPUT PB_5
 
 // Encoder SPI interface
-#define ENCODER_CS   PAout(4)//PA4 // SPI1_SS
-#define ENCODER_SCK  PA5 // SPI1_SCK
-#define ENCODER_MISO PA6 // SPI1_MISO
-#define ENCODER_MOSI PA7 // SPI1_MOSI
+#define ENCODER_CS   PA_4 // SPI1_SS
+#define ENCODER_SCK  PA_5 // SPI1_SCK
+#define ENCODER_MISO PA_6 // SPI1_MISO
+#define ENCODER_MOSI PA_7 // SPI1_MOSI
 
 // Stepping interface
-#define STEP_PIN      PA1 // ! according to the previous files, but this is the same as the dir pin
-#define ENABLE_PIN    PA2
-#define DIRECTION_PIN PA1
+#define STEP_PIN      PA_1 // ! according to the previous files, but this is the same as the dir pin
+#define ENABLE_PIN    PA_2
+#define DIRECTION_PIN PA_1
 
 // CAN bus pins
-#define CAN_IN_PIN  PA11
-#define CAN_OUT_PIN PA12
+#define CAN_IN_PIN  PA_11
+#define CAN_OUT_PIN PA_12
 
 
 
@@ -117,9 +120,6 @@
 // Z:11 Z2:12...
 // E:17, E1:18...
 #define DEFAULT_CAN_ID X
-
-// Encoder speed estimation instead of actual value (saves memory)
-//#define ENCODER_ESTIMATION
 
 // Motor constants
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well

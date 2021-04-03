@@ -158,7 +158,6 @@ void updateDisplay() {
 
 } // Display menu function
 
-
 // Gets the latest parameters from the motor and puts them on screen
 void displayMotorData() {
 
@@ -176,11 +175,10 @@ void displayMotorData() {
     writeOLEDString(0, 16, &(String("Err: ") + String(PIDError))[0]);
 
     // Current angle of the motor
-    float currentAngle = getEncoderAngle();
+    double currentAngle = getEncoderAngle();
     writeOLEDString(0, 32, &(String("Deg: ") + String(currentAngle))[0]);
 
     // Maybe a 4th line later?
-
 }
 
 

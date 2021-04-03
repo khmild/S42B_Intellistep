@@ -1,206 +1,31 @@
 #include "encoder.h"
-//#include "SSD1306.h"
 
 // Main SPI interface for the encoder
-//SPIClass3W encoderSPI = SPIClass3W();
-//Tle5012b encoder = Tle5012Ino(ENCODER_SS);
-
-SPI_HandleTypeDef SPI_HandleStructure;
-GPIO_InitTypeDef GPIO_InitStructure;
+SPIClass3W encoderSPI = SPIClass3W();
+Tle5012Ino encoder;
 
 // The command to send to the encoder
 uint16_t _command[2];
 
-// Angle estimation
-#ifdef ENCODER_ESTIMATION
-    double lastAngleReading = 0;
-    uint32_t lastAngleReadingTime = 0;
-#endif
 
 // Function to setup the encoder
 void initEncoder() {
 
-    // Declare the SPI interface
-    //encoderSPI.begin(ENCODER_MOSI, ENCODER_MISO, ENCODER_SCK, ENCODER_SS);
-    //encoder.begin();
+    // Set the pins to be used with the interface
+    encoderSPI.begin(ENCODER_MISO, ENCODER_MOSI, ENCODER_SCK, ENCODER_CS);
 
-    // Enable the peripheral clocks
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_SPI1_CLK_ENABLE();
+    // Setup the encoder object to be used
+    encoder = Tle5012Ino();
 
-    // Disable the JTAG interface in favor of a SW interface
-    __HAL_AFIO_REMAP_SWJ_NOJTAG();
+    // Start the communication with the encoder
+    encoder.begin();
 
-    // Set up the SPI pins
-    GPIO_InitStructure.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    // Write that the SSC interface should be used
+    encoder.writeInterfaceType(Reg::interfaceType_t::SSC);
 
-    // Set the GPIO bits
-    GPIOA->BSRR = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
-
-    // Set up the SPI structure
-    SPI_HandleStructure.Instance = SPI1;
-    SPI_HandleStructure.Init.Direction = SPI_DIRECTION_2LINES;
-	SPI_HandleStructure.Init.Mode = SPI_MODE_MASTER;
-	SPI_HandleStructure.Init.DataSize = SPI_DATASIZE_16BIT;
-	SPI_HandleStructure.Init.CLKPolarity = SPI_POLARITY_LOW;
-	SPI_HandleStructure.Init.CLKPhase = SPI_PHASE_2EDGE;
-	SPI_HandleStructure.Init.NSS = SPI_NSS_SOFT;
-	SPI_HandleStructure.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16; // Processor runs at 128MHz, so a divisor of 16 takes it to the spec of 8MHz
-	SPI_HandleStructure.Init.FirstBit = SPI_FIRSTBIT_MSB;
-	SPI_HandleStructure.Init.CRCPolynomial = 7;
-	HAL_SPI_Init(&SPI_HandleStructure);
-
-    // Enable the SPI bus
-    SPI1->CR1 |= SPI_CR1_SPE;
-
-    // Disable the chip select pin
-    ENCODER_CS = 1;
-
-    // Reset the firmware on the encoder
-    writeToEncoderRegister(ENCODER_ACTIVATION_REGISTER, 0x401);
-
-    // Write the device's slave number
-    writeToEncoderRegister(ENCODER_WRITE_REGISTER_BASE, 0);
+    // Set the encoder to use -180 to +180
+    //encoder.reg.setAngleRange(Reg::angleRange_t::factor1);
 }
-
-
-// Checks the status of a SPI flag
-FlagStatus getSPIFlagStatus(SPI_TypeDef* SPIx, uint16_t SPI_I2S_FLAG) {
-  FlagStatus bitstatus = RESET;
-
-  /* Check the status of the specified SPI/I2S flag */
-  if ((SPIx->SR & SPI_I2S_FLAG) != (uint16_t)RESET)
-  {
-    /* SPI_I2S_FLAG is set */
-    bitstatus = SET;
-  }
-  else
-  {
-    /* SPI_I2S_FLAG is reset */
-    bitstatus = RESET;
-  }
-  /* Return the SPI_I2S_FLAG status */
-  return bitstatus;
-}
-
-
-// Reads a specified register of the encoder
-void readSingleEncoderRegister(uint16_t address, uint16_t &data) {
-
-    _command[0] = ENCODER_READ_REGISTER_BASE | address | 0x0000 | 0x0000;
-	uint16_t _received[MAX_REGISTER_MEM] = {0};
-	SPISendReceive(_command, 1, _received, 2);
-	data = _received[0];
-
-
-    /*
-    // Create an accumulator for the data collected
-    uint16_t data;
-
-    // Enable the chip select pin
-    ENCODER_CS = 0;
-    //digitalWrite(ENCODER_SS, LOW);
-
-    // Wait for the chip to be ready
-    while(getSPIFlagStatus(SPI1, SPI_FLAG_TXE) != SET);
-   
-    // Send the register address to be read
-    SPI1->DR = address;
-
-    // Wait for the chip to return the data
-    while(getSPIFlagStatus(SPI1, SPI_FLAG_RXNE) != SET);
-
-    // Read the data from the buffer
-    data = SPI1->DR;
-
-    // Disable the SPI tx
-    SPI_TX_OFF;
-
-    // Wait for the response
-    while(getSPIFlagStatus(SPI1, SPI_FLAG_TXE) != SET);
-
-    // Send a second message
-    SPI1->DR = 0xFFFF;
-
-    // Wait for the response
-    while(getSPIFlagStatus(SPI1, SPI_FLAG_RXNE) != SET);
-
-    // Read the data from the buffer
-    data = SPI1->DR & 0x7FFF;
-
-    // Disable the chip select
-    ENCODER_CS = 1;
-    //digitalWrite(ENCODER_SS, HIGH);
-
-    // Turn SPI transactions back on
-    SPI_TX_ON;
-
-    // Return the data that was read
-    return data;
-    */
-
-}
-
-
-// Read multiple encoder registers
-void readMultipleEncoderRegisters(uint16_t command, uint16_t data[]) {
-
-	_command[0] = ENCODER_READ_REGISTER_BASE | command | 0x0000 | 0x0000;
-	uint16_t _received[MAX_REGISTER_MEM] = {0};
-	uint16_t _recDataLength = (_command[0] & (0x000F)); // Number of registers to read
-	SPISendReceive(_command, 1, _received, _recDataLength);
-	memcpy(data, _received, (_recDataLength)* sizeof(uint16_t));
-}
-
-
-// Write data to a specified register
-void writeToEncoderRegister(uint16_t command, uint16_t dataToWrite) {
-	uint16_t safety = 0;
-	_command[0] = ENCODER_WRITE_REGISTER_BASE | command;
-	_command[1] = dataToWrite;
-	SPISendReceive(_command, 2, &safety, 1);
-}
-
-
-// Send / receive a set number of SPI data packets
-void SPISendReceive(uint16_t* sent_data, uint16_t size_of_sent_data, uint16_t* received_data, uint16_t size_of_received_data) {
-
-    // Enable the chip select pin
-    ENCODER_CS = 0;
-
-    // Define the counter used to index the sent and received data
-    uint32_t data_index = 0;
-
-    // Transmit each of the data, one by one
-    for(data_index = 0; data_index < size_of_sent_data; data_index++) { 
-
-        // Wait for the chip to be ready
-        while(getSPIFlagStatus(SPI1, SPI_FLAG_TXE) != SET);
-
-        // Send the specified data
-        SPI1->DR = sent_data[data_index];
-	}
-
-	// Wait for 5 microseconds so the chip knows to send data back
-	//delayMicroseconds(5);
-
-    // Loop through, reading the data from the buffer
-	for(data_index = 0; data_index < size_of_received_data; data_index++) {
-        
-        // Wait for the receieve register to populate
-        while(getSPIFlagStatus(SPI1, SPI_FLAG_RXNE) != SET);
-
-        // Read the data from the buffer
-        received_data[data_index] = SPI1->DR;
-	}
-
-    // Disable the chip again
-	ENCODER_CS = 1;
-}
-
 
 
 // Reads the state of the encoder
@@ -210,7 +35,7 @@ uint16_t readEncoderState() {
     uint16_t state = 0;
 
     // Read the value of the encoder
-    readSingleEncoderRegister(ENCODER_STATUS_REGISTER, state);
+    encoder.readStatus(state);
 
     // Return the state that was received
     return state;
@@ -218,89 +43,32 @@ uint16_t readEncoderState() {
 
 
 // Reads the value for the angle of the encoder
-int16_t getEncoderAngle() {
+double getEncoderAngle() {
 
-    // Create an accumulator for the read data
-	uint16_t rawData = 0;
+    // Create a value where the angle will be stored
+    double angle = 0;
 
-    // Read the register
-	readSingleEncoderRegister(ENCODER_ANGLE_REGISTER, rawData);
+    // Poll the encoder for the angle
+    encoder.getAngleValue(angle);
 
-    // Delete everything after the first 15 bits
-	rawData = (rawData & (DELETE_BIT_15));
-
-	// Check if the value received is positive or negative
-	if (rawData & CHECK_BIT_14)
-	{
-		rawData = rawData - CHANGE_UINT_TO_INT_15;
-	}
-
-    // Convert the angle value to a regular degree value (equation from TLE5012 datasheet)
-	return (360 / POW_2_15) * ((double) rawData);
+    // Return the received angle value
+    return angle;
 }
 
-#ifdef ENCODER_ESTIMATION
 
-    // Function for estimating the speed of the encoder (takes much less flash memory)
-    double estimateEncoderSpeed() {
+// Reads the speed of the encoder
+double getEncoderSpeed() {
 
-        // Calculate the speed
-        double angularSpeed = (getEncoderAngle() - lastAngleReading) / (millis() - lastAngleReadingTime);
+    // Declare a variable to store the encoder's speed in
+    double speed = 0;
 
-        // Update the last variables for the next estimation
-        lastAngleReading = getEncoderAngle();
-        lastAngleReadingTime = millis();
+    // Get the speed from the encoder
+    encoder.getAngleSpeed(speed);
 
-        // Return the RPMs
-        return (angularSpeed / 360);
-    }
+    // Return the encoder's speed
+    return speed;
+}
 
-#else
-
-    // Reads the speed of the encoder
-    double getEncoderSpeed() {
-        return 0;
-        /*
-
-        int8_t numOfData = 0x5;
-        uint16_t rawData[numOfData] = {};
-        rawData = readEncoderRegister(ENCODER_SPEED_REGISTER + numOfData);
-
-        // Prepare raw speed
-        int16_t rawSpeed = rawData[0];
-        rawSpeed = (rawSpeed & (DELETE_BIT_15));
-        // check if the value received is positive or negative
-        if (rawSpeed & CHECK_BIT_14)
-        {
-            rawSpeed = rawSpeed - CHANGE_UINT_TO_INT_15;
-        }
-
-        // Prepare firMDVal
-        uint16_t firMDVal = rawData[3];
-        firMDVal >>= 14;
-
-        // Prepare intMode2Prediction
-        uint16_t intMode2Prediction = rawData[5];
-        if (intMode2Prediction & 0x0004)
-        {
-            intMode2Prediction = 3;
-        }else{
-            intMode2Prediction = 2;
-        }
-
-        // Prepare angle range
-        uint16_t rawAngleRange = rawData[5];
-        rawAngleRange &= GET_BIT_14_4;
-        rawAngleRange >>= 4;
-        double angleRange = 360 * (POW_2_7 / (double) (rawAngleRange));
-
-        //checks the value of fir_MD according to which the value in the calculation of the speed will be determined
-        //according to if prediction is enabled then, the formula for speed changes
-        finalAngleSpeed = calculateAngleSpeed(angleRange, rawSpeed, firMDVal, intMode2Prediction);
-        return (status);*/
-    }
-
-#endif
 
 // Reads the temperature of the encoder
 double getEncoderTemp() {
@@ -309,11 +77,12 @@ double getEncoderTemp() {
     double temperature = 0;
 
     // Read the temperature from the encoder
-    //encoder.getTemperature(temperature);
+    encoder.getTemperature(temperature);
 
     // Return the temperature
     return temperature;
 }
+
 /*
 // Runs through a bunch of motor movements to calibrate the encoder
 void CalibrateEncoder(void) {
@@ -535,15 +304,4 @@ void CalibrateEncoder(void) {
 
     CalibrateEncoder_finish_flag=1; //
 }
-
-
-//
-static void Prompt_show(void) {
-    OLED_Clear();
-    //OLED_ShowString(0,0,"              ");
-    OLED_ShowString(0,16,"   Finished!  ");
-    OLED_ShowString(0,32,"  Please press ");
-    OLED_ShowString(0,48,"Reset Key reboot");
-}
-
 */
