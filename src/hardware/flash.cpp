@@ -284,7 +284,7 @@ void loadSavedValues() {
 
     // Setup the table for parameters
     // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value, CAN ID, dip switches inverted)
-    uint16_t savedParameters[10];
+    uint16_t savedParameters[11];
 
     // Load the table from memory
     flashRead(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));
@@ -304,20 +304,23 @@ void loadSavedValues() {
     // Motor Enable Inverted
     motor.setEnableInversion(savedParameters[4]);
 
+    // Motor microstepping multiplier
+    motor.setMicrostepMultiplier(savedParameters[5]);
+
     // P term of PID
-    motor.setPValue(savedParameters[5]);
+    motor.setPValue(savedParameters[6]);
 
     // I term of PID
-    motor.setIValue(savedParameters[6]);
+    motor.setIValue(savedParameters[7]);
 
     // D term of PID
-    motor.setDValue(savedParameters[7]);
+    motor.setDValue(savedParameters[8]);
 
     // The CAN ID of the motor
-    setCANID(AXIS_CAN_ID(savedParameters[8]));
+    setCANID(AXIS_CAN_ID(savedParameters[9]));
 
     // If the dip switches were installed incorrectly
-    setDipInverted(savedParameters[9]);
+    setDipInverted(savedParameters[10]);
 }
 
 
@@ -326,7 +329,7 @@ void saveParametersToFlash() {
 
     // Setup the table for parameters
     // Parameters are in form = (current, step angle, microstepping divisor, motor reversed, motor enable inversion, PID P value, PID I value, PID D value, CAN ID, dip switches inverted)
-    uint16_t savedParameters[10];
+    uint16_t savedParameters[11];
 
     // Get the motor current
     savedParameters[0] = motor.getCurrent();
@@ -343,20 +346,23 @@ void saveParametersToFlash() {
     // Motor Enable Inverted
     savedParameters[4] = motor.getEnableInversion();
 
+    // Microstep multiplier
+    savedParameters[5] = motor.getMicrostepMultiplier();
+
     // P term of PID
-    savedParameters[5] = motor.getPValue();
+    savedParameters[6] = motor.getPValue();
 
     // I term of PID
-    savedParameters[6] = motor.getIValue();
+    savedParameters[7] = motor.getIValue();
 
     // D term of PID
-    savedParameters[7] = motor.getDValue();
+    savedParameters[8] = motor.getDValue();
 
     // CAN ID of the motor controller
-    savedParameters[8] = getCANID();
+    savedParameters[9] = getCANID();
 
     // If the dip switches were installed incorrectly
-    savedParameters[9] = getDipInverted();
+    savedParameters[10] = getDipInverted();
 
     // Save the array to flash
     flashWrite(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));

@@ -373,7 +373,7 @@ void setupMotorTimers() {
 
 // Need to declare a function to increment the motor for the step interrupt
 void stepMotor() {
-    motor.step(correctionStepDir);
+    motor.step(correctionStepDir, false);
 }
 
 

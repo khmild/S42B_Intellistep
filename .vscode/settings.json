@@ -11,5 +11,8 @@
         "new": "cpp",
         "functional": "cpp",
         "cmath": "cpp"
-    }
+    },
+    "cSpell.words": [
+        "mainboard"
+    ]
 }

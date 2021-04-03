@@ -95,8 +95,14 @@ class StepperMotor {
         // Get if the motor enable pin is inverted
         bool getEnableInversion();
 
+        // Set the microstep multiplier
+        void setMicrostepMultiplier(float newMultiplier);
+
+        // Get the microstep multiplier
+        float getMicrostepMultiplier();
+
         // Calculates the coil values for the motor and updates the set angle. 
-        void step(STEP_DIR dir);
+        void step(STEP_DIR dir, bool useMultiplier);
 
         // Sets the coils to hold the motor at the desired phase angle
         void driveCoils(float angle);
@@ -152,7 +158,7 @@ class StepperMotor {
 
         // Motor characteristics
         // Current (in mA)
-        int current = 0;
+        int current = 1500;
 
         // Microstepping divisor
         int microstepping = 1;
@@ -171,6 +177,9 @@ class StepperMotor {
 
         // The stepping interval (in millis)
         float stepInterval = 10;
+
+        // Microstep multiplier (used to move a custom number of microsteps per step pulse)
+        float microstepMultiplier = 1;
 };
 
 

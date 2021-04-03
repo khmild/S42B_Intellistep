@@ -186,11 +186,34 @@ bool StepperMotor::getEnableInversion() {
 }
 
 
+// Set the microstep multiplier
+void StepperMotor::setMicrostepMultiplier(float newMultiplier) {
+
+    // Set the object's value if it is valid
+    if (newMultiplier != -1) {
+        (this -> microstepMultiplier) = newMultiplier;
+    }
+}
+
+
+// Get the microstep multiplier
+float StepperMotor::getMicrostepMultiplier() {
+
+    // Return the object's value
+    return (this -> microstepMultiplier);
+}
+
+
 // Computes the coil values for the next step position and increments the set angle
-void StepperMotor::step(STEP_DIR dir = PIN) {
+void StepperMotor::step(STEP_DIR dir = PIN, bool useMultiplier = true) {
 
     // Main angle change (any inversions * angle of microstep)
     float angleChange = StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
+
+    // Factor in the multiplier if specified
+    if (useMultiplier) {
+        angleChange *= (this -> microstepMultiplier);
+    }
     
     // Invert the change based on the direction
     if (dir == PIN) {
@@ -258,7 +281,7 @@ void StepperMotor::driveCoils(float degAngle) {
     // Round the microstep angle, it has to be a whole number
     microstepAngle = round(microstepAngle);
 
-    // Make sure that the phase angle doesn't exceeed the maximum
+    // Make sure that the phase angle doesn't exceed the maximum
     microstepAngle = (uint16_t)microstepAngle % SINE_STEPS;
 
     // Calculate the sine and cosine of the angle

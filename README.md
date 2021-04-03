@@ -27,6 +27,7 @@ GCode Table
 - M352 (ex M320 S1) - Sets the direction pin inversion for the motor (0 is standard, 1 is inverted)
 - M353 (ex M353 S1) - Sets the enable pin inversion for the motor (0 is standard, 1 is inverted)
 - M354 (ex M354 S1) - Sets if the motor dip switches were installed incorrectly (reversed) (0 is standard, 1 is inverted)
+- M355 (ex M355 V1.34) - Sets the microstep multiplier for the board. Allows to use multiple motors connected to the same mainboard pin.
 - M500 (ex M500) - Saves the currently loaded parameters into flash
 - M907 (ex M907 V3000) - Sets the current in mA
 
