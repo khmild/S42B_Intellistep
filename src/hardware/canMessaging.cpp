@@ -30,7 +30,7 @@ void sendCANString(AXIS_CAN_ID ID, String string) {
         if ((string.length() + 1) > 8) {
 
             // Set the ID and the message content
-            canMessage message(ID, string.substring(0, 7));
+            canMessage message((int)ID, string.substring(0, 7));
 
             // Send the message over the CAN bus
             CANSend(message);
@@ -40,7 +40,7 @@ void sendCANString(AXIS_CAN_ID ID, String string) {
         }
         else {
             // Build the CAN message
-            canMessage message(ID, string.substring(0, string.length() - 1));
+            canMessage message((int)ID, string.substring(0, string.length() - 1));
 
             // Add the terminator to the end
             message.data[string.length()] = '>';

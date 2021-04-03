@@ -57,6 +57,7 @@ void updateDisplay() {
 
                     // Constrain the current setting within 0 and the maximum current
                     if (currentCursorIndex > MAX_CURRENT / 100) {
+
                         // Loop back to the start of the list
                         currentCursorIndex = 0;
                     }

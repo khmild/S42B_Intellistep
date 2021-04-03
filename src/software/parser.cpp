@@ -13,6 +13,7 @@ String parseString(String buffer) {
     //   - M353 (ex M353 S1) - Sets the enable pin inversion for the motor (0 is standard, 1 is inverted)
     //   - M354 (ex M354 S1) - Sets if the motor dip switches were installed incorrectly (reversed) (0 is standard, 1 is inverted)
     //   - M355 (ex M355 V1.34) - Sets the microstep multiplier for the board. Allows to use multiple motors connected to the same mainboard pin.
+    //   - M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
     //   - M500 (ex M500) - Saves the currently loaded parameters into flash
     //   - M907 (ex M907 V3000) - Sets the current in mA
 
@@ -84,6 +85,89 @@ String parseString(String buffer) {
                 motor.setMicrostepMultiplier(parseValue(buffer, 'V').toFloat());
                 return FEEDBACK_OK;
 
+            case 356:
+                // M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
+                if (parseValue(buffer, 'V').toInt() == 0) {
+
+                    // Value is a character, process it once so that it can be used in the if statements
+                    String axisValue = parseValue(buffer, 'V');
+
+                    // Compare the values of the received value with the expected ones
+                    if (axisValue == "X" || axisValue == "X1") {
+                        setCANID(X);
+                    }
+                    else if (axisValue == "X2") {
+                        setCANID(X2);
+                    }
+                    else if (axisValue == "X3") {
+                        setCANID(X3);
+                    }
+                    else if (axisValue == "X4") {
+                        setCANID(X4);
+                    }
+                    else if (axisValue == "X5") {
+                        setCANID(X5);
+                    }
+                    else if (axisValue == "Y" || axisValue == "Y1") {
+                        setCANID(Y);
+                    }
+                    else if (axisValue == "Y2") {
+                        setCANID(Y2);
+                    }
+                    else if (axisValue == "Y3") {
+                        setCANID(Y3);
+                    }
+                    else if (axisValue == "Y4") {
+                        setCANID(Y4);
+                    }
+                    else if (axisValue == "Y5") {
+                        setCANID(Y5);
+                    }
+                    else if (axisValue == "Z" || axisValue == "Z1") {
+                        setCANID(Z);
+                    }
+                    else if (axisValue == "Z2") {
+                        setCANID(Z2);
+                    }
+                    else if (axisValue == "Z3") {
+                        setCANID(Z3);
+                    }
+                    else if (axisValue == "Z4") {
+                        setCANID(Z4);
+                    }
+                    else if (axisValue == "Z5") {
+                        setCANID(Z5);
+                    }
+                    else if (axisValue == "E" || axisValue == "E1") {
+                        setCANID(E);
+                    }
+                    else if (axisValue == "E2") {
+                        setCANID(E2);
+                    }
+                    else if (axisValue == "E3") {
+                        setCANID(E3);
+                    }
+                    else if (axisValue == "E4") {
+                        setCANID(E4);
+                    }
+                    else if (axisValue == "E5") {
+                        setCANID(E5);
+                    }
+                    else {
+                        return FEEDBACK_NO_VALUE;
+                    }
+
+                    // Return operation successful
+                    return FEEDBACK_OK;
+                }
+                else {
+                    // Value is a number
+                    setCANID(AXIS_CAN_ID(parseValue(buffer, 'V').toInt()));
+
+                    // Return that the operation is complete
+                    return FEEDBACK_OK;
+                }
+
             case 500:
                 // M500 (ex M500) - Saves the currently loaded parameters into flash
                 saveParametersToFlash();
@@ -98,8 +182,7 @@ String parseString(String buffer) {
     }
 
     // Nothing here, nothing to do
-    return parseValue(buffer, 'M');
-    //return "No command specified\n";
+    return F("No command specified\n");
 }
 
 
