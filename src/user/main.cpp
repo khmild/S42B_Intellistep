@@ -49,7 +49,10 @@ void setup() {
 
     // Initialize the CAN bus
     initCAN();
-    
+
+    // Initialize the encoder
+    initEncoder();
+
     // Setup the motor for use
     motor.enable();
 
@@ -137,7 +140,7 @@ void setup() {
 
             // Only update the display if the motor data is being displayed, buttons update the display when clicked
             if (getMenuDepth() == 0) {
-                updateDisplay();
+                displayMotorData();
             }
         }
     }

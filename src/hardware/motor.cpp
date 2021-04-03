@@ -235,15 +235,21 @@ void StepperMotor::step() {
 }
 
 
-// Sets the coils of the motor based on the angle
-void StepperMotor::driveCoils(float angle) {
+// Sets the coils of the motor based on the angle (angle should be in degrees)
+void StepperMotor::driveCoils(float degAngle) {
 
-    // Make sure that the phase angle doesn't ex
-    angle = fmod(angle, SINE_STEPS);
+    // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
+    float microstepAngle = degAngle * (360 / this -> fullStepAngle) * (this -> microstepping);
+
+    // Round the microstep angle, it has to be a whole number
+    microstepAngle = round(microstepAngle);
+
+    // Make sure that the phase angle doesn't exceeed the maximum
+    microstepAngle = fmod(microstepAngle, SINE_STEPS);
 
     // Calculate the sine and cosine of the angle
-    int32_t angleSin = fastSine(angle);
-    int32_t angleCos = fastCosine(angle);
+    int32_t angleSin = fastSine(microstepAngle);
+    int32_t angleCos = fastCosine(microstepAngle);
 
     // If in reverse, we swap the sign of one of the angles
     if (StepperMotor::invertDirection(digitalRead(DIRECTION_PIN) == LOW) == 1) {

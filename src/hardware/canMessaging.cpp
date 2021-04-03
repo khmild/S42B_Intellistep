@@ -5,8 +5,7 @@
 String CANCommandString;
 
 // CAN ID of the motor driver
-// X:1, Y:2, Z:3, Z2:4..., E0:10, E1:11...
-uint16_t canID = DEFAULT_CAN_ID;
+AXIS_CAN_ID canID = DEFAULT_CAN_ID;
 
 // Function for initializing the CAN interface
 void initCAN() {
@@ -19,7 +18,7 @@ void initCAN() {
 }
 
 // Send a String over the CAN bus. Strings will have a "<" to start and a ">" to end
-void sendCANString(uint16_t ID, String string) {
+void sendCANString(AXIS_CAN_ID ID, String string) {
 
     // Add the beginning character to the string
     string = '<' + string;
@@ -30,7 +29,7 @@ void sendCANString(uint16_t ID, String string) {
         // Check the length of the string (need an extra character for the ">" (ending character))
         if ((string.length() + 1) > 8) {
 
-            // Set the ID
+            // Set the ID and the message content
             canMessage message(ID, string.substring(0, 7));
 
             // Send the message over the CAN bus
@@ -48,6 +47,9 @@ void sendCANString(uint16_t ID, String string) {
 
             // Send the message over the CAN bus
             CANSend(message);
+
+            // Break the loop after finishing
+            break;
         }
     }
 }
@@ -62,7 +64,7 @@ void receieveCANMsg() {
         canMessage message = CANReceive();
 
         // Check to see what ID the message has, only listening if it's for this board
-        if (message.id == canID) {
+        if (message.id == (int)canID) {
 
             // Copy data to the command string
             CANCommandString += message.toString();
@@ -81,11 +83,11 @@ void receieveCANMsg() {
 }
 
 // Sets the CAN ID of the board
-void setCANID(uint16_t newCANID) {
+void setCANID(AXIS_CAN_ID newCANID) {
     canID = newCANID;
 }
 
 // Gets the CAN ID of the board
-uint16_t getCANID() {
+AXIS_CAN_ID getCANID() {
     return canID;
 }

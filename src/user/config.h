@@ -77,7 +77,7 @@
 #define COIL_B_POWER_OUTPUT PB5
 
 // Encoder SPI interface
-#define ENCODER_SS   PA4 // SPI1_SS
+#define ENCODER_CS   PAout(4)//PA4 // SPI1_SS
 #define ENCODER_SCK  PA5 // SPI1_SCK
 #define ENCODER_MISO PA6 // SPI1_MISO
 #define ENCODER_MOSI PA7 // SPI1_MOSI
@@ -107,8 +107,11 @@
 #define SERIAL_BAUD 115200
 
 // The CAN ID of this board
-// X:1, Y:2, Z:3, Z2:4..., E0:10, E1:11...
-#define DEFAULT_CAN_ID 1
+// X:2, X2:3...
+// Y:7, Y2:8... 
+// Z:11 Z2:12...
+// E:17, E1:18...
+#define DEFAULT_CAN_ID X
 
 // Encoder speed estimation instead of actual value (saves memory)
 //#define ENCODER_ESTIMATION

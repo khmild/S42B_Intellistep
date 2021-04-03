@@ -55,7 +55,7 @@ class Tle5012b
 			bool STAT_ACC;           //!< \brief bits 13:13 Interface access error
 			bool STAT_ANG;           //!< \brief bits 12:12 Invalid angle value
 			uint8_t RESP;            //!< \brief bits 11:8 Sensor number response indicator
-			uint8_t TLE_CRC;         //!< \brief bits 7:0 Status ADC Test
+			uint8_t EN_CRC;             //!< \brief bits 7:0 Status ADC Test
 
 			/*!
 			* \brief Returns the safety word slave number to identify the sensor
@@ -75,7 +75,7 @@ class Tle5012b
 			*/
 			uint16_t fetch_Safety(uint16_t reg)
 			{
-				TLE_CRC      = (reg & 0x7F);
+				EN_CRC      = (reg & 0x7F);
 				RESP     = (reg & 0xF00) >> 8;
 				STAT_ANG = (reg & 0x1000) >> 12;
 				STAT_ACC = (reg & 0x2000) >> 13;

@@ -92,7 +92,8 @@ String parseString(String buffer) {
     }
 
     // Nothing here, nothing to do
-    return "No command specified";
+    return parseValue(buffer, 'M');
+    //return "No command specified\n";
 }
 
 
@@ -109,11 +110,11 @@ String parseValue(String buffer, char letter) {
         if (buffer.lastIndexOf(' ') > charIndex) {
 
             // Return only the substring between the last space and the letter
-            return buffer.substring(charIndex, buffer.lastIndexOf(' '));
+            return buffer.substring(charIndex + 1, buffer.lastIndexOf(' '));
         }
         else {
             // Get the rest of the string after the letter (should only be a number)
-            return buffer.substring(charIndex);
+            return buffer.substring(charIndex + 1);
         }
     }
     else {

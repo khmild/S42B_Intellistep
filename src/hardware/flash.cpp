@@ -314,7 +314,7 @@ void loadSavedValues() {
     motor.setDValue(savedParameters[7]);
 
     // The CAN ID of the motor
-    setCANID(savedParameters[8]);
+    setCANID(AXIS_CAN_ID(savedParameters[8]));
 
     // If the dip switches were installed incorrectly
     setDipInverted(savedParameters[9]);

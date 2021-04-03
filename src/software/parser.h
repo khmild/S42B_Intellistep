@@ -7,7 +7,7 @@
 
 // Defines for strings that are used repeatedly
 #define FEEDBACK_NO_VALUE F("No value specified! Make sure to specify a value with a letter before it")
-#define FEEDBACK_OK F("ok")
+#define FEEDBACK_OK F("ok\n")
 
 // Parse a string for commands, returning the feedback on the command
 String parseString(String buffer);
