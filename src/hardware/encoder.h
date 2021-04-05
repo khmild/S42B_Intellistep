@@ -6,10 +6,10 @@
 #include "SPI.h"
 #include "TLE5012-ino.hpp"
 
-extern SPIClass3W encoderSPI;
-extern Tle5012Ino encoder;
+//extern SPIClass3W encoderSPI;
+//extern Tle5012Ino encoder;
 
-void initEncoder();
+errorTypes initEncoder();
 uint16_t readEncoderState();
 double getEncoderAngle();
 double getEncoderSpeed();

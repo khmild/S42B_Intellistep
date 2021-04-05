@@ -1,7 +1,8 @@
 #include "encoder.h"
 
 // Main SPI interface for the encoder
-SPIClass3W encoderSPI = SPIClass3W();
+SPIClass3W encoderSPI;
+SPISettings spiSettings;
 Tle5012Ino encoder;
 
 // The command to send to the encoder
@@ -9,24 +10,26 @@ uint16_t _command[2];
 
 
 // Function to setup the encoder
-void initEncoder() {
+errorTypes initEncoder() {
+
+    // Create the SPI instance
+    encoderSPI = SPIClass3W();
 
     // SPI settings to be used. Mainly done to correct the clock of the SPI bus. 
     // The clock should be 8MHz, with the SPI using the most significant bit first
     // CLK polarity set to 0 (low) and the phase set to 
-    SPISettings spiSettings = SPISettings(8000000, MSBFIRST, SPI_MODE1);
+    spiSettings = SPISettings(8000000, MSBFIRST, SPI_MODE1);
 
     // Initialize the bus with the settings selected
-    encoderSPI.beginTransaction(spiSettings);
-
-    // Set the pins to be used with the interface
-    //encoderSPI.begin(ENCODER_MISO, ENCODER_MOSI, ENCODER_SCK, ENCODER_CS);
+    encoderSPI.beginTransaction(ENCODER_CS, spiSettings);    
 
     // Setup the encoder object to be used
-    encoder = Tle5012Ino();
+    encoder = Tle5012Ino(encoderSPI, ENCODER_CS, ENCODER_MISO, ENCODER_MOSI, ENCODER_SCK);
 
     // Start the communication with the encoder
-    encoder.begin();
+    return encoder.begin();
+    //encoderSPI.beginTransaction(ENCODER_CS, spiSettings);
+    //encoder.writeSlaveNumber(encoder.mSlave);
 
     // Write that the SSC interface should be used
     //encoder.writeInterfaceType(Reg::interfaceType_t::SSC);

@@ -18,6 +18,8 @@ HardwareTimer *stepSkipCheckTimer = new HardwareTimer(TIM2);
 // If the motor should move CCW or CW on next step update
 STEP_DIR correctionStepDir = COUNTER_CLOCKWISE;
 
+errorTypes encoderStartupError;
+
 // Run the setup
 void setup() {
 
@@ -51,7 +53,7 @@ void setup() {
     initCAN();
 
     // Initialize the encoder
-    initEncoder();
+    encoderStartupError = initEncoder();
 
     // Setup the motor for use
     motor.enable();
@@ -136,6 +138,7 @@ void setup() {
             // Only update the display if the motor data is being displayed, buttons update the display when clicked
             if (getMenuDepth() == 0) {
                 displayMotorData();
+                writeOLEDString(0, 48, String(encoderStartupError));
             }
         }
     }

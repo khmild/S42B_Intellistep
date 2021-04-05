@@ -168,15 +168,15 @@ void displayMotorData() {
 
     // RPM of the motor (RPM is capped at 2 decimal places)
     float currentRPM = motor.getMotorRPM();
-    writeOLEDString(0, 0, &(String("RPM: ") + String(currentRPM))[0]);
+    writeOLEDString(0, 0, (String("RPM: ") + String(currentRPM)));
 
     // PID loop error
     float PIDError = motor.getPIDError();
-    writeOLEDString(0, 16, &(String("Err: ") + String(PIDError))[0]);
+    writeOLEDString(0, 16, (String("Err: ") + String(PIDError)));
 
     // Current angle of the motor
     double currentAngle = getEncoderAngle();
-    writeOLEDString(0, 32, &(String("Deg: ") + String(currentAngle))[0]);
+    writeOLEDString(0, 32, (String("Deg: ") + String(currentAngle)));
 
     // Maybe a 4th line later?
 }
