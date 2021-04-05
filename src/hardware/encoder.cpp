@@ -11,8 +11,16 @@ uint16_t _command[2];
 // Function to setup the encoder
 void initEncoder() {
 
+    // SPI settings to be used. Mainly done to correct the clock of the SPI bus. 
+    // The clock should be 8MHz, with the SPI using the most significant bit first
+    // CLK polarity set to 0 (low) and the phase set to 
+    SPISettings spiSettings = SPISettings(8000000, MSBFIRST, SPI_MODE1);
+
+    // Initialize the bus with the settings selected
+    encoderSPI.beginTransaction(spiSettings);
+
     // Set the pins to be used with the interface
-    encoderSPI.begin(ENCODER_MISO, ENCODER_MOSI, ENCODER_SCK, ENCODER_CS);
+    //encoderSPI.begin(ENCODER_MISO, ENCODER_MOSI, ENCODER_SCK, ENCODER_CS);
 
     // Setup the encoder object to be used
     encoder = Tle5012Ino();
@@ -21,7 +29,7 @@ void initEncoder() {
     encoder.begin();
 
     // Write that the SSC interface should be used
-    encoder.writeInterfaceType(Reg::interfaceType_t::SSC);
+    //encoder.writeInterfaceType(Reg::interfaceType_t::SSC);
 
     // Set the encoder to use -180 to +180
     //encoder.reg.setAngleRange(Reg::angleRange_t::factor1);
