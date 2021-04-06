@@ -37,7 +37,7 @@
 #define SPI3W_XMC     2
 
 #define MAX_SLAVE_NUM    4              //!< Maximum numbers of slaves on one SPI bus
-#define SPEED            8000000U       //!< default speed of SPI transfer
+#define SPEED            1000000U       //!< default speed of SPI transfer
 
 class SPIClass3W : public SPIClass
 {
