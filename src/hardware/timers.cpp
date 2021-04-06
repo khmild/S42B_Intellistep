@@ -14,6 +14,7 @@ void setupMotorTimers() {
     // Setup the step and stallfault pin
     pinMode(STEP_PIN, INPUT_PULLDOWN);
     pinMode(STALLFAULT_PIN, OUTPUT);
+    pinMode(LED_PIN, OUTPUT);
 
     // Attach the interupt to the step pin
     attachInterrupt(digitalPinToInterrupt(STEP_PIN), updateMotor, CHANGE);
@@ -37,7 +38,8 @@ void updateMotor() {
         motor.disable();
 
         // Shut off the StallGuard pin just in case
-        digitalWrite(STALLFAULT_PIN, LOW);
+        digitalWriteFast(STALLFAULT_PIN, LOW);
+        digitalWriteFast(LED_PIN, LOW);
     }
     else {
 
@@ -68,7 +70,8 @@ void updateMotor() {
             if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1))) {
                 
                 // The maximum count has been exceeded, trigger an endstop pulse
-                digitalWrite(STALLFAULT_PIN, HIGH);
+                digitalWriteFast(STALLFAULT_PIN, HIGH);
+                digitalToggleFast(LED_PIN);
             }
             else {
                 // Just count up, motor is out of position but not out of faults
@@ -78,7 +81,8 @@ void updateMotor() {
         else {
             // Reset the out of position count and the StallFault pin
             outOfPosCount = 0;
-            digitalWrite(STALLFAULT_PIN, LOW);
+            digitalWriteFast(STALLFAULT_PIN, LOW);
+            digitalWriteFast(LED_PIN, LOW);
         }
     }
 }
