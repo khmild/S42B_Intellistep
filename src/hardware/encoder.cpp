@@ -21,10 +21,13 @@ errorTypes initEncoder() {
     spiSettings = SPISettings(8000000, MSBFIRST, SPI_MODE1);
 
     // Initialize the bus with the settings selected
-    encoderSPI.beginTransaction(ENCODER_CS, spiSettings);    
+    encoderSPI.beginTransaction(ENCODER_CS, spiSettings);
+
+    // End the SPI link. Seems dumb, but for some reason it allows the CPU to boot.
+    encoderSPI.end();
 
     // Setup the encoder object to be used
-    encoder = Tle5012Ino(encoderSPI, ENCODER_CS, ENCODER_MISO, ENCODER_MOSI, ENCODER_SCK);
+    encoder = Tle5012Ino();
 
     // Start the communication with the encoder
     return encoder.begin();

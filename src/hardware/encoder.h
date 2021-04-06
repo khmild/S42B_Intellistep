@@ -14,6 +14,7 @@ uint16_t readEncoderState();
 double getEncoderAngle();
 double getEncoderSpeed();
 double getEncoderTemp();
+errorTypes testEncoderAngleError();
 
 #endif
 
