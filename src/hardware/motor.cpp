@@ -121,7 +121,7 @@ void StepperMotor::setCurrent(int current) {
 
 // Get the microstepping divisor of the motor
 int StepperMotor::getMicrostepping() {
-    return (this -> microstepping);
+    return (this -> microstepDivisor);
 }
 
 
@@ -130,7 +130,12 @@ void StepperMotor::setMicrostepping(int setMicrostepping) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (setMicrostepping != -1) {
-        this -> microstepping = setMicrostepping;
+
+        // Set the microstepping divisor
+        this -> microstepDivisor = setMicrostepping;
+
+        // Fix the microstep angle
+        this -> microstepAngle = (this -> fullStepAngle) / (this -> microstepDivisor);
     }
 }
 
@@ -144,7 +149,12 @@ void StepperMotor::setFullStepAngle(float newStepAngle) {
         // Make sure that the value is one of the 2 common types
         // ! Maybe remove later?
         if ((newStepAngle == 1.8) || (newStepAngle == 0.9)) {
+
+            // Save the new full step angle
             this -> fullStepAngle = newStepAngle;
+
+            // Fix the microstep angle
+            this -> microstepAngle = (this -> fullStepAngle) / (this -> microstepDivisor);
         }
     }
 }
@@ -153,6 +163,11 @@ void StepperMotor::setFullStepAngle(float newStepAngle) {
 // Get the full step angle of the motor object
 float StepperMotor::getFullStepAngle() {
     return (this -> fullStepAngle);
+}
+
+
+float StepperMotor::getMicrostepAngle() {
+    return (this -> microstepAngle);
 }
 
 
@@ -208,7 +223,7 @@ float StepperMotor::getMicrostepMultiplier() {
 void StepperMotor::step(STEP_DIR dir = PIN, bool useMultiplier = true) {
 
     // Main angle change (any inversions * angle of microstep)
-    float angleChange = StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepping);
+    float angleChange = StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepDivisor);
 
     // Factor in the multiplier if specified
     if (useMultiplier) {
@@ -276,7 +291,7 @@ void StepperMotor::step(STEP_DIR dir = PIN, bool useMultiplier = true) {
 void StepperMotor::driveCoils(float degAngle) {
 
     // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
-    float microstepAngle = degAngle * (360 / this -> fullStepAngle) * (this -> microstepping);
+    float microstepAngle = degAngle * (360 / this -> fullStepAngle) * (this -> microstepDivisor);
 
     // Round the microstep angle, it has to be a whole number
     microstepAngle = round(microstepAngle);
@@ -385,7 +400,7 @@ void StepperMotor::setCoilCurrent(int ACurrent, int BCurrent) {
 float StepperMotor::speedToHz(float angularSpeed) {
 
     // Calculate the step angle (including microsteps)
-    float stepAngle = (this -> fullStepAngle) / (this -> microstepping);
+    float stepAngle = (this -> fullStepAngle) / (this -> microstepDivisor);
 
     // Calculate the time between step calls
     return (angularSpeed / stepAngle);

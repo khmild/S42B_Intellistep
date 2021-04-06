@@ -369,13 +369,21 @@ void setupMotorTimers() {
 }
 
 
-// Need to declare a function to increment the motor for the step interrupt
+// Need to declare a function to power the motor coils for the step interrupt
 void stepMotor() {
-    motor.step(correctionStepDir, false);
+
+    // Calculate the angle of the next microstep, using the difference but constrained to the nearest microstep
+    double nextAngle = constrain((motor.desiredAngle - getEncoderAngle()), -motor.getMicrostepAngle(), motor.getMicrostepAngle());
+
+    // If the next angle is equal to a microstep, we haven't reached the desired position yet and should continue to move. Otherwise, just hold the coils were they are
+    if (abs(nextAngle) == motor.getMicrostepAngle()) {
+        motor.driveCoils(nextAngle);
+    }
 }
 
 
 // Update the interval on the step timer
+// ! Is this even needed anymore? The step motor timer should do this.
 void stepSkipCheckInterrupt() {
 
     // Check to see the state of the enable pin
@@ -393,10 +401,10 @@ void stepSkipCheckInterrupt() {
         float angularDeviation = getEncoderAngle() - motor.desiredAngle;
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (abs(angularDeviation) > (motor.getFullStepAngle() / motor.getMicrostepping())) {
+        if (abs(angularDeviation) > motor.getMicrostepAngle()) {
 
             // Set the stepper to move in the correct direction
-            if (angularDeviation > (motor.getFullStepAngle() / motor.getMicrostepping())) {
+            if (angularDeviation > motor.getMicrostepAngle()) {
 
                 // Motor is at a position larger than the desired one
                 correctionStepDir = CLOCKWISE;

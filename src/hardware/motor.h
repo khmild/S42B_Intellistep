@@ -83,6 +83,9 @@ class StepperMotor {
         // Gets the full step angle of the motor
         float getFullStepAngle();
 
+        // Get the microstepping angle of the motor. This is the full steps divided by the microsteps. Used to speed up processing
+        float getMicrostepAngle();
+
         // Set if the motor should be reversed
         void setReversed(bool reversed);
 
@@ -161,10 +164,13 @@ class StepperMotor {
         int current = 1500;
 
         // Microstepping divisor
-        int microstepping = 1;
+        int microstepDivisor = 1;
 
         // Angle of a full step
         float fullStepAngle = 1.8;
+
+        // Microstep angle (full step / microstepping divisor)
+        float microstepAngle = 1.8;
 
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
         bool enabled = false;
