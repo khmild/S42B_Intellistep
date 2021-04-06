@@ -1,21 +1,21 @@
 // Import the header file
 #include "serial.h"
 
-// Arduino library
-#include "Arduino.h"
-
 // The buffer for serial data between serial reads
 String serialBuffer;
+
 
 // Initializes serial bus
 void initSerial() {
     Serial.begin(SERIAL_BAUD);
 }
 
+
 // Sends a string to the host
 void sendSerialMessage(String message) {
     Serial.write(message.c_str());
 }
+
 
 // Reads the string in the buffer
 String readSerialBuffer() {
@@ -57,6 +57,7 @@ String readSerialBuffer() {
     // If we made it this far, the read failed and we should return a -1 (will be ignored)
     return "-1";
 }
+
 
 // Parse the buffer for commands
 void runSerialParser() {

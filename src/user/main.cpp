@@ -11,13 +11,7 @@
 // Create a new motor instance
 StepperMotor motor = StepperMotor();
 
-// Create a new timer instance
-HardwareTimer *stepCorrectionTimer = new HardwareTimer(TIM1);
-HardwareTimer *stepSkipCheckTimer = new HardwareTimer(TIM2);
-
-// If the motor should move CCW or CW on next step update
-STEP_DIR correctionStepDir = COUNTER_CLOCKWISE;
-
+// ! For debugging only
 errorTypes encoderStartupError;
 
 // Run the setup
@@ -344,86 +338,6 @@ void overclock(uint32_t PLLMultiplier) {
     SystemCoreClockUpdate();
 }
 
-
-// Sets up the motor update timer
-void setupMotorTimers() {
-
-    // Setup the step pin
-    pinMode(STEP_PIN, INPUT_PULLDOWN);
-
-    // Attach the interupt to the step pin
-    attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, CHANGE);
-
-    // Setup the timer for steps
-    stepCorrectionTimer -> pause();
-    stepCorrectionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    stepCorrectionTimer -> setOverflow(CORRECTION_STEP_FREQ  /*motor.speedToHz(motor.compute(getEncoderAngle()))*/, HERTZ_FORMAT);
-    stepCorrectionTimer -> attachInterrupt(stepMotor);
-
-    // Setup the timer for step intervals
-    stepSkipCheckTimer -> pause();
-    stepSkipCheckTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    stepSkipCheckTimer -> setOverflow(STEPPER_SKIP_CHECK_RATE, HERTZ_FORMAT);
-    stepSkipCheckTimer -> attachInterrupt(stepSkipCheckInterrupt);
-    stepSkipCheckTimer -> resume();
-}
-
-
-// Need to declare a function to power the motor coils for the step interrupt
-void stepMotor() {
-
-    // Calculate the angle of the next microstep, using the difference but constrained to the nearest microstep
-    double nextAngle = constrain((motor.desiredAngle - getEncoderAngle()), -motor.getMicrostepAngle(), motor.getMicrostepAngle());
-
-    // If the next angle is equal to a microstep, we haven't reached the desired position yet and should continue to move. Otherwise, just hold the coils were they are
-    if (abs(nextAngle) == motor.getMicrostepAngle()) {
-        motor.driveCoils(nextAngle);
-    }
-}
-
-
-// Update the interval on the step timer
-// ! Is this even needed anymore? The step motor timer should do this.
-void stepSkipCheckInterrupt() {
-
-    // Check to see the state of the enable pin
-    if (digitalRead(ENABLE_PIN) != motor.getEnableInversion()) {
-
-        // The enable pin is off, the motor should be disabled
-        motor.disable();
-    }
-    else {
-
-        // Enable the motor (just energizes the coils to hold it in position)
-        motor.enable();
-
-        // Calculate the angular deviation
-        float angularDeviation = getEncoderAngle() - motor.desiredAngle;
-
-        // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (abs(angularDeviation) > motor.getMicrostepAngle()) {
-
-            // Set the stepper to move in the correct direction
-            if (angularDeviation > motor.getMicrostepAngle()) {
-
-                // Motor is at a position larger than the desired one
-                correctionStepDir = CLOCKWISE;
-            }
-            else {
-                // Motor is at a position larger than the desired one
-                correctionStepDir = COUNTER_CLOCKWISE;
-            }
-
-            // Timer needs to be enabled, set it to the computed amount
-            stepCorrectionTimer -> resume();
-            stepCorrectionTimer -> setOverflow(CORRECTION_STEP_FREQ, HERTZ_FORMAT);
-        }
-        else {
-            // Disable the timer for step correction, no need for it to run as we're in bounds
-            stepCorrectionTimer -> pause();
-        }
-    }
-}
 
 // ! Only here for testing
 void blink() {

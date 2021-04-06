@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include "parser.h"
 #include <cctype>
+#include "Arduino.h"
 
 void initSerial();
 void sendSerialMessage(String message);

@@ -4,6 +4,36 @@
 // Need the Arduino library for pin conversion
 #include "Arduino.h"
 
+
+// --------------  Settings  --------------
+// General parameters
+#define CLOSED_LOOP
+#define CLOSED_LOOP_CONFIG
+#define BUTTON_REPEAT_INTERVAL 1000 // Millis
+//#define TEST_FLASH
+
+// Serial configuration settings
+#define STRING_START_MARKER '<'
+#define STRING_END_MARKER '>'
+#define SERIAL_BAUD 115200
+
+// The CAN ID of this board
+// X:2, X2:3...
+// Y:7, Y2:8... 
+// Z:11 Z2:12...
+// E:17, E1:18...
+#define DEFAULT_CAN_ID X
+
+// Motor constants
+#define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
+#define MAX_CURRENT 3500 // Maximum current in mA
+#define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
+#define STEP_UPDATE_FREQ 10 // in Hz, to step the motor back to the correct position
+#define MAX_MOTOR_SPEED 50 // deg/s
+#define STEP_FAULT_TIME 1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
+
+
+// --------------  Pins  --------------
 /*
 // * = F103C8-CB    | DIGITAL | ANALOG | USART      | TWI       | SPI        | SPECIAL   |
 //                  |---------|--------|------------|-----------|------------|-----------|
@@ -50,6 +80,7 @@
 //                  |---------|--------|------------|-----------|------------|-----------|
 */
 
+
 // OLED Mappings
 #define OLED_CS   PBout(12)	//
 #define OLED_RST  PAout(8) 	//
@@ -74,7 +105,7 @@
 #define DIP_4  PA_15
 
 // LED pin
-#define LED_PIN PC13
+#define LED_PIN PC_13
 
 // Motor mappings
 #define COIL_A_DIR_1        PB_6
@@ -99,37 +130,16 @@
 #define CAN_IN_PIN  PA_11
 #define CAN_OUT_PIN PA_12
 
+// StallFault connection (to mainboard)
+// Pulls high on a stepper misalignment after the set period
+// ! Find an actual pin to set
+#define STALLFAULT_PIN NC
 
 
-// Options
-#define CLOSED_LOOP
-#define CLOSED_LOOP_CONFIG
-#define BUTTON_REPEAT_INTERVAL 1000 // millis
-//#define TEST_FLASH
-#define STEPPER_SKIP_CHECK_RATE 10
-#define MAX_MOTOR_SPEED 50 // deg/s
-
-// Serial configuration settings
-#define STRING_START_MARKER '<'
-#define STRING_END_MARKER '>'
-#define SERIAL_BAUD 115200
-
-// The CAN ID of this board
-// X:2, X2:3...
-// Y:7, Y2:8... 
-// Z:11 Z2:12...
-// E:17, E1:18...
-#define DEFAULT_CAN_ID X
-
-// Motor constants
-#define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
-#define MAX_CURRENT 3500 // Maximum current in mA
-#define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
-#define CORRECTION_STEP_FREQ 4 // in Hz, to step the motor back to the correct position
-
+// --------------  Internal defines  --------------
+// Under the hood motor setup
 #define SINE_STEPS ((int16_t)(1024L))
 #define SINE_MAX ((int32_t)(32768L))
-
 
 // Low level GPIO configuration (for quicker manipulations than digitalWrites)
 // A large amount of low level commands for handling the useage of fast GPIO manipulation

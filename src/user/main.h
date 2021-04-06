@@ -12,8 +12,7 @@ extern void overclock(uint32_t PLLMultiplier);
 
 // Motor interrupts
 extern void setupMotorTimers();
-extern void stepMotor();
-extern void stepSkipCheckInterrupt();
+extern void updateMotor();
 
 extern StepperMotor motor;
 
