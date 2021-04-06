@@ -67,7 +67,7 @@ void updateMotor() {
             }            
 
             // Check to see if the out of position faults have exceeded the maximum amounts
-            if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1))) {
+            if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
                 
                 // The maximum count has been exceeded, trigger an endstop pulse
                 digitalWriteFast(STALLFAULT_PIN, HIGH);

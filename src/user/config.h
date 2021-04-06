@@ -31,6 +31,7 @@
 #define STEP_UPDATE_FREQ 10 // in Hz, to step the motor back to the correct position
 #define MAX_MOTOR_SPEED 50 // deg/s
 #define STEP_FAULT_TIME 1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
+#define STEP_FAULT_ANGLE 45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
 
 
 // --------------  Pins  --------------
