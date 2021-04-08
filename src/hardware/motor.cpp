@@ -13,12 +13,12 @@ StepperMotor::StepperMotor(float P, float I, float D) {
     this -> previousTime = millis();
 
     // Setup the pins as outputs
-    pinMode(COIL_A_DIR_1, OUTPUT);
-    pinMode(COIL_A_DIR_2, OUTPUT);
-    pinMode(COIL_B_DIR_1, OUTPUT);
-    pinMode(COIL_B_DIR_2, OUTPUT);
-    pinMode(COIL_A_POWER_OUTPUT, OUTPUT);
-    pinMode(COIL_B_POWER_OUTPUT, OUTPUT);
+    pinMode(COIL_A_DIR_1_PIN, OUTPUT);
+    pinMode(COIL_A_DIR_2_PIN, OUTPUT);
+    pinMode(COIL_B_DIR_1_PIN, OUTPUT);
+    pinMode(COIL_B_DIR_2_PIN, OUTPUT);
+    pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
+    pinMode(COIL_B_POWER_OUTPUT_PIN, OUTPUT);
 }
 
 // Constructor without PID terms
@@ -28,12 +28,12 @@ StepperMotor::StepperMotor() {
     this -> previousTime = millis();
 
     // Setup the pins as outputs
-    pinMode(COIL_A_DIR_1, OUTPUT);
-    pinMode(COIL_A_DIR_2, OUTPUT);
-    pinMode(COIL_B_DIR_1, OUTPUT);
-    pinMode(COIL_B_DIR_2, OUTPUT);
-    pinMode(COIL_A_POWER_OUTPUT, OUTPUT);
-    pinMode(COIL_B_POWER_OUTPUT, OUTPUT);
+    pinMode(COIL_A_DIR_1_PIN, OUTPUT);
+    pinMode(COIL_A_DIR_2_PIN, OUTPUT);
+    pinMode(COIL_B_DIR_1_PIN, OUTPUT);
+    pinMode(COIL_B_DIR_2_PIN, OUTPUT);
+    pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
+    pinMode(COIL_B_POWER_OUTPUT_PIN, OUTPUT);
 }
 
 
@@ -345,22 +345,22 @@ void StepperMotor::driveCoils(float degAngle) {
 // ! Maybe change to faster pin writing
 void StepperMotor::setADirection(COIL_STATE desiredState) {
     if (desiredState == FORWARD) {
-        digitalWrite(COIL_A_DIR_1, HIGH);
-        digitalWrite(COIL_A_DIR_2, LOW);
+        digitalWrite(COIL_A_DIR_1_PIN, HIGH);
+        digitalWrite(COIL_A_DIR_2_PIN, LOW);
     }
     else if (desiredState == BACKWARD) {
-        digitalWrite(COIL_A_DIR_1, LOW);
-        digitalWrite(COIL_A_DIR_2, HIGH);
+        digitalWrite(COIL_A_DIR_1_PIN, LOW);
+        digitalWrite(COIL_A_DIR_2_PIN, HIGH);
     }
     else if (desiredState == BRAKE) {
-        digitalWrite(COIL_A_DIR_1, HIGH);
-        digitalWrite(COIL_A_DIR_2, HIGH);
-        analogWrite(COIL_A_POWER_OUTPUT, 0);
+        digitalWrite(COIL_A_DIR_1_PIN, HIGH);
+        digitalWrite(COIL_A_DIR_2_PIN, HIGH);
+        analogWrite(COIL_A_POWER_OUTPUT_PIN, 0);
     }
     else if (desiredState == COAST) {
-        digitalWrite(COIL_A_DIR_1, LOW);
-        digitalWrite(COIL_A_DIR_2, LOW);
-        analogWrite(COIL_A_POWER_OUTPUT, 0);
+        digitalWrite(COIL_A_DIR_1_PIN, LOW);
+        digitalWrite(COIL_A_DIR_2_PIN, LOW);
+        analogWrite(COIL_A_POWER_OUTPUT_PIN, 0);
     }
 }
 
@@ -369,30 +369,40 @@ void StepperMotor::setADirection(COIL_STATE desiredState) {
 // ! Maybe change to faster pin writing
 void StepperMotor::setBDirection(COIL_STATE desiredState) {
     if (desiredState == FORWARD) {
-        digitalWrite(COIL_B_DIR_1, HIGH);
-        digitalWrite(COIL_B_DIR_2, LOW);
+        digitalWrite(COIL_B_DIR_1_PIN, HIGH);
+        digitalWrite(COIL_B_DIR_2_PIN, LOW);
     }
     else if (desiredState == BACKWARD) {
-        digitalWrite(COIL_B_DIR_1, LOW);
-        digitalWrite(COIL_B_DIR_2, HIGH);
+        digitalWrite(COIL_B_DIR_1_PIN, LOW);
+        digitalWrite(COIL_B_DIR_2_PIN, HIGH);
     }
     else if (desiredState == BRAKE) {
-        digitalWrite(COIL_B_DIR_1, HIGH);
-        digitalWrite(COIL_B_DIR_2, HIGH);
-        analogWrite(COIL_B_POWER_OUTPUT, 0);
+        digitalWrite(COIL_B_DIR_1_PIN, HIGH);
+        digitalWrite(COIL_B_DIR_2_PIN, HIGH);
+        analogWrite(COIL_B_POWER_OUTPUT_PIN, 0);
     }
     else if (desiredState == COAST) {
-        digitalWrite(COIL_B_DIR_1, LOW);
-        digitalWrite(COIL_B_DIR_2, LOW);
-        analogWrite(COIL_B_POWER_OUTPUT, 0);
+        digitalWrite(COIL_B_DIR_1_PIN, LOW);
+        digitalWrite(COIL_B_DIR_2_PIN, LOW);
+        analogWrite(COIL_B_POWER_OUTPUT_PIN, 0);
     }
 }
 
 
 // Sets the current of each of the coils (with mapping)
 void StepperMotor::setCoilCurrent(int ACurrent, int BCurrent) {
-    analogWrite(COIL_A_POWER_OUTPUT, map(ACurrent, 0, MAX_CURRENT, 0, 255));
-    analogWrite(COIL_B_POWER_OUTPUT, map(BCurrent, 0, MAX_CURRENT, 0, 255));
+
+    // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
+    uint32_t aPWMValue = 2550 * BOARD_VOLTAGE * CURRENT_SENSE_RESISTOR * ACurrent;
+    uint32_t bPWMValue = 2550 * BOARD_VOLTAGE * CURRENT_SENSE_RESISTOR * BCurrent;
+
+    // Constrain the PWM values
+    aPWMValue = constrain(aPWMValue, 0, 255);
+    bPWMValue = constrain(bPWMValue, 0, 255);
+
+    // Set the values on the output pins
+    analogWrite(COIL_A_POWER_OUTPUT_PIN, aPWMValue);
+    analogWrite(COIL_B_POWER_OUTPUT_PIN, bPWMValue);
 }
 
 

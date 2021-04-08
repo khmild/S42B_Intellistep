@@ -53,7 +53,7 @@ void initEncoder() {
     __HAL_SPI_ENABLE(&spiConfig);
 
     // Set the chip select pin high, disabling the encoder's communication
-	ENCODER_CS = 1;
+	ENCODER_CS_PIN = 1;
 }
 
 
@@ -64,7 +64,7 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
     uint16_t data;
 
     // Set the encoder chip select low, enabling it for communication
-    ENCODER_CS = 0;
+    ENCODER_CS_PIN = 0;
 
     // Wait for the transmit buffer to be empty
     while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
@@ -94,7 +94,7 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
     data = (spiConfig.Instance -> DR) & 0x7FFF;
 
     // Disable the chip communication
-    ENCODER_CS = 1;
+    ENCODER_CS_PIN = 1;
 
     // Enable the SPI transmit
     SPI_TX_ON;
@@ -108,7 +108,7 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
 void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
 
     // Enable the encoder chip's communications
-    ENCODER_CS = 0;
+    ENCODER_CS_PIN = 0;
 
     // Wait until the transmit buffer is empty
     while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
@@ -135,7 +135,7 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
     spiConfig.Instance -> DR;
 
     // Disable the encoder's communications again
-    ENCODER_CS = 1;
+    ENCODER_CS_PIN = 1;
 }
 
 

@@ -21,10 +21,10 @@ void initButtons() {
   pinMode(BACK_BUTTON_PIN, INPUT_PULLUP);
 
   // All of the dip switches
-  pinMode(DIP_1, INPUT_PULLUP);
-  pinMode(DIP_2, INPUT_PULLUP);
-  pinMode(DIP_3, INPUT_PULLUP);
-  pinMode(DIP_4, INPUT_PULLUP);
+  pinMode(DIP_1_PIN, INPUT_PULLUP);
+  pinMode(DIP_2_PIN, INPUT_PULLUP);
+  pinMode(DIP_3_PIN, INPUT_PULLUP);
+  pinMode(DIP_4_PIN, INPUT_PULLUP);
 
   // Read the microstepping of the dip switches
   readDipMicrostepping();
@@ -121,17 +121,17 @@ void readDipMicrostepping() {
     if (dipInverted) {
 
         // If they were installed incorrectly, they have to be read opposite
-        if (digitalRead(DIP_4) && digitalRead(DIP_3)) {
+        if (digitalRead(DIP_4_PIN) && digitalRead(DIP_3_PIN)) {
 
             // Set the microstepping to 1/32 if both dips are on
             motor.setMicrostepping(32);
         }
-        else if (!digitalRead(DIP_4) && digitalRead(DIP_3)) {
+        else if (!digitalRead(DIP_4_PIN) && digitalRead(DIP_3_PIN)) {
 
             // Set the microstepping to 1/16 if the left dip is off and the right is on
             motor.setMicrostepping(16);
         }
-        else if (digitalRead(DIP_4) && !digitalRead(DIP_3)) {
+        else if (digitalRead(DIP_4_PIN) && !digitalRead(DIP_3_PIN)) {
 
             // Set the microstepping to 1/8 if the right dip is off and the left on
             motor.setMicrostepping(8);
@@ -144,17 +144,17 @@ void readDipMicrostepping() {
     }
     else {
         // Dips are not inverted, they are installed correctly
-        if (digitalRead(DIP_1) && digitalRead(DIP_2)) {
+        if (digitalRead(DIP_1_PIN) && digitalRead(DIP_2_PIN)) {
 
             // Set the microstepping to 1/32 if both dips are on
             motor.setMicrostepping(32);
         }
-        else if (!digitalRead(DIP_1) && digitalRead(DIP_2)) {
+        else if (!digitalRead(DIP_1_PIN) && digitalRead(DIP_2_PIN)) {
 
             // Set the microstepping to 1/16 if the left dip is off and the right is on
             motor.setMicrostepping(16);
         }
-        else if (digitalRead(DIP_1) && !digitalRead(DIP_2)) {
+        else if (digitalRead(DIP_1_PIN) && !digitalRead(DIP_2_PIN)) {
 
             // Set the microstepping to 1/8 if the right dip is off and the left on
             motor.setMicrostepping(8);
