@@ -382,18 +382,18 @@ void OLED_WR_Byte(u8 dat,u8 cmd)
 void OLED_WR_Byte(u8 dat,u8 cmd)
 {
 	u8 i;
-	OLED_RS=cmd; //
-	OLED_CS=0;
+	OLED_RS_PIN=cmd; //
+	OLED_CS_PIN=0;
 	for(i=0;i<8;i++)
 	{
-		OLED_SCLK=0;
-		if(dat&0x80)OLED_SDIN=1;
-		else OLED_SDIN=0;
-		OLED_SCLK=1;
+		OLED_SCLK_PIN=0;
+		if(dat&0x80)OLED_SDIN_PIN=1;
+		else OLED_SDIN_PIN=0;
+		OLED_SCLK_PIN=1;
 		dat<<=1;
 	}
-	OLED_CS=1;
-	OLED_RS=1;
+	OLED_CS_PIN=1;
+	OLED_RS_PIN=1;
 }
 #endif
 //
@@ -559,9 +559,9 @@ void initOLED(void)
 
     #endif
 
-	OLED_RST=0;			  		//
+	OLED_RST_PIN=0;			  		//
 	delay(100);
-	OLED_RST=1;
+	OLED_RST_PIN=1;
 	OLED_WR_Byte(0xAE,OLED_CMD);//
 	OLED_WR_Byte(0xD5,OLED_CMD);//
 	OLED_WR_Byte(80,OLED_CMD);  //[3:0],;[7:4],

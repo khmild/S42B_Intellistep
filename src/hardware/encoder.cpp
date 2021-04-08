@@ -21,7 +21,7 @@ errorTypes initEncoder() {
     spiSettings = SPISettings(8000000, MSBFIRST, SPI_MODE1);
 
     // Initialize the bus with the settings selected
-    encoderSPI.beginTransaction(ENCODER_CS, spiSettings);
+    encoderSPI.beginTransaction(ENCODER_CS_PIN, spiSettings);
 
     // End the SPI link. Seems dumb, but for some reason it allows the CPU to boot.
     encoderSPI.end();

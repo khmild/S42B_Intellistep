@@ -10,6 +10,7 @@
 #define CLOSED_LOOP
 #define CLOSED_LOOP_CONFIG
 #define BUTTON_REPEAT_INTERVAL 1000 // Millis
+#define BOARD_VOLTAGE 3.3 // The voltage of the main processor
 //#define TEST_FLASH
 
 // Serial configuration settings
@@ -27,6 +28,7 @@
 // Motor constants
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
 #define MAX_CURRENT 3500 // Maximum current in mA
+#define CURRENT_SENSE_RESISTOR 0.25 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
 #define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
 #define STEP_UPDATE_FREQ 10 // in Hz, to step the motor back to the correct position
 #define MAX_MOTOR_SPEED 50 // deg/s
@@ -83,11 +85,11 @@
 
 
 // OLED Mappings
-#define OLED_CS   PBout(12)	//
-#define OLED_RST  PAout(8) 	//
-#define OLED_RS   PBout(13)	//
-#define OLED_SCLK PBout(15)	//(D0)
-#define OLED_SDIN PBout(14)	//(D1)
+#define OLED_CS_PIN   PBout(12)	//
+#define OLED_RST_PIN  PAout(8) 	//
+#define OLED_RS_PIN   PBout(13)	//
+#define OLED_SCLK_PIN PBout(15)	//(D0)
+#define OLED_SDIN_PIN PBout(14)	//(D1)
 
 // Button mappings
 #define DOWN_BUTTON_PIN         PA_3
@@ -100,27 +102,27 @@
 // DIP_2   |    Microstep 2        |  Closed/Open loop
 // DIP_3   |    Closed/Open loop   |  Microstep 2
 // DIP_4   |    Calibration mode   |  Microstep 1
-#define DIP_1  PB_10
-#define DIP_2  PB_11
-#define DIP_3  PB_3
-#define DIP_4  PA_15
+#define DIP_1_PIN  PB_10
+#define DIP_2_PIN  PB_11
+#define DIP_3_PIN  PB_3
+#define DIP_4_PIN  PA_15
 
 // LED pin
 #define LED_PIN PC_13
 
 // Motor mappings
-#define COIL_A_DIR_1        PB_6
-#define COIL_A_DIR_2        PB_7
-#define COIL_B_DIR_1        PB_8
-#define COIL_B_DIR_2        PB_9
-#define COIL_A_POWER_OUTPUT PB_4
-#define COIL_B_POWER_OUTPUT PB_5
+#define COIL_A_DIR_1_PIN        PB_6
+#define COIL_A_DIR_2_PIN        PB_7
+#define COIL_B_DIR_1_PIN        PB_8
+#define COIL_B_DIR_2_PIN        PB_9
+#define COIL_A_POWER_OUTPUT_PIN PB_4
+#define COIL_B_POWER_OUTPUT_PIN PB_5
 
 // Encoder SPI interface
-#define ENCODER_CS   PA_4 // SPI1_SS
-#define ENCODER_SCK  PA_5 // SPI1_SCK
-#define ENCODER_MISO PA_6 // SPI1_MISO
-#define ENCODER_MOSI PA_7 // SPI1_MOSI
+#define ENCODER_CS_PIN   PA_4 // SPI1_SS
+#define ENCODER_SCK_PIN  PA_5 // SPI1_SCK
+#define ENCODER_MISO_PIN PA_6 // SPI1_MISO
+#define ENCODER_MOSI_PIN PA_7 // SPI1_MOSI
 
 // Stepping interface
 #define STEP_PIN      PA_1 // ! according to the previous files, but this is the same as the dir pin
