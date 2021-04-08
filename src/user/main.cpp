@@ -11,17 +11,13 @@
 // Create a new motor instance
 StepperMotor motor = StepperMotor();
 
-// ! For debugging only
-errorTypes encoderStartupError;
-
 // Run the setup
 void setup() {
 
-    // Set everything up
+    // Set processor up
     SystemInit();
 
     // Setup the system clock (includes overclocking)
-    //overclock(RCC_CFGR_PLLMULL12);
     overclock(RCC_CFGR_PLLMULL16);
 
     // Initialize the LED
@@ -47,7 +43,7 @@ void setup() {
     initCAN();
 
     // Initialize the encoder
-    encoderStartupError = initEncoder();
+    initEncoder();
 
     // Setup the motor for use
     motor.enable();
@@ -79,6 +75,7 @@ void setup() {
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
         while(true) {
+
             // ! Only here for testing
             runSerialParser();
 
@@ -132,179 +129,13 @@ void setup() {
             // Only update the display if the motor data is being displayed, buttons update the display when clicked
             if (getMenuDepth() == 0) {
                 displayMotorData();
-                writeOLEDString(0, 48, String(encoderStartupError));
             }
         }
     }
-    /*
-
-    EXTIX_Init();
-    NVIC_EnableIRQ(EXTI1_IRQn);         //
-    UART_Configuration(USART1, UART1_DEFAULT_BAUDRATE);     //
-    CAN1_Mode_Init(CAN_SJW_1tq, CAN_BS2_6tq, CAN_BS1_5tq, 6, CAN_Mode_LoopBack);//
-    res = CAN1_Send_Msg(canbufTx, 8);                      //
-    delayMs(100);
-    if(res){                                            //
-        printf("CAN1 Transport fail!\r\n");
-    }
-    else{
-        printf("CAN1 Transport OK!\r\n");
-    }
-    TIM2_Cap_Init(0xFFFF,0);          //
-
-     while(1) {
-        #ifdef CLOSED_LOOP
-            if(enableModeFlag){
-                if(getEnablePin()) {
-                    restart_init();
-                }
-                else{
-                    resetStatusFlag++;
-                    enmode = 0;
-                }
-            }
-            else {
-                if(!getEnablePin()){
-                    restart_init();
-                }
-                else{
-                    resetStatusFlag++;
-                    enmode=0; //
-                }
-            }
-            if(resetStatusFlag == 1){       //
-                enmode = 0;
-                resetStatusFlag++;           //1++
-                PID_Cal_value_init();           //
-
-                wap1 = 0;
-                wap2 = 0;
-                dataUpdateFlag = true;
-            }
-            else{
-                if(resetStatusFlag > 3)
-                    resetStatusFlag--;
-            }
-
-            usart_Receive_Process();                        //
-            data_Process();
-            test_uart();
-
-            if(frameErrorFlag){
-                frameErrorFlag =0;
-                USART1_SendStr("Frame Err!\r\n");
-            }
-            if(flashStoreFlag){
-                flashStoreFlag = false;
-
-                //USART_Cmd(USART1, DISABLE);
-                USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);
-                USART_ITConfig(USART1, USART_IT_IDLE, DISABLE);
-
-                flashWrite(DATA_STORE_ADDRESS, table1);//
-
-                //USART_Cmd(USART1, ENABLE);
-                USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
-                USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
-                //Reset_status_flag=1;
-                //restart_init();
-            }
-            KeyScan();                                      //
-            Oled_display();                                 //
-            Motor_data_dis();                               //
-            //TIM4_IRQHandler();
-    #endif
-#if 0
-        if(KEY_Select==0){
-            delay_ms(10);
-            if(KEY_Select==0){
-                if(k3_flag == 0){
-                    k3_flag =1;
-                    led1=!led1;			//
-                    res=CAN1_Send_Msg(canbufTx,8);//
-                    if(res)
-                        printf("CAN1 Transport fail!\r\n");
-                    else
-                        printf("OK!\r\n");
-                }
-            }
-        }
-        else if(KEY_Confirm==0){
-            delay_ms(10);
-            if(KEY_Confirm==0){
-                if(k4_flag == 0){
-                    k4_flag =1;
-                    mode=!mode;
-                    CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_5tq,6,mode);	//
-
-                    if(mode==0)//
-                    {
-                        printf("Nnormal Mode \r\n");
-                    }else //
-                    {
-                        printf("LoopBack Mode\r\n");
-                    }
-                    led1=1;			//off
-                    delay_ms(200);
-                    led1=0;			//on
-                    delay_ms(200);
-                    led1=1;			//off
-                    delay_ms(200);
-                    led1=0;			//on
-                    delay_ms(200);
-                }
-            }
-        }
-        else{
-            k3_flag = 0;
-            k4_flag = 0;
-        }
-        key=CAN1_Receive_Msg(canbufRx);
-        if(key)//
-        {
-            printf("CAN Receive: ");
-             for(i=0;i<key;i++){
-                printf("%x ",canbufRx[i]);
-             }
-            printf("\r\n");
-        }
-        key=0;
-#endif
-    }
-*/
-}
-/*
-//
-void restart_init(void)
-{
-    //
-    if(resetStatusFlag !=0 ){
-        CLEAR_BIT(TIM2->CR1, TIM_CR1_CEN);
-        PID_Cal_value_init();           //
-        SET_BIT(TIM2->CR1, TIM_CR1_CEN);
-    }
-    enmode=1;
-    resetStatusFlag=0;
 }
 
-#ifdef TEST_FLASH
-void flash_test(void)
-{
-    static char t=0;
-    STMFLASH_Write(Data_Store_Arrdess,table,16);
-    delay_ms(10);
-    FLASH_Unlock();						//
-    STMFLASH_Read(Data_Store_Arrdess,table1,16);
-    FLASH_Lock();//
-     printf("flash Read: ");
-    for(t=0;t<16;t++){
-        printf("%c ",table1[t]);
-    }
-    while(1);
-}
-#endif
 
-*/
+// Main loop
 void loop() {
     blink();
 }

@@ -1,100 +1,234 @@
 #include "encoder.h"
 
-// Main SPI interface for the encoder
-SPIClass3W encoderSPI;
-SPISettings spiSettings;
-Tle5012Ino encoder;
-
 // The command to send to the encoder
 uint16_t _command[2];
 
+// SPI init structure
+SPI_HandleTypeDef spiConfig;
 
 // Function to setup the encoder
-errorTypes initEncoder() {
+void initEncoder() {
 
-    // Create the SPI instance
-    encoderSPI = SPIClass3W();
+    // Set up the peripheral clocks
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_AFIO_CLK_ENABLE();
 
-    // SPI settings to be used. Mainly done to correct the clock of the SPI bus. 
-    // The clock should be 8MHz, with the SPI using the most significant bit first
-    // CLK polarity set to 0 (low) and the phase set to 
-    spiSettings = SPISettings(8000000, MSBFIRST, SPI_MODE1);
+    // Remap pins from a JTAG to SWD interface
+    __HAL_AFIO_REMAP_SWJ_NOJTAG();
 
-    // Initialize the bus with the settings selected
-    encoderSPI.beginTransaction(ENCODER_CS, spiSettings);
+    // Main initialization structure
+    GPIO_InitTypeDef GPIO_InitStructure;
 
-    // End the SPI link. Seems dumb, but for some reason it allows the CPU to boot.
-    encoderSPI.end();
+    // Setup pin A4, A5, A6, and A7
+    GPIO_InitStructure.Pin = GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP; // Push/pull
+    GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH; // Fast speed
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // Setup the encoder object to be used
-    encoder = Tle5012Ino();
+    // Enable the clock for the SPI bus
+	__HAL_RCC_SPI1_CLK_ENABLE();
 
-    // Start the communication with the encoder
-    return encoder.begin();
-    //encoderSPI.beginTransaction(ENCODER_CS, spiSettings);
-    //encoder.writeSlaveNumber(encoder.mSlave);
+    // Set the bits of pins A5, A6, and A7
+ 	GPIOA -> BSRR = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
 
-    // Write that the SSC interface should be used
-    //encoder.writeInterfaceType(Reg::interfaceType_t::SSC);
+    // Set the peripheral to be used
+    spiConfig.Instance = SPI1;
 
-    // Set the encoder to use -180 to +180
-    //encoder.reg.setAngleRange(Reg::angleRange_t::factor1);
+    // Configure the settings for transactions
+	spiConfig.Init.Direction = SPI_DIRECTION_2LINES;
+	spiConfig.Init.Mode = SPI_MODE_MASTER;
+	spiConfig.Init.DataSize = SPI_DATASIZE_16BIT;
+	spiConfig.Init.CLKPolarity = SPI_POLARITY_LOW;
+	spiConfig.Init.CLKPhase = SPI_PHASE_2EDGE;
+	spiConfig.Init.NSS = SPI_NSS_SOFT;
+	spiConfig.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+	spiConfig.Init.FirstBit = SPI_FIRSTBIT_MSB;
+	spiConfig.Init.CRCPolynomial = 7;
+    spiConfig.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+
+    // Initialize the SPI bus with the parameters we set
+    HAL_SPI_Init(&spiConfig);
+
+	// Enable the SPI bus
+    __HAL_SPI_ENABLE(&spiConfig);
+
+    // Set the chip select pin high, disabling the encoder's communication
+	ENCODER_CS = 1;
+}
+
+
+// Read the value of a register
+uint16_t readEncoderRegister(uint16_t registerAddress) {
+
+    // Create a variable to store the data in
+    uint16_t data;
+
+    // Set the encoder chip select low, enabling it for communication
+    ENCODER_CS = 0;
+
+    // Wait for the transmit buffer to be empty
+    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
+
+    // Send the register address
+    spiConfig.Instance -> DR = (ENCODER_BASE_REGISTER | registerAddress);
+
+    // Wait for data to be received in the receive buffer
+    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
+
+    // Read the data from the buffer (just to clear it)
+    data = (spiConfig.Instance -> DR);
+
+    // Turn the SPI transmit off
+    SPI_TX_OFF;
+
+    // Wait for the transmit buffer to empty
+    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
+
+    // Send that we want to read the register (BTT had 0xFFFF) (I think that this is to send a blank message)
+    spiConfig.Instance -> DR = 0xFFFF;
+
+    // Wait for the chip to return data
+    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
+
+    // Read the data from the buffer, dropping the 16th bit (not used)
+    data = (spiConfig.Instance -> DR) & 0x7FFF;
+
+    // Disable the chip communication
+    ENCODER_CS = 1;
+
+    // Enable the SPI transmit
+    SPI_TX_ON;
+
+    // Return the received data
+    return data;
+}
+
+
+// Write a value to a register
+void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
+
+    // Enable the encoder chip's communications
+    ENCODER_CS = 0;
+
+    // Wait until the transmit buffer is empty
+    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
+
+    // Send the register address to be modified
+    spiConfig.Instance -> DR = registerAddress;
+
+    // Wait for the response
+    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
+
+    // Read the data in the buffer
+    spiConfig.Instance -> DR;
+
+    // Wait for the transmit buffer to be empty
+    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
+
+    // Send the data to be written to the address
+    spiConfig.Instance -> DR = data;
+
+    // Wait for the response
+    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
+
+    // Clear the receive buffer by reading it
+    spiConfig.Instance -> DR;
+
+    // Disable the encoder's communications again
+    ENCODER_CS = 1;
 }
 
 
 // Reads the state of the encoder
 uint16_t readEncoderState() {
-
-    // Create a variable where the state will be stored
-    uint16_t state = 0;
-
-    // Read the value of the encoder
-    encoder.readStatus(state);
-
-    // Return the state that was received
-    return state;
+    return (readEncoderRegister(ENCODER_STATUS_REGISTER));
 }
 
 
 // Reads the value for the angle of the encoder
 double getEncoderAngle() {
 
-    // Create a value where the angle will be stored
-    double angle = 0;
+    // Get the value of the angle register
+    uint16_t rawData = readEncoderRegister(ENCODER_ANGLE_REGISTER);
 
-    // Poll the encoder for the angle
-    encoder.getAngleValue(angle);
+    // Delete everything but the first 15 bits (others not needed)
+    rawData = (rawData & (DELETE_BIT_15));
 
-    // Return the received angle value
-    return angle;
+	// Check if the value received is positive or negative
+	if (rawData & CHECK_BIT_14) {
+		rawData = rawData - CHANGE_UINT_TO_INT_15;
+	}
+
+    // Return the value (equation from TLE5012 library)
+	return (360 / POW_2_15) * ((double) rawData);
 }
 
 
-// Reads the speed of the encoder
+// Reads the speed of the encoder (for later)
 double getEncoderSpeed() {
+    return 0;
+    /*
+    int8_t numOfData = 0x5;
+	uint16_t rawData[numOfData] = {};
 
-    // Declare a variable to store the encoder's speed in
-    double speed = 0;
+	errorTypes status = readMoreRegisters(reg.REG_ASPD + numOfData, rawData, upd, safe);
+	if (status != NO_ERROR)
+	{
+		return (status);
+	}
 
-    // Get the speed from the encoder
-    encoder.getAngleSpeed(speed);
+	// Prepare raw speed
+	rawSpeed = rawData[0];
+	rawSpeed = (rawSpeed & (DELETE_BIT_15));
+	// check if the value received is positive or negative
+	if (rawSpeed & CHECK_BIT_14)
+	{
+		rawSpeed = rawSpeed - CHANGE_UINT_TO_INT_15;
+	}
 
-    // Return the encoder's speed
-    return speed;
+	// Prepare firMDVal
+	uint16_t firMDVal = rawData[3];
+	firMDVal >>= 14;
+
+	// Prepare intMode2Prediction
+	uint16_t intMode2Prediction = rawData[5];
+	if (intMode2Prediction & 0x0004)
+	{
+		intMode2Prediction = 3;
+	}else{
+		intMode2Prediction = 2;
+	}
+
+	// Prepare angle range
+	uint16_t rawAngleRange = rawData[5];
+	rawAngleRange &= GET_BIT_14_4;
+	rawAngleRange >>= 4;
+	double angleRange = 360 * (POW_2_7 / (double) (rawAngleRange));
+
+	//checks the value of fir_MD according to which the value in the calculation of the speed will be determined
+	//according to if prediction is enabled then, the formula for speed changes
+	finalAngleSpeed = calculateAngleSpeed(angleRange, rawSpeed, firMDVal, intMode2Prediction);
+	return (status);
+    */
 }
 
 
 // Reads the temperature of the encoder
 double getEncoderTemp() {
 
-    // Declare a variable to store the temperature in
-    double temperature = 0;
+    // Create a variable to store the raw encoder data in
+    uint16_t rawData = readEncoderRegister(readEncoderRegister(ENCODER_TEMP_REGISTER));
 
-    // Read the temperature from the encoder
-    encoder.getTemperature(temperature);
+    // Delete everything but the first 7 bits
+	rawData = (rawData & (DELETE_7BITS));
 
-    // Return the temperature
-    return temperature;
+	// Check if the value received is positive or negative
+	if (rawData & CHECK_BIT_9) {
+		rawData = rawData - CHANGE_UNIT_TO_INT_9;
+	}
+
+    // Return the value (equation from TLE5012 library)
+	return (rawData + TEMP_OFFSET) / (TEMP_DIV);
 }
 
 /*
