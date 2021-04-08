@@ -1,8 +1,10 @@
 # Intellistep
 
-A rework of the terribly coded firmware from the BTT S42B v2 boards
+A rework of the terribly coded firmware from the BTT S42B v2 boards.
 
 I am currently working on redoing a lot of the functions found in the firmware. A list of the current things that are being worked on is in the Projects tab. If you don't see your issue there, then please let me know.
+
+***Note: This is a pre-release firmware still in beta testing. It is not ready for actual use yet. Only flash it if you would like to help with the development process. If you compile Intellistep and don't like it, you can always switch back to the production firmware using the file in the "precompiled" folder***
 
 ***Note: For the time being, all serial and CAN messages should start with "<" and end with ">". The serial baud rate is 115200.***
 
