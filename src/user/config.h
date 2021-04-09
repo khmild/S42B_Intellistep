@@ -9,7 +9,7 @@
 // General parameters
 #define CLOSED_LOOP
 #define CLOSED_LOOP_CONFIG
-#define BUTTON_REPEAT_INTERVAL 1000 // Millis
+#define BUTTON_REPEAT_INTERVAL 250 // Millis
 #define BOARD_VOLTAGE 3.3 // The voltage of the main processor
 //#define TEST_FLASH
 

@@ -70,34 +70,46 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
     while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
 
     // Send the register address
-    spiConfig.Instance -> DR = (ENCODER_BASE_REGISTER | registerAddress);
+    spiConfig.Instance -> DR = ((uint16_t)(ENCODER_BASE_REGISTER | registerAddress));
+
+    // Reconfigure the MOSI to be in a high impedance state
+    pinMode(ENCODER_MOSI_PIN, OUTPUT_OPEN_DRAIN);
 
     // Wait for data to be received in the receive buffer
     while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
 
     // Read the data from the buffer (just to clear it)
-    data = (spiConfig.Instance -> DR);
+    data = (uint16_t)(spiConfig.Instance -> DR);
 
     // Turn the SPI transmit off
-    SPI_TX_OFF;
+    //SPI_TX_OFF;
+
+    // Reset the MOSI pin to push pull, removing the impedance
+    pinMode(ENCODER_MOSI_PIN, OUTPUT);
 
     // Wait for the transmit buffer to empty
     while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
 
     // Send that we want to read the register (BTT had 0xFFFF) (I think that this is to send a blank message)
-    spiConfig.Instance -> DR = 0xFFFF;
+    spiConfig.Instance -> DR = ((uint16_t)0xFFFF);
+
+    // Reconfigure the MOSI to be in a high impedance state
+    pinMode(ENCODER_MOSI_PIN, OUTPUT_OPEN_DRAIN);
 
     // Wait for the chip to return data
     while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
 
     // Read the data from the buffer, dropping the 16th bit (not used)
-    data = (spiConfig.Instance -> DR) & 0x7FFF;
+    data = ((uint16_t)(spiConfig.Instance -> DR)) & 0x7FFF;
 
     // Disable the chip communication
     ENCODER_CS_PIN = 1;
 
+    // Reset the MOSI pin to push pull, removing the impedance
+    pinMode(ENCODER_MOSI_PIN, OUTPUT);
+
     // Enable the SPI transmit
-    SPI_TX_ON;
+    //SPI_TX_ON;
 
     // Return the received data
     return data;
