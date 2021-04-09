@@ -31,7 +31,7 @@ void setup() {
     writeOLEDString(0, 0, "Oled Init...OK");
 
     // Wait for 3 seconds so everything can boot and user can read the LCD
-    delay(15000);
+    delay(3000);
 
     // Initialize the buttons (for menu)
     initButtons();
