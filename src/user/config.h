@@ -119,7 +119,7 @@
 #define COIL_B_POWER_OUTPUT_PIN PB_5
 
 // Encoder SPI interface
-#define ENCODER_CS_PIN   PAout(4) // SPI1_SS
+#define ENCODER_CS_PIN   PA_4 // SPI1_SS
 #define ENCODER_SCK_PIN  PA_5 // SPI1_SCK
 #define ENCODER_MISO_PIN PA_6 // SPI1_MISO
 #define ENCODER_MOSI_PIN PA_7 // SPI1_MOSI

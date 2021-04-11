@@ -1,153 +1,115 @@
 #include "encoder.h"
 
-// The command to send to the encoder
-uint16_t _command[2];
-
 // SPI init structure
 SPI_HandleTypeDef spiConfig;
+
+// Main initialization structure
+GPIO_InitTypeDef GPIO_InitStructure;
 
 // Function to setup the encoder
 void initEncoder() {
 
-    // Set up the peripheral clocks
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_AFIO_CLK_ENABLE();
-
-    // Remap pins from a JTAG to SWD interface
-    __HAL_AFIO_REMAP_SWJ_NOJTAG();
-
-    // Main initialization structure
-    GPIO_InitTypeDef GPIO_InitStructure;
-
-    // Setup pin A4, A5, A6, and A7
-    GPIO_InitStructure.Pin = GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
-    GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP; // Push/pull
-    GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH; // Fast speed
+    // Setup pin A5, A6, and A7
+    GPIO_InitStructure.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // Enable the clock for the SPI bus
-	__HAL_RCC_SPI1_CLK_ENABLE();
-
-    // Set the bits of pins A5, A6, and A7
- 	GPIOA -> BSRR = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+    __HAL_RCC_SPI1_CLK_ENABLE();
 
     // Set the peripheral to be used
     spiConfig.Instance = SPI1;
 
     // Configure the settings for transactions
-	spiConfig.Init.Direction = SPI_DIRECTION_2LINES;
-	spiConfig.Init.Mode = SPI_MODE_MASTER;
-	spiConfig.Init.DataSize = SPI_DATASIZE_16BIT;
-	spiConfig.Init.CLKPolarity = SPI_POLARITY_LOW;
-	spiConfig.Init.CLKPhase = SPI_PHASE_2EDGE;
-	spiConfig.Init.NSS = SPI_NSS_SOFT;
-	spiConfig.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
-	spiConfig.Init.FirstBit = SPI_FIRSTBIT_MSB;
-	spiConfig.Init.CRCPolynomial = 7;
-    spiConfig.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    spiConfig.Init.Direction = SPI_DIRECTION_2LINES;
+    spiConfig.Init.Mode = SPI_MODE_MASTER;
+    spiConfig.Init.DataSize = SPI_DATASIZE_8BIT;
+    spiConfig.Init.CLKPolarity = SPI_POLARITY_LOW;
+    spiConfig.Init.CLKPhase = SPI_PHASE_2EDGE;
+    spiConfig.Init.NSS = SPI_NSS_SOFT;
+    spiConfig.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+    spiConfig.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    spiConfig.Init.CRCPolynomial = 7;
 
     // Initialize the SPI bus with the parameters we set
-    HAL_SPI_Init(&spiConfig);
-
-	// Enable the SPI bus
-    __HAL_SPI_ENABLE(&spiConfig);
+    if (HAL_SPI_Init(&spiConfig) != HAL_OK) {
+        Serial.println(F("SPI not initialized!"));
+    }
 
     // Set the chip select pin high, disabling the encoder's communication
-	ENCODER_CS_PIN = 1;
+    pinMode(ENCODER_CS_PIN, OUTPUT);
+    digitalWrite(ENCODER_CS_PIN, HIGH);
 }
 
 
 // Read the value of a register
 uint16_t readEncoderRegister(uint16_t registerAddress) {
 
-    // Create a variable to store the data in
-    uint16_t data;
+    // Pull CS low to select encoder
+    digitalWrite(ENCODER_CS_PIN, LOW);
 
-    // Set the encoder chip select low, enabling it for communication
-    ENCODER_CS_PIN = 0;
+    // Setup TX and RX buffers
+    registerAddress |= ENCODER_READ_COMMAND;
+    uint8_t txbuf[] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
+    uint8_t rxbuf[] = { 0x00, 0x00 };
 
-    // Wait for the transmit buffer to be empty
-    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
+    // Send address we want to read, response seems to be equal to request
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
 
-    // Send the register address
-    spiConfig.Instance -> DR = ((uint16_t)(ENCODER_BASE_REGISTER | registerAddress));
+    // Set the MOSI pin to open drain
+    GPIO_InitStructure.Pin = GPIO_PIN_7;
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // Reconfigure the MOSI to be in a high impedance state
-    pinMode(ENCODER_MOSI_PIN, OUTPUT_OPEN_DRAIN);
+    // Send 0xFFFF (like BTT code), this returns the wanted value
+    txbuf[0] = 0xFF, txbuf[1] = 0xFF;
+    rxbuf[0] = 0x00, rxbuf[1] = 0x00;
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
 
-    // Wait for data to be received in the receive buffer
-    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
+    // Set MOSI back to Push/Pull
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // Read the data from the buffer (just to clear it)
-    data = (uint16_t)(spiConfig.Instance -> DR);
+    // Deselect encoder
+    digitalWrite(ENCODER_CS_PIN, HIGH);
 
-    // Turn the SPI transmit off
-    //SPI_TX_OFF;
-
-    // Reset the MOSI pin to push pull, removing the impedance
-    pinMode(ENCODER_MOSI_PIN, OUTPUT);
-
-    // Wait for the transmit buffer to empty
-    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
-
-    // Send that we want to read the register (BTT had 0xFFFF) (I think that this is to send a blank message)
-    spiConfig.Instance -> DR = ((uint16_t)0xFFFF);
-
-    // Reconfigure the MOSI to be in a high impedance state
-    pinMode(ENCODER_MOSI_PIN, OUTPUT_OPEN_DRAIN);
-
-    // Wait for the chip to return data
-    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
-
-    // Read the data from the buffer, dropping the 16th bit (not used)
-    data = ((uint16_t)(spiConfig.Instance -> DR)) & 0x7FFF;
-
-    // Disable the chip communication
-    ENCODER_CS_PIN = 1;
-
-    // Reset the MOSI pin to push pull, removing the impedance
-    pinMode(ENCODER_MOSI_PIN, OUTPUT);
-
-    // Enable the SPI transmit
-    //SPI_TX_ON;
-
-    // Return the received data
-    return data;
+    // Return angle value as uint16
+    return rxbuf[0] << 8 | rxbuf[1];
 }
 
 
 // Write a value to a register
+// ! Untested
 void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
 
-    // Enable the encoder chip's communications
-    ENCODER_CS_PIN = 0;
+    // Pull CS low to select encoder
+    digitalWrite(ENCODER_CS_PIN, LOW);
 
-    // Wait until the transmit buffer is empty
-    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
+    // Setup TX and RX buffers
+    registerAddress |= ENCODER_WRITE_COMMAND;
+    uint8_t txbuf[] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
+    uint8_t rxbuf[] = { 0x00, 0x00 };
 
-    // Send the register address to be modified
-    spiConfig.Instance -> DR = registerAddress;
+    // Send address we want to read, response seems to be equal to request
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 4, 100);
 
-    // Wait for the response
-    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
+    // Set the MOSI pin to open drain
+    GPIO_InitStructure.Pin = GPIO_PIN_7;
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // Read the data in the buffer
-    spiConfig.Instance -> DR;
+    // Send the data to be written
+    txbuf[0] = uint8_t(data >> 8), txbuf[1] = uint8_t(data);
+    rxbuf[0] = 0x00, rxbuf[1] = 0x00;
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
 
-    // Wait for the transmit buffer to be empty
-    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_TXE));
+    // Set MOSI back to Push/Pull
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // Send the data to be written to the address
-    spiConfig.Instance -> DR = data;
-
-    // Wait for the response
-    while(!__HAL_SPI_GET_FLAG(&spiConfig, SPI_FLAG_RXNE));
-
-    // Clear the receive buffer by reading it
-    spiConfig.Instance -> DR;
-
-    // Disable the encoder's communications again
-    ENCODER_CS_PIN = 1;
+    // Deselect encoder
+    digitalWrite(ENCODER_CS_PIN, HIGH);
 }
 
 
@@ -166,13 +128,13 @@ double getEncoderAngle() {
     // Delete everything but the first 15 bits (others not needed)
     rawData = (rawData & (DELETE_BIT_15));
 
-	// Check if the value received is positive or negative
-	if (rawData & CHECK_BIT_14) {
-		rawData = rawData - CHANGE_UINT_TO_INT_15;
-	}
+    // Check if the value received is positive or negative
+    if (rawData & CHECK_BIT_14) {
+        rawData = rawData - CHANGE_UINT_TO_INT_15;
+    }
 
     // Return the value (equation from TLE5012 library)
-	return (360 / POW_2_15) * ((double) rawData);
+    return (360.0 / POW_2_16) * ((double) rawData);
 }
 
 
