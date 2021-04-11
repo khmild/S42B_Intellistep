@@ -167,18 +167,28 @@ void displayMotorData() {
     }
 
     // RPM of the motor (RPM is capped at 2 decimal places)
-    float currentRPM = motor.getMotorRPM();
-    writeOLEDString(0, 0, (String("RPM: ") + String(currentRPM)));
+    #ifdef ENCODER_SPEED_ESTIMATION
 
-    // PID loop error
-    float PIDError = motor.getPIDError();
-    writeOLEDString(0, 16, (String("Err: ") + String(PIDError)));
+    // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
+    if (millis() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL) {
+        writeOLEDString(0, 0, (String("RPM: ") + String(motor.getMotorRPM())));
+    }
+
+    #else // ! ENCODER_SPEED_ESTIMATION
+
+    // No need to check, just sample it
+    writeOLEDString(0, 0, (String("RPM: ") + String(motor.getMotorRPM())));
+
+    #endif // ! ENCODER_SPEED_ESTIMATION
+
+    // Angle error
+    writeOLEDString(0, 16, (String("Err: ") + String(motor.getAngleError())));
 
     // Current angle of the motor
-    double currentAngle = getEncoderAngle();
-    writeOLEDString(0, 32, (String("Deg: ") + String(currentAngle)));
+    writeOLEDString(0, 32, (String("Deg: ") + String(getEncoderAngle())));
 
     // Maybe a 4th line later?
+    writeOLEDString(0, 48, (String("Temp: " + String(getEncoderTemp()))));
 }
 
 

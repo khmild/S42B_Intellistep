@@ -13,6 +13,11 @@
 #define BOARD_VOLTAGE 3.3 // The voltage of the main processor
 //#define TEST_FLASH
 
+#define ENCODER_SPEED_ESTIMATION // If encoder estimation should be used
+#ifdef ENCODER_SPEED_ESTIMATION
+    #define SPD_EST_MIN_INTERVAL 250 // The minimum sampling interval (ms). Increase to get more steady readings at the cost of accuracy
+#endif
+
 // Serial configuration settings
 #define STRING_START_MARKER '<'
 #define STRING_END_MARKER '>'

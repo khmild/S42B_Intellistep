@@ -6,6 +6,12 @@ SPI_HandleTypeDef spiConfig;
 // Main initialization structure
 GPIO_InitTypeDef GPIO_InitStructure;
 
+// A storage for the last angle sampled
+double lastEncoderAngle = 0;
+
+// A storage for the time of the last angle sampling
+uint32_t lastAngleSampleTime = 0;
+
 // Function to setup the encoder
 void initEncoder() {
 
@@ -40,6 +46,9 @@ void initEncoder() {
     // Set the chip select pin high, disabling the encoder's communication
     pinMode(ENCODER_CS_PIN, OUTPUT);
     digitalWrite(ENCODER_CS_PIN, HIGH);
+
+    // Reset the encoder's firmware
+    writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
 }
 
 
@@ -79,6 +88,45 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
 }
 
 
+// Read multiple registers
+// ! Flat out doesn't work
+void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t data[]) {
+
+    // Pull CS low to select encoder
+    digitalWrite(ENCODER_CS_PIN, LOW);
+
+    // Setup TX and RX buffers
+    registerAddress |= ENCODER_READ_COMMAND;
+    uint8_t txbuf[] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
+    uint8_t rxbuf[] = { 0x00, 0x00 };
+
+    // Send address we want to read, response seems to be equal to request
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
+
+    // Set the MOSI pin to open drain
+    GPIO_InitStructure.Pin = GPIO_PIN_7;
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+    // Send 0xFFFF (like BTT code), this returns the wanted value
+    // Array length is doubled as we're using 8 bit values instead of 16
+    uint16_t arrayLength = (sizeof(data) / sizeof(data[0])) * 2;
+    uint8_t tx2buf[arrayLength] = { 0xFF };
+    uint8_t rx2buf[arrayLength] = { 0x00 };
+    HAL_SPI_TransmitReceive(&spiConfig, tx2buf, rx2buf, arrayLength, 100);
+    
+    // Write the received data to into the array
+    memcpy(data, rx2buf, (arrayLength)* sizeof(uint8_t));
+
+    // Set MOSI back to Push/Pull
+    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+    // Deselect encoder
+    digitalWrite(ENCODER_CS_PIN, HIGH);
+}
+
+
 // Write a value to a register
 // ! Untested
 void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
@@ -115,54 +163,72 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
 
 // Reads the state of the encoder
 uint16_t readEncoderState() {
-    return (readEncoderRegister(ENCODER_STATUS_REGISTER));
+    return (readEncoderRegister(ENCODER_STATUS_REG));
 }
 
 
-// Reads the value for the angle of the encoder
+// Reads the value for the angle of the encoder (ranges from 0-360)
 double getEncoderAngle() {
 
     // Get the value of the angle register
-    uint16_t rawData = readEncoderRegister(ENCODER_ANGLE_REGISTER);
+    uint16_t rawData = readEncoderRegister(ENCODER_ANGLE_REG);
 
     // Delete everything but the first 15 bits (others not needed)
     rawData = (rawData & (DELETE_BIT_15));
 
-    // Check if the value received is positive or negative
-    if (rawData & CHECK_BIT_14) {
-        rawData = rawData - CHANGE_UINT_TO_INT_15;
-    }
-
     // Return the value (equation from TLE5012 library)
-    return (360.0 / POW_2_16) * ((double) rawData);
+    return (360.0 / POW_2_15) * ((double) rawData);
 }
 
+// For average velocity calculations instead of hardware readings from the TLE5012
+#ifdef ENCODER_SPEED_ESTIMATION
+
+// Reads the speed of the encoder (for later)
+// ! Needs fixed yet, readings are off
+double getEncoderSpeed() {
+
+    // Get the newest angle
+    double newAngle = getEncoderAngle();
+
+    // Sample time
+    uint32_t currentTime = millis();
+
+    // Compute the average velocity
+    double avgVelocity = (newAngle - lastEncoderAngle) / (currentTime - lastAngleSampleTime);
+
+    // Correct the last angle and sample time
+    lastEncoderAngle = newAngle;
+    lastAngleSampleTime = currentTime;
+
+    // Return the average velocity
+    return avgVelocity;
+}
+
+#else // ENCODER_ESTIMATION
 
 // Reads the speed of the encoder (for later)
 double getEncoderSpeed() {
-    return 0;
-    /*
-    int8_t numOfData = 0x5;
+
+    // Prepare the variables to store data in
+	int8_t numOfData = 0x5;
 	uint16_t rawData[numOfData] = {};
 
-	errorTypes status = readMoreRegisters(reg.REG_ASPD + numOfData, rawData, upd, safe);
-	if (status != NO_ERROR)
-	{
-		return (status);
-	}
+    // Read the encoder, modifying the array
+	readMultipleEncoderRegisters(ENCODER_SPEED_REGISTER + numOfData, rawData);
 
 	// Prepare raw speed
-	rawSpeed = rawData[0];
+	uint16_t rawSpeed = rawData[0];
 	rawSpeed = (rawSpeed & (DELETE_BIT_15));
-	// check if the value received is positive or negative
+
+	// Check if the value received is positive or negative
 	if (rawSpeed & CHECK_BIT_14)
 	{
 		rawSpeed = rawSpeed - CHANGE_UINT_TO_INT_15;
 	}
 
 	// Prepare firMDVal
-	uint16_t firMDVal = rawData[3];
-	firMDVal >>= 14;
+	uint16_t firMD = rawData[3];
+	firMD >>= 14;
 
 	// Prepare intMode2Prediction
 	uint16_t intMode2Prediction = rawData[5];
@@ -177,21 +243,37 @@ double getEncoderSpeed() {
 	uint16_t rawAngleRange = rawData[5];
 	rawAngleRange &= GET_BIT_14_4;
 	rawAngleRange >>= 4;
-	double angleRange = 360 * (POW_2_7 / (double) (rawAngleRange));
+	double angleRange = 360.0 * (POW_2_7 / (double) (rawAngleRange));
 
-	//checks the value of fir_MD according to which the value in the calculation of the speed will be determined
-	//according to if prediction is enabled then, the formula for speed changes
-	finalAngleSpeed = calculateAngleSpeed(angleRange, rawSpeed, firMDVal, intMode2Prediction);
-	return (status);
-    */
+	// Checks the value of fir_MD according to which the value in the calculation of the speed will be determined
+	// According to if prediction is enabled then, the formula for speed changes
+	double microsecToSec = 0.000001;
+	double firMDVal;
+	if (firMD == 1)
+	{
+		firMDVal = 42.7;
+	}else if (firMD == 0)
+	{
+		firMDVal = 21.3;
+	}else if (firMD == 2)
+	{
+		firMDVal = 85.3;
+	}else if (firMD == 3)
+	{
+		firMDVal = 170.6;
+	}else{
+		firMDVal = 0;
+	}
+	return ((angleRange / POW_2_15) * ((double) rawSpeed)) / (((double) intMode2Prediction) * firMDVal * microsecToSec);
 }
 
+#endif // ! ENCODER_ESTIMATION
 
 // Reads the temperature of the encoder
 double getEncoderTemp() {
 
     // Create a variable to store the raw encoder data in
-    uint16_t rawData = readEncoderRegister(readEncoderRegister(ENCODER_TEMP_REGISTER));
+    uint16_t rawData = readEncoderRegister(ENCODER_TEMP_REG);
 
     // Delete everything but the first 7 bits
 	rawData = (rawData & (DELETE_7BITS));
@@ -202,7 +284,8 @@ double getEncoderTemp() {
 	}
 
     // Return the value (equation from TLE5012 library)
-	return (rawData + TEMP_OFFSET) / (TEMP_DIV);
+    int16_t rawTemp = rawData;
+	return (rawTemp + TEMP_OFFSET) / (TEMP_DIV);
 }
 
 /*

@@ -39,17 +39,13 @@ StepperMotor::StepperMotor() {
 
 // Returns the current RPM of the motor to two decimal places
 float StepperMotor::getMotorRPM() {
-    #ifdef ENCODER_ESTIMATION
-        return (estimateEncoderSpeed() / 360);
-    #else
-        return (getEncoderSpeed() / 360);
-    #endif
+    return (getEncoderSpeed() / 360);
 }
 
 
 // Returns the deviation of the motor from the PID loop
-float StepperMotor::getPIDError() {
-    return (this -> error);
+float StepperMotor::getAngleError() {
+    return ((this -> desiredAngle) - getEncoderAngle());
 }
 
 

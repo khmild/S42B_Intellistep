@@ -45,7 +45,7 @@ class StepperMotor {
         float getMotorRPM();
 
         // Returns the deviation of the motor from the PID loop
-        float getPIDError();
+        float getAngleError();
 
         // Returns the Proportional value of the PID loop
         float getPValue();
