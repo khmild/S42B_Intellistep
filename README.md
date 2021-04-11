@@ -38,4 +38,5 @@ GCode Table
 
 - BTT - Original code
 - CAP1Sup - Main rewrite of code
-- Misfittech - The Smart Stepper [project](https://github.com/Misfittech/nano_stepper). This was a large help when writing the correct stepping code.
+- TazerReloaded - Encoder protocol and communication
+- Misfittech - The [Smart Stepper project](https://github.com/Misfittech/nano_stepper). This was a large help when writing the correct stepping code.
