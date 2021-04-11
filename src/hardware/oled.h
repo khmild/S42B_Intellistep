@@ -23,6 +23,8 @@ void selectMenuItem();
 void moveCursor();
 void exitCurrentMenu();
 int getMenuDepth();
+String padNumber(float number, int leadingZeroCount, int followingZeroCount);
+float roundToPlace(float number, int place);
 
 
 // BTT Display definitions

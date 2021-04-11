@@ -171,24 +171,24 @@ void displayMotorData() {
 
     // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
     if (millis() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL) {
-        writeOLEDString(0, 0, (String("RPM: ") + String(motor.getMotorRPM())));
+        writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)));
     }
 
     #else // ! ENCODER_SPEED_ESTIMATION
 
     // No need to check, just sample it
-    writeOLEDString(0, 0, (String("RPM: ") + String(motor.getMotorRPM())));
+    writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)));
 
     #endif // ! ENCODER_SPEED_ESTIMATION
 
     // Angle error
-    writeOLEDString(0, 16, (String("Err: ") + String(motor.getAngleError())));
+    writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 3, 2)));
 
     // Current angle of the motor
-    writeOLEDString(0, 32, (String("Deg: ") + String(getEncoderAngle())));
+    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getEncoderAngle(), 3, 2)));
 
     // Maybe a 4th line later?
-    writeOLEDString(0, 48, (String("Temp: " + String(getEncoderTemp()))));
+    writeOLEDString(0, 48, (String("Temp: ") + String(getEncoderTemp()) + String(" C")));
 }
 
 
@@ -333,6 +333,46 @@ String topLevelMenuItems[] = {
 const int topLevelMenuLength = sizeof(topLevelMenuItems) / sizeof(topLevelMenuItems[0]);
 
 
+// Function for padding numbers
+String padNumber(float number, int leadingZeroCount, int followingZeroCount) {
+
+    // The final string to be output
+    String finalString = "";
+
+    // Correct the number's rounding
+    number = roundToPlace(number, followingZeroCount);
+
+    // If the value is negative, add a negative sign. Otherwise, add a blank space
+    if (number < 0) {
+        finalString += "-";
+    }
+    else {
+        finalString += " ";
+    }
+
+    // Add any necessary zeros
+    for (int index = (leadingZeroCount - 1); index > 0; index--) {
+        if (abs(number) < pow(10, index)) {
+            finalString += "0";
+        }
+        else {
+            // No need to continue, the other values will fail as well
+            break;
+        }
+    }
+
+    // Add the number to the string (must be absolute, otherwise sign is inserted)
+    finalString += String(abs(number));
+
+    // Return the string
+    return finalString;
+}
+
+
+// Round to a specific decimal place
+float roundToPlace(float number, int place) {
+    return round(number * pow(10, place)) / pow(10, place);
+}
 
 
 
