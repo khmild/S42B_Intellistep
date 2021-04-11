@@ -5,10 +5,6 @@
 #include "Arduino.h"
 #include "config.h"
 
-// Defines
-#define SPI_TX_OFF   {GPIOA->CRL&=0x0FFFFFFF;GPIOA->CRL|=0x40000000;}
-#define SPI_TX_ON    {GPIOA->CRL&=0x0FFFFFFF;GPIOA->CRL|=0xB0000000;}
-
 // Register locations (reading)
 #define ENCODER_READ_COMMAND   0x8000 // 8000
 #define ENCODER_STATUS_REG (0x0000U) // Same as base
