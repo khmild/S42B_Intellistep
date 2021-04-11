@@ -58,10 +58,12 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
     // Pull CS low to select encoder
     digitalWrite(ENCODER_CS_PIN, LOW);
 
-    // Setup TX and RX buffers
-    registerAddress |= ENCODER_READ_COMMAND;
-    uint8_t txbuf[] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
-    uint8_t rxbuf[] = { 0x00, 0x00 };
+    // Add read bit to address
+    registerAddress |= ENCODER_READ_COMMAND + 1;
+
+    // Setup RX and TX buffers
+    uint8_t rxbuf[2];
+    uint8_t txbuf[2] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
 
     // Send address we want to read, response seems to be equal to request
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
@@ -73,7 +75,6 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
-    rxbuf[0] = 0x00, rxbuf[1] = 0x00;
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
 
     // Set MOSI back to Push/Pull
@@ -83,22 +84,22 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
     // Deselect encoder
     digitalWrite(ENCODER_CS_PIN, HIGH);
 
-    // Return angle value as uint16
+    // Return value as uint16
     return rxbuf[0] << 8 | rxbuf[1];
 }
 
 
 // Read multiple registers
 // ! Flat out doesn't work
-void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t data[]) {
+void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength) {
 
     // Pull CS low to select encoder
     digitalWrite(ENCODER_CS_PIN, LOW);
 
     // Setup TX and RX buffers
-    registerAddress |= ENCODER_READ_COMMAND;
-    uint8_t txbuf[] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
-    uint8_t rxbuf[] = { 0x00, 0x00 };
+    registerAddress |= ENCODER_READ_COMMAND + dataLength;
+    uint8_t txbuf[dataLength * 2] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
+    uint8_t rxbuf[dataLength * 2];
 
     // Send address we want to read, response seems to be equal to request
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
@@ -110,13 +111,15 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t data[]) {
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     // Array length is doubled as we're using 8 bit values instead of 16
-    uint16_t arrayLength = (sizeof(data) / sizeof(data[0])) * 2;
-    uint8_t tx2buf[arrayLength] = { 0xFF };
-    uint8_t rx2buf[arrayLength] = { 0x00 };
-    HAL_SPI_TransmitReceive(&spiConfig, tx2buf, rx2buf, arrayLength, 100);
+    for (uint8_t i = 0; i < dataLength * 2; i++) {
+        txbuf[i] = 0xFF;
+    }
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, dataLength * 2, 100);
     
-    // Write the received data to into the array
-    memcpy(data, rx2buf, (arrayLength)* sizeof(uint8_t));
+    // Write the received data into the array
+    for (uint8_t i = 0; i < dataLength; i++) {
+        data[i] = rxbuf[i * 2] << 8 | rxbuf[i * 2 + 1];
+    }
 
     // Set MOSI back to Push/Pull
     GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
@@ -135,12 +138,12 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
     digitalWrite(ENCODER_CS_PIN, LOW);
 
     // Setup TX and RX buffers
-    registerAddress |= ENCODER_WRITE_COMMAND;
-    uint8_t txbuf[] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
-    uint8_t rxbuf[] = { 0x00, 0x00 };
+    registerAddress |= ENCODER_WRITE_COMMAND + 1;
+    uint8_t txbuf[2] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
+    uint8_t rxbuf[2];
 
-    // Send address we want to read, response seems to be equal to request
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 4, 100);
+    // Send address we want to write, response seems to be equal to request
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
 
     // Set the MOSI pin to open drain
     GPIO_InitStructure.Pin = GPIO_PIN_7;
@@ -149,8 +152,7 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
 
     // Send the data to be written
     txbuf[0] = uint8_t(data >> 8), txbuf[1] = uint8_t(data);
-    rxbuf[0] = 0x00, rxbuf[1] = 0x00;
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
 
     // Set MOSI back to Push/Pull
     GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
@@ -210,19 +212,33 @@ double getEncoderSpeed() {
 double getEncoderSpeed() {
 
     // Prepare the variables to store data in
-	int8_t numOfData = 0x5;
-	uint16_t rawData[numOfData] = {};
+	uint16_t rawData[5];
 
     // Read the encoder, modifying the array
-	readMultipleEncoderRegisters(ENCODER_SPEED_REGISTER + numOfData, rawData);
+    readMultipleEncoderRegisters(ENCODER_SPEED_REG, rawData, 5);
+
+    // Debug stuff, delete later!
+    /*
+    int16_t speed = rawData[0] & DELETE_BIT_15;
+    if (speed & CHECK_BIT_14) {
+		speed -= CHANGE_UINT_TO_INT_15;
+	}
+    Serial.print(speed, DEC);
+    Serial.print(" ");
+    for (uint8_t i = 1; i < 5; i++) {
+        Serial.print(rawData[i], DEC);
+        Serial.print(" ");
+    }
+    Serial.println();
+    delay(1000);
+    */
 
 	// Prepare raw speed
-	uint16_t rawSpeed = rawData[0];
+	int16_t rawSpeed = rawData[0];
 	rawSpeed = (rawSpeed & (DELETE_BIT_15));
 
 	// Check if the value received is positive or negative
-	if (rawSpeed & CHECK_BIT_14)
-	{
+	if (rawSpeed & CHECK_BIT_14) {
 		rawSpeed = rawSpeed - CHANGE_UINT_TO_INT_15;
 	}
 
@@ -231,15 +247,16 @@ double getEncoderSpeed() {
 	firMD >>= 14;
 
 	// Prepare intMode2Prediction
+    // this produces an overflow and reads random memory data!!!
 	uint16_t intMode2Prediction = rawData[5];
-	if (intMode2Prediction & 0x0004)
-	{
+	if (intMode2Prediction & 0x0004) {
 		intMode2Prediction = 3;
-	}else{
+	} else {
 		intMode2Prediction = 2;
 	}
 
 	// Prepare angle range
+    // this produces an overflow and reads random memory data!!!
 	uint16_t rawAngleRange = rawData[5];
 	rawAngleRange &= GET_BIT_14_4;
 	rawAngleRange >>= 4;
@@ -249,19 +266,15 @@ double getEncoderSpeed() {
 	// According to if prediction is enabled then, the formula for speed changes
 	double microsecToSec = 0.000001;
 	double firMDVal;
-	if (firMD == 1)
-	{
+	if (firMD == 1) {
 		firMDVal = 42.7;
-	}else if (firMD == 0)
-	{
+	} else if (firMD == 0) {
 		firMDVal = 21.3;
-	}else if (firMD == 2)
-	{
+	} else if (firMD == 2) {
 		firMDVal = 85.3;
-	}else if (firMD == 3)
-	{
+	} else if (firMD == 3) {
 		firMDVal = 170.6;
-	}else{
+	} else {
 		firMDVal = 0;
 	}
 	return ((angleRange / POW_2_15) * ((double) rawSpeed)) / (((double) intMode2Prediction) * firMDVal * microsecToSec);
