@@ -10,12 +10,16 @@ I am currently working on redoing a lot of the functions found in the firmware. 
 
 New Features:
 
-- Redone stepping setup
+- Redone stepping for higher torque and quieter operation
 - Redone serial commands (based on gcode)
+- Temperature readout on the display
 
 Future Features:
 
-- Manual tuning utility for manual tuning
+- Motor and driver overtemperature current reduction
+- Dynamic current control based on speed and acceleration
+- CAN subnetwork for driver configuration
+- Manual tuning utility for manual PID tuning
 - Much better stepper calibration
 - New menu items for setting PID parameters
 
