@@ -210,74 +210,46 @@ double getEncoderSpeed() {
 
 // Reads the speed of the encoder (for later)
 double getEncoderSpeed() {
-
     // Prepare the variables to store data in
-	uint16_t rawData[5];
+	uint16_t rawData[4];
 
     // Read the encoder, modifying the array
-    readMultipleEncoderRegisters(ENCODER_SPEED_REG, rawData, 5);
+    readMultipleEncoderRegisters(ENCODER_SPEED_REG, rawData, sizeof(rawData) / sizeof(uint16_t));
 
-    // Debug stuff, delete later!
-    /*
-    int16_t speed = rawData[0] & DELETE_BIT_15;
-    if (speed & CHECK_BIT_14) {
-		speed -= CHANGE_UINT_TO_INT_15;
-	}
-    Serial.print(speed, DEC);
-    Serial.print(" ");
-    for (uint8_t i = 1; i < 5; i++) {
-        Serial.print(rawData[i], DEC);
-        Serial.print(" ");
-    }
-    Serial.println();
-    delay(1000);
-    */
-
-	// Prepare raw speed
+	// Get raw speed reading
 	int16_t rawSpeed = rawData[0];
-	rawSpeed = (rawSpeed & (DELETE_BIT_15));
+	rawSpeed = rawSpeed & DELETE_BIT_15;
 
-	// Check if the value received is positive or negative
+	// If bit 14 is set, the value is negative
 	if (rawSpeed & CHECK_BIT_14) {
 		rawSpeed = rawSpeed - CHANGE_UINT_TO_INT_15;
 	}
 
-	// Prepare firMDVal
-	uint16_t firMD = rawData[3];
-	firMD >>= 14;
+	// Get FIR_MD from bits 15 and 16 of register 0x06
+	uint16_t firMD = rawData[3] >> 14;
 
-	// Prepare intMode2Prediction
-    // this produces an overflow and reads random memory data!!!
-	uint16_t intMode2Prediction = rawData[5];
-	if (intMode2Prediction & 0x0004) {
-		intMode2Prediction = 3;
-	} else {
-		intMode2Prediction = 2;
-	}
-
-	// Prepare angle range
-    // this produces an overflow and reads random memory data!!!
-	uint16_t rawAngleRange = rawData[5];
-	rawAngleRange &= GET_BIT_14_4;
-	rawAngleRange >>= 4;
-	double angleRange = 360.0 * (POW_2_7 / (double) (rawAngleRange));
-
-	// Checks the value of fir_MD according to which the value in the calculation of the speed will be determined
-	// According to if prediction is enabled then, the formula for speed changes
-	double microsecToSec = 0.000001;
+	// Determine sensor update rate from FIR_MD
 	double firMDVal;
-	if (firMD == 1) {
-		firMDVal = 42.7;
-	} else if (firMD == 0) {
-		firMDVal = 21.3;
-	} else if (firMD == 2) {
-		firMDVal = 85.3;
-	} else if (firMD == 3) {
-		firMDVal = 170.6;
-	} else {
-		firMDVal = 0;
-	}
-	return ((angleRange / POW_2_15) * ((double) rawSpeed)) / (((double) intMode2Prediction) * firMDVal * microsecToSec);
+    switch (firMD) {
+        case 0:
+            firMDVal = 21.3;
+            break;
+        case 1:
+            firMDVal = 42.7;
+            break;
+        case 2:
+            firMDVal = 85.3;
+            break;
+        case 3:
+            firMDVal = 170.6;
+            break;
+        default:
+            firMDVal = 0.0;
+            break;
+    }
+
+    // Calculate and return angle speed in degree per second
+	return ((360.0 / POW_2_15) * rawSpeed) / (2.0 * firMDVal * 0.000001);
 }
 
 #endif // ! ENCODER_ESTIMATION
