@@ -117,7 +117,7 @@ class StepperMotor {
         void setBDirection(COIL_STATE desiredState);
 
         // Sets the current of the coils
-        void setCoilCurrent(int ACurrent, int BCurrent);
+        void setCoilCurrent(uint16_t ACurrent, uint16_t BCurrent);
 
         // Sets the speed of the motor (angular speed is in deg/s)
         float speedToHz(float angularSpeed);

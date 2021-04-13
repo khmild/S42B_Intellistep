@@ -287,17 +287,18 @@ void StepperMotor::step(STEP_DIR dir = PIN, bool useMultiplier = true) {
 void StepperMotor::driveCoils(float degAngle) {
 
     // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
-    float microstepAngle = degAngle * (360 / this -> fullStepAngle) * (this -> microstepDivisor);
+    float microstepAngle = degAngle * (this -> fullStepAngle / 360) * (this -> microstepDivisor);
 
-    // Round the microstep angle, it has to be a whole number
-    microstepAngle = round(microstepAngle);
+    // Round the microstep angle, it has to be a whole value of the number of microsteps available
+    // Also ensures that the coils are being driven to the major step positions (increases torque)
+    uint16_t roundedMicrosteps = round(microstepAngle);
 
     // Make sure that the phase angle doesn't exceed the maximum
-    microstepAngle = (uint16_t)microstepAngle % SINE_STEPS;
+    roundedMicrosteps = roundedMicrosteps % SINE_STEPS;
 
     // Calculate the sine and cosine of the angle
-    int32_t angleSin = fastSine(microstepAngle);
-    int32_t angleCos = fastCosine(microstepAngle);
+    float angleSin = fastSin(roundedMicrosteps);
+    float angleCos = fastCos(roundedMicrosteps);
 
     // If in reverse, we swap the sign of one of the angles
     if ((bool)digitalRead(DIRECTION_PIN) != (this -> reversed)) {
@@ -305,8 +306,8 @@ void StepperMotor::driveCoils(float degAngle) {
     }
 
     // Equation comes out to be (effort * -1 to 1) depending on the sine/cosine of the phase angle
-    int32_t coilAPower = ((int32_t)(this -> current) * (int64_t)abs(angleSin))/SINE_MAX;
-    int32_t coilBPower = ((int32_t)(this -> current) * (int64_t)abs(angleCos))/SINE_MAX;
+    float coilAPower = ((this -> current) * abs(angleSin));
+    float coilBPower = ((this -> current) * abs(angleCos));
 
     // Check the if the coil should be energized to move backward or forward
     if(angleSin > 0)  {
@@ -333,7 +334,7 @@ void StepperMotor::driveCoils(float degAngle) {
     }
     
     // Set the current of the coils
-    setCoilCurrent(abs(coilAPower), abs(coilBPower));
+    setCoilCurrent(coilAPower, coilBPower);
 }
 
 
@@ -386,7 +387,7 @@ void StepperMotor::setBDirection(COIL_STATE desiredState) {
 
 
 // Sets the current of each of the coils (with mapping)
-void StepperMotor::setCoilCurrent(int ACurrent, int BCurrent) {
+void StepperMotor::setCoilCurrent(uint16_t ACurrent, uint16_t BCurrent) {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
     uint32_t aPWMValue = 2550 * BOARD_VOLTAGE * CURRENT_SENSE_RESISTOR * ACurrent;

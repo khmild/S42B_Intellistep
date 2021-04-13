@@ -146,8 +146,8 @@
 
 // --------------  Internal defines  --------------
 // Under the hood motor setup
-#define SINE_STEPS ((int16_t)(1024L))
-#define SINE_MAX ((int32_t)(32768L))
+#define SINE_STEPS ((int16_t)(128))
+#define SINE_MAX 1
 
 // Low level GPIO configuration (for quicker manipulations than digitalWrites)
 // A large amount of low level commands for handling the useage of fast GPIO manipulation
