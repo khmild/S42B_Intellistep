@@ -94,7 +94,7 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
 void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength) {
 
     // Pull CS low to select encoder
-    digitalWrite(ENCODER_CS_PIN, LOW);
+    digitalWriteFast(ENCODER_CS_PIN, LOW);
 
     // Setup TX and RX buffers
     registerAddress |= ENCODER_READ_COMMAND + dataLength;
@@ -126,7 +126,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // Deselect encoder
-    digitalWrite(ENCODER_CS_PIN, HIGH);
+    digitalWriteFast(ENCODER_CS_PIN, HIGH);
 }
 
 
@@ -135,7 +135,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
 void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
 
     // Pull CS low to select encoder
-    digitalWrite(ENCODER_CS_PIN, LOW);
+    digitalWriteFast(ENCODER_CS_PIN, LOW);
 
     // Setup TX and RX buffers
     registerAddress |= ENCODER_WRITE_COMMAND + 1;
@@ -159,7 +159,7 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // Deselect encoder
-    digitalWrite(ENCODER_CS_PIN, HIGH);
+    digitalWriteFast(ENCODER_CS_PIN, HIGH);
 }
 
 

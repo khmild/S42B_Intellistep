@@ -8,15 +8,15 @@
 #include "main.h"
 #include <algorithm>
 #include "stm32f1xx_ll_gpio.h"
+#include "oledfont.h"
 
 // Variables
 extern String topLevelMenuItems[];
 extern const int topLevelMenuLength;
 class StepperMotor;
 
+// Functions (for high level displaying)
 void initOLED();
-void writeOLEDString(uint8_t x, uint8_t y, String string);
-void clearOLED();
 void updateDisplay();
 void displayMotorData();
 void selectMenuItem();
@@ -26,22 +26,31 @@ int getMenuDepth();
 String padNumber(float number, int leadingZeroCount, int followingZeroCount);
 float roundToPlace(float number, int place);
 
-
 // BTT Display definitions
-#define OLED_CMD  0
-#define OLED_DATA 1
+typedef enum {
+    COMMAND,
+    DATA
+} OLED_MODE;
 
-void OLED_WR_Byte(uint8_t dat,uint8_t cmd);
-void OLED_Display_On(void);
-void OLED_Display_Off(void);
-void OLED_Refresh_Gram(void);
-void OLED_DrawPoint(uint8_t x,uint8_t y,uint8_t t);
-void OLED_Fill(uint8_t x1,uint8_t y1,uint8_t x2,uint8_t y2,uint8_t dot);
-void OLED_ShowChar(uint8_t x,uint8_t y,uint8_t chr,uint8_t size,uint8_t mode);
-void OLED_ShowNum(uint8_t x,uint8_t y,uint32_t num,uint8_t len,uint8_t size);
-void OLED_ShowString(uint8_t x,uint8_t y,const char *p);
+typedef enum {
+    BLACK,
+    WHITE
+} OLED_COLOR;
 
-uint32_t oled_pow(uint8_t m,uint8_t n);//
-void OLED_Showword(uint8_t x,uint8_t y,uint8_t *num,uint8_t mode);
+#define MAX_CHAR_POSX 122
+#define MAX_CHAR_POSY 58
+
+// Low level OLED commands
+void writeOLEDByte(uint8_t data, OLED_MODE mode);
+void writeOLEDOn();
+void writeOLEDOff();
+void writeOLEDBuffer();
+void setOLEDPixel(uint8_t x, uint8_t y, OLED_COLOR color);
+void fillOLED(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, OLED_COLOR color, bool updateScreen);
+void writeOLEDChar(uint8_t x, uint8_t y, uint8_t chr, uint8_t fontSize, OLED_COLOR color, bool updateScreen);
+void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fontSize, bool updateScreen);
+void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool updateScreen);
+void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen);
+void clearOLED();
 
 #endif

@@ -230,7 +230,7 @@ void StepperMotor::step(STEP_DIR dir = PIN, bool useMultiplier = true) {
     if (dir == PIN) {
 
         // Use the DIR_PIN state
-        angleChange *= StepperMotor::invertDirection(digitalRead(DIRECTION_PIN) == LOW);
+        angleChange *= StepperMotor::invertDirection(digitalReadFast(DIRECTION_PIN) == (this -> reversed));
     }
     //else if (dir == COUNTER_CLOCKWISE) {
         // Nothing to do here, the value is already positive
@@ -301,7 +301,7 @@ void StepperMotor::driveCoils(float degAngle) {
     float angleCos = fastCos(roundedMicrosteps);
 
     // If in reverse, we swap the sign of one of the angles
-    if ((bool)digitalRead(DIRECTION_PIN) != (this -> reversed)) {
+    if ((bool)digitalReadFast(DIRECTION_PIN) != (this -> reversed)) {
         angleCos = -angleCos;
     }
 
@@ -342,21 +342,21 @@ void StepperMotor::driveCoils(float degAngle) {
 // ! Maybe change to faster pin writing
 void StepperMotor::setADirection(COIL_STATE desiredState) {
     if (desiredState == FORWARD) {
-        digitalWrite(COIL_A_DIR_1_PIN, HIGH);
-        digitalWrite(COIL_A_DIR_2_PIN, LOW);
+        digitalWriteFast(COIL_A_DIR_1_PIN, HIGH);
+        digitalWriteFast(COIL_A_DIR_2_PIN, LOW);
     }
     else if (desiredState == BACKWARD) {
-        digitalWrite(COIL_A_DIR_1_PIN, LOW);
-        digitalWrite(COIL_A_DIR_2_PIN, HIGH);
+        digitalWriteFast(COIL_A_DIR_1_PIN, LOW);
+        digitalWriteFast(COIL_A_DIR_2_PIN, HIGH);
     }
     else if (desiredState == BRAKE) {
-        digitalWrite(COIL_A_DIR_1_PIN, HIGH);
-        digitalWrite(COIL_A_DIR_2_PIN, HIGH);
+        digitalWriteFast(COIL_A_DIR_1_PIN, HIGH);
+        digitalWriteFast(COIL_A_DIR_2_PIN, HIGH);
         analogWrite(COIL_A_POWER_OUTPUT_PIN, 0);
     }
     else if (desiredState == COAST) {
-        digitalWrite(COIL_A_DIR_1_PIN, LOW);
-        digitalWrite(COIL_A_DIR_2_PIN, LOW);
+        digitalWriteFast(COIL_A_DIR_1_PIN, LOW);
+        digitalWriteFast(COIL_A_DIR_2_PIN, LOW);
         analogWrite(COIL_A_POWER_OUTPUT_PIN, 0);
     }
 }
@@ -366,21 +366,21 @@ void StepperMotor::setADirection(COIL_STATE desiredState) {
 // ! Maybe change to faster pin writing
 void StepperMotor::setBDirection(COIL_STATE desiredState) {
     if (desiredState == FORWARD) {
-        digitalWrite(COIL_B_DIR_1_PIN, HIGH);
-        digitalWrite(COIL_B_DIR_2_PIN, LOW);
+        digitalWriteFast(COIL_B_DIR_1_PIN, HIGH);
+        digitalWriteFast(COIL_B_DIR_2_PIN, LOW);
     }
     else if (desiredState == BACKWARD) {
-        digitalWrite(COIL_B_DIR_1_PIN, LOW);
-        digitalWrite(COIL_B_DIR_2_PIN, HIGH);
+        digitalWriteFast(COIL_B_DIR_1_PIN, LOW);
+        digitalWriteFast(COIL_B_DIR_2_PIN, HIGH);
     }
     else if (desiredState == BRAKE) {
-        digitalWrite(COIL_B_DIR_1_PIN, HIGH);
-        digitalWrite(COIL_B_DIR_2_PIN, HIGH);
+        digitalWriteFast(COIL_B_DIR_1_PIN, HIGH);
+        digitalWriteFast(COIL_B_DIR_2_PIN, HIGH);
         analogWrite(COIL_B_POWER_OUTPUT_PIN, 0);
     }
     else if (desiredState == COAST) {
-        digitalWrite(COIL_B_DIR_1_PIN, LOW);
-        digitalWrite(COIL_B_DIR_2_PIN, LOW);
+        digitalWriteFast(COIL_B_DIR_1_PIN, LOW);
+        digitalWriteFast(COIL_B_DIR_2_PIN, LOW);
         analogWrite(COIL_B_POWER_OUTPUT_PIN, 0);
     }
 }
@@ -494,8 +494,8 @@ void StepperMotor::calibrate() {
 
     // Display that calibration is coming soon
     clearOLED();
-    writeOLEDString(0, 0, "Calibration");
-    writeOLEDString(0, 16, "coming soon");
+    writeOLEDString(0, 0, "Calibration", false);
+    writeOLEDString(0, 16, "coming soon", true);
     delay(5000);
 
     // Calibrate encoder offset

@@ -2,6 +2,11 @@
 #include "cstring"
 #include "math.h"
 
+// Screen data is stored in an array. Each set of 8 pixels is written one by one
+// Each set of 8 is stored as an integer. The panel is written to horizontally, then vertically
+// Array stores the values in width - height format with bits stored along vertical rows
+uint8_t OLEDBuffer[128][8];
+
 // The index of the current top level menu item
 int topLevelMenuIndex = 0;
 int lastTopLevelMenuIndex = 0;
@@ -14,9 +19,10 @@ int menuDepthIndex = 0;
 int lastMenuDepthIndex = 0;
 
 // Convience function for writing a specific string to the OLED panel
-void writeOLEDString(uint8_t x, uint8_t y, String string) {
-    OLED_ShowString(x, y, string.c_str());
+void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen) {
+    writeOLEDString(x, y, string.c_str(), 16, updateScreen);
 }
+
 
 // Function for displaying relevant data on the OLED panel, such as motor data or menu data
 void updateDisplay() {
@@ -33,11 +39,11 @@ void updateDisplay() {
             // Values must first be determined using the mod function in order to prevent overflow errors
             // Then the strings are converted into character arrays by giving the address of the first character in the string
             clearOLED();
-            writeOLEDString(0, 0, "->");
-            writeOLEDString(25, 0,  &topLevelMenuItems[(topLevelMenuIndex)     % topLevelMenuLength][0]);
-            writeOLEDString(25, 16, &topLevelMenuItems[(topLevelMenuIndex + 1) % topLevelMenuLength][0]);
-            writeOLEDString(25, 32, &topLevelMenuItems[(topLevelMenuIndex + 2) % topLevelMenuLength][0]);
-            writeOLEDString(25, 48, &topLevelMenuItems[(topLevelMenuIndex + 3) % topLevelMenuLength][0]);
+            writeOLEDString(0, 0, "->", false);
+            writeOLEDString(25, 0,  &topLevelMenuItems[(topLevelMenuIndex)     % topLevelMenuLength][0], false);
+            writeOLEDString(25, 16, &topLevelMenuItems[(topLevelMenuIndex + 1) % topLevelMenuLength][0], false);
+            writeOLEDString(25, 32, &topLevelMenuItems[(topLevelMenuIndex + 2) % topLevelMenuLength][0], false);
+            writeOLEDString(25, 48, &topLevelMenuItems[(topLevelMenuIndex + 3) % topLevelMenuLength][0], true);
             break;
 
         case 2:
@@ -46,9 +52,9 @@ void updateDisplay() {
                 case 0:
                     // In the first menu, the calibration one. No need to do anything here, besides maybe displaying an progress bar or PID values (later?)
                     clearOLED();
-                    writeOLEDString(0, 0, "Are you sure?");
-                    writeOLEDString(0, 16, "Press select");
-                    writeOLEDString(0, 32, "to confirm");
+                    writeOLEDString(0, 0, "Are you sure?", false);
+                    writeOLEDString(0, 16, "Press select", false);
+                    writeOLEDString(0, 32, "to confirm", true);
                     break;
 
                 case 1:
@@ -63,7 +69,7 @@ void updateDisplay() {
                     }
 
                     // Write the pointer
-                    writeOLEDString(0, 0, "->");
+                    writeOLEDString(0, 0, "->", false);
 
                     // Write each of the strings
                     for (int stringIndex = 0; stringIndex <= 3; stringIndex++) {
@@ -72,18 +78,21 @@ void updateDisplay() {
                         if (!((currentCursorIndex + stringIndex) * 100 > MAX_CURRENT)) {
 
                             // Value is in range, display the current on that line
-                            writeOLEDString(25, stringIndex * 16, String((int) ((currentCursorIndex + stringIndex) * 100)) + String("mA"));
+                            writeOLEDString(25, stringIndex * 16, String((int) ((currentCursorIndex + stringIndex) * 100)) + String("mA"), false);
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
                         // }
                     }
+
+                    // Write out the info to the OLED display
+                    writeOLEDBuffer();
                     break;
 
                 case 2:
                     // In the microstep menu, this is also dynamically generated. Get the current stepping of the motor, then display all of the values around it
                     clearOLED();
-                    writeOLEDString(0, 0, "->");
+                    writeOLEDString(0, 0, "->", false);
 
                     // Loop the currentCursor index back if it's out of range
                     if (currentCursorIndex > log2(MAX_MICROSTEP_DIVISOR)) {
@@ -102,12 +111,15 @@ void updateDisplay() {
                         if (!(pow(2, currentCursorIndex + stringIndex) > MAX_MICROSTEP_DIVISOR)) {
 
                             // Value is in range, display the current on that line
-                            writeOLEDString(25, stringIndex * 16, String("1/") + String((int) pow(2, currentCursorIndex + stringIndex)) + String("th"));
+                            writeOLEDString(25, stringIndex * 16, String("1/") + String((int) pow(2, currentCursorIndex + stringIndex)) + String("th"), false);
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
                         // }
                     }
+
+                    // Write out the data to the OLED
+                    writeOLEDBuffer();
                     break;
 
                 case 3:
@@ -116,17 +128,17 @@ void updateDisplay() {
                     clearOLED();
 
                     // Title
-                    writeOLEDString(0, 0, "Enable logic:");
+                    writeOLEDString(0, 0, "Enable logic:", false);
 
                     // Write the string to the screen
                     if (currentCursorIndex % 2 == 0) {
 
                         // The index is even, the logic is inverted
-                        writeOLEDString(0, 24, "Inverted");
+                        writeOLEDString(0, 24, "Inverted", true);
                     }
                     else {
                         // Index is odd, the logic is normal
-                        writeOLEDString(0, 24, "Normal");
+                        writeOLEDString(0, 24, "Normal", true);
                     }
                     break;
 
@@ -135,17 +147,17 @@ void updateDisplay() {
                     clearOLED();
 
                     // Title
-                    writeOLEDString(0, 0, "Dir logic:");
+                    writeOLEDString(0, 0, "Dir logic:", false);
 
                     // Write the string to the screen
                     if (currentCursorIndex % 2 == 0) {
 
                         // The index is even, the logic is inverted
-                        writeOLEDString(0, 24, "Inverted");
+                        writeOLEDString(0, 24, "Inverted", true);
                     }
                     else {
                         // Index is odd, the logic is normal
-                        writeOLEDString(0, 24, "Normal");
+                        writeOLEDString(0, 24, "Normal", true);
                     }
                     break;
             } // Top level menu switch
@@ -157,6 +169,7 @@ void updateDisplay() {
     lastTopLevelMenuIndex = topLevelMenuIndex;
 
 } // Display menu function
+
 
 // Gets the latest parameters from the motor and puts them on screen
 void displayMotorData() {
@@ -171,24 +184,24 @@ void displayMotorData() {
 
     // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
     if (millis() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL) {
-        writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)));
+        writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)), false);
     }
 
     #else // ! ENCODER_SPEED_ESTIMATION
 
     // No need to check, just sample it
-    writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)));
+    writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)), false);
 
     #endif // ! ENCODER_SPEED_ESTIMATION
 
     // Angle error
-    writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 3, 2)));
+    writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 3, 2)), false);
 
     // Current angle of the motor
-    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getEncoderAngle(), 3, 2)));
+    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getEncoderAngle(), 3, 2)), false);
 
     // Maybe a 4th line later?
-    writeOLEDString(0, 48, (String("Temp: ") + String(getEncoderTemp()) + String(" C")));
+    writeOLEDString(0, 48, (String("Temp: ") + String(getEncoderTemp()) + String(" C")), true);
 }
 
 
@@ -329,6 +342,7 @@ String topLevelMenuItems[] = {
     ""
 };
 
+
 // Length of the list of top menu items (found by dividing the length of the list by how much space a single element takes up)
 const int topLevelMenuLength = sizeof(topLevelMenuItems) / sizeof(topLevelMenuItems[0]);
 
@@ -375,271 +389,305 @@ float roundToPlace(float number, int place) {
 }
 
 
+// Write the entire OLED buffer to the screen
+void writeOLEDBuffer() {
 
-// Old OLED display commands from BTT (will be replaced later)
-#include "oled.h"
-#include "stdlib.h"
-#include "oledfont.h"
-//#include "gpio.h"
-//////////////////////////////////////////////////////////////////////////////////
+    // Loop through each of the vertical lines
+	for(uint8_t vertIndex = 0; vertIndex < 8; vertIndex++) {
 
-#define u8 uint8_t
-#define u32 uint32_t
+		// Specify the line that is being written to
+        writeOLEDByte(0xb0 + vertIndex, COMMAND);
+		writeOLEDByte(0x00, COMMAND);
+		writeOLEDByte(0x10, COMMAND); // DCDC OFF
 
-//
-//
-//[0]0 1 2 3 ... 127
-//[1]0 1 2 3 ... 127
-//[2]0 1 2 3 ... 127
-//[3]0 1 2 3 ... 127
-//[4]0 1 2 3 ... 127
-//[5]0 1 2 3 ... 127
-//[6]0 1 2 3 ... 127
-//[7]0 1 2 3 ... 127
-u8 OLED_GRAM[128][8];
-
-//
-void OLED_Refresh_Gram(void)//
-{
-	u8 i,n;
-	for(i=0;i<8;i++)
-	{
-		OLED_WR_Byte (0xb0+i,OLED_CMD);    //
-		OLED_WR_Byte (0x00,OLED_CMD);      //
-		OLED_WR_Byte (0x10,OLED_CMD);      //
-		for(n=0;n<128;n++)
-		OLED_WR_Byte(OLED_GRAM[n][i],OLED_DATA);
+        // Loop through the horizontal lines
+		for(uint8_t horzIndex = 0; horzIndex < 128; horzIndex++) {
+		    writeOLEDByte(OLEDBuffer[horzIndex][vertIndex], DATA);
+        }
 	}
 }
-#if OLED_MODE==1
-//
-//dat:
-//cmd:/ 0;1;
-void OLED_WR_Byte(u8 dat,u8 cmd)
-{
-	DATAOUT(dat);
- 	OLED_RS=cmd;
-	OLED_CS=0;
-	OLED_WR=0;
-	OLED_WR=1;
-	OLED_CS=1;
-	OLED_RS=1;
-}
-#else
-//
-//dat:
-//cmd:
-void OLED_WR_Byte(u8 dat,u8 cmd)
-{
-	u8 i;
-	OLED_RS_PIN=cmd; //
-	OLED_CS_PIN=0;
-	for(i=0;i<8;i++)
-	{
-		OLED_SCLK_PIN=0;
-		if(dat&0x80)OLED_SDIN_PIN=1;
-		else OLED_SDIN_PIN=0;
-		OLED_SCLK_PIN=1;
-		dat<<=1;
+
+
+// Write a single byte to the LCD panel
+void writeOLEDByte(uint8_t data, OLED_MODE mode) {
+
+    // Write the current mode and enable the screen's communcation
+	OLED_RS_PIN = (uint8_t)mode;
+	OLED_CS_PIN = 0;
+
+    // Write each bit of the byte
+	for(uint8_t i = 0; i < 8; i++) {
+
+        // Prevent the screen from reading the data in
+		OLED_SCLK_PIN = 0;
+
+        // If the bit is 1 (true)
+		if(data & 0x80) {
+
+            // Write true
+            OLED_SDIN_PIN = 1;
+        }
+		else {
+            // Write false
+            OLED_SDIN_PIN = 0;
+        }
+
+        // Signal that the data needs to be sampled again
+		OLED_SCLK_PIN = 1;
+
+        // Shift all of the bits so the next will be read
+		data <<= 1;
 	}
-	OLED_CS_PIN=1;
-	OLED_RS_PIN=1;
+
+    // Disable the screen's communication
+	OLED_CS_PIN = 1;
+	OLED_RS_PIN = 1;
 }
-#endif
-//
-void OLED_Display_On(void)
-{
-	OLED_WR_Byte(0X8D,OLED_CMD);  //SET
-	OLED_WR_Byte(0X14,OLED_CMD);  //DCDC ON
-	OLED_WR_Byte(0XAF,OLED_CMD);  //DISPLAY ON
+
+
+// Turn the display on
+void writeOLEDOn() {
+	writeOLEDByte(0X8D, COMMAND);  //SET
+	writeOLEDByte(0X14, COMMAND);  //DCDC ON
+	writeOLEDByte(0XAF, COMMAND);  //DISPLAY ON
 }
-//
-void OLED_Display_Off(void)
-{
-	OLED_WR_Byte(0X8D,OLED_CMD);  //SET
-	OLED_WR_Byte(0X10,OLED_CMD);  //DCDC OFF
-	OLED_WR_Byte(0XAE,OLED_CMD);  //DISPLAY OFF
+
+
+// Turn the display off
+void writeOLEDOff() {
+	writeOLEDByte(0X8D, COMMAND);  //SET
+	writeOLEDByte(0X10, COMMAND);  //DCDC OFF
+	writeOLEDByte(0XAE, COMMAND);  //DISPLAY OFF
 }
-//!!!
-void clearOLED(void)
-{
-	u8 i,n;
-	for(i=0;i<8;i++)
-	for(n=0;n<128;n++)
-	OLED_GRAM[n][i]=0X00;
-	OLED_Refresh_Gram();//
+
+
+// Wipes the output buffer, then writes the zeroed array to the screen
+void clearOLED() {
+
+    // Set all of the values in the buffer to 0
+	memset(OLEDBuffer, 0X00, sizeof(OLEDBuffer));
+
+    // Push the values to the display
+	writeOLEDBuffer();
 }
-//
-//x:0~127
-//y:0~63
-//t:1  0,
-///
-void OLED_DrawPoint(u8 x,u8 y,u8 t)
-{
-	u8 pos,bx,temp=0;
-	if(x>127||y>63)return;//.
-	pos=7-y/8;		//
-	bx=y%8;			//
-	temp=1<<(7-bx);	//
-	if(t)OLED_GRAM[x][pos]|=temp;
-	else OLED_GRAM[x][pos]&=~temp;
+
+
+// Writes a point on the buffer
+void setOLEDPixel(uint8_t x, uint8_t y, OLED_COLOR color) {
+
+    // Create variables for later use
+	uint8_t yPos;
+
+    // Exit if the function would be writing to an index that is off of the screen
+	if (x > 127 || y > 63) {
+        return;
+    }
+
+    // Calculate the y position
+	yPos = 7 - (y / 8);
+
+    // Write white pixels if the point isn't inverted
+	if(color) {
+        OLEDBuffer[x][yPos] |= (1<<(7-(y%8)));
+    }
+
+    // Otherwise, write black pixels to the point
+	else {
+        OLEDBuffer[x][yPos] &= ~(1<<(7-(y%8)));
+    }
 }
-//x1,y1,x2,y2
-//<=x2;y1<=y2 0<=x1<=127 0<=y1<=63
-//dot:0,;1,
-void OLED_Fill(u8 x1,u8 y1,u8 x2,u8 y2,u8 dot)
-{
-	u8 x,y;
-	for(x=x1;x<=x2;x++)
-	{
-		for(y=y1;y<=y2;y++)OLED_DrawPoint(x,y,dot);
+
+
+// Fill an area of pixels, starting at x1 or y1 to x2 or y2
+void fillOLED(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, OLED_COLOR color, bool updateScreen) {
+
+    // Loop through all of the X points
+	for(uint8_t x = x1; x <= x2; x++) {
+
+        // Loop through all of the Y points
+		for(uint8_t y = y1; y <= y2; y++) {
+            setOLEDPixel(x, y, color);
+        }
 	}
-	OLED_Refresh_Gram();//
+
+    // Write the buffer to the screen if specified
+    if (updateScreen) {
+	    writeOLEDBuffer();
+    }
 }
-//
-//x:0~127
-//y:0~63
-//mode:0,;1,
-//size: 16/12
-void OLED_ShowChar(u8 x,u8 y,u8 chr,u8 size,u8 mode)
-{
-	u8 temp,t,t1;
-	u8 y0=y;
-	chr=chr-' ';//
-    for(t=0;t<size;t++)
-    {
-		if(size==12)temp=oled_asc2_1206[chr][t];  //
-		else temp=oled_asc2_1608[chr][t];		 //
-        for(t1=0;t1<8;t1++)
-		{
-			if(temp&0x80)OLED_DrawPoint(x,y,mode);
-			else OLED_DrawPoint(x,y,!mode);
-			temp<<=1;
+
+
+// Writes a characer to the display
+void writeOLEDChar(uint8_t x, uint8_t y, uint8_t chr, uint8_t fontSize, OLED_COLOR color, bool updateScreen) {
+	
+    // Create the variables to be used
+    uint8_t pixelData;
+	uint8_t y0 = y;
+
+    // Correct the character index
+	chr = chr - ' ';
+
+    // Loop through the data of each of the pixels of the character
+    for (uint8_t pixelIndex = 0; pixelIndex < fontSize; pixelIndex++) {
+
+        // Use the appropriate font data
+		if (fontSize == 12) {
+            pixelData = OLED_1206_Font[chr][pixelIndex];
+        }
+		else {
+            pixelData = OLED_1608_Font[chr][pixelIndex];
+        }
+
+        // Loop through the bits, setting them on the buffer array
+        for(uint8_t bitIndex = 0; bitIndex < 8; bitIndex++) {
+
+            // Check if the pixel should be inverted (as compared to what was set)
+			if (pixelData & 0x80) {
+                setOLEDPixel(x, y, color);
+            }
+			else {
+                setOLEDPixel(x, y, OLED_COLOR(!color));
+            }
+
+            // Shift all of the bits to the left, bringing the next bit in for the next cycle
+			pixelData <<= 1;
+
+            // Move down in the y direction so two pixels don't overwrite eachother
 			y++;
-			if((y-y0)==size)
-			{
-				y=y0;
+
+            // When the character vertical's vertical column is filled, move to the next one
+			if((y-y0) == fontSize) {
+				y = y0;
 				x++;
 				break;
 			}
 		}
     }
-	OLED_Refresh_Gram();//
-}
-//m^n
-uint32_t oled_pow(u8 m,u8 n)
-{
-	uint32_t result=1;
-	while(n--)result*=m;
-	return result;
-}
-//
-//x,y :
-//len :
-//size:
-//mode:;1,
-//num:(0~4294967295);
-void OLED_ShowNum(u8 x,u8 y,u32 num,u8 len,u8 size)
-{
-	u8 t,temp;
-	u8 enshow=0;
-	for(t=0;t<len;t++)
-	{
-		temp=(num/oled_pow(10,len-t-1))%10;
-		if(enshow==0&&t<(len-1))
-		{
-			if(temp==0)
-			{
-				OLED_ShowChar(x+(size/2)*t,y,' ',size,1);
-				continue;
-			}else enshow=1;
-		}
-	 	OLED_ShowChar(x+(size/2)*t,y,temp+'0',size,1);
-	}
-}
-//
 
-void OLED_ShowString(u8 x,u8 y,const char *p)
-{
-#define MAX_CHAR_POSX 122
-#define MAX_CHAR_POSY 58
-    while(*p!='\0')
-    {
-        if(x>MAX_CHAR_POSX){x=0;y+=16;}
-        if(y>MAX_CHAR_POSY){y=x=0;clearOLED();}
-        OLED_ShowChar(x,y,*p,16,1);
-        x+=8;
-        p++;
+    // Update the screen if desired
+    if (updateScreen) {
+        writeOLEDBuffer();
+    }
+	
+}
+
+
+// Writes a number to the OLED display
+void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fontSize, bool updateScreen) {
+
+    // Create variables
+	uint8_t digit;
+	uint8_t enshow = 0;
+
+    // Loop through each of the digits
+	for (uint8_t digitIndex = 0; digitIndex < len; digitIndex++) {
+
+        // Choose the digit out of the number
+		digit = (number / (uint8_t)pow(10, len - (digitIndex + 1))) % 10;
+
+        // Display the digit if everything is good
+		if(enshow == 0 && digitIndex < (len-1)) {
+			if(digit == 0) {
+				writeOLEDChar(x+(fontSize/2)*digitIndex, y, ' ', fontSize, WHITE, false);
+				continue;
+			}
+            else {
+                enshow = 1;
+            }
+		}
+
+        // Write out the character
+	 	writeOLEDChar(x+(fontSize/2)*digitIndex, y, digit + '0', fontSize, WHITE, false);
+	}
+
+    // Update the screen if specified
+    if (updateScreen) {
+        writeOLEDBuffer();
     }
 }
 
-//SSD1306
-void initOLED(void)
-{
+
+// Function to write a string to the screen
+void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool updateScreen) {
+
+    // Check if we haven't reached the end of the string
+    while(*p != '\0') {
+
+        // Make sure that the x and y don't exceed the maximum indexes
+        if(x > MAX_CHAR_POSX){
+            x = 0;
+            y += 16;
+        }
+        if(y > MAX_CHAR_POSY){
+            y = x = 0;
+            clearOLED();
+        }
+
+        // Display the character on the screen
+        writeOLEDChar(x, y, *p, fontSize, WHITE, false);
+
+        // Move over by half the font size
+        x += (fontSize / 2);
+
+        // Move to the next character
+        p++;
+    }
+
+    // Update the screen if specified
+    if (updateScreen) {
+        writeOLEDBuffer();
+    }
+}
+
+
+// Sets up the OLED panel
+void initOLED() {
+
     // Set all of the menu values back to their defaults (for if the screen needs to be reinitialized)
     topLevelMenuIndex = 0;
 
-    #if 1
-	RCC->APB2ENR|=1<<3;    //
-	RCC->APB2ENR |=1<<2;		//
+	RCC->APB2ENR |= 1<<3;
+	RCC->APB2ENR |= 1<<2;
 
-    GPIOA->CRH &=0XFFFffFF0;	//
-    GPIOA->CRH |=0X00000003;
-    GPIOA->ODR |=1<<8;		    //
+    GPIOA->CRH &= 0XFFFffFF0;
+    GPIOA->CRH |= 0X00000003;
+    GPIOA->ODR |= 1<<8;
 
-  	GPIOB->CRH&=0X0000FFFF;//PB
-  	GPIOB->CRH|=0X33330000;
-	GPIOB->ODR|=0xF<<12;
+  	GPIOB->CRH &= 0X0000FFFF;
+  	GPIOB->CRH |= 0X33330000;
+	GPIOB->ODR |= 0xF<<12;
 
-	#endif
-    #if 0
-    	RCC->APB2ENR|=1<<3;    //
-        RCC->APB2ENR |=1<<2;		//
-
-        GPIOB->CRL&=0X00FFFFFF;//PB6,7
-        GPIOB->CRL|=0X33000000;
-
-        GPIOB->CRH&=0XFFFFFFF0;//PB8
-        GPIOB->CRH|=0X00000003;
-        GPIOB->ODR|=1<<8;
-
-        GPIOA->CRH &=0XFFF00FFF;	//
-        GPIOA->CRH |=0X00033000;
-        GPIOA->ODR |=1<<11;		    //
-
-    #endif
-
-	OLED_RST_PIN=0;			  		//
+	OLED_RST_PIN = 0;
 	delay(100);
-	OLED_RST_PIN=1;
-	OLED_WR_Byte(0xAE,OLED_CMD);//
-	OLED_WR_Byte(0xD5,OLED_CMD);//
-	OLED_WR_Byte(80,OLED_CMD);  //[3:0],;[7:4],
-	OLED_WR_Byte(0xA8,OLED_CMD);//
-	OLED_WR_Byte(0X3F,OLED_CMD);//(1/64)
-	OLED_WR_Byte(0xD3,OLED_CMD);//
-	OLED_WR_Byte(0X00,OLED_CMD);//
+	OLED_RST_PIN = 1;
+	writeOLEDByte(0xAE, COMMAND);//
+	writeOLEDByte(0xD5, COMMAND);//
+	writeOLEDByte(80,   COMMAND);  //[3:0],;[7:4],
+	writeOLEDByte(0xA8, COMMAND);//
+	writeOLEDByte(0X3F, COMMAND);//(1/64)
+	writeOLEDByte(0xD3, COMMAND);//
+	writeOLEDByte(0X00, COMMAND);//
 
-	OLED_WR_Byte(0x40,OLED_CMD);// [5:0],.
+	writeOLEDByte(0x40, COMMAND);// [5:0],.
 
-	OLED_WR_Byte(0x8D,OLED_CMD);//
-	OLED_WR_Byte(0x14,OLED_CMD);///
-	OLED_WR_Byte(0x20,OLED_CMD);//
-	OLED_WR_Byte(0x02,OLED_CMD);//[1:0],;
-	OLED_WR_Byte(0xA1,OLED_CMD);//,bit0:0,0->0;1,0->127;
-	OLED_WR_Byte(0xC0,OLED_CMD);//;bit3:0,;1, COM[N-1]->COM0;N:
-	OLED_WR_Byte(0xDA,OLED_CMD);//
-	OLED_WR_Byte(0x12,OLED_CMD);//[5:4]
+	writeOLEDByte(0x8D, COMMAND);//
+	writeOLEDByte(0x14, COMMAND);///
+	writeOLEDByte(0x20, COMMAND);//
+	writeOLEDByte(0x02, COMMAND);//[1:0],;
+	writeOLEDByte(0xA1, COMMAND);//,bit0:0,0->0;1,0->127;
+	writeOLEDByte(0xC0, COMMAND);//;bit3:0,;1, COM[N-1]->COM0;N:
+	writeOLEDByte(0xDA, COMMAND);//
+	writeOLEDByte(0x12, COMMAND);//[5:4]
 
-	OLED_WR_Byte(0x81,OLED_CMD);//
-	OLED_WR_Byte(0xEF,OLED_CMD);//1~255;
-	OLED_WR_Byte(0xD9,OLED_CMD);//
-	OLED_WR_Byte(0xf1,OLED_CMD);//[3:0],PHASE 1;[7:4],PHASE 2;
-	OLED_WR_Byte(0xDB,OLED_CMD);//
-	OLED_WR_Byte(0x30,OLED_CMD);//[6:4] 000,0.65*vcc;001,0.77*vcc;011,0.83*vcc;
-	OLED_WR_Byte(0xA4,OLED_CMD);//;bit0:1,;0,;
-	OLED_WR_Byte(0xA6,OLED_CMD);//;bit0:1,;0,
-	OLED_WR_Byte(0xAF,OLED_CMD);//
+	writeOLEDByte(0x81, COMMAND);//
+	writeOLEDByte(0xEF, COMMAND);//1~255;
+	writeOLEDByte(0xD9, COMMAND);//
+	writeOLEDByte(0xf1, COMMAND);//[3:0],PHASE 1;[7:4],PHASE 2;
+	writeOLEDByte(0xDB, COMMAND);//
+	writeOLEDByte(0x30, COMMAND);//[6:4] 000,0.65*vcc;001,0.77*vcc;011,0.83*vcc;
+	writeOLEDByte(0xA4, COMMAND);//;bit0:1,;0,;
+	writeOLEDByte(0xA6, COMMAND);//;bit0:1,;0,
+	writeOLEDByte(0xAF, COMMAND);//
 	delay(100);
 	clearOLED();
 }

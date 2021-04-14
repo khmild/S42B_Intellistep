@@ -28,7 +28,7 @@ void setup() {
     initOLED();
 
     // Give the user feeback that OLED starting has been successful
-    writeOLEDString(0, 0, "Oled Init...OK");
+    writeOLEDString(0, 0, "Oled Init...OK", true);
 
     // Wait for 3 seconds so everything can boot and user can read the LCD
     delay(3000);
@@ -62,16 +62,16 @@ void setup() {
 
         // Display that the motor is not calibrated
         clearOLED();
-        writeOLEDString(0, 0, "NOT");
-        writeOLEDString(0, 16, "Calibrated!");
-        writeOLEDString(0, 32, "Please calibrate");
+        writeOLEDString(0, 0, "NOT", false);
+        writeOLEDString(0, 16, "Calibrated!", false);
+        writeOLEDString(0, 32, "Please calibrate", true);
         delay(3000);
 
         // Display that the select key can be clicked to run calibration
         clearOLED();
-        writeOLEDString(0, 0, "Use the");
-        writeOLEDString(0, 16, "select key");
-        writeOLEDString(0, 32, "to calibrate");
+        writeOLEDString(0, 0, "Use the", false);
+        writeOLEDString(0, 16, "select key", false);
+        writeOLEDString(0, 32, "to calibrate", true);
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
         while(true) {
@@ -104,15 +104,9 @@ void setup() {
 
         // Let the user know that the calibration was successfully loaded
         clearOLED();
-        writeOLEDString(0, 0, "Calibration");
-        writeOLEDString(0, 16, "OK!");
+        writeOLEDString(0, 0, "Calibration", false);
+        writeOLEDString(0, 16, "OK!", true);
         delay(1000);
-
-        // Start displaying the motor data
-        clearOLED();
-        writeOLEDString(0, 0,  "RPM: 0.00");
-        writeOLEDString(0, 16, "Err: 0.00");
-        writeOLEDString(0, 32, "Deg: 0.00");
 
         // Setup the motor timers and interrupts
         // ! setupMotorTimers();

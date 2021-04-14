@@ -139,8 +139,8 @@ canMessage CANReceive()
  * @params CAN_rx_msg - CAN message struct that will be populated
  * 
  */
-void CANSend(canMessage message)
-{
+void CANSend(canMessage message) {
+
     volatile int count = 0;
      
     CAN1->sTxMailBox[0].TIR   = (message.id) << 21;
