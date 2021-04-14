@@ -13,6 +13,11 @@
 #define BOARD_VOLTAGE 3.3 // The voltage of the main processor
 //#define TEST_FLASH
 
+// Averages (number of readings in average)
+#define RPM_AVG_READINGS     50
+#define ANGLE_AVG_READINGS   35
+#define TEMP_AVG_READINGS    200
+
 //#define ENCODER_SPEED_ESTIMATION // If encoder estimation should be used
 #ifdef ENCODER_SPEED_ESTIMATION
     #define SPD_EST_MIN_INTERVAL 250 // The minimum sampling interval (ms). Increase to get more steady readings at the cost of accuracy

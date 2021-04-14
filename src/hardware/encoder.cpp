@@ -12,6 +12,11 @@ double lastEncoderAngle = 0;
 // A storage for the time of the last angle sampling
 uint32_t lastAngleSampleTime = 0;
 
+// Moving average instances
+Smoothed <float> encoderSpeedAvg;
+Smoothed <float> encoderAngleAvg;
+Smoothed <float> encoderTempAvg;
+
 // Function to setup the encoder
 void initEncoder() {
 
@@ -49,6 +54,11 @@ void initEncoder() {
 
     // Reset the encoder's firmware
     writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
+
+    // Setup the moving average calculations
+    encoderSpeedAvg.begin(SMOOTHED_AVERAGE, RPM_AVG_READINGS);
+    encoderAngleAvg.begin(SMOOTHED_AVERAGE, ANGLE_AVG_READINGS);
+    encoderTempAvg.begin(SMOOTHED_AVERAGE, TEMP_AVG_READINGS);
 }
 
 
@@ -178,8 +188,9 @@ double getEncoderAngle() {
     // Delete everything but the first 15 bits (others not needed)
     rawData = (rawData & (DELETE_BIT_15));
 
-    // Return the value (equation from TLE5012 library)
-    return (360.0 / POW_2_15) * ((double) rawData);
+    // Return the averaged value (equation from TLE5012 library)
+    encoderAngleAvg.add((360.0 / POW_2_15) * ((double) rawData));
+    return encoderAngleAvg.get();
 }
 
 // For average velocity calculations instead of hardware readings from the TLE5012
@@ -248,8 +259,9 @@ double getEncoderSpeed() {
             break;
     }
 
-    // Calculate and return angle speed in degree per second
-	return ((360.0 / POW_2_15) * rawSpeed) / (2.0 * firMDVal * 0.000001);
+    // Calculate and return average angle speed in degree per second
+	encoderSpeedAvg.add(((360.0 / POW_2_15) * rawSpeed) / (2.0 * firMDVal * 0.000001));
+    return encoderSpeedAvg.get();
 }
 
 #endif // ! ENCODER_ESTIMATION
@@ -270,7 +282,8 @@ double getEncoderTemp() {
 
     // Return the value (equation from TLE5012 library)
     int16_t rawTemp = rawData;
-	return (rawTemp + TEMP_OFFSET) / (TEMP_DIV);
+	encoderTempAvg.add((rawTemp + TEMP_OFFSET) / (TEMP_DIV));
+    return encoderTempAvg.get();
 }
 
 /*
