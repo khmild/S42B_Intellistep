@@ -109,11 +109,10 @@ void setup() {
         delay(1000);
 
         // Setup the motor timers and interrupts
-        // ! setupMotorTimers();
+        setupMotorTimers();
 
         // Loop forever, checking the keys and updating the display
         while(true) {
-
             // Check to see if serial data is available to read
             runSerialParser();
 

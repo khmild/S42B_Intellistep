@@ -13,11 +13,11 @@ void setupMotorTimers() {
 
     // Setup the step and stallfault pin
     pinMode(STEP_PIN, INPUT_PULLDOWN);
-    pinMode(STALLFAULT_PIN, OUTPUT);
+    //pinMode(STALLFAULT_PIN, OUTPUT);
     pinMode(LED_PIN, OUTPUT);
 
     // Attach the interupt to the step pin
-    attachInterrupt(digitalPinToInterrupt(STEP_PIN), updateMotor, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, CHANGE);
 
     // Setup the timer for steps
     steppingTimer -> pause();
@@ -28,17 +28,23 @@ void setupMotorTimers() {
 }
 
 
+// Just a simple stepping function. Interrupt functions can't be instance methods
+void stepMotor() {
+    motor.step();
+}
+
+
 // Need to declare a function to power the motor coils for the step interrupt
 void updateMotor() {
 
     // Check to see the state of the enable pin
-    if (digitalRead(ENABLE_PIN) != motor.getEnableInversion()) {
+    if (digitalRead(ENABLE_PIN) == motor.getEnableInversion()) {
 
         // The enable pin is off, the motor should be disabled
         motor.disable();
 
         // Shut off the StallGuard pin just in case
-        digitalWriteFast(STALLFAULT_PIN, LOW);
+        //digitalWriteFast(STALLFAULT_PIN, LOW);
         digitalWriteFast(LED_PIN, LOW);
     }
     else {
@@ -70,8 +76,8 @@ void updateMotor() {
             if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
                 
                 // The maximum count has been exceeded, trigger an endstop pulse
-                digitalWriteFast(STALLFAULT_PIN, HIGH);
-                digitalToggleFast(LED_PIN);
+                //digitalWriteFast(STALLFAULT_PIN, HIGH);
+                digitalWriteFast(LED_PIN, HIGH);
             }
             else {
                 // Just count up, motor is out of position but not out of faults
@@ -81,7 +87,7 @@ void updateMotor() {
         else {
             // Reset the out of position count and the StallFault pin
             outOfPosCount = 0;
-            digitalWriteFast(STALLFAULT_PIN, LOW);
+            //digitalWriteFast(STALLFAULT_PIN, LOW);
             digitalWriteFast(LED_PIN, LOW);
         }
     }

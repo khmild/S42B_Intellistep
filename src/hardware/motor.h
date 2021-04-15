@@ -105,7 +105,7 @@ class StepperMotor {
         float getMicrostepMultiplier();
 
         // Calculates the coil values for the motor and updates the set angle. 
-        void step(STEP_DIR dir, bool useMultiplier);
+        void step(STEP_DIR dir = PIN, bool useMultiplier = true);
 
         // Sets the coils to hold the motor at the desired phase angle
         void driveCoils(float angle);
@@ -161,7 +161,7 @@ class StepperMotor {
 
         // Motor characteristics
         // Current (in mA)
-        int current = 1500;
+        int current = 500;
 
         // Microstepping divisor
         int microstepDivisor = 1;

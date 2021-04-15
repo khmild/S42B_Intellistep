@@ -8,6 +8,7 @@
 
 // Functions
 void setupMotorTimers();
+void stepMotor();
 void updateMotor();
 
 #endif

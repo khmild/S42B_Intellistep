@@ -216,7 +216,7 @@ float StepperMotor::getMicrostepMultiplier() {
 
 
 // Computes the coil values for the next step position and increments the set angle
-void StepperMotor::step(STEP_DIR dir = PIN, bool useMultiplier = true) {
+void StepperMotor::step(STEP_DIR dir, bool useMultiplier) {
 
     // Main angle change (any inversions * angle of microstep)
     float angleChange = StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepDivisor);
@@ -386,12 +386,12 @@ void StepperMotor::setBDirection(COIL_STATE desiredState) {
 }
 
 
-// Sets the current of each of the coils (with mapping)
+// Sets the current of each of the coils (with mapping)(in ma)
 void StepperMotor::setCoilCurrent(uint16_t ACurrent, uint16_t BCurrent) {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
-    uint32_t aPWMValue = 2550 * BOARD_VOLTAGE * CURRENT_SENSE_RESISTOR * ACurrent;
-    uint32_t bPWMValue = 2550 * BOARD_VOLTAGE * CURRENT_SENSE_RESISTOR * BCurrent;
+    uint32_t aPWMValue = (2.55 * CURRENT_SENSE_RESISTOR * ACurrent) / BOARD_VOLTAGE;
+    uint32_t bPWMValue = (2.55 * CURRENT_SENSE_RESISTOR * BCurrent) / BOARD_VOLTAGE;
 
     // Constrain the PWM values
     aPWMValue = constrain(aPWMValue, 0, 255);

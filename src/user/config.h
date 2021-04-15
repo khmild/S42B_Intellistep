@@ -38,7 +38,7 @@
 // Motor constants
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
 #define MAX_CURRENT 3500 // Maximum current in mA
-#define CURRENT_SENSE_RESISTOR 0.25 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
+#define CURRENT_SENSE_RESISTOR 0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
 #define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
 #define STEP_UPDATE_FREQ 10 // in Hz, to step the motor back to the correct position
 #define MAX_MOTOR_SPEED 50 // deg/s
