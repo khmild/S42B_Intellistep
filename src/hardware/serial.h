@@ -8,6 +8,7 @@
 #include "parser.h"
 #include <cctype>
 #include "Arduino.h"
+#include "timers.h"
 
 void initSerial();
 void sendSerialMessage(String message);

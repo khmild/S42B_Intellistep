@@ -20,12 +20,24 @@ static const float sineTable[128] = {
 
 // Fast sin function
 float fastSin(uint16_t angle) {
+
+    // Make sure that it hasn't exceed the array limit
+    angle = angle % SINE_STEPS;
+
+    // Nothing fancy, just return the angle
     return sineTable[angle];
 }
 
 
 // Fast cosine function
 float fastCos(uint16_t angle) {
-    angle = angle + (SINE_STEPS / 4);
-    return sineTable[angle];
+
+    // Shift the angle 90 degrees forward
+    angle += (SINE_STEPS / 4);
+
+    // Make sure that it hasn't exceed the array limit
+    angle = angle % SINE_STEPS;
+
+    // Return the value (now the cosine)
+    return -sineTable[angle];
 }

@@ -161,7 +161,7 @@ class StepperMotor {
 
         // Motor characteristics
         // Current (in mA)
-        int current = 500;
+        int current = 750;
 
         // Microstepping divisor
         int microstepDivisor = 1;

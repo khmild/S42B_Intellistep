@@ -28,6 +28,18 @@ void setupMotorTimers() {
 }
 
 
+// Pauses the timers, essentially disabling them for the time being
+void disableInterrupts() {
+    steppingTimer -> pause();
+}
+
+
+// Resumes the timers, re-enabling them
+void enableInterrupts() {
+    steppingTimer -> resume();
+}
+
+
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
     motor.step();
@@ -52,6 +64,12 @@ void updateMotor() {
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         motor.enable();
 
+        motor.step(COUNTER_CLOCKWISE, false);
+
+        digitalWriteFast(LED_PIN, HIGH);
+
+
+        /*
         // Get the current angle of the motor (multiple reads take a longer time)
         double currentAngle = getEncoderAngle();
 
@@ -89,6 +107,6 @@ void updateMotor() {
             outOfPosCount = 0;
             //digitalWriteFast(STALLFAULT_PIN, LOW);
             digitalWriteFast(LED_PIN, LOW);
-        }
+        }*/
     }
 }

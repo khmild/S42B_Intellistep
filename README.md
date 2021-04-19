@@ -40,7 +40,8 @@ GCode Table
 
 ## Credits
 
-- BTT - Original code
-- CAP1Sup - Main rewrite of code
-- TazerReloaded - Encoder protocol and communication
-- Misfittech - The [Smart Stepper project](https://github.com/Misfittech/nano_stepper). This was a large help when writing the correct stepping code.
+- [BTT](https://github.com/bigtreetech) - [Original code](https://github.com/bigtreetech/BIGTREETECH-Stepper-Motor-Driver)
+- [CAP1Sup](https://github.com/CAP1Sup) - Main rewrite of code
+- [TazerReloaded](https://github.com/TazerReloaded) - Encoder protocol and communication
+- [Misfittech](https://github.com/Misfittech) - The [Smart Stepper project](https://github.com/Misfittech/nano_stepper). This was a large help when writing the correct stepping code.
+- [Matt Fryer](https://github.com/MattFryer) - [Smoothed](https://github.com/MattFryer/Smoothed) library. This was a huge help when smoothing out the OLED values to make them more readable and accurate

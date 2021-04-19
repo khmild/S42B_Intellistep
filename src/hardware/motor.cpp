@@ -219,7 +219,7 @@ float StepperMotor::getMicrostepMultiplier() {
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier) {
 
     // Main angle change (any inversions * angle of microstep)
-    float angleChange = StepperMotor::invertDirection(this -> reversed) * (this -> fullStepAngle) / (this -> microstepDivisor);
+    float angleChange = StepperMotor::invertDirection(this -> reversed) * ((this -> fullStepAngle) / (this -> microstepDivisor));
 
     // Factor in the multiplier if specified
     if (useMultiplier) {
@@ -287,23 +287,23 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier) {
 void StepperMotor::driveCoils(float degAngle) {
 
     // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
-    float microstepAngle = degAngle * (this -> fullStepAngle / 360) * (this -> microstepDivisor);
+    float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
 
     // Round the microstep angle, it has to be a whole value of the number of microsteps available
     // Also ensures that the coils are being driven to the major step positions (increases torque)
-    uint16_t roundedMicrosteps = round(microstepAngle);
+    int roundedMicrosteps = round(microstepAngle);
 
-    // Make sure that the phase angle doesn't exceed the maximum
-    roundedMicrosteps = roundedMicrosteps % SINE_STEPS;
+    // Make sure that the phase angle doesn't exceed the steps per phase rotation (4 full steps to a phase rotation * whatever microstepping)
+    roundedMicrosteps = roundedMicrosteps % (4 * (this -> microstepDivisor));
 
     // Calculate the sine and cosine of the angle
-    float angleSin = fastSin(roundedMicrosteps);
-    float angleCos = fastCos(roundedMicrosteps);
+    float angleSin = fastSin(roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor)));
+    float angleCos = fastCos(roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor)));
 
     // If in reverse, we swap the sign of one of the angles
-    if ((bool)digitalReadFast(DIRECTION_PIN) != (this -> reversed)) {
-        angleCos = -angleCos;
-    }
+    //if ((bool)digitalReadFast(DIRECTION_PIN) != (this -> reversed)) {
+    //    angleCos = -angleCos;
+    //}
 
     // Equation comes out to be (effort * -1 to 1) depending on the sine/cosine of the phase angle
     float coilAPower = ((this -> current) * abs(angleSin));
@@ -321,6 +321,7 @@ void StepperMotor::driveCoils(float degAngle) {
         setADirection(BACKWARD);
     }
 
+
     // Check the if the coil should be energized to move backward or forward
     if(angleCos > 0)  {
 
@@ -332,6 +333,16 @@ void StepperMotor::driveCoils(float degAngle) {
         // Set second channel for backward movement
         setBDirection(BACKWARD);
     }
+
+    Serial.print("\t");
+    Serial.print(angleSin);
+    Serial.print(" ");
+    Serial.print(angleCos);
+    //Serial.print(" ");
+    //Serial.print(roundedMicrosteps);
+    //Serial.print(" ");
+    //Serial.print(this -> microstepDivisor);
+    Serial.println();
     
     // Set the current of the coils
     setCoilCurrent(coilAPower, coilBPower);
@@ -397,9 +408,25 @@ void StepperMotor::setCoilCurrent(uint16_t ACurrent, uint16_t BCurrent) {
     aPWMValue = constrain(aPWMValue, 0, 255);
     bPWMValue = constrain(bPWMValue, 0, 255);
 
-    // Set the values on the output pins
-    analogWrite(COIL_A_POWER_OUTPUT_PIN, aPWMValue);
-    analogWrite(COIL_B_POWER_OUTPUT_PIN, bPWMValue);
+    // If the A coil is 0, set it to coast
+    if (aPWMValue == 0) {
+        setADirection(COAST);
+    }
+    else {
+        // Set the values on the output pins
+        analogWrite(COIL_A_POWER_OUTPUT_PIN, aPWMValue);
+    }
+
+    // If the B coil is 0, set it to coast
+    if (bPWMValue == 0) {
+        setBDirection(COAST);
+    }
+    else {
+        // Set the values on the output pins
+        analogWrite(COIL_B_POWER_OUTPUT_PIN, bPWMValue);
+    }
+    
+
 }
 
 

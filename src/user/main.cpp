@@ -100,7 +100,7 @@ void setup() {
         // There is a calibration, load it and move on to the loop
 
         // Load the values from flash
-        loadSavedValues();
+        //loadSavedValues();
 
         // Let the user know that the calibration was successfully loaded
         clearOLED();
@@ -123,6 +123,9 @@ void setup() {
             if (getMenuDepth() == 0) {
                 displayMotorData();
             }
+
+            // We need a little delay to allow the motor time to process if it needs it
+            delay(50);
         }
     }
 }

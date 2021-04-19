@@ -73,6 +73,9 @@ bool flashWaitDone(uint16_t microseconds) {
 // Erases a full page of flash
 bool flashErasePage(uint32_t address) {
 
+    // Flash reads and writes should NOT have any interrupts allowed as it could cause major problems
+    disableInterrupts();
+
     // Wait until the flash is available,  if so, begin writing
     if(flashWaitDone(0X5FFF)) {
         FLASH -> CR |= 1 << 1;
@@ -83,14 +86,23 @@ bool flashErasePage(uint32_t address) {
         if(flashWaitDone(0X5FFF)) {
             FLASH -> CR &= ~(1 << 1);
 
+            // All done, time to re-enable interrupts
+            enableInterrupts();
+
             // Operation successful
             return true;
         }
+
+        // All done, time to re-enable interrupts
+        enableInterrupts();
 
         // Failed to actually write the data
         return false;
     }
     else {
+        // All done, time to re-enable interrupts
+        enableInterrupts();
+        
         // Flash wasn't available, couldn't write at all
         return false;
     }
@@ -144,6 +156,9 @@ bool flashWriteNoCheck(uint32_t address, uint16_t *pBuffer, uint16_t arrayLength
   */
 bool flashProgramHalfWord(uint32_t Address, uint16_t Data) {
 
+    // Flash reads and writes should NOT have any interrupts allowed as it could cause major problems
+    disableInterrupts();
+
     // Declare an accumulator
     bool flashAvailable = false;
 
@@ -161,7 +176,10 @@ bool flashProgramHalfWord(uint32_t Address, uint16_t Data) {
         
         /* Disable the PG Bit */
         FLASH->CR &= CR_PG_Reset;
-    } 
+    }
+
+    // Re-enable the interrupts, the flash write is completed
+    enableInterrupts();
     
     /* Return the Program Status */
     return flashAvailable;
@@ -178,6 +196,10 @@ uint16_t STMFLASH_BUF[STM_SECTOR_SIZE / 2];
 
 
 void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
+
+    // Flash reads and writes should NOT have any interrupts allowed as it could cause major problems
+    disableInterrupts();
+
     uint32_t secpos;	   // Sector position
     uint16_t secoff;	   // Sector offset
     uint16_t secremain;    //
@@ -219,6 +241,9 @@ void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
         }
     };
     lockFlash();
+
+    // Re-enable the interrupts
+    enableInterrupts();
 }
 
 

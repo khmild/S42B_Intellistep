@@ -138,8 +138,8 @@ void readDipMicrostepping() {
         }
         else {
 
-            // Both are off, just revert to using quarter stepping
-            motor.setMicrostepping(4);
+            // Both are off, just revert to using full stepping
+            motor.setMicrostepping(1);
         }
     }
     else {
@@ -161,8 +161,8 @@ void readDipMicrostepping() {
         }
         else {
 
-            // Both are off, just revert to using quarter stepping
-            motor.setMicrostepping(4);
+            // Both are off, just revert to using full stepping
+            motor.setMicrostepping(1);
         }
     }
 }

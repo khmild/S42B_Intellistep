@@ -40,7 +40,7 @@
 #define MAX_CURRENT 3500 // Maximum current in mA
 #define CURRENT_SENSE_RESISTOR 0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
 #define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
-#define STEP_UPDATE_FREQ 10 // in Hz, to step the motor back to the correct position
+#define STEP_UPDATE_FREQ 1 // in Hz, to step the motor back to the correct position
 #define MAX_MOTOR_SPEED 50 // deg/s
 #define STEP_FAULT_TIME 1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
 #define STEP_FAULT_ANGLE 45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
@@ -125,8 +125,8 @@
 #define COIL_A_DIR_2_PIN        PB_7
 #define COIL_B_DIR_1_PIN        PB_8
 #define COIL_B_DIR_2_PIN        PB_9
-#define COIL_A_POWER_OUTPUT_PIN PB_4
-#define COIL_B_POWER_OUTPUT_PIN PB_5
+#define COIL_A_POWER_OUTPUT_PIN PB_5
+#define COIL_B_POWER_OUTPUT_PIN PB_4
 
 // Encoder SPI interface
 #define ENCODER_CS_PIN   PA_4 // SPI1_SS
