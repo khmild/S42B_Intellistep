@@ -13,12 +13,12 @@ New Features:
 - Redone stepping for higher torque and quieter operation
 - Redone serial commands (based on gcode)
 - Temperature readout on the display
+- CAN subnetwork for driver configuration
 
 Future Features:
 
 - Motor and driver overtemperature current reduction
 - Dynamic current control based on speed and acceleration
-- CAN subnetwork for driver configuration
 - Manual tuning utility for manual PID tuning
 - Much better stepper calibration
 - New menu items for setting PID parameters
@@ -26,6 +26,7 @@ Future Features:
 GCode Table
 
 - M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
+- M115 (ex M115) - Prints out firmware information. Only firmware version for now.
 - M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
 - M307 (ex M307) - Runs an autotune sequence for the PID loop
 - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles

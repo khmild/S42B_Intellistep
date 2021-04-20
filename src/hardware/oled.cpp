@@ -18,9 +18,11 @@ int currentCursorIndex = 0;
 int menuDepthIndex = 0;
 int lastMenuDepthIndex = 0;
 
-// Convience function for writing a specific string to the OLED panel
-void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen) {
-    writeOLEDString(x, y, string.c_str(), 16, updateScreen);
+// Displays the bootscreen
+void showBootscreen() {
+    writeOLEDString(0, 0, F("Intellistep"), false);
+    writeOLEDString(0, 32, F("Version: "), false);
+    writeOLEDString(0, 48, F(VERSION), true);
 }
 
 
@@ -175,7 +177,7 @@ void updateDisplay() {
 void displayMotorData() {
 
     // Clear the old menu off of the display
-    if (!(lastMenuDepthIndex == 0)) {
+    if (lastMenuDepthIndex != 0) {
         clearOLED();
     }
 
@@ -389,22 +391,56 @@ float roundToPlace(float number, int place) {
 }
 
 
-// Write the entire OLED buffer to the screen
-void writeOLEDBuffer() {
+// Sets up the OLED panel
+void initOLED() {
 
-    // Loop through each of the vertical lines
-	for(uint8_t vertIndex = 0; vertIndex < 8; vertIndex++) {
+    // Set all of the menu values back to their defaults (for if the screen needs to be reinitialized)
+    topLevelMenuIndex = 0;
 
-		// Specify the line that is being written to
-        writeOLEDByte(0xb0 + vertIndex, COMMAND);
-		writeOLEDByte(0x00, COMMAND);
-		writeOLEDByte(0x10, COMMAND); // DCDC OFF
+	RCC->APB2ENR |= 1<<3;
+	RCC->APB2ENR |= 1<<2;
 
-        // Loop through the horizontal lines
-		for(uint8_t horzIndex = 0; horzIndex < 128; horzIndex++) {
-		    writeOLEDByte(OLEDBuffer[horzIndex][vertIndex], DATA);
-        }
-	}
+    GPIOA->CRH &= 0XFFFffFF0;
+    GPIOA->CRH |= 0X00000003;
+    GPIOA->ODR |= 1<<8;
+
+  	GPIOB->CRH &= 0X0000FFFF;
+  	GPIOB->CRH |= 0X33330000;
+	GPIOB->ODR |= 0xF<<12;
+
+	OLED_RST_PIN = 0;
+	delay(100);
+	OLED_RST_PIN = 1;
+	writeOLEDByte(0xAE, COMMAND);//
+	writeOLEDByte(0xD5, COMMAND);//
+	writeOLEDByte(80,   COMMAND);  //[3:0],;[7:4],
+	writeOLEDByte(0xA8, COMMAND);//
+	writeOLEDByte(0X3F, COMMAND);//(1/64)
+	writeOLEDByte(0xD3, COMMAND);//
+	writeOLEDByte(0X00, COMMAND);//
+
+	writeOLEDByte(0x40, COMMAND);// [5:0],.
+
+	writeOLEDByte(0x8D, COMMAND);//
+	writeOLEDByte(0x14, COMMAND);///
+	writeOLEDByte(0x20, COMMAND);//
+	writeOLEDByte(0x02, COMMAND);//[1:0],;
+	writeOLEDByte(0xA1, COMMAND);//,bit0:0,0->0;1,0->127;
+	writeOLEDByte(0xC0, COMMAND);//;bit3:0,;1, COM[N-1]->COM0;N:
+	writeOLEDByte(0xDA, COMMAND);//
+	writeOLEDByte(0x12, COMMAND);//[5:4]
+
+	writeOLEDByte(0x81, COMMAND);//
+	writeOLEDByte(0xEF, COMMAND);//1~255;
+	writeOLEDByte(0xD9, COMMAND);//
+	writeOLEDByte(0xf1, COMMAND);//[3:0],PHASE 1;[7:4],PHASE 2;
+	writeOLEDByte(0xDB, COMMAND);//
+	writeOLEDByte(0x30, COMMAND);//[6:4] 000,0.65*vcc;001,0.77*vcc;011,0.83*vcc;
+	writeOLEDByte(0xA4, COMMAND);//;bit0:1,;0,;
+	writeOLEDByte(0xA6, COMMAND);//;bit0:1,;0,
+	writeOLEDByte(0xAF, COMMAND);//
+	delay(100);
+	clearOLED();
 }
 
 
@@ -458,6 +494,25 @@ void writeOLEDOff() {
 	writeOLEDByte(0X8D, COMMAND);  //SET
 	writeOLEDByte(0X10, COMMAND);  //DCDC OFF
 	writeOLEDByte(0XAE, COMMAND);  //DISPLAY OFF
+}
+
+
+// Write the entire OLED buffer to the screen
+void writeOLEDBuffer() {
+
+    // Loop through each of the vertical lines
+	for(uint8_t vertIndex = 0; vertIndex < 8; vertIndex++) {
+
+		// Specify the line that is being written to
+        writeOLEDByte(0xb0 + vertIndex, COMMAND);
+		writeOLEDByte(0x00, COMMAND);
+		writeOLEDByte(0x10, COMMAND); // DCDC OFF
+
+        // Loop through the horizontal lines
+		for(uint8_t horzIndex = 0; horzIndex < 128; horzIndex++) {
+		    writeOLEDByte(OLEDBuffer[horzIndex][vertIndex], DATA);
+        }
+	}
 }
 
 
@@ -640,54 +695,7 @@ void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool
 }
 
 
-// Sets up the OLED panel
-void initOLED() {
-
-    // Set all of the menu values back to their defaults (for if the screen needs to be reinitialized)
-    topLevelMenuIndex = 0;
-
-	RCC->APB2ENR |= 1<<3;
-	RCC->APB2ENR |= 1<<2;
-
-    GPIOA->CRH &= 0XFFFffFF0;
-    GPIOA->CRH |= 0X00000003;
-    GPIOA->ODR |= 1<<8;
-
-  	GPIOB->CRH &= 0X0000FFFF;
-  	GPIOB->CRH |= 0X33330000;
-	GPIOB->ODR |= 0xF<<12;
-
-	OLED_RST_PIN = 0;
-	delay(100);
-	OLED_RST_PIN = 1;
-	writeOLEDByte(0xAE, COMMAND);//
-	writeOLEDByte(0xD5, COMMAND);//
-	writeOLEDByte(80,   COMMAND);  //[3:0],;[7:4],
-	writeOLEDByte(0xA8, COMMAND);//
-	writeOLEDByte(0X3F, COMMAND);//(1/64)
-	writeOLEDByte(0xD3, COMMAND);//
-	writeOLEDByte(0X00, COMMAND);//
-
-	writeOLEDByte(0x40, COMMAND);// [5:0],.
-
-	writeOLEDByte(0x8D, COMMAND);//
-	writeOLEDByte(0x14, COMMAND);///
-	writeOLEDByte(0x20, COMMAND);//
-	writeOLEDByte(0x02, COMMAND);//[1:0],;
-	writeOLEDByte(0xA1, COMMAND);//,bit0:0,0->0;1,0->127;
-	writeOLEDByte(0xC0, COMMAND);//;bit3:0,;1, COM[N-1]->COM0;N:
-	writeOLEDByte(0xDA, COMMAND);//
-	writeOLEDByte(0x12, COMMAND);//[5:4]
-
-	writeOLEDByte(0x81, COMMAND);//
-	writeOLEDByte(0xEF, COMMAND);//1~255;
-	writeOLEDByte(0xD9, COMMAND);//
-	writeOLEDByte(0xf1, COMMAND);//[3:0],PHASE 1;[7:4],PHASE 2;
-	writeOLEDByte(0xDB, COMMAND);//
-	writeOLEDByte(0x30, COMMAND);//[6:4] 000,0.65*vcc;001,0.77*vcc;011,0.83*vcc;
-	writeOLEDByte(0xA4, COMMAND);//;bit0:1,;0,;
-	writeOLEDByte(0xA6, COMMAND);//;bit0:1,;0,
-	writeOLEDByte(0xAF, COMMAND);//
-	delay(100);
-	clearOLED();
+// Convience function for writing a specific string to the OLED panel
+void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen) {
+    writeOLEDString(x, y, string.c_str(), 16, updateScreen);
 }

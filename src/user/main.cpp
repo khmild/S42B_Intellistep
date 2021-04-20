@@ -27,8 +27,8 @@ void setup() {
     // Initialize the OLED
     initOLED();
 
-    // Give the user feeback that OLED starting has been successful
-    writeOLEDString(0, 0, "Oled Init...OK", true);
+    // Show the bootscreen
+    showBootscreen();
 
     // Wait for 3 seconds so everything can boot and user can read the LCD
     delay(3000);

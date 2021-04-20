@@ -13,12 +13,12 @@ StepperMotor::StepperMotor(float P, float I, float D) {
     this -> previousTime = millis();
 
     // Setup the pins as outputs
-    pinMode(COIL_A_DIR_1_PIN, OUTPUT);
-    pinMode(COIL_A_DIR_2_PIN, OUTPUT);
-    pinMode(COIL_B_DIR_1_PIN, OUTPUT);
-    pinMode(COIL_B_DIR_2_PIN, OUTPUT);
-    pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
-    pinMode(COIL_B_POWER_OUTPUT_PIN, OUTPUT);
+    pinMode(COIL_DIR_1_PINS[A], OUTPUT);
+    pinMode(COIL_DIR_2_PINS[A], OUTPUT);
+    pinMode(COIL_DIR_1_PINS[B], OUTPUT);
+    pinMode(COIL_DIR_2_PINS[B], OUTPUT);
+    pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
+    pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
 }
 
 // Constructor without PID terms
@@ -28,12 +28,12 @@ StepperMotor::StepperMotor() {
     this -> previousTime = millis();
 
     // Setup the pins as outputs
-    pinMode(COIL_A_DIR_1_PIN, OUTPUT);
-    pinMode(COIL_A_DIR_2_PIN, OUTPUT);
-    pinMode(COIL_B_DIR_1_PIN, OUTPUT);
-    pinMode(COIL_B_DIR_2_PIN, OUTPUT);
-    pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
-    pinMode(COIL_B_POWER_OUTPUT_PIN, OUTPUT);
+    pinMode(COIL_DIR_1_PINS[A], OUTPUT);
+    pinMode(COIL_DIR_2_PINS[A], OUTPUT);
+    pinMode(COIL_DIR_1_PINS[B], OUTPUT);
+    pinMode(COIL_DIR_2_PINS[B], OUTPUT);
+    pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
+    pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
 }
 
 
@@ -310,15 +310,15 @@ void StepperMotor::driveCoils(float degAngle) {
     float coilBPower = ((this -> current) * abs(angleCos));
 
     // Check the if the coil should be energized to move backward or forward
-    if(angleSin > 0)  {
+    if(angleSin > 0) {
 
         // Set first channel for forward movement
-        setADirection(FORWARD);
+        setCoil(A, FORWARD, coilAPower);
     }
     else if (angleSin < 0) {
 
         // Set first channel for backward movement
-        setADirection(BACKWARD);
+        setCoil(A, BACKWARD, coilAPower);
     }
 
 
@@ -326,12 +326,12 @@ void StepperMotor::driveCoils(float degAngle) {
     if(angleCos > 0)  {
 
         // Set second channel for forward movement
-        setBDirection(FORWARD);
+        setCoil(B, FORWARD, coilBPower);
     }
     else if (angleCos < 0) {
 
         // Set second channel for backward movement
-        setBDirection(BACKWARD);
+        setCoil(B, BACKWARD, coilBPower);
     }
 
     Serial.print("\t");
@@ -343,90 +343,45 @@ void StepperMotor::driveCoils(float degAngle) {
     //Serial.print(" ");
     //Serial.print(this -> microstepDivisor);
     Serial.println();
-    
-    // Set the current of the coils
-    setCoilCurrent(coilAPower, coilBPower);
 }
 
 
-// Function for setting the A coil state
-// ! Maybe change to faster pin writing
-void StepperMotor::setADirection(COIL_STATE desiredState) {
+// Function for setting the A coil state and current
+void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, float current) {
+
+    // Disable the coil
+    analogWrite(COIL_POWER_OUTPUT_PINS[coil], 0);
+
+    // Decide how to deal with the coil based on current, re-enabling it after setting the direction
     if (desiredState == FORWARD) {
-        digitalWriteFast(COIL_A_DIR_1_PIN, HIGH);
-        digitalWriteFast(COIL_A_DIR_2_PIN, LOW);
+        digitalWriteFast(COIL_DIR_1_PINS[coil], HIGH);
+        digitalWriteFast(COIL_DIR_2_PINS[coil], LOW);
+        analogWrite(COIL_POWER_OUTPUT_PINS[coil], currentToPWM(current));
     }
     else if (desiredState == BACKWARD) {
-        digitalWriteFast(COIL_A_DIR_1_PIN, LOW);
-        digitalWriteFast(COIL_A_DIR_2_PIN, HIGH);
+        digitalWriteFast(COIL_DIR_1_PINS[coil], LOW);
+        digitalWriteFast(COIL_DIR_2_PINS[coil], HIGH);
+        analogWrite(COIL_POWER_OUTPUT_PINS[coil], currentToPWM(current));
     }
     else if (desiredState == BRAKE) {
-        digitalWriteFast(COIL_A_DIR_1_PIN, HIGH);
-        digitalWriteFast(COIL_A_DIR_2_PIN, HIGH);
-        analogWrite(COIL_A_POWER_OUTPUT_PIN, 0);
+        digitalWriteFast(COIL_DIR_1_PINS[coil], HIGH);
+        digitalWriteFast(COIL_DIR_2_PINS[coil], HIGH);
     }
     else if (desiredState == COAST) {
-        digitalWriteFast(COIL_A_DIR_1_PIN, LOW);
-        digitalWriteFast(COIL_A_DIR_2_PIN, LOW);
-        analogWrite(COIL_A_POWER_OUTPUT_PIN, 0);
+        digitalWriteFast(COIL_DIR_1_PINS[coil], LOW);
+        digitalWriteFast(COIL_DIR_2_PINS[coil], LOW);
     }
 }
 
 
-// Function for setting the B coil state
-// ! Maybe change to faster pin writing
-void StepperMotor::setBDirection(COIL_STATE desiredState) {
-    if (desiredState == FORWARD) {
-        digitalWriteFast(COIL_B_DIR_1_PIN, HIGH);
-        digitalWriteFast(COIL_B_DIR_2_PIN, LOW);
-    }
-    else if (desiredState == BACKWARD) {
-        digitalWriteFast(COIL_B_DIR_1_PIN, LOW);
-        digitalWriteFast(COIL_B_DIR_2_PIN, HIGH);
-    }
-    else if (desiredState == BRAKE) {
-        digitalWriteFast(COIL_B_DIR_1_PIN, HIGH);
-        digitalWriteFast(COIL_B_DIR_2_PIN, HIGH);
-        analogWrite(COIL_B_POWER_OUTPUT_PIN, 0);
-    }
-    else if (desiredState == COAST) {
-        digitalWriteFast(COIL_B_DIR_1_PIN, LOW);
-        digitalWriteFast(COIL_B_DIR_2_PIN, LOW);
-        analogWrite(COIL_B_POWER_OUTPUT_PIN, 0);
-    }
-}
-
-
-// Sets the current of each of the coils (with mapping)(in ma)
-void StepperMotor::setCoilCurrent(uint16_t ACurrent, uint16_t BCurrent) {
+// Calculates the current of each of the coils (with mapping)(current in mA)
+uint32_t StepperMotor::currentToPWM(float current) {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
-    uint32_t aPWMValue = (2.55 * CURRENT_SENSE_RESISTOR * ACurrent) / BOARD_VOLTAGE;
-    uint32_t bPWMValue = (2.55 * CURRENT_SENSE_RESISTOR * BCurrent) / BOARD_VOLTAGE;
+    uint32_t PWMValue = abs((2.55 * CURRENT_SENSE_RESISTOR * current) / BOARD_VOLTAGE);
 
-    // Constrain the PWM values
-    aPWMValue = constrain(aPWMValue, 0, 255);
-    bPWMValue = constrain(bPWMValue, 0, 255);
-
-    // If the A coil is 0, set it to coast
-    if (aPWMValue == 0) {
-        setADirection(COAST);
-    }
-    else {
-        // Set the values on the output pins
-        analogWrite(COIL_A_POWER_OUTPUT_PIN, aPWMValue);
-    }
-
-    // If the B coil is 0, set it to coast
-    if (bPWMValue == 0) {
-        setBDirection(COAST);
-    }
-    else {
-        // Set the values on the output pins
-        analogWrite(COIL_B_POWER_OUTPUT_PIN, bPWMValue);
-    }
-    
-
+    // Constrain the PWM value, then return it
+    return constrain(PWMValue, 0, 255);
 }
 
 
@@ -463,14 +418,11 @@ void StepperMotor::disable() {
     // Check if the motor is not enabled yet. No need to disable the coils if they're already off
     if (this -> enabled) {
 
-        // Set the A driver to brake
-        setADirection(COAST);
+        // Set the A driver to whatever disable mode was set
+        setCoil(A, IDLE_MODE);
 
-        // Set the B driver to brake
-        setBDirection(COAST);
-
-        // Set the coils
-        setCoilCurrent(0, 0);
+        // Set the B driver to whatever disable mode was set
+        setCoil(B, IDLE_MODE);
 
         // Set the enabled to false so we don't repeat
         this -> enabled = false;

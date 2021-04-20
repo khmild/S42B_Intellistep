@@ -22,6 +22,12 @@ typedef enum {
     COAST
 } COIL_STATE;
 
+// Enumeration for coil letter
+typedef enum {
+    A,
+    B
+} COIL;
+
 // Enumeration for stepping direction
 typedef enum {
     PIN,
@@ -110,14 +116,11 @@ class StepperMotor {
         // Sets the coils to hold the motor at the desired phase angle
         void driveCoils(float angle);
 
-        // Sets the state of the A coil
-        void setADirection(COIL_STATE desiredState);
+        // Sets the state of a coil
+        void setCoil(COIL coil, COIL_STATE desiredState, float current = 0);
 
-        // Sets the state of the B coil
-        void setBDirection(COIL_STATE desiredState);
-
-        // Sets the current of the coils
-        void setCoilCurrent(uint16_t ACurrent, uint16_t BCurrent);
+        // Calculates the correct PWM setting based on an input current
+        uint32_t currentToPWM(float current);
 
         // Sets the speed of the motor (angular speed is in deg/s)
         float speedToHz(float angularSpeed);

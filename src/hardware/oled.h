@@ -16,7 +16,7 @@ extern const int topLevelMenuLength;
 class StepperMotor;
 
 // Functions (for high level displaying)
-void initOLED();
+void showBootscreen();
 void updateDisplay();
 void displayMotorData();
 void selectMenuItem();
@@ -41,6 +41,7 @@ typedef enum {
 #define MAX_CHAR_POSY 58
 
 // Low level OLED commands
+void initOLED();
 void writeOLEDByte(uint8_t data, OLED_MODE mode);
 void writeOLEDOn();
 void writeOLEDOff();

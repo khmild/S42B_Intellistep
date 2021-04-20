@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "main.h"
 #include "flash.h"
+#include "config.h"
 
 // Defines for strings that are used repeatedly
 #define FEEDBACK_NO_VALUE F("No value specified! Make sure to specify a value with a letter before it")

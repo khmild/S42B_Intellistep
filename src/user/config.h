@@ -4,21 +4,19 @@
 // Need the Arduino library for pin conversion
 #include "Arduino.h"
 
+// Version of the firmware (displayed on LCD) (follows semantic versioning)
+#define VERSION "0.0.1"
+
 
 // --------------  Settings  --------------
-// General parameters
-#define CLOSED_LOOP
-#define CLOSED_LOOP_CONFIG
-#define BUTTON_REPEAT_INTERVAL 250 // Millis
-#define BOARD_VOLTAGE 3.3 // The voltage of the main processor
-//#define TEST_FLASH
 
 // Averages (number of readings in average)
 #define RPM_AVG_READINGS     50
 #define ANGLE_AVG_READINGS   35
 #define TEMP_AVG_READINGS    200
 
-//#define ENCODER_SPEED_ESTIMATION // If encoder estimation should be used
+// If encoder estimation should be used
+//#define ENCODER_SPEED_ESTIMATION
 #ifdef ENCODER_SPEED_ESTIMATION
     #define SPD_EST_MIN_INTERVAL 250 // The minimum sampling interval (ms). Increase to get more steady readings at the cost of accuracy
 #endif
@@ -35,15 +33,25 @@
 // E:17, E1:18...
 #define DEFAULT_CAN_ID X
 
-// Motor constants
+// Motor characteristics
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
-#define MAX_CURRENT 3500 // Maximum current in mA
-#define CURRENT_SENSE_RESISTOR 0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
-#define MAX_MICROSTEP_DIVISOR 32 // The maximum microstepping divisor
 #define STEP_UPDATE_FREQ 1 // in Hz, to step the motor back to the correct position
 #define MAX_MOTOR_SPEED 50 // deg/s
-#define STEP_FAULT_TIME 1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
-#define STEP_FAULT_ANGLE 45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
+
+// Board characteristics
+// ! Do not modify unless you know what you are doing!
+#define BOARD_VOLTAGE           3.3 // The voltage of the main processor
+#define CURRENT_SENSE_RESISTOR  0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
+
+// Motor settings
+#define MAX_CURRENT             3500 // Maximum current in mA
+#define MAX_MICROSTEP_DIVISOR   32 // The maximum microstepping divisor
+#define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
+#define STEP_FAULT_ANGLE        45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
+#define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
+
+// Button settings
+#define BUTTON_REPEAT_INTERVAL 250 // Millis
 
 
 // --------------  Pins  --------------
@@ -95,11 +103,11 @@
 
 
 // OLED Mappings
-#define OLED_CS_PIN   PBout(12)	//
-#define OLED_RST_PIN  PAout(8) 	//
-#define OLED_RS_PIN   PBout(13)	//
-#define OLED_SCLK_PIN PBout(15)	//(D0)
-#define OLED_SDIN_PIN PBout(14)	//(D1)
+#define OLED_CS_PIN   output(GPIOB_BASE, 12)
+#define OLED_RST_PIN  output(GPIOA_BASE, 8)
+#define OLED_RS_PIN   output(GPIOB_BASE, 13)
+#define OLED_SCLK_PIN output(GPIOB_BASE, 15)	//(D0)
+#define OLED_SDIN_PIN output(GPIOB_BASE, 14)	//(D1)
 
 // Button mappings
 #define DOWN_BUTTON_PIN         PA_3
@@ -107,11 +115,11 @@
 #define SELECT_BUTTON_PIN       PB_1
 
 // Dip switch mappings
-// PIN     |    Normal             |  Reversed
-// DIP_1   |    Microstep 1        |  Calibration mode
-// DIP_2   |    Microstep 2        |  Closed/Open loop
-// DIP_3   |    Closed/Open loop   |  Microstep 2
-// DIP_4   |    Calibration mode   |  Microstep 1
+// PIN     |    Normal orientation      |  Reversed orientation
+// DIP_1   |    Microstep 1             |  Calibration mode
+// DIP_2   |    Microstep 2             |  Closed/Open loop
+// DIP_3   |    Closed/Open loop        |  Microstep 2
+// DIP_4   |    Calibration mode        |  Microstep 1
 #define DIP_1_PIN  PB_10
 #define DIP_2_PIN  PB_11
 #define DIP_3_PIN  PB_3
@@ -120,73 +128,48 @@
 // LED pin
 #define LED_PIN PC_13
 
-// Motor mappings
-#define COIL_A_DIR_1_PIN        PB_6
-#define COIL_A_DIR_2_PIN        PB_7
-#define COIL_B_DIR_1_PIN        PB_8
-#define COIL_B_DIR_2_PIN        PB_9
-#define COIL_A_POWER_OUTPUT_PIN PB_5
-#define COIL_B_POWER_OUTPUT_PIN PB_4
+// Motor mappings                                    [ A  ,  B  ]
+static const PinName COIL_DIR_1_PINS[]           =  { PB_6, PB_8 };
+static const PinName COIL_DIR_2_PINS[]           =  { PB_7, PB_9 };
+static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 
 // Encoder SPI interface
-#define ENCODER_CS_PIN   PA_4 // SPI1_SS
-#define ENCODER_SCK_PIN  PA_5 // SPI1_SCK
-#define ENCODER_MISO_PIN PA_6 // SPI1_MISO
-#define ENCODER_MOSI_PIN PA_7 // SPI1_MOSI
+#define ENCODER_CS_PIN    PA_4 // SPI1_SS
+#define ENCODER_SCK_PIN   PA_5 // SPI1_SCK
+#define ENCODER_MISO_PIN  PA_6 // SPI1_MISO
+#define ENCODER_MOSI_PIN  PA_7 // SPI1_MOSI
 
 // Stepping interface
-#define STEP_PIN      PA_1 // ! according to the previous files, but this is the same as the dir pin
-#define ENABLE_PIN    PA_2
-#define DIRECTION_PIN PA_1
+#define STEP_PIN       PA_1 // ! according to the previous files, but this is the same as the dir pin
+#define ENABLE_PIN     PA_2
+#define DIRECTION_PIN  PA_1
 
 // CAN bus pins
-#define CAN_IN_PIN  PA_11
-#define CAN_OUT_PIN PA_12
+#define CAN_IN_PIN   PA_11
+#define CAN_OUT_PIN  PA_12
 
 // StallFault connection (to mainboard)
 // Pulls high on a stepper misalignment after the set period
 // ! Find an actual pin to set
-#define STALLFAULT_PIN NC
+#define STALLFAULT_PIN  NC
 
 
 // --------------  Internal defines  --------------
 // Under the hood motor setup
 #define SINE_STEPS ((int16_t)(128))
-#define SINE_MAX 1
 
-// Low level GPIO configuration (for quicker manipulations than digitalWrites)
-// A large amount of low level commands for handling the useage of fast GPIO manipulation
-#define GPIOA_ODR_Addr    (GPIOA_BASE+12) //0x4001080C
-#define GPIOB_ODR_Addr    (GPIOB_BASE+12) //0x40010C0C
-#define GPIOC_ODR_Addr    (GPIOC_BASE+12) //0x4001100C
-#define GPIOD_ODR_Addr    (GPIOD_BASE+12) //0x4001140C
-#define GPIOE_ODR_Addr    (GPIOE_BASE+12) //0x4001180C
-#define GPIOF_ODR_Addr    (GPIOF_BASE+12) //0x40011A0C
-#define GPIOG_ODR_Addr    (GPIOG_BASE+12) //0x40011E0C
-
-#define GPIOA_IDR_Addr    (GPIOA_BASE+8) //0x40010808
-#define GPIOB_IDR_Addr    (GPIOB_BASE+8) //0x40010C08
-#define GPIOC_IDR_Addr    (GPIOC_BASE+8) //0x40011008
-#define GPIOD_IDR_Addr    (GPIOD_BASE+8) //0x40011408
-#define GPIOE_IDR_Addr    (GPIOE_BASE+8) //0x40011808
-#define GPIOF_IDR_Addr    (GPIOF_BASE+8) //0x40011A08
-#define GPIOG_IDR_Addr    (GPIOG_BASE+8) //0x40011E08
-
-
+// Bitwise memory modification
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
 #define MEM_ADDR(addr)  *((volatile unsigned long  *)(addr))
 #define BIT_ADDR(addr, bitnum)   MEM_ADDR(BITBAND(addr, bitnum))
 
+// Low level GPIO configuration (for quicker manipulations than digitalWrites)
+#define output(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12),n)
+#define input(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8),n)
 
-#define PAout(n)   BIT_ADDR(GPIOA_ODR_Addr,n)
-#define PAin(n)    BIT_ADDR(GPIOA_IDR_Addr,n)
 
-#define PBout(n)   BIT_ADDR(GPIOB_ODR_Addr,n)
-#define PBin(n)    BIT_ADDR(GPIOB_IDR_Addr,n)
-
-#define PCout(n)   BIT_ADDR(GPIOC_ODR_Addr,n)
-#define PCin(n)    BIT_ADDR(GPIOC_IDR_Addr,n)
-
+// --------------  Debugging  --------------
+//#define TEST_FLASH
 
 
 #endif //__CONFIG_H

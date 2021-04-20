@@ -21,7 +21,7 @@ bool isCalibrated() {
 // Check if the flash is busy
 uint8_t flashGetStatus(void) {
 
-    // Check if the flash state
+    // Check the flash state register
     uint32_t state = FLASH -> SR;
 
     if (state & (1<<0)) {

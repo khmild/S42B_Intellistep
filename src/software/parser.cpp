@@ -33,6 +33,10 @@ String parseString(String buffer) {
                 motor.setFullStepAngle(parseValue(buffer, 'V').toFloat());
                 return FEEDBACK_OK;
 
+            case 115:
+                // M115 (ex M115) - Prints out firmware information. Only firmware version for now.
+                return (String("Version: ") + String(VERSION) + String("\n"));
+
             case 306:
                 // M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
                 motor.setPValue(parseValue(buffer, 'P').toFloat());
