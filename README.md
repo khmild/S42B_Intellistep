@@ -25,6 +25,8 @@ Future Features:
 
 GCode Table
 
+- M17 (ex M17) - Enables the motor (overrides enable pin)
+- M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
 - M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
 - M115 (ex M115) - Prints out firmware information. Only firmware version for now.
 - M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor

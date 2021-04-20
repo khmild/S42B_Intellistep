@@ -35,6 +35,13 @@ typedef enum {
     CLOCKWISE
 } STEP_DIR;
 
+// Enumeration for the enable state of the motor
+typedef enum {
+    ENABLED,
+    DISABLED,
+    FORCED_DISABLED
+} MOTOR_STATE;
+
 // Stepper motor class (defined to make life a bit easier when dealing with the motor)
 class StepperMotor {
 
@@ -126,10 +133,10 @@ class StepperMotor {
         float speedToHz(float angularSpeed);
 
         // Enables the coils, preventing motor movement
-        void enable();
+        void enable(bool clearForcedDisable = false);
 
-        // Releases the coils, allowing the motor to freewheel
-        void disable();
+        // Releases the coils, allowing the motor to freewheel. The forced disable will cause it to ignore the enabled pin
+        void disable(bool forcedDisable = false);
 
         // Computes the next speed of the motor
         float compute(float feedback);
@@ -176,7 +183,7 @@ class StepperMotor {
         float microstepAngle = 1.8;
 
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
-        bool enabled = false;
+        MOTOR_STATE state = DISABLED;
 
         // If the motor direction is inverted
         bool reversed = false;

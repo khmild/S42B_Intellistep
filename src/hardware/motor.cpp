@@ -397,26 +397,31 @@ float StepperMotor::speedToHz(float angularSpeed) {
 
 
 // Enables the motor, powering the coils
-void StepperMotor::enable() {
+void StepperMotor::enable(bool clearForcedDisable) {
+
+    // Clear the forced disable if needed
+    if (clearForcedDisable && ((this -> state) == FORCED_DISABLED)) {
+        this -> state = DISABLED;
+    }
 
     // Check if the motor is enabled yet. No need to set all of the coils if they're already set
-    if (!(this -> enabled)) {
+    if ((this -> state) == DISABLED) {
 
         // Mod the current angle by total phase angle to estimate the phase angle of the motor, then set the coils to the current position
         // ! Possibly make this round the angle to the nearest nice microstep
         this -> driveCoils(getEncoderAngle());
 
         // Set the motor to be enabled
-        this -> enabled = true;
+        this -> state = ENABLED;
     }
 }
 
 
 // Disables the motor, freeing the coils
-void StepperMotor::disable() {
+void StepperMotor::disable(bool forceDisable) {
 
     // Check if the motor is not enabled yet. No need to disable the coils if they're already off
-    if (this -> enabled) {
+    if ((this -> state) == ENABLED) {
 
         // Set the A driver to whatever disable mode was set
         setCoil(A, IDLE_MODE);
@@ -424,8 +429,14 @@ void StepperMotor::disable() {
         // Set the B driver to whatever disable mode was set
         setCoil(B, IDLE_MODE);
 
-        // Set the enabled to false so we don't repeat
-        this -> enabled = false;
+        // Set the state to disabled (forced if specified)
+        if (forceDisable) {
+            this -> state = FORCED_DISABLED;
+        }
+        else {
+            this -> state = DISABLED;
+        }
+        
     }
 }
 

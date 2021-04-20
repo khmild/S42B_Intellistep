@@ -28,6 +28,21 @@ String parseString(String buffer) {
         // Switch statement the command number
         switch (parseValue(buffer, 'M').toInt()) {
 
+            case 17:
+                // M17 (ex M17) - Enables the motor (overrides enable pin)
+                motor.enable(true);
+                return FEEDBACK_OK;
+
+            case 18:
+                // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
+                motor.disable(true);
+                return FEEDBACK_OK;
+
+            case 84:
+                // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
+                motor.disable(true);
+                return FEEDBACK_OK;
+
             case 93:
                 // M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
                 motor.setFullStepAngle(parseValue(buffer, 'V').toFloat());
