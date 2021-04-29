@@ -1,3 +1,9 @@
+// Import the config (needed for the USE_SERIAL or USE_CAN defines)
+#include "config.h"
+
+// Only include if the serial or CAN bus is enabled
+#if defined(USE_SERIAL) || defined(USE_CAN)
+
 #include "parser.h"
 
 // Parses an entire string for any commands
@@ -49,8 +55,8 @@ String parseString(String buffer) {
                 return FEEDBACK_OK;
 
             case 115:
-                // M115 (ex M115) - Prints out firmware information. Only firmware version for now.
-                return (String("Version: ") + String(VERSION) + String("\n"));
+                // M115 (ex M115) - Prints out firmware information.
+                return FIRMWARE_FEATURE_PRINT;
 
             case 306:
                 // M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
@@ -105,87 +111,95 @@ String parseString(String buffer) {
                 return FEEDBACK_OK;
 
             case 356:
-                // M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
-                if (parseValue(buffer, 'V').toInt() == 0) {
 
-                    // Value is a character, process it once so that it can be used in the if statements
-                    String axisValue = parseValue(buffer, 'V');
+                // Only build in functionality if specified
+                #ifdef USE_CAN
+                    // M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
+                    if (parseValue(buffer, 'V').toInt() == 0) {
 
-                    // Compare the values of the received value with the expected ones
-                    if (axisValue == "X" || axisValue == "X1") {
-                        setCANID(X);
-                    }
-                    else if (axisValue == "X2") {
-                        setCANID(X2);
-                    }
-                    else if (axisValue == "X3") {
-                        setCANID(X3);
-                    }
-                    else if (axisValue == "X4") {
-                        setCANID(X4);
-                    }
-                    else if (axisValue == "X5") {
-                        setCANID(X5);
-                    }
-                    else if (axisValue == "Y" || axisValue == "Y1") {
-                        setCANID(Y);
-                    }
-                    else if (axisValue == "Y2") {
-                        setCANID(Y2);
-                    }
-                    else if (axisValue == "Y3") {
-                        setCANID(Y3);
-                    }
-                    else if (axisValue == "Y4") {
-                        setCANID(Y4);
-                    }
-                    else if (axisValue == "Y5") {
-                        setCANID(Y5);
-                    }
-                    else if (axisValue == "Z" || axisValue == "Z1") {
-                        setCANID(Z);
-                    }
-                    else if (axisValue == "Z2") {
-                        setCANID(Z2);
-                    }
-                    else if (axisValue == "Z3") {
-                        setCANID(Z3);
-                    }
-                    else if (axisValue == "Z4") {
-                        setCANID(Z4);
-                    }
-                    else if (axisValue == "Z5") {
-                        setCANID(Z5);
-                    }
-                    else if (axisValue == "E" || axisValue == "E1") {
-                        setCANID(E);
-                    }
-                    else if (axisValue == "E2") {
-                        setCANID(E2);
-                    }
-                    else if (axisValue == "E3") {
-                        setCANID(E3);
-                    }
-                    else if (axisValue == "E4") {
-                        setCANID(E4);
-                    }
-                    else if (axisValue == "E5") {
-                        setCANID(E5);
+                        // Value is a character, process it once so that it can be used in the if statements
+                        String axisValue = parseValue(buffer, 'V');
+
+                        // Compare the values of the received value with the expected ones
+                        if (axisValue == "X" || axisValue == "X1") {
+                            setCANID(X);
+                        }
+                        else if (axisValue == "X2") {
+                            setCANID(X2);
+                        }
+                        else if (axisValue == "X3") {
+                            setCANID(X3);
+                        }
+                        else if (axisValue == "X4") {
+                            setCANID(X4);
+                        }
+                        else if (axisValue == "X5") {
+                            setCANID(X5);
+                        }
+                        else if (axisValue == "Y" || axisValue == "Y1") {
+                            setCANID(Y);
+                        }
+                        else if (axisValue == "Y2") {
+                            setCANID(Y2);
+                        }
+                        else if (axisValue == "Y3") {
+                            setCANID(Y3);
+                        }
+                        else if (axisValue == "Y4") {
+                            setCANID(Y4);
+                        }
+                        else if (axisValue == "Y5") {
+                            setCANID(Y5);
+                        }
+                        else if (axisValue == "Z" || axisValue == "Z1") {
+                            setCANID(Z);
+                        }
+                        else if (axisValue == "Z2") {
+                            setCANID(Z2);
+                        }
+                        else if (axisValue == "Z3") {
+                            setCANID(Z3);
+                        }
+                        else if (axisValue == "Z4") {
+                            setCANID(Z4);
+                        }
+                        else if (axisValue == "Z5") {
+                            setCANID(Z5);
+                        }
+                        else if (axisValue == "E" || axisValue == "E1") {
+                            setCANID(E);
+                        }
+                        else if (axisValue == "E2") {
+                            setCANID(E2);
+                        }
+                        else if (axisValue == "E3") {
+                            setCANID(E3);
+                        }
+                        else if (axisValue == "E4") {
+                            setCANID(E4);
+                        }
+                        else if (axisValue == "E5") {
+                            setCANID(E5);
+                        }
+                        else {
+                            return FEEDBACK_NO_VALUE;
+                        }
+
+                        // Return operation successful
+                        return FEEDBACK_OK;
                     }
                     else {
-                        return FEEDBACK_NO_VALUE;
+                        // Value is a number
+                        setCANID(AXIS_CAN_ID(parseValue(buffer, 'V').toInt()));
+
+                        // Return that the operation is complete
+                        return FEEDBACK_OK;
                     }
 
-                    // Return operation successful
-                    return FEEDBACK_OK;
-                }
-                else {
-                    // Value is a number
-                    setCANID(AXIS_CAN_ID(parseValue(buffer, 'V').toInt()));
-
-                    // Return that the operation is complete
-                    return FEEDBACK_OK;
-                }
+                #else
+                    // Return that the feature is not enabled
+                    return FEEDBACK_CAN_NOT_ENABLED;
+                #endif
 
             case 500:
                 // M500 (ex M500) - Saves the currently loaded parameters into flash
@@ -231,3 +245,5 @@ String parseValue(String buffer, char letter) {
         return "-1";
     }
 }
+
+#endif // (USE_SERIAL || USE_CAN)

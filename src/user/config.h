@@ -5,10 +5,15 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on LCD) (follows semantic versioning)
-#define VERSION "0.0.1"
+#define VERSION "0.0.2"
 
 
 // --------------  Settings  --------------
+
+// Main feature enable
+#define USE_OLED
+#define USE_SERIAL
+#define USE_CAN
 
 // Averages (number of readings in average)
 #define RPM_AVG_READINGS     50
@@ -22,16 +27,20 @@
 #endif
 
 // Serial configuration settings
-#define STRING_START_MARKER '<'
-#define STRING_END_MARKER '>'
-#define SERIAL_BAUD 115200
+#ifdef USE_SERIAL
+    #define STRING_START_MARKER '<'
+    #define STRING_END_MARKER '>'
+    #define SERIAL_BAUD 115200
+#endif
 
 // The CAN ID of this board
 // X:2, X2:3...
 // Y:7, Y2:8... 
 // Z:11 Z2:12...
 // E:17, E1:18...
-#define DEFAULT_CAN_ID X
+#ifdef USE_CAN
+    #define DEFAULT_CAN_ID X
+#endif
 
 // Motor characteristics
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
@@ -51,7 +60,9 @@
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
 // Button settings
-#define BUTTON_REPEAT_INTERVAL 250 // Millis
+#ifdef USE_OLED
+    #define BUTTON_REPEAT_INTERVAL 250 // Millis
+#endif
 
 
 // --------------  Pins  --------------

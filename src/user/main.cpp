@@ -24,29 +24,38 @@ void setup() {
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, HIGH);
 
-    // Initialize the OLED
-    initOLED();
-
-    // Show the bootscreen
-    showBootscreen();
-
-    // Wait for 3 seconds so everything can boot and user can read the LCD
-    delay(3000);
-
-    // Initialize the buttons (for menu)
-    initButtons();
-
-    // Initialize the serial bus
-    initSerial();
-
-    // Initialize the CAN bus
-    initCAN();
-
     // Initialize the encoder
     initEncoder();
 
     // Setup the motor for use
-    motor.enable();
+    motor.enable(true);
+
+    // Only run if the OLED is enabled
+    #ifdef USE_OLED
+
+        // Initialize the OLED
+        initOLED();
+
+        // Show the bootscreen
+        showBootscreen();
+
+        // Wait for 3 seconds so everything can boot and user can read the LCD
+        delay(3000);
+
+        // Initialize the buttons (for menu)
+        initButtons();
+    #endif
+
+    // Initialize the serial bus
+    #ifdef USE_SERIAL
+        initSerial();
+    #endif
+
+    // Initialize the CAN bus
+    #ifdef USE_CAN
+        // Initialize the CAN bus
+        initCAN();
+    #endif
 
     // Test the flash if specified
     //#ifdef TEST_FLASH
@@ -60,40 +69,60 @@ void setup() {
     // Check if the board is calibrated. Need to force calibration if the board isn't calibrated
     if (!isCalibrated()) {
 
-        // Display that the motor is not calibrated
-        clearOLED();
-        writeOLEDString(0, 0, "NOT", false);
-        writeOLEDString(0, 16, "Calibrated!", false);
-        writeOLEDString(0, 32, "Please calibrate", true);
-        delay(3000);
+        // Only display to screen if the screen is enabled
+        #ifdef USE_OLED
 
-        // Display that the select key can be clicked to run calibration
-        clearOLED();
-        writeOLEDString(0, 0, "Use the", false);
-        writeOLEDString(0, 16, "select key", false);
-        writeOLEDString(0, 32, "to calibrate", true);
+            // Display that the motor is not calibrated
+            clearOLED();
+            writeOLEDString(0, 0, "NOT", false);
+            writeOLEDString(0, 16, "Calibrated!", false);
+            writeOLEDString(0, 32, "Please calibrate", true);
+            delay(3000);
+
+            // Display that the select key can be clicked to run calibration
+            clearOLED();
+            writeOLEDString(0, 0, "Use the", false);
+            writeOLEDString(0, 16, "select key", false);
+            writeOLEDString(0, 32, "to calibrate", true);
+        #endif
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
         while(true) {
 
-            // ! Only here for testing
-            runSerialParser();
+            // Only if serial is specified
+            #ifdef USE_SERIAL
+                // ! Only here for testing
+                runSerialParser();
+            #endif
+
+            #ifdef USE_OLED
+                // Check to see if any of the buttons are pressed
+                checkButtons(false);
+            #endif
 
             // ! Only for testing
             //blink();
 
-            // Check to see if any of the buttons are pressed
-            checkButtons(false);
+            // Only if the OLED is needed
+            #ifdef USE_OLED
 
-            // Check to see if the menu button has been clicked
-            if (getMenuDepth() > 0) {
+                // Check to see if the menu button has been clicked
+                if (getMenuDepth() > 0) {
 
-                // Calibrate the motor
+                    // Calibrate the motor
+                    motor.calibrate();
+
+                    // Reboot the chip
+                    NVIC_SystemReset();
+                }
+ 
+            #else
+
+                // Just jump to calibrating the motor and reset the system afterward
                 motor.calibrate();
-
-                // Reboot the chip
                 NVIC_SystemReset();
-            }
+
+            #endif
         }
     }
     else {
@@ -102,27 +131,35 @@ void setup() {
         // Load the values from flash
         //loadSavedValues();
 
-        // Let the user know that the calibration was successfully loaded
-        clearOLED();
-        writeOLEDString(0, 0, "Calibration", false);
-        writeOLEDString(0, 16, "OK!", true);
-        delay(1000);
+        #ifdef USE_OLED
+
+            // Let the user know that the calibration was successfully loaded
+            clearOLED();
+            writeOLEDString(0, 0, "Calibration", false);
+            writeOLEDString(0, 16, "OK!", true);
+            delay(1000);
+        #endif
 
         // Setup the motor timers and interrupts
         setupMotorTimers();
 
         // Loop forever, checking the keys and updating the display
         while(true) {
+            
             // Check to see if serial data is available to read
-            runSerialParser();
+            #ifdef USE_SERIAL
+                runSerialParser();
+            #endif
 
-            // Check the buttons
-            checkButtons(true);
+            #ifdef USE_OLED
+                // Check the buttons
+                checkButtons(true);
 
-            // Only update the display if the motor data is being displayed, buttons update the display when clicked
-            if (getMenuDepth() == 0) {
-                displayMotorData();
-            }
+                // Only update the display if the motor data is being displayed, buttons update the display when clicked
+                if (getMenuDepth() == 0) {
+                    displayMotorData();
+                }
+            #endif
 
             // We need a little delay to allow the motor time to process if it needs it
             delay(50);
@@ -168,8 +205,8 @@ void overclock(uint32_t PLLMultiplier) {
 
 // ! Only here for testing
 void blink() {
-    digitalWrite(LED_PIN, HIGH);
+    digitalWriteFast(LED_PIN, HIGH);
     delay(500);
-    digitalWrite(LED_PIN, LOW);
+    digitalWriteFast(LED_PIN, LOW);
     delay(500);
 }

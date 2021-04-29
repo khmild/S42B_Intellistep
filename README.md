@@ -28,7 +28,7 @@ GCode Table
 - M17 (ex M17) - Enables the motor (overrides enable pin)
 - M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
 - M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
-- M115 (ex M115) - Prints out firmware information. Only firmware version for now.
+- M115 (ex M115) - Prints out firmware information, consisting of the version and any enabled features.
 - M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
 - M307 (ex M307) - Runs an autotune sequence for the PID loop
 - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles

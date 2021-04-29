@@ -384,7 +384,9 @@ void saveParametersToFlash() {
     savedParameters[8] = motor.getDValue();
 
     // CAN ID of the motor controller
-    savedParameters[9] = getCANID();
+    #ifdef USE_CAN
+        savedParameters[9] = getCANID();
+    #endif
 
     // If the dip switches were installed incorrectly
     savedParameters[10] = getDipInverted();

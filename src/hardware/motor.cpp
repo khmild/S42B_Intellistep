@@ -482,11 +482,15 @@ float StepperMotor::compute(float currentAngle) {
 void StepperMotor::calibrate() {
     // ! Write yet
 
-    // Display that calibration is coming soon
-    clearOLED();
-    writeOLEDString(0, 0, "Calibration", false);
-    writeOLEDString(0, 16, "coming soon", true);
-    delay(5000);
+    // Only include if specified
+    #ifdef USE_OLED
+
+        // Display that calibration is coming soon
+        clearOLED();
+        writeOLEDString(0, 0, "Calibration", false);
+        writeOLEDString(0, 16, "coming soon", true);
+        delay(5000);
+    #endif
 
     // Calibrate encoder offset
 

@@ -1,3 +1,10 @@
+// Import the config (nedeed for the USE_OLED define)
+#include "config.h"
+
+// Only build if needed
+#ifdef USE_OLED
+
+// Import libraries
 #include "oled.h"
 #include "cstring"
 #include "math.h"
@@ -699,3 +706,5 @@ void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool
 void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen) {
     writeOLEDString(x, y, string.c_str(), 16, updateScreen);
 }
+
+#endif // ! USE_OLED
