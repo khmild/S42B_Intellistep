@@ -79,16 +79,16 @@ class StepperMotor {
         void setDValue(float newD);
 
         // Gets the current of the motor (in mA)
-        int getCurrent();
+        uint16_t getCurrent();
 
         // Sets the current of the motor (in mA)
-        void setCurrent(int current);
+        void setCurrent(uint16_t current);
 
         // Gets the microstepping mode of the motor
-        int getMicrostepping();
+        uint8_t getMicrostepping();
 
         // Sets the microstepping mode of the motor
-        void setMicrostepping(int setMicrostepping);
+        void setMicrostepping(uint8_t setMicrostepping);
 
         // Sets the angle of a full step of the motor
         void setFullStepAngle(float newStepAngle);
@@ -124,10 +124,10 @@ class StepperMotor {
         void driveCoils(float angle);
 
         // Sets the state of a coil
-        void setCoil(COIL coil, COIL_STATE desiredState, float current = 0);
+        void setCoil(COIL coil, COIL_STATE desiredState, uint16_t current = 0);
 
         // Calculates the correct PWM setting based on an input current
-        uint32_t currentToPWM(float current);
+        uint32_t currentToPWM(uint16_t current);
 
         // Sets the speed of the motor (angular speed is in deg/s)
         float speedToHz(float angularSpeed);
@@ -171,10 +171,10 @@ class StepperMotor {
 
         // Motor characteristics
         // Current (in mA)
-        int current = 750;
+        uint16_t current = 750;
 
         // Microstepping divisor
-        int microstepDivisor = 1;
+        uint8_t microstepDivisor = 1;
 
         // Angle of a full step
         float fullStepAngle = 1.8;

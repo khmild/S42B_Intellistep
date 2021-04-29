@@ -249,7 +249,7 @@ void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
 
 // Erase all of the data stored
 void flashErase32K(void) {
-    //for (int i = 0, i <= )
+    //for (uint8_t i = 0, i <= )
     flashErasePage(CALIBRATION_ADDRESS);
     flashErasePage(0x08018000); // CALIBRATION_ADDRESS + 1024
     flashErasePage(0x08018400);

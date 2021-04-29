@@ -5,7 +5,7 @@
 HardwareTimer *steppingTimer = new HardwareTimer(TIM1);
 
 // A counter for the number of position faults (used for stall detection)
-int outOfPosCount = 0;
+uint16_t outOfPosCount = 0;
 
 
 // Sets up the motor update timer

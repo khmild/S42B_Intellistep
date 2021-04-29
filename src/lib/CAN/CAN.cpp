@@ -92,7 +92,7 @@ void CANSetFilter(uint16_t id)
  
 void CANSetFilters(uint16_t* ids, uint8_t num)
 {
-    for (int i = 0; i < num; i++)
+    for (uint8_t i = 0; i < num; i++)
     {
         CANSetFilter(ids[i]);
     }
@@ -192,7 +192,7 @@ canMessage::canMessage() {
     this -> id = 0;
 
     // Set the data
-    for (int index = 0; index <= 7; index++) {
+    for (uint8_t index = 0; index <= 7; index++) {
         this -> data[index] = 0;
     }
 
@@ -200,13 +200,13 @@ canMessage::canMessage() {
     this -> len = MESSAGE_LENGTH;
 }
 
-canMessage::canMessage(u_int16_t ID) {
+canMessage::canMessage(uint16_t ID) {
 
     // Set the ID
     this -> id = ID;
 
     // Set the data
-    for (int index = 0; index <= 7; index++) {
+    for (uint8_t index = 0; index <= 7; index++) {
         this -> data[index] = 0;
     }
 
@@ -214,13 +214,13 @@ canMessage::canMessage(u_int16_t ID) {
     this -> len = MESSAGE_LENGTH;
 }
 
-canMessage::canMessage(u_int16_t ID, String string) {
+canMessage::canMessage(uint16_t ID, String string) {
 
     // Set the ID
     this -> id = ID;
 
     // Set the data
-    for (int index = 0; index <= 7; index++) {
+    for (uint8_t index = 0; index <= 7; index++) {
         this -> data[index] = string.charAt(index);
     }
 

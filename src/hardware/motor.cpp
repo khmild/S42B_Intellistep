@@ -98,13 +98,13 @@ void StepperMotor::setDValue(float newD) {
 
 
 // Gets the current of the motor (in mA)
-int StepperMotor::getCurrent() {
+uint16_t StepperMotor::getCurrent() {
     return (this -> current);
 }
 
 
 // Sets the current of the motor (in mA)
-void StepperMotor::setCurrent(int current) {
+void StepperMotor::setCurrent(uint16_t current) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (current != -1) {
@@ -116,13 +116,13 @@ void StepperMotor::setCurrent(int current) {
 
 
 // Get the microstepping divisor of the motor
-int StepperMotor::getMicrostepping() {
+uint8_t StepperMotor::getMicrostepping() {
     return (this -> microstepDivisor);
 }
 
 
 // Set the microstepping divisor of the motor
-void StepperMotor::setMicrostepping(int setMicrostepping) {
+void StepperMotor::setMicrostepping(uint8_t setMicrostepping) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (setMicrostepping != -1) {
@@ -291,7 +291,7 @@ void StepperMotor::driveCoils(float degAngle) {
 
     // Round the microstep angle, it has to be a whole value of the number of microsteps available
     // Also ensures that the coils are being driven to the major step positions (increases torque)
-    int roundedMicrosteps = round(microstepAngle);
+    uint16_t roundedMicrosteps = round(microstepAngle);
 
     // Make sure that the phase angle doesn't exceed the steps per phase rotation (4 full steps to a phase rotation * whatever microstepping)
     roundedMicrosteps = roundedMicrosteps % (4 * (this -> microstepDivisor));
@@ -347,7 +347,7 @@ void StepperMotor::driveCoils(float degAngle) {
 
 
 // Function for setting the A coil state and current
-void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, float current) {
+void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current) {
 
     // Disable the coil
     analogWrite(COIL_POWER_OUTPUT_PINS[coil], 0);
@@ -375,7 +375,7 @@ void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, float current) {
 
 
 // Calculates the current of each of the coils (with mapping)(current in mA)
-uint32_t StepperMotor::currentToPWM(float current) {
+uint32_t StepperMotor::currentToPWM(uint16_t current) {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
     uint32_t PWMValue = abs((2.55 * CURRENT_SENSE_RESISTOR * current) / BOARD_VOLTAGE);

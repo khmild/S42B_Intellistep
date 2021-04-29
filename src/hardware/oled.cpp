@@ -15,15 +15,15 @@
 uint8_t OLEDBuffer[128][8];
 
 // The index of the current top level menu item
-int topLevelMenuIndex = 0;
-int lastTopLevelMenuIndex = 0;
+uint8_t topLevelMenuIndex = 0;
+uint8_t lastTopLevelMenuIndex = 0;
 
 // The current value of the cursor
-int currentCursorIndex = 0;
+uint8_t currentCursorIndex = 0;
 
 // The current menu depth. 0 would be the motor data, 1 the main menu, and 2 any submenus
-int menuDepthIndex = 0;
-int lastMenuDepthIndex = 0;
+uint8_t menuDepthIndex = 0;
+uint8_t lastMenuDepthIndex = 0;
 
 // Displays the bootscreen
 void showBootscreen() {
@@ -81,7 +81,7 @@ void updateDisplay() {
                     writeOLEDString(0, 0, "->", false);
 
                     // Write each of the strings
-                    for (int stringIndex = 0; stringIndex <= 3; stringIndex++) {
+                    for (uint8_t stringIndex = 0; stringIndex <= 3; stringIndex++) {
 
                         // Check to make sure that the current isn't out of range of the max current
                         if (!((currentCursorIndex + stringIndex) * 100 > MAX_CURRENT)) {
@@ -114,7 +114,7 @@ void updateDisplay() {
                     }
 
                     // Write each of the strings
-                    for (int stringIndex = 0; stringIndex <= 3; stringIndex++) {
+                    for (uint8_t stringIndex = 0; stringIndex <= 3; stringIndex++) {
 
                         // Check to make sure that the current isn't out of range of the max current
                         if (!(pow(2, currentCursorIndex + stringIndex) > MAX_MICROSTEP_DIVISOR)) {
@@ -336,7 +336,7 @@ void exitCurrentMenu() {
 
 
 // Returns the depth of the menu (helpful for watching the select button)
-int getMenuDepth() {
+uint8_t getMenuDepth() {
     return menuDepthIndex;
 }
 
@@ -353,17 +353,20 @@ String topLevelMenuItems[] = {
 
 
 // Length of the list of top menu items (found by dividing the length of the list by how much space a single element takes up)
-const int topLevelMenuLength = sizeof(topLevelMenuItems) / sizeof(topLevelMenuItems[0]);
+const uint8_t topLevelMenuLength = sizeof(topLevelMenuItems) / sizeof(topLevelMenuItems[0]);
 
 
 // Function for padding numbers
-String padNumber(float number, int leadingZeroCount, int followingZeroCount) {
+String padNumber(float number, uint8_t leadingPlaceCount, uint8_t followingPlaceCount) {
 
     // The final string to be output
     String finalString = "";
 
+    // Reserve memory for the string (needs an extra 1 for the decimal place)
+    finalString.reserve(leadingPlaceCount + followingPlaceCount + 1);
+
     // Correct the number's rounding
-    number = roundToPlace(number, followingZeroCount);
+    number = roundToPlace(number, followingPlaceCount);
 
     // If the value is negative, add a negative sign. Otherwise, add a blank space
     if (number < 0) {
@@ -374,7 +377,7 @@ String padNumber(float number, int leadingZeroCount, int followingZeroCount) {
     }
 
     // Add any necessary zeros
-    for (int index = (leadingZeroCount - 1); index > 0; index--) {
+    for (uint8_t index = (leadingPlaceCount - 1); index > 0; index--) {
         if (abs(number) < pow(10, index)) {
             finalString += "0";
         }
@@ -393,7 +396,7 @@ String padNumber(float number, int leadingZeroCount, int followingZeroCount) {
 
 
 // Round to a specific decimal place
-float roundToPlace(float number, int place) {
+float roundToPlace(float number, uint8_t place) {
     return round(number * pow(10, place)) / pow(10, place);
 }
 

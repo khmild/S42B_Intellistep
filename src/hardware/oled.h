@@ -12,7 +12,7 @@
 
 // Variables
 extern String topLevelMenuItems[];
-extern const int topLevelMenuLength;
+extern const uint8_t topLevelMenuLength;
 class StepperMotor;
 
 // Functions (for high level displaying)
@@ -22,9 +22,9 @@ void displayMotorData();
 void selectMenuItem();
 void moveCursor();
 void exitCurrentMenu();
-int getMenuDepth();
-String padNumber(float number, int leadingZeroCount, int followingZeroCount);
-float roundToPlace(float number, int place);
+uint8_t getMenuDepth();
+String padNumber(float number, uint8_t leadingZeroCount, uint8_t followingZeroCount);
+float roundToPlace(float number, uint8_t place);
 
 // BTT Display definitions
 typedef enum {

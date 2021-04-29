@@ -223,7 +223,7 @@ String parseString(String buffer) {
 String parseValue(String buffer, char letter) {
 
     // Search the input string for a V (for the value measurement)
-    int charIndex = buffer.indexOf(toupper(letter));
+    uint8_t charIndex = buffer.indexOf(toupper(letter));
 
     // If the index came back with a value, we can convert the value to an integer and set it
     if (charIndex != -1) {

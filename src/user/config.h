@@ -4,7 +4,7 @@
 // Need the Arduino library for pin conversion
 #include "Arduino.h"
 
-// Version of the firmware (displayed on LCD) (follows semantic versioning)
+// Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define VERSION "0.0.2"
 
 
