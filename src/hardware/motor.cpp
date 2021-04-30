@@ -320,6 +320,9 @@ void StepperMotor::driveCoils(float degAngle) {
         // Set first channel for backward movement
         setCoil(A, BACKWARD, coilAPower);
     }
+    else /* (angleSin == 0) */ {
+        setCoil(A, COAST);
+    }
 
 
     // Check the if the coil should be energized to move backward or forward
@@ -333,6 +336,10 @@ void StepperMotor::driveCoils(float degAngle) {
         // Set second channel for backward movement
         setCoil(B, BACKWARD, coilBPower);
     }
+    else /* (angleCos == 0) */ {
+        setCoil(B, COAST);
+    }
+
 
     Serial.print("\t");
     Serial.print(angleSin);
@@ -351,6 +358,12 @@ void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current)
 
     // Disable the coil
     analogWrite(COIL_POWER_OUTPUT_PINS[coil], 0);
+
+    // ! Maybe for later?
+    // Check the current. If the current is 0, then this means that the motor should go to its idle mode
+    //if (current == 0) {
+    //    desiredState = IDLE_MODE;
+    //}
 
     // Decide how to deal with the coil based on current, re-enabling it after setting the direction
     if (desiredState == FORWARD) {
