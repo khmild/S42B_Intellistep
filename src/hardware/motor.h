@@ -55,19 +55,19 @@ class StepperMotor {
         StepperMotor();
 
         // Returns the current RPM of the motor to two decimal places
-        float getMotorRPM();
+        float getMotorRPM() const;
 
         // Returns the deviation of the motor from the PID loop
-        float getAngleError();
+        float getAngleError() const;
 
         // Returns the Proportional value of the PID loop
-        float getPValue();
+        float getPValue() const;
 
         // Returns the Integral value fo the PID loop
-        float getIValue();
+        float getIValue() const;
 
         // Returns the Derivative value for the PID loop
-        float getDValue();
+        float getDValue() const;
 
         // Sets the Proportional term of the PID loop
         void setPValue(float newP);
@@ -79,13 +79,13 @@ class StepperMotor {
         void setDValue(float newD);
 
         // Gets the current of the motor (in mA)
-        uint16_t getCurrent();
+        uint16_t getCurrent() const;
 
         // Sets the current of the motor (in mA)
         void setCurrent(uint16_t current);
 
         // Gets the microstepping mode of the motor
-        uint8_t getMicrostepping();
+        uint8_t getMicrostepping() const;
 
         // Sets the microstepping mode of the motor
         void setMicrostepping(uint8_t setMicrostepping);
@@ -94,43 +94,43 @@ class StepperMotor {
         void setFullStepAngle(float newStepAngle);
 
         // Gets the full step angle of the motor
-        float getFullStepAngle();
+        float getFullStepAngle() const;
 
         // Get the microstepping angle of the motor. This is the full steps divided by the microsteps. Used to speed up processing
-        float getMicrostepAngle();
+        float getMicrostepAngle() const;
 
         // Set if the motor should be reversed
         void setReversed(bool reversed);
 
         // Get if the motor direction is reversed
-        bool getReversed();
+        bool getReversed() const;
 
         // Set if the motor enable pin should be inverted
         void setEnableInversion(bool inverted);
 
         // Get if the motor enable pin is inverted
-        bool getEnableInversion();
+        bool getEnableInversion() const;
 
         // Set the microstep multiplier
         void setMicrostepMultiplier(float newMultiplier);
 
         // Get the microstep multiplier
-        float getMicrostepMultiplier();
+        float getMicrostepMultiplier() const;
 
         // Calculates the coil values for the motor and updates the set angle. 
         void step(STEP_DIR dir = PIN, bool useMultiplier = true);
 
         // Sets the coils to hold the motor at the desired phase angle
-        void driveCoils(float angle);
+        void driveCoils(float angle) const;
 
         // Sets the state of a coil
-        void setCoil(COIL coil, COIL_STATE desiredState, uint16_t current = 0);
+        void setCoil(COIL coil, COIL_STATE desiredState, uint16_t current = 0) const;
 
         // Calculates the correct PWM setting based on an input current
-        uint32_t currentToPWM(uint16_t current);
+        uint32_t currentToPWM(uint16_t current) const;
 
         // Sets the speed of the motor (angular speed is in deg/s)
-        float speedToHz(float angularSpeed);
+        float speedToHz(float angularSpeed) const;
 
         // Enables the coils, preventing motor movement
         void enable(bool clearForcedDisable = false);
@@ -151,7 +151,7 @@ class StepperMotor {
     private:
 
         // Function for turning booleans into -1 for true and 1 for false
-        float invertDirection(bool invert);
+        float invertDirection(bool invert) const;
 
         // Motor PID controller values
         float pTerm = 0;

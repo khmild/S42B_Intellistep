@@ -38,31 +38,31 @@ StepperMotor::StepperMotor() {
 
 
 // Returns the current RPM of the motor to two decimal places
-float StepperMotor::getMotorRPM() {
+float StepperMotor::getMotorRPM() const {
     return (getEncoderSpeed() / 360);
 }
 
 
 // Returns the deviation of the motor from the PID loop
-float StepperMotor::getAngleError() {
+float StepperMotor::getAngleError() const {
     return ((this -> desiredAngle) - getEncoderAngle());
 }
 
 
 // Returns the Proportional value of the PID loop
-float StepperMotor::getPValue() {
+float StepperMotor::getPValue() const {
     return (this -> pTerm);
 }
 
 
 // Returns the Integral value fo the PID loop
-float StepperMotor::getIValue() {
+float StepperMotor::getIValue() const {
     return (this -> iTerm);
 }
 
 
 // Returns the Derivative value for the PID loop
-float StepperMotor::getDValue() {
+float StepperMotor::getDValue() const {
     return (this -> dTerm);
 }
 
@@ -98,7 +98,7 @@ void StepperMotor::setDValue(float newD) {
 
 
 // Gets the current of the motor (in mA)
-uint16_t StepperMotor::getCurrent() {
+uint16_t StepperMotor::getCurrent() const {
     return (this -> current);
 }
 
@@ -116,7 +116,7 @@ void StepperMotor::setCurrent(uint16_t current) {
 
 
 // Get the microstepping divisor of the motor
-uint8_t StepperMotor::getMicrostepping() {
+uint8_t StepperMotor::getMicrostepping() const {
     return (this -> microstepDivisor);
 }
 
@@ -157,12 +157,12 @@ void StepperMotor::setFullStepAngle(float newStepAngle) {
 
 
 // Get the full step angle of the motor object
-float StepperMotor::getFullStepAngle() {
+float StepperMotor::getFullStepAngle() const {
     return (this -> fullStepAngle);
 }
 
 
-float StepperMotor::getMicrostepAngle() {
+float StepperMotor::getMicrostepAngle() const {
     return (this -> microstepAngle);
 }
 
@@ -176,7 +176,7 @@ void StepperMotor::setReversed(bool reversed) {
 
 
 // Get if the motor direction is reversed
-bool StepperMotor::getReversed() {
+bool StepperMotor::getReversed() const {
     return (this -> reversed);
 }
 
@@ -190,7 +190,7 @@ void StepperMotor::setEnableInversion(bool inverted) {
 
 
 // Get if the motor enable should be inverted
-bool StepperMotor::getEnableInversion() {
+bool StepperMotor::getEnableInversion() const {
 
     // Return the object's value
     return (this -> enableInverted);
@@ -208,7 +208,7 @@ void StepperMotor::setMicrostepMultiplier(float newMultiplier) {
 
 
 // Get the microstep multiplier
-float StepperMotor::getMicrostepMultiplier() {
+float StepperMotor::getMicrostepMultiplier() const {
 
     // Return the object's value
     return (this -> microstepMultiplier);
@@ -284,7 +284,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier) {
 
 
 // Sets the coils of the motor based on the angle (angle should be in degrees)
-void StepperMotor::driveCoils(float degAngle) {
+void StepperMotor::driveCoils(float degAngle) const {
 
     // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
     float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
@@ -353,8 +353,8 @@ void StepperMotor::driveCoils(float degAngle) {
 }
 
 
-// Function for setting the A coil state and current
-void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current) {
+// Function for setting a coil state and current
+void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current) const {
 
     // Disable the coil
     analogWrite(COIL_POWER_OUTPUT_PINS[coil], 0);
@@ -388,7 +388,7 @@ void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current)
 
 
 // Calculates the current of each of the coils (with mapping)(current in mA)
-uint32_t StepperMotor::currentToPWM(uint16_t current) {
+uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
     uint32_t PWMValue = abs((2.55 * CURRENT_SENSE_RESISTOR * current) / BOARD_VOLTAGE);
@@ -399,7 +399,7 @@ uint32_t StepperMotor::currentToPWM(uint16_t current) {
 
 
 // Sets the speed of the motor (basically sets the speed at which the step function is called)
-float StepperMotor::speedToHz(float angularSpeed) {
+float StepperMotor::speedToHz(float angularSpeed) const {
 
     // Calculate the step angle (including microsteps)
     float stepAngle = (this -> fullStepAngle) / (this -> microstepDivisor);
@@ -421,7 +421,6 @@ void StepperMotor::enable(bool clearForcedDisable) {
     if ((this -> state) == DISABLED) {
 
         // Mod the current angle by total phase angle to estimate the phase angle of the motor, then set the coils to the current position
-        // ! Possibly make this round the angle to the nearest nice microstep
         this -> driveCoils(getEncoderAngle());
 
         // Set the motor to be enabled
@@ -512,7 +511,7 @@ void StepperMotor::calibrate() {
 
 
 // Returns a -1 for true and a 1 for false
-float StepperMotor::invertDirection(bool invert) {
+float StepperMotor::invertDirection(bool invert) const {
     if (invert) {
         return -1;
     }
