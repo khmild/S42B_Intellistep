@@ -13,7 +13,7 @@
 // Main feature enable
 #define USE_OLED
 #define USE_SERIAL
-#define USE_CAN
+//#define USE_CAN
 
 // Averages (number of readings in average)
 #define RPM_AVG_READINGS     50
@@ -44,11 +44,11 @@
 
 // Motor characteristics
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
-#define STEP_UPDATE_FREQ 1 // in Hz, to step the motor back to the correct position
+#define STEP_UPDATE_FREQ 100 // in Hz, to step the motor back to the correct position
 #define MAX_MOTOR_SPEED 50 // deg/s
 
 // Board characteristics
-// ! Do not modify unless you know what you are doing!
+// ! Do not modify unless you know what you are doing!dd
 #define BOARD_VOLTAGE           3.3 // The voltage of the main processor
 #define CURRENT_SENSE_RESISTOR  0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
 
@@ -139,10 +139,10 @@
 // LED pin
 #define LED_PIN PC_13
 
-// Motor mappings                                    [ A  ,  B  ]
-static const PinName COIL_DIR_1_PINS[]           =  { PB_6, PB_8 };
-static const PinName COIL_DIR_2_PINS[]           =  { PB_7, PB_9 };
-static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
+// Motor mappings                                   [  A  ,   B  ]
+static const PinName COIL_DIR_1_PINS[]           =  { PB_8, PB_6 };
+static const PinName COIL_DIR_2_PINS[]           =  { PB_9, PB_7 };
+static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_4, PB_5 };
 
 // Encoder SPI interface
 #define ENCODER_CS_PIN    PA_4 // SPI1_SS
@@ -167,7 +167,7 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 
 // --------------  Internal defines  --------------
 // Under the hood motor setup
-#define SINE_STEPS ((int16_t)(128))
+#define SINE_STEPS ((uint16_t)(128))
 
 // Bitwise memory modification
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))

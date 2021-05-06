@@ -140,6 +140,9 @@ void setup() {
             delay(1000);
         #endif
 
+        // Write out the first data to the screen (makes sure that the first write isn't interrupted)
+        displayMotorData();
+
         // Setup the motor timers and interrupts
         setupMotorTimers();
 

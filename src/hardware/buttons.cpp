@@ -95,16 +95,16 @@ void checkButtons(bool updateScreen) {
 }
 
 // Check to see if a button is clicked
-bool checkButtonState(uint32_t buttonPin) {
+bool checkButtonState(PinName buttonPin) {
 
   // Check to see if the select button is clicked (pins are pulled high by default)
-  if(digitalRead(buttonPin) == LOW){
+  if(digitalReadFast(buttonPin) == LOW){
 
     // Wait to make sure it wasn't a misread
     delay(10);
 
     // Check again
-    if(digitalRead(buttonPin) == LOW){
+    if(digitalReadFast(buttonPin) == LOW){
 
       // The button is still clicked, it's valid
       return true;
