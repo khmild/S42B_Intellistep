@@ -243,48 +243,13 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier) {
     // Set the desired angle to itself + the change in angle
     this -> desiredAngle += angleChange;
 
-    /* Explanation of how the stepping calculations work:
-       1. Current angle is received from the encoder
-       2. The mod of the current angle and the full step angle is found. This will return the progress through a step cycle for that angle (4 full steps for a step cycle).
-       The sin and cos functions show the current needed at each coil at a given angle through the step cycle.
-       3. Check to see if the motor need to move in the positive direction or the negative
-       4. Since a phase angle's period is equal to 2pi, we can divide the angle by 4 (to get the full step angle) and then again by the microstepping divisor (to split the microsteps)
-       5. Effectively round the phase angle to the closest "high torque" one. The motor is most powerful when closest to fractional radian values.
-       6. Current is calculated using the new angle and the current in the motor
-       7. Both coils currents are checked. If the current is reversed, then the respective driver is assigned to move backward. The current output is set using the PWM frequency of the power output pins
-    */
-
-    // Get the current angle of the motor
-    //float currentAngle = getEncoderAngle();
-
-    /*
-    // Mod the current angle by total phase angle to estimate the phase angle of the motor
-    float phaseAngle = fmod(currentAngle, ((this -> fullStepAngle) * 4));
-
-    // Calculate if the motor should move in positive or negative direction
-    if (currentAngle < (this -> desiredAngle)) {
-        // Motor should move in the positive direction by the angle of a step (2pi / microstep divisor)
-        phaseAngle += (2*PI / ((this -> microstepping) * 4));
-
-        // Round the phase angle to be set to the closest perfect angles (increases torque on the output)
-        phaseAngle -= fmod(phaseAngle, (2*PI / ((this -> microstepping) * 4)));
-    }
-    else {
-        // Motor should move in the negative direction by the angle of a step (2pi / microstep divisor)
-        phaseAngle -= (2*PI / ((this -> microstepping) * 4));
-
-        // Round the phase angle to be set to the closest perfect angles (increases torque on the output)
-        phaseAngle += fmod(-phaseAngle, (2*PI / ((this -> microstepping) * 4)));
-    }
-    */
-
     // Drive the coils to the new phase angle
-    this -> driveCoils(desiredAngle);
+    this -> driveCoils(desiredAngle, dir);
 }
 
 
 // Sets the coils of the motor based on the angle (angle should be in degrees)
-void StepperMotor::driveCoils(float degAngle) const {
+void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
 
     // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
     float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
@@ -297,20 +262,26 @@ void StepperMotor::driveCoils(float degAngle) const {
     roundedMicrosteps = roundedMicrosteps % (4 * (this -> microstepDivisor));
 
     // Calculate the sine and cosine of the angle
-    float angleSin = fastSin(roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor)));
-    float angleCos = fastCos(roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor)));
+    uint8_t arrayIndex = roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor));
+    float angleSin = fastSin(arrayIndex);
+    float angleCos = fastCos(arrayIndex);
 
-    // If in reverse, we swap the sign of one of the angles
-    //if ((bool)digitalReadFast(DIRECTION_PIN) != (this -> reversed)) {
-    //    angleCos = -angleCos;
-    //}
+    // If in reverse, we swap the sign of one of the angles    
+    if (direction == PIN) {
+        if ((bool)digitalReadFast(DIRECTION_PIN) != (this -> reversed)) {
+            angleCos = -angleCos;
+        }
+    }
+    else if (direction == CLOCKWISE) {
+        angleCos = -angleCos;
+    }
 
     // Equation comes out to be (effort * -1 to 1) depending on the sine/cosine of the phase angle
     float coilAPower = ((this -> current) * abs(angleSin));
     float coilBPower = ((this -> current) * abs(angleCos));
 
     // Check the if the coil should be energized to move backward or forward
-    if(angleSin > 0) {
+    if (angleSin > 0) {
 
         // Set first channel for forward movement
         setCoil(A, FORWARD, coilAPower);
@@ -321,12 +292,12 @@ void StepperMotor::driveCoils(float degAngle) const {
         setCoil(A, BACKWARD, coilAPower);
     }
     else /* (angleSin == 0) */ {
-        setCoil(A, COAST);
+        setCoil(A, BRAKE);
     }
 
 
     // Check the if the coil should be energized to move backward or forward
-    if(angleCos > 0)  {
+    if (angleCos > 0)  {
 
         // Set second channel for forward movement
         setCoil(B, FORWARD, coilBPower);
@@ -337,9 +308,8 @@ void StepperMotor::driveCoils(float degAngle) const {
         setCoil(B, BACKWARD, coilBPower);
     }
     else /* (angleCos == 0) */ {
-        setCoil(B, COAST);
+        setCoil(B, BRAKE);
     }
-
 
     Serial.print("\t");
     Serial.print(angleSin);
@@ -354,7 +324,7 @@ void StepperMotor::driveCoils(float degAngle) const {
 
 
 // Function for setting a coil state and current
-void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current) const {
+void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current) {
 
     // Disable the coil
     analogWrite(COIL_POWER_OUTPUT_PINS[coil], 0);
@@ -421,7 +391,7 @@ void StepperMotor::enable(bool clearForcedDisable) {
     if ((this -> state) == DISABLED) {
 
         // Mod the current angle by total phase angle to estimate the phase angle of the motor, then set the coils to the current position
-        this -> driveCoils(getEncoderAngle());
+        this -> driveCoils(getEncoderAngle(), COUNTER_CLOCKWISE);
 
         // Set the motor to be enabled
         this -> state = ENABLED;
