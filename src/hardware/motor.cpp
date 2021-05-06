@@ -45,7 +45,7 @@ float StepperMotor::getMotorRPM() const {
 
 // Returns the deviation of the motor from the PID loop
 float StepperMotor::getAngleError() const {
-    return ((this -> desiredAngle) - getEncoderAngle());
+    return ((this -> desiredAngle) - getAbsoluteAngle());
 }
 
 
@@ -216,7 +216,7 @@ float StepperMotor::getMicrostepMultiplier() const {
 
 
 // Computes the coil values for the next step position and increments the set angle
-void StepperMotor::step(STEP_DIR dir, bool useMultiplier) {
+void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngle) {
 
     // Main angle change (any inversions * angle of microstep)
     float angleChange = StepperMotor::invertDirection(this -> reversed) * ((this -> fullStepAngle) / (this -> microstepDivisor));
@@ -240,11 +240,18 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier) {
         angleChange *= -1;
     }
 
-    // Set the desired angle to itself + the change in angle
-    this -> desiredAngle += angleChange;
+    // Check if the angle should be just added to, or actually moved there.
+    if (updateDesiredAngle) {
 
-    // Drive the coils to the new phase angle
-    this -> driveCoils(desiredAngle, dir);
+        // Angle is basically just added to, not really much to do here
+        this -> desiredAngle += angleChange;
+        this -> driveCoils(desiredAngle, dir);
+    }
+    else {
+
+        // Angle is added the current one (for step correction)
+        this -> driveCoils(getAbsoluteAngle() + angleChange, dir);
+    }
 }
 
 
@@ -391,7 +398,7 @@ void StepperMotor::enable(bool clearForcedDisable) {
     if ((this -> state) == DISABLED) {
 
         // Mod the current angle by total phase angle to estimate the phase angle of the motor, then set the coils to the current position
-        this -> driveCoils(getEncoderAngle(), COUNTER_CLOCKWISE);
+        this -> driveCoils(0, COUNTER_CLOCKWISE);
 
         // Set the motor to be enabled
         this -> state = ENABLED;

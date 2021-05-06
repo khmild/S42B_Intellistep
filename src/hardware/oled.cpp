@@ -207,7 +207,7 @@ void displayMotorData() {
     writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 3, 2)), false);
 
     // Current angle of the motor
-    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getEncoderAngle(), 3, 2)), false);
+    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getAbsoluteAngle(), 3, 2)), false);
 
     // Maybe a 4th line later?
     writeOLEDString(0, 48, (String("Temp: ") + String(getEncoderTemp()) + String(" C")), true);

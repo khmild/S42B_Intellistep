@@ -84,7 +84,7 @@ String parseString(String buffer) {
 
                 // Loop forever, until a new value is sent
                 while (!Serial.available()) {
-                    Serial.println(getEncoderAngle());
+                    Serial.println(getAbsoluteAngle());
                 }
                 return FEEDBACK_OK;
 

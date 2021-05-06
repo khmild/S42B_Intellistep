@@ -118,7 +118,7 @@ class StepperMotor {
         float getMicrostepMultiplier() const;
 
         // Calculates the coil values for the motor and updates the set angle. 
-        void step(STEP_DIR dir = PIN, bool useMultiplier = true);
+        void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredPosition = true);
 
         // Sets the coils to hold the motor at the desired phase angle
         void driveCoils(float angle, STEP_DIR direction);

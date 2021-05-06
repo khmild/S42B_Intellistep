@@ -64,14 +64,14 @@ void updateMotor() {
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         motor.enable();
 
-        motor.step(COUNTER_CLOCKWISE, false);
+        motor.step(COUNTER_CLOCKWISE, false, false);
 
         digitalWriteFast(LED_PIN, HIGH);
 
 
         /*
         // Get the current angle of the motor (multiple reads take a longer time)
-        double currentAngle = getEncoderAngle();
+        double currentAngle = getAbsoluteAngle();
 
         // Calculate the angular deviation
         float angularDeviation = currentAngle - motor.desiredAngle;

@@ -20,6 +20,9 @@
 #define ANGLE_AVG_READINGS   35
 #define TEMP_AVG_READINGS    200
 
+// Encoder tolerance for loopback (deg)
+#define ENCODER_LOOPBACK_TOLERANCE 20
+
 // If encoder estimation should be used
 //#define ENCODER_SPEED_ESTIMATION
 #ifdef ENCODER_SPEED_ESTIMATION
