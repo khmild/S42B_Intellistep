@@ -242,7 +242,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t data[]);
 uint16_t getBitField(BitField_t bitField);
 void setBitField(BitField_t bitfield, uint16_t bitFNewValue);
 uint16_t readEncoderState();
-double getEncoderAngle(bool average = true);
+double getAngle(bool average = true);
 double getEncoderSpeed();
 double getEncoderTemp();
 double getAbsoluteRev();

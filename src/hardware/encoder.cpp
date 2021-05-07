@@ -17,8 +17,9 @@ Smoothed <float> encoderAngleAvg;
 Smoothed <float> encoderAbsoluteAngleAvg;
 Smoothed <float> encoderTempAvg;
 
-// The startup angle offset
+// The startup angle and rev offsets
 double startupAngleOffset = 0;
+double startupAngleRevOffset = 0;
 
 // A map of the known registers
 uint16_t regMap[MAX_NUM_REG];              //!< Register map */
@@ -175,14 +176,20 @@ void initEncoder() {
     // Reset the encoder's firmware
     writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
 
-    // Set the angle offset
-    setEncoderOffset(0);
-
     // Setup the moving average calculations
     encoderSpeedAvg.begin(SMOOTHED_AVERAGE, RPM_AVG_READINGS);
     encoderAngleAvg.begin(SMOOTHED_AVERAGE, ANGLE_AVG_READINGS);
     encoderAbsoluteAngleAvg.begin(SMOOTHED_AVERAGE, ANGLE_AVG_READINGS);
     encoderTempAvg.begin(SMOOTHED_AVERAGE, TEMP_AVG_READINGS);
+
+    // Populate the average angle reading table
+    for (uint8_t index = 0; index < ANGLE_AVG_READINGS; index++) {
+        getAngle();
+    }
+
+    // Set the offsets
+    startupAngleOffset = getAngle();
+    startupAngleRevOffset = getAbsoluteRev();
 }
 
 
@@ -334,7 +341,7 @@ uint16_t readEncoderState() {
 
 
 // Reads the value for the angle of the encoder (ranges from 0-360)
-double getEncoderAngle(bool average) {
+double getAngle(bool average) {
 
     // Get the value of the angle register
     uint16_t rawData = readEncoderRegister(ENCODER_ANGLE_REG);
@@ -343,7 +350,7 @@ double getEncoderAngle(bool average) {
     rawData = (rawData & (DELETE_BIT_15));
 
     // Add the averaged value (equation from TLE5012 library)
-    double angle = (360.0 / POW_2_15) * ((double) rawData);
+    double angle = ((360.0 / POW_2_15) * ((double) rawData)) - startupAngleOffset;
     encoderAngleAvg.add(angle);
 
     // Return the average if desired, otherwise just the raw angle
@@ -464,20 +471,21 @@ double getAbsoluteRev() {
 	}
 
     // Return the angle measurement
-    return ((int16_t)rawData);
+    return ((double)rawData - startupAngleRevOffset);
 }
 
 
 // Gets the absolute angle of the motor
 double getAbsoluteAngle() {
-    encoderAbsoluteAngleAvg.add((getAbsoluteRev() * 360) + getEncoderAngle(false));
+    encoderAbsoluteAngleAvg.add((getAbsoluteRev() * 360) + getAngle(false));
     return encoderAbsoluteAngleAvg.get();
 }
 
 
-// Set encoder offset
-void setEncoderOffset(uint16_t offset) {
-    setBitField(bitFields[REG_MOD_3_ANG_BASE], offset);
+// Set encoder zero point
+void zeroEncoder() {
+    startupAngleOffset = getAngle();
+    startupAngleRevOffset = getAbsoluteRev();
 }
 
 
