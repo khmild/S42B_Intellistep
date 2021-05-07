@@ -45,7 +45,7 @@ float StepperMotor::getMotorRPM() const {
 
 // Returns the deviation of the motor from the PID loop
 float StepperMotor::getAngleError() const {
-    return ((this -> desiredAngle) - getAbsoluteAngle());
+    return (getAbsoluteAngle() - (this -> desiredAngle));
 }
 
 

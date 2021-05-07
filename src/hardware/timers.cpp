@@ -64,10 +64,7 @@ void updateMotor() {
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         motor.enable();
 
-        motor.step(COUNTER_CLOCKWISE, false, false);
-
-        digitalWriteFast(LED_PIN, HIGH);
-
+        motor.step(COUNTER_CLOCKWISE, false, true);
 
         /*
         // Get the current angle of the motor (multiple reads take a longer time)
@@ -83,18 +80,20 @@ void updateMotor() {
             if (angularDeviation > motor.getMicrostepAngle()) {
 
                 // Motor is at a position larger than the desired one
-                motor.driveCoils(currentAngle - motor.getMicrostepAngle());
+                motor.driveCoils(currentAngle - motor.getMicrostepAngle(), CLOCKWISE);
             }
             else {
                 // Motor is at a position smaller than the desired one
-                motor.driveCoils(currentAngle + motor.getMicrostepAngle());
+                motor.driveCoils(currentAngle + motor.getMicrostepAngle(), COUNTER_CLOCKWISE);
             }            
 
             // Check to see if the out of position faults have exceeded the maximum amounts
             if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
                 
                 // The maximum count has been exceeded, trigger an endstop pulse
-                //digitalWriteFast(STALLFAULT_PIN, HIGH);
+                #if STALLFAULT_PIN != NC 
+                    digitalWriteFast(STALLFAULT_PIN, HIGH);
+                #endif
                 digitalWriteFast(LED_PIN, HIGH);
             }
             else {
@@ -105,8 +104,11 @@ void updateMotor() {
         else {
             // Reset the out of position count and the StallFault pin
             outOfPosCount = 0;
-            //digitalWriteFast(STALLFAULT_PIN, LOW);
+            #if STALLFAULT_PIN != NC
+                digitalWriteFast(STALLFAULT_PIN, LOW);
+            #endif
             digitalWriteFast(LED_PIN, LOW);
-        }*/
+        }
+        */
     }
 }

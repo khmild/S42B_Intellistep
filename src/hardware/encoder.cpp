@@ -7,18 +7,18 @@ SPI_HandleTypeDef spiConfig;
 GPIO_InitTypeDef GPIO_InitStructure;
 
 // A storage for the last angle sampled
-double lastEncoderAngle = 0;
-
-// A storage for the time of the last angle sampling
-uint32_t lastAngleSampleTime = 0;
+#ifdef ENCODER_ESTIMATION
+    double lastEncoderAngle = 0;
+#endif
 
 // Moving average instances
 Smoothed <float> encoderSpeedAvg;
 Smoothed <float> encoderAngleAvg;
+Smoothed <float> encoderAbsoluteAngleAvg;
 Smoothed <float> encoderTempAvg;
 
-// The absolute angle offset
-double absoluteAngleOffset = 0;
+// The startup angle offset
+double startupAngleOffset = 0;
 
 // A map of the known registers
 uint16_t regMap[MAX_NUM_REG];              //!< Register map */
@@ -181,6 +181,7 @@ void initEncoder() {
     // Setup the moving average calculations
     encoderSpeedAvg.begin(SMOOTHED_AVERAGE, RPM_AVG_READINGS);
     encoderAngleAvg.begin(SMOOTHED_AVERAGE, ANGLE_AVG_READINGS);
+    encoderAbsoluteAngleAvg.begin(SMOOTHED_AVERAGE, ANGLE_AVG_READINGS);
     encoderTempAvg.begin(SMOOTHED_AVERAGE, TEMP_AVG_READINGS);
 }
 
@@ -333,7 +334,7 @@ uint16_t readEncoderState() {
 
 
 // Reads the value for the angle of the encoder (ranges from 0-360)
-double getEncoderAngle() {
+double getEncoderAngle(bool average) {
 
     // Get the value of the angle register
     uint16_t rawData = readEncoderRegister(ENCODER_ANGLE_REG);
@@ -341,9 +342,17 @@ double getEncoderAngle() {
     // Delete everything but the first 15 bits (others not needed)
     rawData = (rawData & (DELETE_BIT_15));
 
-    // Return the averaged value (equation from TLE5012 library)
-    encoderAngleAvg.add((360.0 / POW_2_15) * ((double) rawData));
-    return encoderAngleAvg.get();
+    // Add the averaged value (equation from TLE5012 library)
+    double angle = (360.0 / POW_2_15) * ((double) rawData);
+    encoderAngleAvg.add(angle);
+
+    // Return the average if desired, otherwise just the raw angle
+    if (average) {
+        return encoderAngleAvg.get();
+    }
+    else {
+        return angle;
+    }
 }
 
 // For average velocity calculations instead of hardware readings from the TLE5012
@@ -374,6 +383,7 @@ double getEncoderSpeed() {
 
 // Reads the speed of the encoder (for later)
 double getEncoderSpeed() {
+
     // Prepare the variables to store data in
 	uint16_t rawData[4];
 
@@ -434,33 +444,34 @@ double getEncoderTemp() {
 	}
 
     // Return the value (equation from TLE5012 library)
-    int16_t rawTemp = rawData;
-	encoderTempAvg.add((rawTemp + TEMP_OFFSET) / (TEMP_DIV));
+	encoderTempAvg.add(((int16_t)rawData + TEMP_OFFSET) / (TEMP_DIV));
     return encoderTempAvg.get();
 }
 
 
-// Gets the absolute angle of the encoder (accounts for loopback)
+// Gets the absolute revolutions of the motor
+double getAbsoluteRev() {
+
+    // Get the angle value
+    uint16_t rawData = readEncoderRegister(ENCODER_ANGLE_REV_REG);
+
+    // Delete the first 7 bits, they are not needed
+	rawData = (rawData & (DELETE_7BITS));
+
+	// Check if the value received is positive or negative
+	if (rawData & CHECK_BIT_9) {
+		rawData = rawData - CHANGE_UNIT_TO_INT_9;
+	}
+
+    // Return the angle measurement
+    return ((int16_t)rawData);
+}
+
+
+// Gets the absolute angle of the motor
 double getAbsoluteAngle() {
-
-    // Get the current angle of the motor
-    float currentAngle = getEncoderAngle();
-
-    // Get the last angle of the motor
-    float lastAngle = encoderAngleAvg.getLast();
-
-    // Check to see if there is a sum larger than 360 
-    // Indicates that the angle has looped back from 360 to 0
-    if (currentAngle > (360 - (ENCODER_LOOPBACK_TOLERANCE / 2)) && lastAngle < (ENCODER_LOOPBACK_TOLERANCE / 2)) {
-        absoluteAngleOffset += 360;
-    }
-    // Angle - 0 -> 360
-    else if (lastAngle > (360 - (ENCODER_LOOPBACK_TOLERANCE / 2)) && currentAngle < (ENCODER_LOOPBACK_TOLERANCE / 2)) {
-        absoluteAngleOffset -= 360;
-    }
-
-    // Return the absolute angle
-    return (absoluteAngleOffset + currentAngle);
+    encoderAbsoluteAngleAvg.add((getAbsoluteRev() * 360) + getEncoderAngle(false));
+    return encoderAbsoluteAngleAvg.get();
 }
 
 

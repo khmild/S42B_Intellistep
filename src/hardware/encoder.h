@@ -11,6 +11,7 @@
 #define ENCODER_STATUS_REG     (0x0000U) // Same as base
 #define ENCODER_ANGLE_REG      (0x0020U)
 #define ENCODER_SPEED_REG      (0x0030U)
+#define ENCODER_ANGLE_REV_REG  (0x0040U)
 #define ENCODER_TEMP_REG       (0x0050U)
 
 // Register locations (writing)
@@ -241,9 +242,10 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t data[]);
 uint16_t getBitField(BitField_t bitField);
 void setBitField(BitField_t bitfield, uint16_t bitFNewValue);
 uint16_t readEncoderState();
-double getEncoderAngle();
+double getEncoderAngle(bool average = true);
 double getEncoderSpeed();
 double getEncoderTemp();
+double getAbsoluteRev();
 double getAbsoluteAngle();
 void setEncoderOffset(uint16_t offset);
 
