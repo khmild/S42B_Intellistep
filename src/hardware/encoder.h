@@ -29,6 +29,7 @@
 #define TEMP_OFFSET                 152.0     // Used to offset the temp reading
 #define TEMP_DIV                    2.776     // Used to divide the temperature
 #define DELETE_7_BITS               0x01FF    // Used to delete the first 7 bits of a 16 bit integer
+#define CHANGE_UNIT_TO_INT_9        0x0200    // Used to change an unsigned 9 bit integer into signed
 #define CHECK_BIT_9                 0x0100    // Used to check the 9th bit
 
 
