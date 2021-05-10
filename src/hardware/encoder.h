@@ -4,7 +4,7 @@
 // Libraries
 #include "Arduino.h"
 #include "config.h"
-#include <MovingAverage.h>
+#include <Smoothed.h>
 
 // Register locations (reading)
 #define ENCODER_READ_COMMAND    0x8000 // 8000

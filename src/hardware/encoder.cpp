@@ -12,10 +12,10 @@ GPIO_InitTypeDef GPIO_InitStructure;
 #endif
 
 // Moving average instances
-MovingAverage <float> encoderSpeedAvg;
-MovingAverage <float> encoderAngleAvg;
-MovingAverage <float> encoderAbsoluteAngleAvg;
-MovingAverage <float> encoderTempAvg;
+Smoothed <float> encoderSpeedAvg;
+Smoothed <float> encoderAngleAvg;
+Smoothed <float> encoderAbsoluteAngleAvg;
+Smoothed <float> encoderTempAvg;
 
 // The startup angle and rev offsets
 double startupAngleOffset = 0;
@@ -177,10 +177,10 @@ void initEncoder() {
     writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
 
     // Setup the moving average calculations
-    encoderSpeedAvg.begin(RPM_AVG_READINGS);
-    encoderAngleAvg.begin(ANGLE_AVG_READINGS);
-    encoderAbsoluteAngleAvg.begin(ANGLE_AVG_READINGS);
-    encoderTempAvg.begin(TEMP_AVG_READINGS);
+    encoderSpeedAvg.begin(SMOOTHED_AVERAGE, RPM_AVG_READINGS);
+    encoderAngleAvg.begin(SMOOTHED_AVERAGE, ANGLE_AVG_READINGS);
+    encoderAbsoluteAngleAvg.begin(SMOOTHED_AVERAGE, ANGLE_AVG_READINGS);
+    encoderTempAvg.begin(SMOOTHED_AVERAGE, TEMP_AVG_READINGS);
 
     // Populate the average angle reading table
     for (uint8_t index = 0; index < ANGLE_AVG_READINGS; index++) {

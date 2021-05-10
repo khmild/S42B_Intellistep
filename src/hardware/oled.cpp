@@ -193,24 +193,24 @@ void displayMotorData() {
 
     // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
     if (millis() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL) {
-        writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)), false);
+        writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM() + String("     "), 2, 3)), false);
     }
 
     #else // ! ENCODER_SPEED_ESTIMATION
 
     // No need to check, just sample it
-    writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)), false);
+    writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)) + String("     "), false);
 
     #endif // ! ENCODER_SPEED_ESTIMATION
 
     // Angle error
-    writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 3, 2)), false);
+    writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 3, 2)) + String("     "), false);
 
     // Current angle of the motor
-    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getAbsoluteAngle(), 3, 2)), false);
+    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getAbsoluteAngle(), 3, 2)) + String("     "), false);
 
     // Maybe a 4th line later?
-    writeOLEDString(0, 48, (String("Temp: ") + String(getEncoderTemp()) + String(" C")), true);
+    writeOLEDString(0, 48, (String("Temp: ") + String(getEncoderTemp()) + String(" C")) + String("     "), true);
 }
 
 
@@ -679,13 +679,8 @@ void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool
     while(*p != '\0') {
 
         // Make sure that the x and y don't exceed the maximum indexes
-        if(x > MAX_CHAR_POSX){
-            x = 0;
-            y += 16;
-        }
-        if(y > MAX_CHAR_POSY){
-            y = x = 0;
-            clearOLED();
+        if(x > MAX_CHAR_POSX || y > MAX_CHAR_POSY){
+            break;
         }
 
         // Display the character on the screen
