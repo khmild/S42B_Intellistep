@@ -19,6 +19,10 @@ StepperMotor::StepperMotor(float P, float I, float D) {
     pinMode(COIL_DIR_2_PINS[B], OUTPUT);
     pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
     pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
+
+    // Configure the PWM
+    analogWriteResolution(12); // STM32's is 12 bits max (max 4096)
+    analogWriteFrequency(MOTOR_PWM_FREQ * 1000);
 }
 
 // Constructor without PID terms
@@ -368,10 +372,10 @@ void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current)
 uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
-    uint32_t PWMValue = abs((2.55 * CURRENT_SENSE_RESISTOR * current) / BOARD_VOLTAGE);
+    uint32_t PWMValue = abs((40.96 * CURRENT_SENSE_RESISTOR * current) / BOARD_VOLTAGE);
 
     // Constrain the PWM value, then return it
-    return constrain(PWMValue, 0, 255);
+    return constrain(PWMValue, 0, 4095);
 }
 
 

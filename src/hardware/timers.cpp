@@ -24,19 +24,20 @@ void setupMotorTimers() {
     steppingTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
     steppingTimer -> setOverflow(STEP_UPDATE_FREQ, HERTZ_FORMAT);
     steppingTimer -> attachInterrupt(updateMotor);
+    steppingTimer -> refresh();
     steppingTimer -> resume();
 }
 
 
 // Pauses the timers, essentially disabling them for the time being
 void disableInterrupts() {
-    steppingTimer -> pause();
+    __disable_irq();
 }
 
 
 // Resumes the timers, re-enabling them
 void enableInterrupts() {
-    steppingTimer -> resume();
+    __enable_irq();
 }
 
 
