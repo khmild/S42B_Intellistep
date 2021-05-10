@@ -346,7 +346,7 @@ double getAngle(bool average) {
     // Get the value of the angle register
     uint16_t rawData = readEncoderRegister(ENCODER_ANGLE_REG);
 
-    // Delete everything but the first 15 bits (others not needed)
+    // Delete the first bit, saving the last 15
     rawData = (rawData & (DELETE_BIT_15));
 
     // Add the averaged value (equation from TLE5012 library)
@@ -442,8 +442,8 @@ double getEncoderTemp() {
     // Create a variable to store the raw encoder data in
     uint16_t rawData = readEncoderRegister(ENCODER_TEMP_REG);
 
-    // Delete everything but the first 7 bits
-	rawData = (rawData & (DELETE_7BITS));
+    // Delete everything before the first 7 bits
+	rawData = (rawData & (DELETE_7_BITS));
 
 	// Check if the value received is positive or negative
 	if (rawData & CHECK_BIT_9) {
@@ -460,14 +460,19 @@ double getEncoderTemp() {
 double getAbsoluteRev() {
 
     // Get the angle value
-    uint16_t rawData = readEncoderRegister(ENCODER_ANGLE_REV_REG);
+    int16_t rawData = readEncoderRegister(ENCODER_ANGLE_REV_REG);
 
     // Delete the first 7 bits, they are not needed
-	rawData = (rawData & (DELETE_7BITS));
+	rawData = (rawData & (DELETE_7_BITS));
 
 	// Check if the value received is positive or negative
 	if (rawData & CHECK_BIT_9) {
-		rawData = rawData - CHANGE_UNIT_TO_INT_9;
+		
+        // Set the signed bit to 1, the number should be negative
+        rawData |= 1UL << 15;
+
+        // Delete the 9th bit, it'll cause confusion later
+        rawData &= ~(1UL << 8);
 	}
 
     // Return the angle measurement
