@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.10"
+#define VERSION "0.0.11"
 
 
 // --------------  Settings  --------------
@@ -61,7 +61,7 @@
 #define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
 #define STEP_FAULT_ANGLE        45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
-#define MOTOR_PWM_FREQ          20 // in kHz
+#define MOTOR_PWM_FREQ          50 // in kHz
 
 // Button settings
 #ifdef USE_OLED

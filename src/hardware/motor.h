@@ -117,6 +117,12 @@ class StepperMotor {
         // Get the microstep multiplier
         float getMicrostepMultiplier() const;
 
+        // Set the desired motor angle
+        void setDesiredAngle(float newDesiredAngle);
+
+        // Gets the desired motor angle
+        float getDesiredAngle() const;
+
         // Calculates the coil values for the motor and updates the set angle. 
         void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredPosition = true);
 
@@ -144,14 +150,19 @@ class StepperMotor {
         // Calibrates the encoder and PID loop
         void calibrate();
 
-        // Variable to keep the desired angle of the motor
-        float desiredAngle = 0;
+
 
     // Things that shouldn't be accessed by the outside
     private:
 
         // Function for turning booleans into -1 for true and 1 for false
         float invertDirection(bool invert) const;
+        
+        // Variable to keep the desired angle of the motor
+        float desiredAngle = 0;
+
+        // Phase angle of the motor (increases in both negative and positive directions)
+        float phaseAngle = 0;
 
         // Motor PID controller values
         float pTerm = 0;
@@ -190,9 +201,6 @@ class StepperMotor {
 
         // If the motor enable is inverted
         bool enableInverted = false;
-
-        // The stepping interval (in millis)
-        float stepInterval = 10;
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
         float microstepMultiplier = 1;

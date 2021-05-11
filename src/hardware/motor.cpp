@@ -38,6 +38,10 @@ StepperMotor::StepperMotor() {
     pinMode(COIL_DIR_2_PINS[B], OUTPUT);
     pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
     pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
+
+    // Configure the PWM
+    analogWriteResolution(12); // STM32's is 12 bits max (max 4096)
+    analogWriteFrequency(MOTOR_PWM_FREQ * 1000);
 }
 
 
@@ -219,6 +223,20 @@ float StepperMotor::getMicrostepMultiplier() const {
 }
 
 
+// Set the desired angle of the motor
+void StepperMotor::setDesiredAngle(float newDesiredAngle) {
+    this -> desiredAngle = newDesiredAngle;
+}
+
+
+// Get the desired angle of the motor
+float StepperMotor::getDesiredAngle() const {
+
+    // Return the object's value
+    return (this -> desiredAngle);
+}
+
+
 // Computes the coil values for the next step position and increments the set angle
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngle) {
 
@@ -243,19 +261,24 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
         // Make the angle change in the negative direction
         angleChange *= -1;
     }
+    
+    // Add to the phase angle
+    this -> phaseAngle += abs(angleChange);
+    
+    // If the phaseAngle is greater than 360, we need to bring it back into range
+    if (this -> phaseAngle >= 360) {
+        phaseAngle -= 360;
+    }
 
     // Check if the angle should be just added to, or actually moved there.
     if (updateDesiredAngle) {
 
-        // Angle is basically just added to, not really much to do here
+        // Angles are basically just added to, not really much to do here
         this -> desiredAngle += angleChange;
-        this -> driveCoils(desiredAngle, dir);
     }
-    else {
 
-        // Angle is added the current one (for step correction)
-        this -> driveCoils(getAbsoluteAngle() + angleChange, dir);
-    }
+    // Drive the coils to their destination
+    this -> driveCoils(phaseAngle, dir);
 }
 
 

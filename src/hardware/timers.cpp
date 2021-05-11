@@ -65,14 +65,14 @@ void updateMotor() {
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         motor.enable();
 
-        motor.step(COUNTER_CLOCKWISE, false, true);
+        motor.step(COUNTER_CLOCKWISE, false, false);
 
         /*
         // Get the current angle of the motor (multiple reads take a longer time)
         double currentAngle = getAbsoluteAngle();
 
         // Calculate the angular deviation
-        float angularDeviation = currentAngle - motor.desiredAngle;
+        float angularDeviation = currentAngle - motor.getDesiredAngle();
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
         if (abs(angularDeviation) > motor.getMicrostepAngle()) {
@@ -81,11 +81,11 @@ void updateMotor() {
             if (angularDeviation > motor.getMicrostepAngle()) {
 
                 // Motor is at a position larger than the desired one
-                motor.driveCoils(currentAngle - motor.getMicrostepAngle(), CLOCKWISE);
+                motor.step(CLOCKWISE, false, false);
             }
             else {
                 // Motor is at a position smaller than the desired one
-                motor.driveCoils(currentAngle + motor.getMicrostepAngle(), COUNTER_CLOCKWISE);
+                motor.step(COUNTER_CLOCKWISE, false, false);
             }            
 
             // Check to see if the out of position faults have exceeded the maximum amounts
