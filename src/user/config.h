@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.11"
+#define VERSION "0.0.12"
 
 
 // --------------  Settings  --------------
@@ -66,6 +66,7 @@
 // Button settings
 #ifdef USE_OLED
     #define BUTTON_REPEAT_INTERVAL 250 // Millis
+    #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
 #endif
 
 

@@ -22,6 +22,9 @@
     },
     "cSpell.words": [
         "CANID",
+        "GPIO",
+        "NVIC",
+        "OLED",
         "gcode",
         "mainboard"
     ]
