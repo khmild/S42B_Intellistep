@@ -465,15 +465,10 @@ double getAbsoluteRev() {
     // Delete the first 7 bits, they are not needed
 	rawData = (rawData & (DELETE_7_BITS));
 
-	// Check if the value received is positive or negative
-	if (rawData & CHECK_BIT_9) {
-		
-        // Set the signed bit to 1, the number should be negative
-        rawData |= 1UL << 15;
-
-        // Delete the 9th bit, it'll cause confusion later
-        rawData &= ~(1UL << 8);
-	}
+    // Check if the value is negative, if so it needs 512 subtracted from it
+    if (rawData & CHECK_BIT_9) {
+        rawData -= 512;
+    }
 
     // Return the angle measurement
     return ((double)rawData - startupAngleRevOffset);

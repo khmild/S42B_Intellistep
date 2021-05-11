@@ -10,6 +10,7 @@
 // Standard naming conventions
 #include "stdint.h"
 
+
 // A class used to store and calculate the values to be smoothed.
 template <typename T>
 class MovingAverage {
@@ -32,15 +33,18 @@ class MovingAverage {
     bool clear();
 };
 
+
 // Constructor
 template <typename T>
 MovingAverage<T>::MovingAverage () {}
+
 
 // Destructor
 template <typename T>
 MovingAverage<T>::~MovingAverage () { // Destructor
     delete[] readings;
 }
+
 
 // Initialize the array for storing sensor values
 template <typename T>
@@ -63,6 +67,7 @@ bool MovingAverage<T>::begin (uint16_t smoothFactor) {
     return true;
 }
 
+
 // Add a value to the array
 template <typename T>
 bool MovingAverage<T>::add (T newReading) {
@@ -70,17 +75,24 @@ bool MovingAverage<T>::add (T newReading) {
     // Keep record of the number of readings being averaged
     // This will count up to the array size then stay at that number
     if(readingsNum < readingsFactor) { 
-        readingsNum++; 
-    } 
-    
-    // Add the new value to the running total
-    runningTotal += newReading;
+        readingsNum++;
 
-    // Remove the old value from the running total
-    runningTotal -= readings[readingsPosition];
+        // Add the new value to the running total
+        runningTotal += newReading;
 
-    // Replace the old value in the array
-    readings[readingsPosition] = newReading;
+        // Replace the zero in the array
+        readings[readingsPosition] = newReading;
+    }
+    else {
+        // Add the new value to the running total
+        runningTotal += newReading;
+
+        // Remove the old value from the running total
+        runningTotal -= readings[readingsPosition];
+
+        // Replace the old value in the array
+        readings[readingsPosition] = newReading;
+    }
 
     // If at the end of the array
     if (readingsPosition == (readingsFactor - 1)) {
@@ -97,11 +109,13 @@ bool MovingAverage<T>::add (T newReading) {
     return true;
 }
 
+
 // Get the smoothed result
 template <typename T>
 T MovingAverage<T>::get() {
     return (runningTotal / readingsNum);
 }
+
 
 // Gets the last result stored
 template <typename T>
@@ -115,6 +129,7 @@ T MovingAverage<T>::getLast() {
         return readings[readingsPosition - 1];
     }         
 }
+
 
 // Clears all stored values
 template <typename T>

@@ -199,18 +199,18 @@ void displayMotorData() {
     #else // ! ENCODER_SPEED_ESTIMATION
 
     // No need to check, just sample it
-    writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)) + String("     "), false);
+    writeOLEDString(0, 0, (String("RPM:   ") + padNumber(motor.getMotorRPM(), 2, 3)) + String("     "), false);
 
     #endif // ! ENCODER_SPEED_ESTIMATION
 
     // Angle error
-    writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 3, 2)) + String("     "), false);
+    writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 4, 2)) + String("     "), false);
 
     // Current angle of the motor
-    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getAbsoluteAngle(), 3, 2)) + String("     "), false);
+    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getAbsoluteAngle(), 4, 2)) + String("     "), false);
 
     // Maybe a 4th line later?
-    writeOLEDString(0, 48, (String("Temp: ") + String(getEncoderTemp()) + String(" C")) + String("     "), true);
+    writeOLEDString(0, 48, (String("Temp:   ") + String(getEncoderTemp()) + String(" C")) + String("     "), true);
 }
 
 
