@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.12"
+#define VERSION "0.0.13"
 
 
 // --------------  Settings  --------------
@@ -51,12 +51,13 @@
 #define MAX_MOTOR_SPEED 50 // deg/s
 
 // Board characteristics
-// ! Do not modify unless you know what you are doing!dd
+// ! Do not modify unless you know what you are doing!
 #define BOARD_VOLTAGE           3.3 // The voltage of the main processor
 #define CURRENT_SENSE_RESISTOR  0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
 
 // Motor settings
 #define MAX_CURRENT             3500 // Maximum current in mA
+#define MIN_MICROSTEP_DIVISOR   1 // The minimum microstepping divisor
 #define MAX_MICROSTEP_DIVISOR   32 // The maximum microstepping divisor
 #define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
 #define STEP_FAULT_ANGLE        45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered

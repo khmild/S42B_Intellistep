@@ -84,7 +84,7 @@ void updateDisplay() {
                     for (uint8_t stringIndex = 0; stringIndex <= 3; stringIndex++) {
 
                         // Check to make sure that the current isn't out of range of the max current
-                        if (!((currentCursorIndex + stringIndex) * 100 > MAX_CURRENT)) {
+                        if ((currentCursorIndex + stringIndex) * 100 <= MAX_CURRENT) {
 
                             // Value is in range, display the current on that line
                             writeOLEDString(25, stringIndex * 16, String((int) ((currentCursorIndex + stringIndex) * 100)) + String("mA"), false);
@@ -105,19 +105,19 @@ void updateDisplay() {
 
                     // Loop the currentCursor index back if it's out of range
                     if (currentCursorIndex > log2(MAX_MICROSTEP_DIVISOR)) {
-                        currentCursorIndex = 2;
+                        currentCursorIndex = log2(MIN_MICROSTEP_DIVISOR);
                     }
-                    else if (currentCursorIndex < 2) {
+                    else if (currentCursorIndex < log2(MIN_MICROSTEP_DIVISOR)) {
 
                         // Make sure that the cursor index is in valid range
-                        currentCursorIndex = 2;
+                        currentCursorIndex = log2(MIN_MICROSTEP_DIVISOR);
                     }
 
                     // Write each of the strings
                     for (uint8_t stringIndex = 0; stringIndex <= 3; stringIndex++) {
 
                         // Check to make sure that the current isn't out of range of the max current
-                        if (!(pow(2, currentCursorIndex + stringIndex) > MAX_MICROSTEP_DIVISOR)) {
+                        if (pow(2, currentCursorIndex + stringIndex) <= MAX_MICROSTEP_DIVISOR) {
 
                             // Value is in range, display the current on that line
                             writeOLEDString(25, stringIndex * 16, String("1/") + String((int) pow(2, currentCursorIndex + stringIndex)) + String("th"), false);
@@ -236,9 +236,75 @@ void displayError(String firstLine, String secondLine, String thirdLine, bool up
 // Function for moving the cursor up
 void selectMenuItem() {
 
-    // Go down in the menu index if we're not at the bottom already
-    if (menuDepth < SUBMENUS) {
-        menuDepth = MENU_DEPTH(menuDepth - 1);
+    // Go down to the top level
+    if (menuDepth == MOTOR_DATA) {
+        menuDepth = TOP_LEVEL;
+    }
+
+    // Go down to the submenus and deterimine the starting index
+    else if (menuDepth == TOP_LEVEL) {
+
+        // Set that we're moving into the submenus
+        menuDepth = SUBMENUS;
+
+        // Check the submenus available
+        switch(submenu % submenuCount) {
+
+            case CALIBRATION:
+                // Nothing to see here, just moving into the calibration
+                motor.calibrate();
+
+                // Exit the menu
+                menuDepth = MENU_RETURN_LEVEL;
+                break;
+
+            case CURRENT:
+                // Motor mAs. Need to get the current motor mAs, then convert that to a cursor value
+                currentCursorIndex = round(motor.getCurrent() / 100);
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
+
+            case MICROSTEP:
+                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
+                currentCursorIndex = log2(motor.getMicrostepping()) - log2(MIN_MICROSTEP_DIVISOR);
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
+
+            case ENABLE_LOGIC:
+                // Get if the enable pin is inverted
+                if (motor.getEnableInversion()) {
+                    // Value is true already, therefore start at "true"
+                    currentCursorIndex = 0;
+                }
+                else {
+                    // Otherwise set the value to false to start
+                    currentCursorIndex = 1;
+                }
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
+
+            case DIR_LOGIC:
+                // Get if the direction pin is inverted
+                if (motor.getReversed()) {
+                    currentCursorIndex = 0;
+                }
+                else {
+                    currentCursorIndex = 1;
+                }
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
+        }
+
+        // Update the display with the new information
+        updateDisplay();
     }
 
     // If we're in certain menus, the cursor should start at their current value
@@ -249,37 +315,23 @@ void selectMenuItem() {
         switch(submenu % submenuCount) {
 
             case CALIBRATION:
-                // Nothing to see here, just the calibration.
-                motor.calibrate();
-
-                // Exit the menu
-                menuDepth = MENU_RETURN_LEVEL;
-
+                // Nothing to see here, everything is handled on the initial press.
                 break;
 
             case CURRENT:
-                // Motor mAs. Need to get the current motor mAs, then convert that to a cursor value
-                if (motor.getCurrent() % 100 == 0) {
-                    // Motor current is one of the menu items, we can check it to get the cursor index
-                    currentCursorIndex = motor.getCurrent() / 100;
-                }
-                else {
-                    // Non-standard value (probably set with serial or CAN)
-                    currentCursorIndex = 0;
-                }
+                // Motor mAs. Need to get the cursor value, then convert that to current value
+                motor.setCurrent(currentCursorIndex * 100);
 
                 // Exit the menu
                 menuDepth = MENU_RETURN_LEVEL;
-
                 break;
 
             case MICROSTEP:
                 // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
-                currentCursorIndex = log2(motor.getMicrostepping()) - 2;
+                motor.setMicrostepping(pow(2, currentCursorIndex));
 
                 // Exit the menu
                 menuDepth = MENU_RETURN_LEVEL;
-
                 break;
 
             case ENABLE_LOGIC:
@@ -296,7 +348,6 @@ void selectMenuItem() {
 
                 // Exit the menu
                 menuDepth = MENU_RETURN_LEVEL;
-
                 break;
 
             case DIR_LOGIC:
@@ -313,17 +364,18 @@ void selectMenuItem() {
 
                 // Exit the menu
                 menuDepth = MENU_RETURN_LEVEL;
-
                 break;
         }
 
+        // Update the display with the new menu  
+        updateDisplay();
     }
 
     // Warning level
     else if (menuDepth == WARNING) {
 
         // Set the current menu to the last menu used
-        menuDepth = lastMenuDepth;
+        menuDepth = MENU_RETURN_LEVEL;
 
         // Update the display
         updateDisplay();
