@@ -9,7 +9,7 @@ on: [push]
 
 jobs:
   test_builds:
-    name: Run All Tests
+    name: Run Building Tests
     runs-on: ubuntu-latest
 
     strategy:
