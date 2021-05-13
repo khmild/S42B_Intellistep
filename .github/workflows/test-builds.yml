@@ -16,7 +16,6 @@ jobs:
       matrix:
         test-platform:
         # Base Environments
-
         - BTT_S42B_V2
 
     steps:

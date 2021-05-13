@@ -62,7 +62,7 @@ else
     if [[ -z "$test_name" ]] ; then
       # Fail if none matches
       printf "\033[0;31mCould not find test \033[0m#$3\033[0;31m in \033[0mbuildroot/tests/$2\n"
-      exit 1
+      #exit 1
     else
       printf "\033[0;32mMatching test \033[0m#$3\033[0;32m: '\033[0m$test_name\033[0;32m'\n"
     fi
