@@ -4,11 +4,24 @@
 
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+    - config/**
+    - datasheets/**
+    - docs/**
+    - '**/*.md'
+
+  pull_request:
+    paths-ignore:
+    - config/**
+    - datasheets/**
+    - docs/**
+    - '**/*.md'
 
 jobs:
   test_builds:
-    name: Run Building Tests
+    name: Run Configuration Tests
     runs-on: ubuntu-latest
 
     strategy:
