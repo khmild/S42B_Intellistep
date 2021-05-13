@@ -15,15 +15,15 @@
 uint8_t OLEDBuffer[128][8];
 
 // The index of the current top level menu item
-uint8_t topLevelMenuIndex = 0;
-uint8_t lastTopLevelMenuIndex = 0;
+SUBMENU submenu = CALIBRATION;
+SUBMENU lastSubmenu = CALIBRATION;
 
 // The current value of the cursor
 uint8_t currentCursorIndex = 0;
 
-// The current menu depth. 0 would be the motor data, 1 the main menu, and 2 any submenus
-uint8_t menuDepthIndex = 0;
-uint8_t lastMenuDepthIndex = 0;
+// The current menu depth
+MENU_DEPTH menuDepth = MOTOR_DATA;
+MENU_DEPTH lastMenuDepth = MOTOR_DATA;
 
 // Displays the bootscreen
 void showBootscreen() {
@@ -37,28 +37,28 @@ void showBootscreen() {
 void updateDisplay() {
 
     // Decide on the current depth of the menu
-    switch(menuDepthIndex){
-        case 0:
+    switch(menuDepth) {
+        case MOTOR_DATA:
             // Not actually in the menu, just displaying motor data for now
             displayMotorData();
             break;
 
-        case 1:
+        case TOP_LEVEL:
             // In the top level of the menu. Make sure that the set top level menu index is within the range of the menu length
             // Values must first be determined using the mod function in order to prevent overflow errors
             // Then the strings are converted into character arrays by giving the address of the first character in the string
             clearOLED();
             writeOLEDString(0, 0, "->", false);
-            writeOLEDString(25, 0,  &topLevelMenuItems[(topLevelMenuIndex)     % topLevelMenuLength][0], false);
-            writeOLEDString(25, 16, &topLevelMenuItems[(topLevelMenuIndex + 1) % topLevelMenuLength][0], false);
-            writeOLEDString(25, 32, &topLevelMenuItems[(topLevelMenuIndex + 2) % topLevelMenuLength][0], false);
-            writeOLEDString(25, 48, &topLevelMenuItems[(topLevelMenuIndex + 3) % topLevelMenuLength][0], true);
+            writeOLEDString(25, 0,  &submenuItems[(submenu)     % submenuCount][0], false);
+            writeOLEDString(25, 16, &submenuItems[(submenu + 1) % submenuCount][0], false);
+            writeOLEDString(25, 32, &submenuItems[(submenu + 2) % submenuCount][0], false);
+            writeOLEDString(25, 48, &submenuItems[(submenu + 3) % submenuCount][0], true);
             break;
 
-        case 2:
+        case SUBMENUS:
             // We should be in a sub menu, this is where we have to figure out which submenu that should be
-            switch(topLevelMenuIndex) {
-                case 0:
+            switch(submenu) {
+                case CALIBRATION:
                     // In the first menu, the calibration one. No need to do anything here, besides maybe displaying an progress bar or PID values (later?)
                     clearOLED();
                     writeOLEDString(0, 0, "Are you sure?", false);
@@ -66,7 +66,7 @@ void updateDisplay() {
                     writeOLEDString(0, 32, "to confirm", true);
                     break;
 
-                case 1:
+                case CURRENT:
                     // In the second menu, the motor mAs. This is dynamically generated and has increments every 100 mA from 0 mA (testing only) to 3500 mA
                     clearOLED();
 
@@ -84,7 +84,7 @@ void updateDisplay() {
                     for (uint8_t stringIndex = 0; stringIndex <= 3; stringIndex++) {
 
                         // Check to make sure that the current isn't out of range of the max current
-                        if (!((currentCursorIndex + stringIndex) * 100 > MAX_CURRENT)) {
+                        if ((currentCursorIndex + stringIndex) * 100 <= MAX_CURRENT) {
 
                             // Value is in range, display the current on that line
                             writeOLEDString(25, stringIndex * 16, String((int) ((currentCursorIndex + stringIndex) * 100)) + String("mA"), false);
@@ -98,26 +98,26 @@ void updateDisplay() {
                     writeOLEDBuffer();
                     break;
 
-                case 2:
+                case MICROSTEP:
                     // In the microstep menu, this is also dynamically generated. Get the current stepping of the motor, then display all of the values around it
                     clearOLED();
                     writeOLEDString(0, 0, "->", false);
 
                     // Loop the currentCursor index back if it's out of range
                     if (currentCursorIndex > log2(MAX_MICROSTEP_DIVISOR)) {
-                        currentCursorIndex = 2;
+                        currentCursorIndex = log2(MIN_MICROSTEP_DIVISOR);
                     }
-                    else if (currentCursorIndex < 2) {
+                    else if (currentCursorIndex < log2(MIN_MICROSTEP_DIVISOR)) {
 
                         // Make sure that the cursor index is in valid range
-                        currentCursorIndex = 2;
+                        currentCursorIndex = log2(MIN_MICROSTEP_DIVISOR);
                     }
 
                     // Write each of the strings
                     for (uint8_t stringIndex = 0; stringIndex <= 3; stringIndex++) {
 
                         // Check to make sure that the current isn't out of range of the max current
-                        if (!(pow(2, currentCursorIndex + stringIndex) > MAX_MICROSTEP_DIVISOR)) {
+                        if (pow(2, currentCursorIndex + stringIndex) <= MAX_MICROSTEP_DIVISOR) {
 
                             // Value is in range, display the current on that line
                             writeOLEDString(25, stringIndex * 16, String("1/") + String((int) pow(2, currentCursorIndex + stringIndex)) + String("th"), false);
@@ -131,7 +131,7 @@ void updateDisplay() {
                     writeOLEDBuffer();
                     break;
 
-                case 3:
+                case ENABLE_LOGIC:
                     // In the enable logic menu, a very simple menu. Just need to invert the displayed state
                     // Clear the OLED
                     clearOLED();
@@ -151,7 +151,7 @@ void updateDisplay() {
                     }
                     break;
 
-                case 4:
+                case DIR_LOGIC:
                     // Another easy menu, just the direction pin. Once again, just need to invert the state
                     clearOLED();
 
@@ -169,13 +169,18 @@ void updateDisplay() {
                         writeOLEDString(0, 24, "Normal", true);
                     }
                     break;
-            } // Top level menu switch
+            } // Submenu switch
             break;
+
+            case WARNING:
+                // Nothing to do
+                break;
+
     } // Main switch
 
     // Save the last set value (for display functions that don't need to clear the OLED all of the time)
-    lastMenuDepthIndex = menuDepthIndex;
-    lastTopLevelMenuIndex = topLevelMenuIndex;
+    lastMenuDepth = menuDepth;
+    lastSubmenu = submenu;
 
 } // Display menu function
 
@@ -184,7 +189,7 @@ void updateDisplay() {
 void displayMotorData() {
 
     // Clear the old menu off of the display
-    if (lastMenuDepthIndex != 0) {
+    if (lastMenuDepth != 0) {
         clearOLED();
     }
 
@@ -214,56 +219,123 @@ void displayMotorData() {
 }
 
 
+// Display an error message
+void displayError(String firstLine, String secondLine, String thirdLine, bool updateScreen) {
+    clearOLED();
+    writeOLEDString(0, 0,  firstLine,  false);
+    writeOLEDString(0, 16, secondLine, false);
+    writeOLEDString(0, 32, thirdLine,  false);
+    writeOLEDString(0, 48, F("Select to exit"), updateScreen);
+
+    // Save the last menu used (for returning later), then move to the new index
+    lastMenuDepth = menuDepth;
+    menuDepth = WARNING;
+}
+
+
 // Function for moving the cursor up
 void selectMenuItem() {
 
-    // Go down in the menu index if we're not at the bottom already
-    if (menuDepthIndex < 2) {
-        menuDepthIndex++;
+    // Go down to the top level
+    if (menuDepth == MOTOR_DATA) {
+        menuDepth = TOP_LEVEL;
+        updateDisplay();
     }
 
-    // If we're in certain menus, the cursor should start at their current value
-    else if (menuDepthIndex == 2) {
-        // Cursor settings are only needed in the submenus
+    // Go down to the submenus and deterimine the starting index
+    else if (menuDepth == TOP_LEVEL) {
+
+        // Set that we're moving into the submenus
+        menuDepth = SUBMENUS;
 
         // Check the submenus available
-        switch(topLevelMenuIndex % topLevelMenuLength) {
+        switch(submenu % submenuCount) {
 
-            case 0:
-                // Nothing to see here, just the calibration.
+            case CALIBRATION:
+                // Nothing to see here, just moving into the calibration
                 motor.calibrate();
 
                 // Exit the menu
-                menuDepthIndex--;
-
+                menuDepth = MENU_RETURN_LEVEL;
                 break;
 
-            case 1:
+            case CURRENT:
                 // Motor mAs. Need to get the current motor mAs, then convert that to a cursor value
-                if (motor.getCurrent() % 100 == 0) {
-                    // Motor current is one of the menu items, we can check it to get the cursor index
-                    currentCursorIndex = motor.getCurrent() / 100;
-                }
-                else {
-                    // Non-standard value (probably set with serial or CAN)
+                currentCursorIndex = round(motor.getCurrent() / 100);
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
+
+            case MICROSTEP:
+                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
+                currentCursorIndex = log2(motor.getMicrostepping()) - log2(MIN_MICROSTEP_DIVISOR);
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
+
+            case ENABLE_LOGIC:
+                // Get if the enable pin is inverted
+                if (motor.getEnableInversion()) {
+                    // Value is true already, therefore start at "true"
                     currentCursorIndex = 0;
                 }
+                else {
+                    // Otherwise set the value to false to start
+                    currentCursorIndex = 1;
+                }
 
-                // Exit the menu
-                menuDepthIndex--;
-
+                // Enter the menu
+                menuDepth = SUBMENUS;
                 break;
 
-            case 2:
+            case DIR_LOGIC:
+                // Get if the direction pin is inverted
+                if (motor.getReversed()) {
+                    currentCursorIndex = 0;
+                }
+                else {
+                    currentCursorIndex = 1;
+                }
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
+        }
+
+        // Update the display with the new information
+        updateDisplay();
+    }
+
+    // If we're in certain menus, the cursor should start at their current value
+    else if (menuDepth == SUBMENUS) {
+        // Cursor settings are only needed in the submenus
+
+        // Check the submenus available
+        switch(submenu % submenuCount) {
+
+            case CALIBRATION:
+                // Nothing to see here, everything is handled on the initial press.
+                break;
+
+            case CURRENT:
+                // Motor mAs. Need to get the cursor value, then convert that to current value
+                motor.setCurrent(currentCursorIndex * 100);
+
+                // Exit the menu
+                menuDepth = MENU_RETURN_LEVEL;
+                break;
+
+            case MICROSTEP:
                 // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
-                currentCursorIndex = log2(motor.getMicrostepping()) - 2;
+                motor.setMicrostepping(pow(2, currentCursorIndex));
 
                 // Exit the menu
-                menuDepthIndex--;
-
+                menuDepth = MENU_RETURN_LEVEL;
                 break;
 
-            case 3:
+            case ENABLE_LOGIC:
                 // Get if the enable pin is inverted
                 if (currentCursorIndex % 2 == 0) {
 
@@ -276,11 +348,10 @@ void selectMenuItem() {
                 }
 
                 // Exit the menu
-                menuDepthIndex--;
-
+                menuDepth = MENU_RETURN_LEVEL;
                 break;
 
-            case 4:
+            case DIR_LOGIC:
                 // Get if the direction pin is inverted
                 if (currentCursorIndex % 2 == 0) {
 
@@ -293,11 +364,22 @@ void selectMenuItem() {
                 }
 
                 // Exit the menu
-                menuDepthIndex--;
-
+                menuDepth = MENU_RETURN_LEVEL;
                 break;
         }
 
+        // Update the display with the new menu  
+        updateDisplay();
+    }
+
+    // Warning level
+    else if (menuDepth == WARNING) {
+
+        // Set the current menu to the last menu used
+        menuDepth = MENU_RETURN_LEVEL;
+
+        // Update the display
+        updateDisplay();
     }
 }
 
@@ -306,22 +388,25 @@ void selectMenuItem() {
 void moveCursor() {
 
     // If we're on the motor display menu, do nothing for now
-    if (menuDepthIndex == 0) {
+    if (menuDepth == MOTOR_DATA) {
         // Do nothing (maybe add a feature later?)
     }
-    else if (menuDepthIndex == 1) {
+    else if (menuDepth == TOP_LEVEL) {
         // We're in the top level menu, change the topLevelMenuIndex (as long as we haven't exceeded the length of the list)
-        if (topLevelMenuIndex + 3 > topLevelMenuLength) {
-            topLevelMenuIndex = 0;
+        if (submenu + 3 > submenuCount) {
+            submenu = SUBMENU(0);
         }
         else {
-            topLevelMenuIndex++;
+            submenu = SUBMENU(submenu + 1);
         }
     }
-    else {
-        // We have to be in the submenu, increment the cursor index (submenus handle the display themselves)
+    else if (menuDepth == SUBMENUS) {
+        // We are in the submenu, increment the cursor index (submenus handle the display themselves)
         currentCursorIndex++;
     }
+
+    // Update the display
+    updateDisplay();
 }
 
 
@@ -329,20 +414,23 @@ void moveCursor() {
 void exitCurrentMenu() {
 
     // Go up in the menu index if we're not already at the motor data screen
-    if (menuDepthIndex > 0) {
-        menuDepthIndex--;
+    if (menuDepth > (uint8_t)MOTOR_DATA) {
+        menuDepth = MENU_DEPTH(menuDepth - 1);
     }
+
+    // Update the display to match
+    updateDisplay();
 }
 
 
 // Returns the depth of the menu (helpful for watching the select button)
-uint8_t getMenuDepth() {
-    return menuDepthIndex;
+MENU_DEPTH getMenuDepth() {
+    return menuDepth;
 }
 
 
 // A list of all of the top level menu items
-String topLevelMenuItems[] = {
+String submenuItems[] = {
     "Calibrate",
     "Motor mA",
     "Microstep",
@@ -353,7 +441,7 @@ String topLevelMenuItems[] = {
 
 
 // Length of the list of top menu items (found by dividing the length of the list by how much space a single element takes up)
-const uint8_t topLevelMenuLength = sizeof(topLevelMenuItems) / sizeof(topLevelMenuItems[0]);
+const uint8_t submenuCount = sizeof(submenuItems) / sizeof(submenuItems[0]);
 
 
 // Function for padding numbers
@@ -405,7 +493,7 @@ float roundToPlace(float number, uint8_t place) {
 void initOLED() {
 
     // Set all of the menu values back to their defaults (for if the screen needs to be reinitialized)
-    topLevelMenuIndex = 0;
+    submenu = CALIBRATION;
 
 	RCC->APB2ENR |= 1<<3;
 	RCC->APB2ENR |= 1<<2;
@@ -673,7 +761,7 @@ void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fo
 
 
 // Function to write a string to the screen
-void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool updateScreen) {
+void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen) {
 
     // Check if we haven't reached the end of the string
     while(*p != '\0') {
@@ -684,10 +772,10 @@ void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool
         }
 
         // Display the character on the screen
-        writeOLEDChar(x, y, *p, fontSize, WHITE, false);
+        writeOLEDChar(x, y, *p, 16, WHITE, false);
 
         // Move over by half the font size
-        x += (fontSize / 2);
+        x += (16 / 2);
 
         // Move to the next character
         p++;
@@ -702,7 +790,7 @@ void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool
 
 // Convience function for writing a specific string to the OLED panel
 void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen) {
-    writeOLEDString(x, y, string.c_str(), 16, updateScreen);
+    writeOLEDString(x, y, string.c_str(), updateScreen);
 }
 
 #endif // ! USE_OLED

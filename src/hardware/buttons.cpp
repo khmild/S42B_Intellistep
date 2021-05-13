@@ -55,11 +55,6 @@ void checkButtons(bool updateScreen) {
 
       // Select the current menu item
       selectMenuItem();
-
-      // Update the display
-      if (updateScreen) {
-        updateDisplay();
-      }
     }
 
     // Check the down button
@@ -70,11 +65,6 @@ void checkButtons(bool updateScreen) {
 
       // Move down
       moveCursor();
-
-      // Update the screen
-      if (updateScreen){
-        updateDisplay();
-      }
     }
 
     // Check the back button
@@ -85,11 +75,6 @@ void checkButtons(bool updateScreen) {
 
       // Back up
       exitCurrentMenu();
-
-      // Update the screen
-      if (updateScreen) {
-        updateDisplay();
-      }
     }
   }
 }

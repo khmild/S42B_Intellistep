@@ -159,7 +159,7 @@ void setup() {
                 checkButtons(true);
 
                 // Only update the display if the motor data is being displayed, buttons update the display when clicked
-                if (getMenuDepth() == 0) {
+                if (getMenuDepth() == MOTOR_DATA) {
                     displayMotorData();
                 }
             #endif
