@@ -138,10 +138,10 @@ void setup() {
             writeOLEDString(0, 0, "Calibration", false);
             writeOLEDString(0, 16, "OK!", true);
             delay(1000);
+            
+            // Write out the first data to the screen (makes sure that the first write isn't interrupted)
+            displayMotorData();
         #endif
-
-        // Write out the first data to the screen (makes sure that the first write isn't interrupted)
-        displayMotorData();
 
         // Setup the motor timers and interrupts
         setupMotorTimers();
