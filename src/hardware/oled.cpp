@@ -239,6 +239,7 @@ void selectMenuItem() {
     // Go down to the top level
     if (menuDepth == MOTOR_DATA) {
         menuDepth = TOP_LEVEL;
+        updateDisplay();
     }
 
     // Go down to the submenus and deterimine the starting index
@@ -403,6 +404,9 @@ void moveCursor() {
         // We are in the submenu, increment the cursor index (submenus handle the display themselves)
         currentCursorIndex++;
     }
+
+    // Update the display
+    updateDisplay();
 }
 
 
@@ -410,9 +414,12 @@ void moveCursor() {
 void exitCurrentMenu() {
 
     // Go up in the menu index if we're not already at the motor data screen
-    if (menuDepth > MOTOR_DATA) {
-        menuDepth = MENU_DEPTH(menuDepth + 1);
+    if (menuDepth > (uint8_t)MOTOR_DATA) {
+        menuDepth = MENU_DEPTH(menuDepth - 1);
     }
+
+    // Update the display to match
+    updateDisplay();
 }
 
 
