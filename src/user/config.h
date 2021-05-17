@@ -65,6 +65,8 @@
 #ifdef USE_OLED
     #define BUTTON_REPEAT_INTERVAL 250 // Millis
     #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
+    #define WARNING_CURRENT 1000 // The current at which to display a warning confirmation (mA)
+    #define WARNING_MICROSTEP 32 // The largest microstep to warn on (the denominator of the fraction)
 #endif
 
 

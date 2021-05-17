@@ -18,7 +18,9 @@
         "string_view": "cpp",
         "initializer_list": "cpp",
         "algorithm": "cpp",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "atomic": "cpp",
+        "cstdint": "cpp"
     },
     "cSpell.words": [
         "CANID",

@@ -35,7 +35,7 @@ class StepperMotor;
 void showBootscreen();
 void updateDisplay();
 void displayMotorData();
-void displayError(String firstLine, String secondLine, String thirdLine, bool updateScreen = true);
+void displayWarning(String firstLine, String secondLine, String thirdLine, bool updateScreen = true);
 void selectMenuItem();
 void moveCursor();
 void exitCurrentMenu();

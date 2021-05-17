@@ -220,7 +220,7 @@ void displayMotorData() {
 
 
 // Display an error message
-void displayError(String firstLine, String secondLine, String thirdLine, bool updateScreen) {
+void displayWarning(String firstLine, String secondLine, String thirdLine, bool updateScreen) {
     clearOLED();
     writeOLEDString(0, 0,  firstLine,  false);
     writeOLEDString(0, 16, secondLine, false);
@@ -261,7 +261,7 @@ void selectMenuItem() {
 
             case CURRENT:
                 // Motor mAs. Need to get the current motor mAs, then convert that to a cursor value
-                currentCursorIndex = round(motor.getCurrent() / 100);
+                currentCursorIndex = constrain(round(motor.getCurrent() / 100), 0, MAX_CURRENT);
 
                 // Enter the menu
                 menuDepth = SUBMENUS;
@@ -319,21 +319,57 @@ void selectMenuItem() {
                 // Nothing to see here, everything is handled on the initial press.
                 break;
 
-            case CURRENT:
+            case CURRENT: {
                 // Motor mAs. Need to get the cursor value, then convert that to current value
-                motor.setCurrent(currentCursorIndex * 100);
+                // Get the set value
+                uint8_t currentSetting = 100 * currentCursorIndex;
 
-                // Exit the menu
-                menuDepth = MENU_RETURN_LEVEL;
+                // Check to see if the warning needs flagged
+                if (currentSetting >= WARNING_CURRENT) {
+
+                    // Set the display to output the warning
+                    menuDepth = WARNING;
+
+                    // Actually draw the warning
+                    displayWarning(F("Large current"), F("set. Are you"), F("sure?"), true);
+                }
+                else {
+                    // Set the value
+                    motor.setCurrent(currentSetting);
+                    
+                    // Exit the menu
+                    menuDepth = MENU_RETURN_LEVEL;
+                }
+           
+                // We're done here, time to head out
                 break;
+            }
 
-            case MICROSTEP:
+            case MICROSTEP: {
                 // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
-                motor.setMicrostepping(pow(2, currentCursorIndex));
+                // Get the set value
+                uint8_t microstepSetting = pow(2, currentCursorIndex);
 
-                // Exit the menu
-                menuDepth = MENU_RETURN_LEVEL;
+                // Check to see if the warning needs flagged
+                if (microstepSetting >= WARNING_MICROSTEP) {
+
+                    // Set the display to output the warning
+                    menuDepth = WARNING;
+
+                    // Actually draw the warning
+                    displayWarning(F("Large stepping"), F("set. Are you"), F("sure?"), true);
+                }
+                else {
+                    // Set the value
+                    motor.setMicrostepping(microstepSetting);
+                    
+                    // Exit the menu
+                    menuDepth = MENU_RETURN_LEVEL;
+                }
+                
+                // We're done here, time to head out
                 break;
+            }
 
             case ENABLE_LOGIC:
                 // Get if the enable pin is inverted
@@ -374,6 +410,26 @@ void selectMenuItem() {
 
     // Warning level
     else if (menuDepth == WARNING) {
+
+        // Check which menu was previously displayed
+        switch(submenu) {
+
+            // Need to set the current
+            case CURRENT:
+
+                // Calculate the setting from the cursor index
+                motor.setCurrent(100 * currentCursorIndex);
+
+            // Need to set the microstep
+            case MICROSTEP:
+
+                // Set the value
+                motor.setMicrostepping(pow(2, currentCursorIndex));
+
+            default:
+                // Nothing to do here, just move on
+                break;
+        }
 
         // Set the current menu to the last menu used
         menuDepth = MENU_RETURN_LEVEL;
