@@ -8,10 +8,10 @@
 #include "config.h"
 
 // Public variables
-extern float sineValues[];
+//extern float sineValues[];
 
 // Main functions
-float fastSin(uint16_t angle);
-float fastCos(uint16_t angle);
+int16_t fastSin(uint16_t angle);
+int16_t fastCos(uint16_t angle);
 
 #endif // !__FAST_SINE_H__

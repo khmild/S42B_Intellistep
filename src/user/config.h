@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.13"
+#define VERSION "0.0.14"
 
 
 // --------------  Settings  --------------
@@ -16,14 +16,14 @@
 //#define USE_CAN
 
 // Averages (number of readings in average)
-#define RPM_AVG_READINGS     50
-#define ANGLE_AVG_READINGS   35
-#define TEMP_AVG_READINGS    200
+#define RPM_AVG_READINGS     10
+#define ANGLE_AVG_READINGS   15
+#define TEMP_AVG_READINGS    100
 
 // If encoder estimation should be used
-//#define ENCODER_SPEED_ESTIMATION
+#define ENCODER_SPEED_ESTIMATION
 #ifdef ENCODER_SPEED_ESTIMATION
-    #define SPD_EST_MIN_INTERVAL 250 // The minimum sampling interval (ms). Increase to get more steady readings at the cost of accuracy
+    #define SPD_EST_MIN_INTERVAL 500 // The minimum sampling interval (us). Increase to get more steady readings at the cost of latency
 #endif
 
 // Serial configuration settings
@@ -44,7 +44,7 @@
 
 // Motor characteristics
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
-#define STEP_UPDATE_FREQ 100 // in Hz, to step the motor back to the correct position
+#define STEP_UPDATE_FREQ 500 // in Hz, to step the motor back to the correct position
 #define MAX_MOTOR_SPEED 50 // deg/s
 
 // Board characteristics
@@ -143,9 +143,9 @@
 #define LED_PIN PC_13
 
 // Motor mappings                                   [  A  ,   B  ]
-static const PinName COIL_DIR_1_PINS[]           =  { PB_8, PB_6 };
-static const PinName COIL_DIR_2_PINS[]           =  { PB_9, PB_7 };
-static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_4, PB_5 };
+static const PinName COIL_DIR_1_PINS[]           =  { PB_6, PB_8 };
+static const PinName COIL_DIR_2_PINS[]           =  { PB_7, PB_9 };
+static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 
 // Encoder SPI interface
 #define ENCODER_CS_PIN    PA_4 // SPI1_SS
@@ -170,7 +170,8 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_4, PB_5 };
 
 // --------------  Internal defines  --------------
 // Under the hood motor setup
-#define SINE_STEPS ((uint16_t)(128))
+#define SINE_VAL_COUNT ((uint16_t)(128))
+#define SINE_MAX ((int16_t)(10000))
 
 // Bitwise memory modification
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
@@ -181,6 +182,16 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_4, PB_5 };
 #define output(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12),n)
 #define input(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8),n)
 
+// Maybe an even faster digitalWrite, but only if really needed
+/*
+#define digitalWriteFaster(PinName pn, bool high) \
+    if (high) { \
+        WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BSRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
+    } \
+    else { \
+        WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
+    }
+*/
 
 // --------------  Debugging  --------------
 //#define TEST_FLASH

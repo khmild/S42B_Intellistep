@@ -1,6 +1,9 @@
 #include "motor.h"
 #include "oled.h"
 
+// Optimize for speed
+#pragma GCC optimize ("-Ofast")
+
 // Main constructor (with PID terms)
 StepperMotor::StepperMotor(float P, float I, float D) {
 
@@ -23,6 +26,9 @@ StepperMotor::StepperMotor(float P, float I, float D) {
     // Configure the PWM
     analogWriteResolution(12); // STM32's is 12 bits max (max 4096)
     analogWriteFrequency(MOTOR_PWM_FREQ * 1000);
+
+    // Disable the motor
+    disable();
 }
 
 // Constructor without PID terms
@@ -42,6 +48,9 @@ StepperMotor::StepperMotor() {
     // Configure the PWM
     analogWriteResolution(12); // STM32's is 12 bits max (max 4096)
     analogWriteFrequency(MOTOR_PWM_FREQ * 1000);
+
+    // Disable the motor
+    disable();
 }
 
 
@@ -124,13 +133,13 @@ void StepperMotor::setCurrent(uint16_t current) {
 
 
 // Get the microstepping divisor of the motor
-uint8_t StepperMotor::getMicrostepping() const {
+uint16_t StepperMotor::getMicrostepping() const {
     return (this -> microstepDivisor);
 }
 
 
 // Set the microstepping divisor of the motor
-void StepperMotor::setMicrostepping(uint8_t setMicrostepping) {
+void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (setMicrostepping != -1) {
@@ -284,6 +293,9 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 
 // Sets the coils of the motor based on the angle (angle should be in degrees)
 void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
+    
+    // Last values used
+    //static int16_t lastCoilAPower = 0, lastCoilBPower = 0;
 
     // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
     float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
@@ -296,9 +308,9 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
     roundedMicrosteps = roundedMicrosteps % (4 * (this -> microstepDivisor));
 
     // Calculate the sine and cosine of the angle
-    uint8_t arrayIndex = roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor));
-    float angleSin = fastSin(arrayIndex);
-    float angleCos = fastCos(arrayIndex);
+    uint16_t arrayIndex = roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor));
+    int16_t angleSin = fastSin(arrayIndex);
+    int16_t angleCos = fastCos(arrayIndex);
 
     // If in reverse, we swap the sign of one of the angles    
     if (direction == PIN) {
@@ -311,49 +323,43 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
     }
 
     // Equation comes out to be (effort * -1 to 1) depending on the sine/cosine of the phase angle
-    float coilAPower = ((this -> current) * abs(angleSin));
-    float coilBPower = ((this -> current) * abs(angleCos));
+    int16_t coilAPower = ((int16_t)(this -> current) * (int16_t)(angleSin)) / SINE_MAX;
+    int16_t coilBPower = ((int16_t)(this -> current) * (int16_t)(angleCos)) / SINE_MAX;
 
     // Check the if the coil should be energized to move backward or forward
-    if (angleSin > 0) {
+    if (coilAPower > 0) {
 
         // Set first channel for forward movement
         setCoil(A, FORWARD, coilAPower);
     }
-    else if (angleSin < 0) {
+    else if (coilAPower < 0) {
 
         // Set first channel for backward movement
-        setCoil(A, BACKWARD, coilAPower);
+        setCoil(A, BACKWARD, -coilAPower);
     }
-    else /* (angleSin == 0) */ {
+    else {
         setCoil(A, BRAKE);
     }
 
 
     // Check the if the coil should be energized to move backward or forward
-    if (angleCos > 0)  {
+    if (coilBPower > 0) {
 
-        // Set second channel for forward movement
+        // Set first channel for forward movement
         setCoil(B, FORWARD, coilBPower);
     }
-    else if (angleCos < 0) {
+    else if (coilBPower < 0) {
 
-        // Set second channel for backward movement
-        setCoil(B, BACKWARD, coilBPower);
+        // Set first channel for backward movement
+        setCoil(B, BACKWARD, -coilBPower);
     }
-    else /* (angleCos == 0) */ {
+    else {
         setCoil(B, BRAKE);
     }
 
-    Serial.print("\t");
-    Serial.print(angleSin);
-    Serial.print(" ");
-    Serial.print(angleCos);
-    //Serial.print(" ");
-    //Serial.print(roundedMicrosteps);
-    //Serial.print(" ");
-    //Serial.print(this -> microstepDivisor);
-    Serial.println();
+    // Save the old values
+    //lastCoilAPower = coilAPower;
+    //lastCoilBPower = coilBPower;
 }
 
 
@@ -361,6 +367,7 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
 void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current) {
 
     // Disable the coil
+    // ! Make this process faster
     analogWrite(COIL_POWER_OUTPUT_PINS[coil], 0);
 
     // ! Maybe for later?

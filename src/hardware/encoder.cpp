@@ -7,8 +7,9 @@ SPI_HandleTypeDef spiConfig;
 GPIO_InitTypeDef GPIO_InitStructure;
 
 // A storage for the last angle sampled
-#ifdef ENCODER_ESTIMATION
+#ifdef ENCODER_SPEED_ESTIMATION
     double lastEncoderAngle = 0;
+    uint32_t lastAngleSampleTime = 0;
 #endif
 
 // Moving average instances
@@ -174,7 +175,7 @@ void initEncoder() {
     digitalWrite(ENCODER_CS_PIN, HIGH);
 
     // Reset the encoder's firmware
-    writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
+    //writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
 
     // Setup the moving average calculations
     encoderSpeedAvg.begin(RPM_AVG_READINGS);
@@ -190,6 +191,12 @@ void initEncoder() {
     // Set the offsets
     startupAngleOffset = getAngle();
     startupAngleRevOffset = getAbsoluteRev();
+
+    // Set the correct starting values for the estimation if using estimation
+    #ifdef ENCODER_SPEED_ESTIMATION
+        lastEncoderAngle = getAbsoluteAngle();
+        lastAngleSampleTime = micros();
+    #endif
 }
 
 
@@ -231,7 +238,6 @@ uint16_t readEncoderRegister(uint16_t registerAddress) {
 
 
 // Read multiple registers
-// ! Flat out doesn't work
 void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength) {
 
     // Pull CS low to select encoder
@@ -373,17 +379,20 @@ double getEncoderSpeed() {
     double newAngle = getAbsoluteAngle();
 
     // Sample time
-    uint32_t currentTime = millis();
+    uint32_t currentTime = micros();
 
     // Compute the average velocity
-    double avgVelocity = (newAngle - lastEncoderAngle) / (currentTime - lastAngleSampleTime);
+    double avgVelocity = 1000000 * (newAngle - lastEncoderAngle) / (currentTime - lastAngleSampleTime);
 
     // Correct the last angle and sample time
     lastEncoderAngle = newAngle;
     lastAngleSampleTime = currentTime;
 
-    // Return the average velocity
-    return avgVelocity;
+    // Add the value to the averaging list
+    encoderSpeedAvg.add(avgVelocity);
+
+    // Return the averaged velocity
+    return encoderSpeedAvg.get();
 }
 
 #else // ENCODER_ESTIMATION
@@ -484,6 +493,6 @@ double getAbsoluteAngle() {
 
 // Set encoder zero point
 void zeroEncoder() {
-    startupAngleOffset = getAngle();
-    startupAngleRevOffset = getAbsoluteRev();
+    startupAngleOffset = getAngle() + startupAngleOffset;
+    startupAngleRevOffset = getAbsoluteRev() + startupAngleRevOffset;
 }

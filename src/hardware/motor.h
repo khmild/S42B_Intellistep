@@ -85,10 +85,10 @@ class StepperMotor {
         void setCurrent(uint16_t current);
 
         // Gets the microstepping mode of the motor
-        uint8_t getMicrostepping() const;
+        uint16_t getMicrostepping() const;
 
         // Sets the microstepping mode of the motor
-        void setMicrostepping(uint8_t setMicrostepping);
+        void setMicrostepping(uint16_t setMicrostepping);
 
         // Sets the angle of a full step of the motor
         void setFullStepAngle(float newStepAngle);
@@ -185,7 +185,7 @@ class StepperMotor {
         uint16_t current = 750;
 
         // Microstepping divisor
-        uint8_t microstepDivisor = 1;
+        uint16_t microstepDivisor = 1;
 
         // Angle of a full step
         float fullStepAngle = 1.8;

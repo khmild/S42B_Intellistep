@@ -1,6 +1,9 @@
 // Import the header file
 #include "timers.h"
 
+// Optimize for speed
+#pragma GCC optimize ("-Ofast")
+
 // Create a new timer instance
 HardwareTimer *steppingTimer = new HardwareTimer(TIM1);
 
@@ -65,9 +68,6 @@ void updateMotor() {
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         motor.enable();
 
-        motor.step(COUNTER_CLOCKWISE, false, false);
-
-        /*
         // Get the current angle of the motor (multiple reads take a longer time)
         double currentAngle = getAbsoluteAngle();
 
@@ -75,10 +75,10 @@ void updateMotor() {
         float angularDeviation = currentAngle - motor.getDesiredAngle();
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (abs(angularDeviation) > motor.getMicrostepAngle()) {
+        if (abs(angularDeviation) > 16 * motor.getMicrostepAngle()) {
 
             // Set the stepper to move in the correct direction
-            if (angularDeviation > motor.getMicrostepAngle()) {
+            if (angularDeviation > 16 * motor.getMicrostepAngle()) {
 
                 // Motor is at a position larger than the desired one
                 motor.step(CLOCKWISE, false, false);
@@ -110,6 +110,5 @@ void updateMotor() {
             #endif
             digitalWriteFast(LED_PIN, LOW);
         }
-        */
     }
 }

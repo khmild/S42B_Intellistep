@@ -14,6 +14,9 @@ StepperMotor motor = StepperMotor();
 // Run the setup
 void setup() {
 
+    // Set up the HAL library
+    HAL_Init();
+
     // Set processor up
     SystemInit();
 
@@ -29,6 +32,8 @@ void setup() {
 
     // Setup the motor for use
     motor.enable(true);
+    //motor.setMicrostepping(16);
+    //motor.setDesiredAngle(100);
 
     // Only run if the OLED is enabled
     #ifdef USE_OLED
@@ -145,10 +150,28 @@ void setup() {
 
         // Setup the motor timers and interrupts
         setupMotorTimers();
+        
+        //uint8_t count = 0;
 
         // Loop forever, checking the keys and updating the display
         while(true) {
-            
+
+            /*
+            while(count < 16) {
+                motor.step(CLOCKWISE);
+                displayMotorData();
+                delay(5);
+                count++;
+            }
+
+            while (count > 0) {
+                motor.step(COUNTER_CLOCKWISE);
+                displayMotorData();
+                delay(5);
+                count--;
+            }
+            */
+
             // Check to see if serial data is available to read
             #ifdef USE_SERIAL
                 runSerialParser();
@@ -180,26 +203,26 @@ void loop() {
 // Overclocks the processor to the desired value
 void overclock(uint32_t PLLMultiplier) {
 
-    // Use PLL as the system clock instead of the HSE (the board's oscillator)
-    RCC -> CFGR |= RCC_CFGR_PLLSRC;
+    // Tune the HSI
+    //HSI_CalibrateMinError();
 
-    // Activate the HSE (board's oscillator)
-    RCC -> CR |= RCC_CR_HSEON;
+    // Initialization structure
+    RCC_OscInitTypeDef RCC_OscInitStruct;
 
-    // Set the multiplier to desired
-    RCC -> CFGR |= PLLMultiplier;
+    /* Enable HSE Oscillator and activate PLL with HSI as source */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    RCC_OscInitStruct.HSEState = RCC_HSE_OFF;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
+    RCC_OscInitStruct.PLL.PLLMUL = PLLMultiplier;
+    HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
-    // Set the HSE to half speed before the PLL (so effectively multiplier/2 speed overall)
-    RCC -> CFGR |= RCC_CFGR_PLLXTPRE_HSE;
-
-    // Activate the PLL
-    RCC -> CR |= RCC_CR_PLLON;
-
-    // Wait until the PLL is configured
+    // Wait for the PLL to be configured
     while(!(RCC_CR_PLLRDY & RCC -> CR));
 
     // Use the PLL as the system clock
-    RCC -> CFGR |= RCC_CFGR_SW_PLL;
+    RCC -> CFGR |= RCC_SYSCLKSOURCE_PLLCLK;
 
     // Update the system clock with the new speed
     SystemCoreClockUpdate();
