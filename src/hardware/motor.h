@@ -78,11 +78,17 @@ class StepperMotor {
         // Sets the Derivative of the PID loop
         void setDValue(float newD);
 
-        // Gets the current of the motor (in mA)
-        uint16_t getCurrent() const;
+        // Gets the RMS current of the motor (in mA)
+        uint16_t getRMSCurrent() const;
 
-        // Sets the current of the motor (in mA)
-        void setCurrent(uint16_t current);
+        // Gets the peak current of the motor
+        uint16_t getPeakCurrent() const;
+
+        // Sets the RMS current of the motor (in mA)(Peak is adjusted to match)
+        void setRMSCurrent(uint16_t rmsCurrent);
+
+        // Sets the peak current of the motor (in mA)(RMS is adjusted to match)
+        void setPeakCurrent(uint16_t peakCurrent);
 
         // Gets the microstepping mode of the motor
         uint16_t getMicrostepping() const;
@@ -181,8 +187,10 @@ class StepperMotor {
         float rateError;
 
         // Motor characteristics
-        // Current (in mA)
-        uint16_t current = 750;
+        // RMS Current (in mA)
+        uint16_t rmsCurrent = 750;
+        // Peak Current (in mA)
+        uint16_t peakCurrent = (rmsCurrent * 1.414);
 
         // Microstepping divisor
         uint16_t microstepDivisor = 1;

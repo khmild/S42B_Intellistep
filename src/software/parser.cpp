@@ -210,8 +210,9 @@ String parseString(String buffer) {
                 return FEEDBACK_OK;
 
             case 907:
-                // M907 (ex M907 V3000) - Sets the current in mA
-                motor.setCurrent(parseValue(buffer, 'V').toInt());
+                // M907 (ex M907 R3000 or M907 P3000) - Sets the RMS or Peak current in mA
+                motor.setRMSCurrent(parseValue(buffer, 'V').toInt());
+                motor.setPeakCurrent(parseValue(buffer, 'P').toInt());
                 return FEEDBACK_OK;
 
         }

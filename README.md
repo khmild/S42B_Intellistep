@@ -39,7 +39,7 @@ GCode Table
 - M355 (ex M355 V1.34) - Sets the microstep multiplier for the board. Allows to use multiple motors connected to the same mainboard pin.
 - M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
 - M500 (ex M500) - Saves the currently loaded parameters into flash
-- M907 (ex M907 V3000) - Sets the current in mA
+- M907 (ex M907 R3000 or M907 P3000) - Sets the RMS or Peak current in mA
 
 ## Credits
 

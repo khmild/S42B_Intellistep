@@ -315,7 +315,7 @@ void loadSavedValues() {
     flashRead(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));
 
     // Set the motor current
-    motor.setCurrent(savedParameters[0]);
+    motor.setRMSCurrent(savedParameters[0]);
 
     // Motor stepping angle
     motor.setFullStepAngle(savedParameters[1]);
@@ -357,7 +357,7 @@ void saveParametersToFlash() {
     uint16_t savedParameters[11];
 
     // Get the motor current
-    savedParameters[0] = motor.getCurrent();
+    savedParameters[0] = motor.getRMSCurrent();
 
     // Motor stepping angle
     savedParameters[1] = motor.getFullStepAngle();

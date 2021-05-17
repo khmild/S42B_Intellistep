@@ -53,7 +53,7 @@
 #define CURRENT_SENSE_RESISTOR  0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
 
 // Motor settings
-#define MAX_CURRENT             3500 // Maximum current in mA
+#define MAX_PEAK_CURRENT        3500 // Maximum peak current in mA
 #define MIN_MICROSTEP_DIVISOR   1 // The minimum microstepping divisor
 #define MAX_MICROSTEP_DIVISOR   32 // The maximum microstepping divisor
 #define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
@@ -65,8 +65,10 @@
 #ifdef USE_OLED
     #define BUTTON_REPEAT_INTERVAL 250 // Millis
     #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
-    #define WARNING_CURRENT 1000 // The current at which to display a warning confirmation (mA)
     #define WARNING_MICROSTEP 32 // The largest microstep to warn on (the denominator of the fraction)
+    
+    #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
+    //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
 #endif
 
 
@@ -198,5 +200,8 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 // --------------  Debugging  --------------
 //#define TEST_FLASH
 
+// Import the sanity check (needed so all files have the defines done in the sanity check file)
+// Must be last so that it can use the defines above
+#include "sanityCheck.h"
 
 #endif //__CONFIG_H

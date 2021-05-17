@@ -114,20 +114,44 @@ void StepperMotor::setDValue(float newD) {
 }
 
 
-// Gets the current of the motor (in mA)
-uint16_t StepperMotor::getCurrent() const {
-    return (this -> current);
+// Gets the RMS current of the motor (in mA)
+uint16_t StepperMotor::getRMSCurrent() const {
+    return (this -> rmsCurrent);
 }
 
 
-// Sets the current of the motor (in mA)
-void StepperMotor::setCurrent(uint16_t current) {
+// Gets the peak current of the motor (in mA)
+uint16_t StepperMotor::getPeakCurrent() const {
+    return (this -> peakCurrent);
+}
+
+
+// Sets the RMS current of the motor (in mA)
+void StepperMotor::setRMSCurrent(uint16_t rmsCurrent) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
-    if (current != -1) {
+    if (rmsCurrent != -1) {
 
-        // Make sure that the current is within the current bounds of the motor, if so set it
-        this -> current = constrain(current, 0, 3500);
+        // Make sure that the RMS current is within the current bounds of the motor, if so set it
+        this -> rmsCurrent = constrain(rmsCurrent, 0, (uint16_t)MAX_RMS_CURRENT);
+
+        // Also set the peak current
+        this -> peakCurrent = constrain((uint16_t)(rmsCurrent * 1.414), 0, (uint16_t)MAX_PEAK_CURRENT);
+    }
+}
+
+
+// Sets the peak current of the motor (in mA)
+void StepperMotor::setPeakCurrent(uint16_t peakCurrent) {
+
+    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
+    if (peakCurrent != -1) {
+
+        // Make sure that the peak current is within the current bounds of the motor, if so set it
+        this -> peakCurrent = constrain(peakCurrent, 0, (uint16_t)MAX_PEAK_CURRENT);
+
+        // Also set the RMS current
+        this -> rmsCurrent = constrain((uint16_t)(peakCurrent * 0.707), 0, (uint16_t)MAX_RMS_CURRENT);
     }
 }
 
@@ -323,8 +347,8 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
     }
 
     // Equation comes out to be (effort * -1 to 1) depending on the sine/cosine of the phase angle
-    int16_t coilAPower = ((int16_t)(this -> current) * (int16_t)(angleSin)) / SINE_MAX;
-    int16_t coilBPower = ((int16_t)(this -> current) * (int16_t)(angleCos)) / SINE_MAX;
+    int16_t coilAPower = ((int16_t)(this -> peakCurrent) * angleSin) / SINE_MAX;
+    int16_t coilBPower = ((int16_t)(this -> peakCurrent) * angleCos) / SINE_MAX;
 
     // Check the if the coil should be energized to move backward or forward
     if (coilAPower > 0) {
