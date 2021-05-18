@@ -325,7 +325,7 @@ void selectMenuItem() {
                 uint8_t rmsCurrentSetting = 100 * currentCursorIndex;
 
                 // Check to see if the warning needs flagged
-                if (rmsCurrentSetting >= (uint16_t)WARNING_RMS_CURRENT) {
+                if (rmsCurrentSetting % (uint16_t)MAX_RMS_CURRENT >= (uint16_t)WARNING_RMS_CURRENT) {
 
                     // Set the display to output the warning
                     menuDepth = WARNING;
@@ -335,7 +335,7 @@ void selectMenuItem() {
                 }
                 else {
                     // Set the value
-                    motor.setRMSCurrent(rmsCurrentSetting);
+                    motor.setRMSCurrent(rmsCurrentSetting % (uint16_t)MAX_RMS_CURRENT);
                     
                     // Exit the menu
                     menuDepth = MENU_RETURN_LEVEL;
@@ -418,7 +418,7 @@ void selectMenuItem() {
             case CURRENT:
 
                 // Calculate the setting from the cursor index
-                motor.setRMSCurrent(100 * currentCursorIndex);
+                motor.setRMSCurrent((100 * currentCursorIndex) % (uint16_t)MAX_RMS_CURRENT);
 
             // Need to set the microstep
             case MICROSTEP:
