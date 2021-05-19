@@ -6,6 +6,7 @@
 // Each set of 8 is stored as an integer. The panel is written to horizontally, then vertically
 // Array stores the values in width - height format with bits stored along vertical rows
 uint8_t OLEDBuffer[128][8];
+char outBuffer[OB_SIZE];
 
 // The index of the current top level menu item
 int topLevelMenuIndex = 0;
@@ -20,7 +21,7 @@ int lastMenuDepthIndex = 0;
 
 // Displays the bootscreen
 void showBootscreen() {
-    writeOLEDString(0, 0, F("Intellistep"), false);
+    writeOLEDString(0, 0,  F("Intellistep"), false);
     writeOLEDString(0, 32, F("Version: "), false);
     writeOLEDString(0, 48, F(VERSION), true);
 }
@@ -80,7 +81,8 @@ void updateDisplay() {
                         if (!((currentCursorIndex + stringIndex) * 100 > MAX_CURRENT)) {
 
                             // Value is in range, display the current on that line
-                            writeOLEDString(25, stringIndex * 16, String((int) ((currentCursorIndex + stringIndex) * 100)) + String("mA"), false);
+                            snprintf(outBuffer, OB_SIZE, "%dmA", (int)((currentCursorIndex + stringIndex) * 100));
+                            writeOLEDString(25, stringIndex * 16, outBuffer, false);
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
@@ -113,7 +115,8 @@ void updateDisplay() {
                         if (!(pow(2, currentCursorIndex + stringIndex) > MAX_MICROSTEP_DIVISOR)) {
 
                             // Value is in range, display the current on that line
-                            writeOLEDString(25, stringIndex * 16, String("1/") + String((int) pow(2, currentCursorIndex + stringIndex)) + String("th"), false);
+                            snprintf(outBuffer, OB_SIZE, "1/%dth", (int)pow(2, currentCursorIndex + stringIndex));
+                            writeOLEDString(25, stringIndex * 16, outBuffer, false);
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
@@ -192,18 +195,22 @@ void displayMotorData() {
     #else // ! ENCODER_SPEED_ESTIMATION
 
     // No need to check, just sample it
-    writeOLEDString(0, 0, (String("RPM: ") + padNumber(motor.getMotorRPM(), 2, 3)), false);
+    snprintf(outBuffer, OB_SIZE, "RPM: %06.3f", motor.getMotorRPM());
+    writeOLEDString(0, 0, outBuffer, false);
 
     #endif // ! ENCODER_SPEED_ESTIMATION
 
     // Angle error
-    writeOLEDString(0, 16, (String("Err: ") + padNumber(motor.getAngleError(), 3, 2)), false);
+    snprintf(outBuffer, OB_SIZE, "Err: %06.2f", motor.getAngleError());
+    writeOLEDString(0, 16, outBuffer, false);
 
     // Current angle of the motor
-    writeOLEDString(0, 32, (String("Deg: ") + padNumber(getEncoderAngle(), 3, 2)), false);
+    snprintf(outBuffer, OB_SIZE, "Deg: %06.2f", getEncoderAngle());
+    writeOLEDString(0, 32, outBuffer, false);
 
     // Maybe a 4th line later?
-    writeOLEDString(0, 48, (String("Temp: ") + String(getEncoderTemp()) + String(" C")), true);
+    snprintf(outBuffer, OB_SIZE, "Temp: %.0f C", getEncoderTemp());
+    writeOLEDString(0, 48, outBuffer, true);
 }
 
 
@@ -327,7 +334,6 @@ void exitCurrentMenu() {
     }
 }
 
-
 // Returns the depth of the menu (helpful for watching the select button)
 int getMenuDepth() {
     return menuDepthIndex;
@@ -335,7 +341,7 @@ int getMenuDepth() {
 
 
 // A list of all of the top level menu items
-String topLevelMenuItems[] = {
+const char* topLevelMenuItems[] = {
     "Calibrate",
     "Motor mA",
     "Microstep",
@@ -344,52 +350,8 @@ String topLevelMenuItems[] = {
     ""
 };
 
-
 // Length of the list of top menu items (found by dividing the length of the list by how much space a single element takes up)
 const int topLevelMenuLength = sizeof(topLevelMenuItems) / sizeof(topLevelMenuItems[0]);
-
-
-// Function for padding numbers
-String padNumber(float number, int leadingZeroCount, int followingZeroCount) {
-
-    // The final string to be output
-    String finalString = "";
-
-    // Correct the number's rounding
-    number = roundToPlace(number, followingZeroCount);
-
-    // If the value is negative, add a negative sign. Otherwise, add a blank space
-    if (number < 0) {
-        finalString += "-";
-    }
-    else {
-        finalString += " ";
-    }
-
-    // Add any necessary zeros
-    for (int index = (leadingZeroCount - 1); index > 0; index--) {
-        if (abs(number) < pow(10, index)) {
-            finalString += "0";
-        }
-        else {
-            // No need to continue, the other values will fail as well
-            break;
-        }
-    }
-
-    // Add the number to the string (must be absolute, otherwise sign is inserted)
-    finalString += String(abs(number));
-
-    // Return the string
-    return finalString;
-}
-
-
-// Round to a specific decimal place
-float roundToPlace(float number, int place) {
-    return round(number * pow(10, place)) / pow(10, place);
-}
-
 
 // Sets up the OLED panel
 void initOLED() {

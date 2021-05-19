@@ -1,5 +1,4 @@
-#ifndef __OLED_H__
-#define __OLED_H__
+#pragma once
 
 // Imports
 #include "config.h"
@@ -11,7 +10,7 @@
 #include "oledfont.h"
 
 // Variables
-extern String topLevelMenuItems[];
+extern const char* topLevelMenuItems[];
 extern const int topLevelMenuLength;
 class StepperMotor;
 
@@ -23,8 +22,6 @@ void selectMenuItem();
 void moveCursor();
 void exitCurrentMenu();
 int getMenuDepth();
-String padNumber(float number, int leadingZeroCount, int followingZeroCount);
-float roundToPlace(float number, int place);
 
 // BTT Display definitions
 typedef enum {
@@ -39,6 +36,7 @@ typedef enum {
 
 #define MAX_CHAR_POSX 122
 #define MAX_CHAR_POSY 58
+#define OB_SIZE 32
 
 // Low level OLED commands
 void initOLED();
@@ -53,5 +51,3 @@ void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fo
 void writeOLEDString(uint8_t x, uint8_t y, const char *p, uint8_t fontSize, bool updateScreen);
 void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen);
 void clearOLED();
-
-#endif

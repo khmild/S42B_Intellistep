@@ -62,14 +62,14 @@ void setup() {
 
         // Display that the motor is not calibrated
         clearOLED();
-        writeOLEDString(0, 0, "NOT", false);
+        writeOLEDString(0, 0,  "NOT", false);
         writeOLEDString(0, 16, "Calibrated!", false);
         writeOLEDString(0, 32, "Please calibrate", true);
         delay(3000);
 
         // Display that the select key can be clicked to run calibration
         clearOLED();
-        writeOLEDString(0, 0, "Use the", false);
+        writeOLEDString(0, 0,  "Use the", false);
         writeOLEDString(0, 16, "select key", false);
         writeOLEDString(0, 32, "to calibrate", true);
 
@@ -104,7 +104,7 @@ void setup() {
 
         // Let the user know that the calibration was successfully loaded
         clearOLED();
-        writeOLEDString(0, 0, "Calibration", false);
+        writeOLEDString(0, 0,  "Calibration", false);
         writeOLEDString(0, 16, "OK!", true);
         delay(1000);
 
