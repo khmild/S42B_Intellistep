@@ -1,3 +1,9 @@
+// Import the config (needed for the USE_CAN define)
+#include "config.h"
+
+// Only build the file if needed
+#ifdef USE_CAN
+
 // The local header file
 #include "canMessaging.h"
 
@@ -11,7 +17,7 @@ AXIS_CAN_ID canID = DEFAULT_CAN_ID;
 void initCAN() {
 
     // Initialize the CAN interface
-    CANInit(CAN_1000KBPS);
+    //CANInit(CAN_1000KBPS);
 
     // Clear the command string
     CANCommandString = String();
@@ -30,23 +36,23 @@ void sendCANString(AXIS_CAN_ID ID, String string) {
         if ((string.length() + 1) > 8) {
 
             // Set the ID and the message content
-            canMessage message((int)ID, string.substring(0, 7));
+            //canMessage message((int)ID, string.substring(0, 7));
 
             // Send the message over the CAN bus
-            CANSend(message);
+            //CANSend(message);
 
             // String needs to be split into multiple packets
             string.remove(0, 8);
         }
         else {
             // Build the CAN message
-            canMessage message((int)ID, string.substring(0, string.length() - 1));
+            //canMessage message((int)ID, string.substring(0, string.length() - 1));
 
             // Add the terminator to the end
-            message.data[string.length()] = '>';
+            //message.data[string.length()] = '>';
 
             // Send the message over the CAN bus
-            CANSend(message);
+            //CANSend(message);
 
             // Break the loop after finishing
             break;
@@ -58,28 +64,28 @@ void sendCANString(AXIS_CAN_ID ID, String string) {
 void receieveCANMsg() {
 
     // Check to make sure that we can actually read a value
-    if (CANMsgAvail()) {
+    //if (CANMsgAvail()) {
 
         // Create the storage for the CAN message with the read value
-        canMessage message = CANReceive();
+        //canMessage message = CANReceive();
 
         // Check to see what ID the message has, only listening if it's for this board
-        if (message.id == (int)canID) {
+        //if (message.id == (int)canID) {
 
             // Copy data to the command string
-            CANCommandString += message.toString();
+            //CANCommandString += message.toString();
 
             // Check to see if the command buffer is full ('>' is the termanator)
-            if (CANCommandString.indexOf('>')) {
+            //if (CANCommandString.indexOf('>')) {
 
                 // Parse the command
-                parseString(CANCommandString.substring(0, CANCommandString.indexOf('>')));
+                //parseString(CANCommandString.substring(0, CANCommandString.indexOf('>')));
 
                 // Empty the buffer
-                CANCommandString = "";
-            }
-        }
-    }
+                //CANCommandString = "";
+            //}
+        //}
+    //}
 }
 
 // Sets the CAN ID of the board
@@ -91,3 +97,5 @@ void setCANID(AXIS_CAN_ID newCANID) {
 AXIS_CAN_ID getCANID() {
     return canID;
 }
+
+#endif // ! USE_CAN

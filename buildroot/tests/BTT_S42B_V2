@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# Build tests for the S42B v2 (STM32F103)
+#
+
+# exit on first failure
+set -e
+
+#
+# Build with the default configurations
+#
+restore_configs
+opt_enable USE_OLED USE_CAN USE_SERIAL
+exec_test $1 $2 "OLED, CAN, Serial" "$3"
+
+restore_configs
+opt_enable USE_OLED USE_SERIAL
+opt_disable USE_CAN
+exec_test $1 $2 "OLED, Serial" "$3"
+
+restore_configs
+opt_disable USE_OLED USE_CAN USE_SERIAL
+exec_test $1 $2 "No extra options" "$3"

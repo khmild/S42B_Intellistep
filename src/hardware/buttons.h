@@ -10,7 +10,7 @@ extern bool dipInverted;
 // Function definitions
 void initButtons();
 void checkButtons(bool updateScreen);
-bool checkButtonState(uint32_t buttonPin);
+bool checkButtonState(PinName buttonPin);
 void readDipMicrostepping();
 void setDipInverted(bool inverted);
 bool getDipInverted();

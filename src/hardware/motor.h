@@ -55,19 +55,19 @@ class StepperMotor {
         StepperMotor();
 
         // Returns the current RPM of the motor to two decimal places
-        float getMotorRPM();
+        float getMotorRPM() const;
 
         // Returns the deviation of the motor from the PID loop
-        float getAngleError();
+        float getAngleError() const;
 
         // Returns the Proportional value of the PID loop
-        float getPValue();
+        float getPValue() const;
 
         // Returns the Integral value fo the PID loop
-        float getIValue();
+        float getIValue() const;
 
         // Returns the Derivative value for the PID loop
-        float getDValue();
+        float getDValue() const;
 
         // Sets the Proportional term of the PID loop
         void setPValue(float newP);
@@ -78,59 +78,71 @@ class StepperMotor {
         // Sets the Derivative of the PID loop
         void setDValue(float newD);
 
-        // Gets the current of the motor (in mA)
-        int getCurrent();
+        // Gets the RMS current of the motor (in mA)
+        uint16_t getRMSCurrent() const;
 
-        // Sets the current of the motor (in mA)
-        void setCurrent(int current);
+        // Gets the peak current of the motor
+        uint16_t getPeakCurrent() const;
+
+        // Sets the RMS current of the motor (in mA)(Peak is adjusted to match)
+        void setRMSCurrent(uint16_t rmsCurrent);
+
+        // Sets the peak current of the motor (in mA)(RMS is adjusted to match)
+        void setPeakCurrent(uint16_t peakCurrent);
 
         // Gets the microstepping mode of the motor
-        int getMicrostepping();
+        uint16_t getMicrostepping() const;
 
         // Sets the microstepping mode of the motor
-        void setMicrostepping(int setMicrostepping);
+        void setMicrostepping(uint16_t setMicrostepping);
 
         // Sets the angle of a full step of the motor
         void setFullStepAngle(float newStepAngle);
 
         // Gets the full step angle of the motor
-        float getFullStepAngle();
+        float getFullStepAngle() const;
 
         // Get the microstepping angle of the motor. This is the full steps divided by the microsteps. Used to speed up processing
-        float getMicrostepAngle();
+        float getMicrostepAngle() const;
 
         // Set if the motor should be reversed
         void setReversed(bool reversed);
 
         // Get if the motor direction is reversed
-        bool getReversed();
+        bool getReversed() const;
 
         // Set if the motor enable pin should be inverted
         void setEnableInversion(bool inverted);
 
         // Get if the motor enable pin is inverted
-        bool getEnableInversion();
+        bool getEnableInversion() const;
 
         // Set the microstep multiplier
         void setMicrostepMultiplier(float newMultiplier);
 
         // Get the microstep multiplier
-        float getMicrostepMultiplier();
+        float getMicrostepMultiplier() const;
+
+        // Set the desired motor angle
+        void setDesiredAngle(float newDesiredAngle);
+
+        // Gets the desired motor angle
+        float getDesiredAngle() const;
 
         // Calculates the coil values for the motor and updates the set angle. 
-        void step(STEP_DIR dir = PIN, bool useMultiplier = true);
+        void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredPosition = true);
 
         // Sets the coils to hold the motor at the desired phase angle
-        void driveCoils(float angle);
+        void driveCoils(float angle, STEP_DIR direction);
 
         // Sets the state of a coil
-        void setCoil(COIL coil, COIL_STATE desiredState, float current = 0);
+        void setCoil(COIL coil, COIL_STATE desiredState, uint16_t current = 0);
 
         // Calculates the correct PWM setting based on an input current
-        uint32_t currentToPWM(float current);
+        uint32_t currentToPWM(uint16_t current) const;
 
         // Sets the speed of the motor (angular speed is in deg/s)
-        float speedToHz(float angularSpeed);
+        float speedToHz(float angularSpeed) const;
 
         // Enables the coils, preventing motor movement
         void enable(bool clearForcedDisable = false);
@@ -144,14 +156,19 @@ class StepperMotor {
         // Calibrates the encoder and PID loop
         void calibrate();
 
-        // Variable to keep the desired angle of the motor
-        float desiredAngle = 0;
+
 
     // Things that shouldn't be accessed by the outside
     private:
 
         // Function for turning booleans into -1 for true and 1 for false
-        float invertDirection(bool invert);
+        float invertDirection(bool invert) const;
+        
+        // Variable to keep the desired angle of the motor
+        float desiredAngle = 0;
+
+        // Phase angle of the motor (increases in both negative and positive directions)
+        float phaseAngle = 0;
 
         // Motor PID controller values
         float pTerm = 0;
@@ -170,11 +187,13 @@ class StepperMotor {
         float rateError;
 
         // Motor characteristics
-        // Current (in mA)
-        int current = 750;
+        // RMS Current (in mA)
+        uint16_t rmsCurrent = 750;
+        // Peak Current (in mA)
+        uint16_t peakCurrent = (rmsCurrent * 1.414);
 
         // Microstepping divisor
-        int microstepDivisor = 1;
+        uint16_t microstepDivisor = 1;
 
         // Angle of a full step
         float fullStepAngle = 1.8;
@@ -190,9 +209,6 @@ class StepperMotor {
 
         // If the motor enable is inverted
         bool enableInverted = false;
-
-        // The stepping interval (in millis)
-        float stepInterval = 10;
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
         float microstepMultiplier = 1;

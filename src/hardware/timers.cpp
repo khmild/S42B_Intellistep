@@ -1,11 +1,14 @@
 // Import the header file
 #include "timers.h"
 
+// Optimize for speed
+#pragma GCC optimize ("-Ofast")
+
 // Create a new timer instance
 HardwareTimer *steppingTimer = new HardwareTimer(TIM1);
 
 // A counter for the number of position faults (used for stall detection)
-int outOfPosCount = 0;
+uint16_t outOfPosCount = 0;
 
 
 // Sets up the motor update timer
@@ -24,19 +27,20 @@ void setupMotorTimers() {
     steppingTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
     steppingTimer -> setOverflow(STEP_UPDATE_FREQ, HERTZ_FORMAT);
     steppingTimer -> attachInterrupt(updateMotor);
+    steppingTimer -> refresh();
     steppingTimer -> resume();
 }
 
 
 // Pauses the timers, essentially disabling them for the time being
 void disableInterrupts() {
-    steppingTimer -> pause();
+    __disable_irq();
 }
 
 
 // Resumes the timers, re-enabling them
 void enableInterrupts() {
-    steppingTimer -> resume();
+    __enable_irq();
 }
 
 
@@ -64,37 +68,33 @@ void updateMotor() {
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         motor.enable();
 
-        motor.step(COUNTER_CLOCKWISE, false);
-
-        digitalWriteFast(LED_PIN, HIGH);
-
-
-        /*
         // Get the current angle of the motor (multiple reads take a longer time)
-        double currentAngle = getEncoderAngle();
+        double currentAngle = getAbsoluteAngle();
 
         // Calculate the angular deviation
-        float angularDeviation = currentAngle - motor.desiredAngle;
+        float angularDeviation = currentAngle - motor.getDesiredAngle();
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (abs(angularDeviation) > motor.getMicrostepAngle()) {
+        if (abs(angularDeviation) > 16 * motor.getMicrostepAngle()) {
 
             // Set the stepper to move in the correct direction
-            if (angularDeviation > motor.getMicrostepAngle()) {
+            if (angularDeviation > 16 * motor.getMicrostepAngle()) {
 
                 // Motor is at a position larger than the desired one
-                motor.driveCoils(currentAngle - motor.getMicrostepAngle());
+                motor.step(CLOCKWISE, false, false);
             }
             else {
                 // Motor is at a position smaller than the desired one
-                motor.driveCoils(currentAngle + motor.getMicrostepAngle());
+                motor.step(COUNTER_CLOCKWISE, false, false);
             }            
 
             // Check to see if the out of position faults have exceeded the maximum amounts
             if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
                 
                 // The maximum count has been exceeded, trigger an endstop pulse
-                //digitalWriteFast(STALLFAULT_PIN, HIGH);
+                #if STALLFAULT_PIN != NC 
+                    digitalWriteFast(STALLFAULT_PIN, HIGH);
+                #endif
                 digitalWriteFast(LED_PIN, HIGH);
             }
             else {
@@ -105,8 +105,10 @@ void updateMotor() {
         else {
             // Reset the out of position count and the StallFault pin
             outOfPosCount = 0;
-            //digitalWriteFast(STALLFAULT_PIN, LOW);
+            #if STALLFAULT_PIN != NC
+                digitalWriteFast(STALLFAULT_PIN, LOW);
+            #endif
             digitalWriteFast(LED_PIN, LOW);
-        }*/
+        }
     }
 }

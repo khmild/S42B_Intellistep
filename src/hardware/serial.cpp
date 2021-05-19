@@ -1,3 +1,9 @@
+// Import the config
+#include "config.h"
+
+// Only build if specified
+#ifdef USE_SERIAL
+
 // Import the header file
 #include "serial.h"
 
@@ -86,3 +92,5 @@ void runSerialParser() {
         sendSerialMessage(parseString(serialCommandBuffer));
     }
 }
+
+#endif // ! USE_SERIAL

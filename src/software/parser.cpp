@@ -1,10 +1,19 @@
+// Import the config (needed for the USE_SERIAL or USE_CAN defines)
+#include "config.h"
+
+// Only include if the serial or CAN bus is enabled
+#if defined(USE_SERIAL) || defined(USE_CAN)
+
 #include "parser.h"
 
 // Parses an entire string for any commands
 String parseString(String buffer) {
 
     // GCode Table
+    //   - M17 (ex M17) - Enables the motor (overrides enable pin)
+    //   - M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
     //   - M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
+    //   - M115 (ex M115) - Prints out firmware information.
     //   - M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
     //   - M307 (ex M307) - Runs an autotune sequence for the PID loop
     //   - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
@@ -49,8 +58,8 @@ String parseString(String buffer) {
                 return FEEDBACK_OK;
 
             case 115:
-                // M115 (ex M115) - Prints out firmware information. Only firmware version for now.
-                return (String("Version: ") + String(VERSION) + String("\n"));
+                // M115 (ex M115) - Prints out firmware information.
+                return FIRMWARE_FEATURE_PRINT;
 
             case 306:
                 // M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
@@ -75,7 +84,7 @@ String parseString(String buffer) {
 
                 // Loop forever, until a new value is sent
                 while (!Serial.available()) {
-                    Serial.println(getEncoderAngle());
+                    Serial.println(getAbsoluteAngle());
                 }
                 return FEEDBACK_OK;
 
@@ -105,87 +114,95 @@ String parseString(String buffer) {
                 return FEEDBACK_OK;
 
             case 356:
-                // M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
-                if (parseValue(buffer, 'V').toInt() == 0) {
 
-                    // Value is a character, process it once so that it can be used in the if statements
-                    String axisValue = parseValue(buffer, 'V');
+                // Only build in functionality if specified
+                #ifdef USE_CAN
+                    // M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
+                    if (parseValue(buffer, 'V').toInt() == 0) {
 
-                    // Compare the values of the received value with the expected ones
-                    if (axisValue == "X" || axisValue == "X1") {
-                        setCANID(X);
-                    }
-                    else if (axisValue == "X2") {
-                        setCANID(X2);
-                    }
-                    else if (axisValue == "X3") {
-                        setCANID(X3);
-                    }
-                    else if (axisValue == "X4") {
-                        setCANID(X4);
-                    }
-                    else if (axisValue == "X5") {
-                        setCANID(X5);
-                    }
-                    else if (axisValue == "Y" || axisValue == "Y1") {
-                        setCANID(Y);
-                    }
-                    else if (axisValue == "Y2") {
-                        setCANID(Y2);
-                    }
-                    else if (axisValue == "Y3") {
-                        setCANID(Y3);
-                    }
-                    else if (axisValue == "Y4") {
-                        setCANID(Y4);
-                    }
-                    else if (axisValue == "Y5") {
-                        setCANID(Y5);
-                    }
-                    else if (axisValue == "Z" || axisValue == "Z1") {
-                        setCANID(Z);
-                    }
-                    else if (axisValue == "Z2") {
-                        setCANID(Z2);
-                    }
-                    else if (axisValue == "Z3") {
-                        setCANID(Z3);
-                    }
-                    else if (axisValue == "Z4") {
-                        setCANID(Z4);
-                    }
-                    else if (axisValue == "Z5") {
-                        setCANID(Z5);
-                    }
-                    else if (axisValue == "E" || axisValue == "E1") {
-                        setCANID(E);
-                    }
-                    else if (axisValue == "E2") {
-                        setCANID(E2);
-                    }
-                    else if (axisValue == "E3") {
-                        setCANID(E3);
-                    }
-                    else if (axisValue == "E4") {
-                        setCANID(E4);
-                    }
-                    else if (axisValue == "E5") {
-                        setCANID(E5);
+                        // Value is a character, process it once so that it can be used in the if statements
+                        String axisValue = parseValue(buffer, 'V');
+
+                        // Compare the values of the received value with the expected ones
+                        if (axisValue == "X" || axisValue == "X1") {
+                            setCANID(X);
+                        }
+                        else if (axisValue == "X2") {
+                            setCANID(X2);
+                        }
+                        else if (axisValue == "X3") {
+                            setCANID(X3);
+                        }
+                        else if (axisValue == "X4") {
+                            setCANID(X4);
+                        }
+                        else if (axisValue == "X5") {
+                            setCANID(X5);
+                        }
+                        else if (axisValue == "Y" || axisValue == "Y1") {
+                            setCANID(Y);
+                        }
+                        else if (axisValue == "Y2") {
+                            setCANID(Y2);
+                        }
+                        else if (axisValue == "Y3") {
+                            setCANID(Y3);
+                        }
+                        else if (axisValue == "Y4") {
+                            setCANID(Y4);
+                        }
+                        else if (axisValue == "Y5") {
+                            setCANID(Y5);
+                        }
+                        else if (axisValue == "Z" || axisValue == "Z1") {
+                            setCANID(Z);
+                        }
+                        else if (axisValue == "Z2") {
+                            setCANID(Z2);
+                        }
+                        else if (axisValue == "Z3") {
+                            setCANID(Z3);
+                        }
+                        else if (axisValue == "Z4") {
+                            setCANID(Z4);
+                        }
+                        else if (axisValue == "Z5") {
+                            setCANID(Z5);
+                        }
+                        else if (axisValue == "E" || axisValue == "E1") {
+                            setCANID(E);
+                        }
+                        else if (axisValue == "E2") {
+                            setCANID(E2);
+                        }
+                        else if (axisValue == "E3") {
+                            setCANID(E3);
+                        }
+                        else if (axisValue == "E4") {
+                            setCANID(E4);
+                        }
+                        else if (axisValue == "E5") {
+                            setCANID(E5);
+                        }
+                        else {
+                            return FEEDBACK_NO_VALUE;
+                        }
+
+                        // Return operation successful
+                        return FEEDBACK_OK;
                     }
                     else {
-                        return FEEDBACK_NO_VALUE;
+                        // Value is a number
+                        setCANID(AXIS_CAN_ID(parseValue(buffer, 'V').toInt()));
+
+                        // Return that the operation is complete
+                        return FEEDBACK_OK;
                     }
 
-                    // Return operation successful
-                    return FEEDBACK_OK;
-                }
-                else {
-                    // Value is a number
-                    setCANID(AXIS_CAN_ID(parseValue(buffer, 'V').toInt()));
-
-                    // Return that the operation is complete
-                    return FEEDBACK_OK;
-                }
+                #else
+                    // Return that the feature is not enabled
+                    return FEEDBACK_CAN_NOT_ENABLED;
+                #endif
 
             case 500:
                 // M500 (ex M500) - Saves the currently loaded parameters into flash
@@ -193,8 +210,9 @@ String parseString(String buffer) {
                 return FEEDBACK_OK;
 
             case 907:
-                // M907 (ex M907 V3000) - Sets the current in mA
-                motor.setCurrent(parseValue(buffer, 'V').toInt());
+                // M907 (ex M907 R3000 or M907 P3000) - Sets the RMS or Peak current in mA
+                motor.setRMSCurrent(parseValue(buffer, 'V').toInt());
+                motor.setPeakCurrent(parseValue(buffer, 'P').toInt());
                 return FEEDBACK_OK;
 
         }
@@ -209,7 +227,7 @@ String parseString(String buffer) {
 String parseValue(String buffer, char letter) {
 
     // Search the input string for a V (for the value measurement)
-    int charIndex = buffer.indexOf(toupper(letter));
+    uint8_t charIndex = buffer.indexOf(toupper(letter));
 
     // If the index came back with a value, we can convert the value to an integer and set it
     if (charIndex != -1) {
@@ -231,3 +249,5 @@ String parseValue(String buffer, char letter) {
         return "-1";
     }
 }
+
+#endif // (USE_SERIAL || USE_CAN)

@@ -4,38 +4,47 @@
 // Need the Arduino library for pin conversion
 #include "Arduino.h"
 
-// Version of the firmware (displayed on LCD) (follows semantic versioning)
-#define VERSION "0.0.1"
+// Version of the firmware (displayed on OLED) (follows semantic versioning)
+#define VERSION "0.0.14"
 
 
 // --------------  Settings  --------------
 
+// Main feature enable
+#define USE_OLED
+#define USE_SERIAL
+//#define USE_CAN
+
 // Averages (number of readings in average)
-#define RPM_AVG_READINGS     50
-#define ANGLE_AVG_READINGS   35
-#define TEMP_AVG_READINGS    200
+#define RPM_AVG_READINGS     10
+#define ANGLE_AVG_READINGS   15
+#define TEMP_AVG_READINGS    100
 
 // If encoder estimation should be used
-//#define ENCODER_SPEED_ESTIMATION
+#define ENCODER_SPEED_ESTIMATION
 #ifdef ENCODER_SPEED_ESTIMATION
-    #define SPD_EST_MIN_INTERVAL 250 // The minimum sampling interval (ms). Increase to get more steady readings at the cost of accuracy
+    #define SPD_EST_MIN_INTERVAL 500 // The minimum sampling interval (us). Increase to get more steady readings at the cost of latency
 #endif
 
 // Serial configuration settings
-#define STRING_START_MARKER '<'
-#define STRING_END_MARKER '>'
-#define SERIAL_BAUD 115200
+#ifdef USE_SERIAL
+    #define STRING_START_MARKER '<'
+    #define STRING_END_MARKER '>'
+    #define SERIAL_BAUD 115200
+#endif
 
 // The CAN ID of this board
 // X:2, X2:3...
 // Y:7, Y2:8... 
 // Z:11 Z2:12...
 // E:17, E1:18...
-#define DEFAULT_CAN_ID X
+#ifdef USE_CAN
+    #define DEFAULT_CAN_ID X
+#endif
 
 // Motor characteristics
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
-#define STEP_UPDATE_FREQ 1 // in Hz, to step the motor back to the correct position
+#define STEP_UPDATE_FREQ 500 // in Hz, to step the motor back to the correct position
 #define MAX_MOTOR_SPEED 50 // deg/s
 
 // Board characteristics
@@ -44,14 +53,23 @@
 #define CURRENT_SENSE_RESISTOR  0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
 
 // Motor settings
-#define MAX_CURRENT             3500 // Maximum current in mA
+#define MAX_PEAK_CURRENT        3500 // Maximum peak current in mA
+#define MIN_MICROSTEP_DIVISOR   1 // The minimum microstepping divisor
 #define MAX_MICROSTEP_DIVISOR   32 // The maximum microstepping divisor
 #define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
 #define STEP_FAULT_ANGLE        45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
+#define MOTOR_PWM_FREQ          50 // in kHz
 
 // Button settings
-#define BUTTON_REPEAT_INTERVAL 250 // Millis
+#ifdef USE_OLED
+    #define BUTTON_REPEAT_INTERVAL 250 // Millis
+    #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
+    #define WARNING_MICROSTEP 32 // The largest microstep to warn on (the denominator of the fraction)
+    
+    #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
+    //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
+#endif
 
 
 // --------------  Pins  --------------
@@ -128,7 +146,7 @@
 // LED pin
 #define LED_PIN PC_13
 
-// Motor mappings                                    [ A  ,  B  ]
+// Motor mappings                                   [  A  ,   B  ]
 static const PinName COIL_DIR_1_PINS[]           =  { PB_6, PB_8 };
 static const PinName COIL_DIR_2_PINS[]           =  { PB_7, PB_9 };
 static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
@@ -156,7 +174,8 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 
 // --------------  Internal defines  --------------
 // Under the hood motor setup
-#define SINE_STEPS ((int16_t)(128))
+#define SINE_VAL_COUNT ((uint16_t)(128))
+#define SINE_MAX ((int16_t)(10000))
 
 // Bitwise memory modification
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
@@ -167,9 +186,22 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 #define output(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12),n)
 #define input(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8),n)
 
+// Maybe an even faster digitalWrite, but only if really needed
+/*
+#define digitalWriteFaster(PinName pn, bool high) \
+    if (high) { \
+        WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BSRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
+    } \
+    else { \
+        WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
+    }
+*/
 
 // --------------  Debugging  --------------
 //#define TEST_FLASH
 
+// Import the sanity check (needed so all files have the defines done in the sanity check file)
+// Must be last so that it can use the defines above
+#include "sanityCheck.h"
 
 #endif //__CONFIG_H

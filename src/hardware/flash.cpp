@@ -249,7 +249,7 @@ void flashWrite(uint32_t WriteAddr, uint16_t *pBuffer, uint16_t arrayLength) {
 
 // Erase all of the data stored
 void flashErase32K(void) {
-    //for (int i = 0, i <= )
+    //for (uint8_t i = 0, i <= )
     flashErasePage(CALIBRATION_ADDRESS);
     flashErasePage(0x08018000); // CALIBRATION_ADDRESS + 1024
     flashErasePage(0x08018400);
@@ -315,7 +315,7 @@ void loadSavedValues() {
     flashRead(CALIBRATION_ADDRESS, savedParameters, sizeof(savedParameters) / sizeof(savedParameters[0]));
 
     // Set the motor current
-    motor.setCurrent(savedParameters[0]);
+    motor.setRMSCurrent(savedParameters[0]);
 
     // Motor stepping angle
     motor.setFullStepAngle(savedParameters[1]);
@@ -357,7 +357,7 @@ void saveParametersToFlash() {
     uint16_t savedParameters[11];
 
     // Get the motor current
-    savedParameters[0] = motor.getCurrent();
+    savedParameters[0] = motor.getRMSCurrent();
 
     // Motor stepping angle
     savedParameters[1] = motor.getFullStepAngle();
@@ -384,7 +384,9 @@ void saveParametersToFlash() {
     savedParameters[8] = motor.getDValue();
 
     // CAN ID of the motor controller
-    savedParameters[9] = getCANID();
+    #ifdef USE_CAN
+        savedParameters[9] = getCANID();
+    #endif
 
     // If the dip switches were installed incorrectly
     savedParameters[10] = getDipInverted();

@@ -4,7 +4,7 @@
 import math
 
 # Constants
-trailingZeros = 6
+trailingZeros = 0
 
 # Main function
 def main():
@@ -34,7 +34,7 @@ def main():
     while (((360 * counter) / (4 * divisor)) < 360):
 
         # Calculate the sine with the degree value
-        value = round(math.sin(math.radians((360 * counter) / (4 * divisor))), trailingZeros)
+        value = math.trunc(math.sin(math.radians((360 * counter) / (4 * divisor))) * 10000)
 
         # Add a space if the value is positive or negative sign if value is negative, but don't pad the first values
         if (value >= 0):
@@ -42,8 +42,35 @@ def main():
         else:
             sign = "-"
 
+        # Pad the leading spaces
+        if (abs(value) < 10):
+            
+            # Need 4 spaces
+            spaces = "    "
+        
+        elif (abs(value) < 100):
+
+            # Need 3 spaces
+            spaces = "   "
+
+        elif(abs(value) < 1000):
+            
+            # Need 2 spaces
+            spaces = "  "
+
+        elif(abs(value) < 10000):
+
+            # Need one space
+            spaces = " "
+
+        else:
+            # Set spaces to none
+            spaces = ""
+
+
         # Pad the value and add it to the final string
-        finalString += (sign + str(abs(value)) + ('0' * ((trailingZeros + 2) - len(str(abs(value))))))
+        #finalString += (sign + str(abs(value)) + ('0' * ((trailingZeros + 2) - len(str(abs(value))))))
+        finalString += spaces + sign + str(abs(value))
         
         # Check if the next value should have a comma. Prevents the last value from having an extra comma
         if (((360 * (counter + 1)) / (4 * divisor)) < 360):
