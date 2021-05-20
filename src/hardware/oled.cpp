@@ -201,14 +201,14 @@ void displayMotorData() {
 
     // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
     if (micros() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL) {
-        snprintf(outBuffer, OB_SIZE, "RPM: %06.3f     ", motor.getMotorRPM());
+        snprintf(outBuffer, OB_SIZE, "RPM: %05.2f     ", motor.getMotorRPM());
         writeOLEDString(0, 0, outBuffer, false);
     }
 
     #else // ! ENCODER_SPEED_ESTIMATION
 
     // No need to check, just sample it
-    snprintf(outBuffer, OB_SIZE, "RPM:   %06.3f     ", motor.getMotorRPM());
+    snprintf(outBuffer, OB_SIZE, "RPM:   %5.2f     ", motor.getMotorRPM());
     writeOLEDString(0, 0, outBuffer, false);
 
     #endif // ! ENCODER_SPEED_ESTIMATION
