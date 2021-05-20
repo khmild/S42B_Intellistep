@@ -208,7 +208,7 @@ void displayMotorData() {
     #else // ! ENCODER_SPEED_ESTIMATION
 
     // No need to check, just sample it
-    snprintf(outBuffer, OB_SIZE, "RPM:   %5.2f     ", motor.getMotorRPM());
+    snprintf(outBuffer, OB_SIZE, "RPM:   %05.2f     ", motor.getMotorRPM());
     writeOLEDString(0, 0, outBuffer, false);
 
     #endif // ! ENCODER_SPEED_ESTIMATION
