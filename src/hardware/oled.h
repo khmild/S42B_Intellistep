@@ -1,5 +1,4 @@
-#ifndef __OLED_H__
-#define __OLED_H__
+#pragma once
 
 // Imports
 #include "config.h"
@@ -27,7 +26,9 @@ typedef enum {
 } SUBMENU;
 
 // Variables
-extern String submenuItems[];
+extern const char* topLevelMenuItems[];
+extern const uint8_t topLevelMenuLength;
+extern const char* submenuItems[];
 extern const uint8_t submenuCount;
 class StepperMotor;
 
@@ -56,6 +57,7 @@ typedef enum {
 
 #define MAX_CHAR_POSX 122
 #define MAX_CHAR_POSY 58
+#define OB_SIZE 32
 
 // Low level OLED commands
 void initOLED();
@@ -70,5 +72,3 @@ void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fo
 void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen = true);
 void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen = true);
 void clearOLED();
-
-#endif
