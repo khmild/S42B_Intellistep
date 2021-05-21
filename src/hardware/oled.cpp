@@ -1,4 +1,4 @@
-// Import the config (nedeed for the USE_OLED define)
+// Import the config (needed for the USE_OLED define)
 #include "config.h"
 
 // Only build if needed
@@ -222,7 +222,7 @@ void displayMotorData() {
     writeOLEDString(0, 32, outBuffer, false);
 
     // Maybe a 4th line later?
-    snprintf(outBuffer, OB_SIZE, "Temp: %.0f C", getEncoderTemp());
+    snprintf(outBuffer, OB_SIZE, "Temp: %.1f C", getEncoderTemp());
     writeOLEDString(0, 48, outBuffer, true);
 }
 

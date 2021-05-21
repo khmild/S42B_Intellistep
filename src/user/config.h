@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.14"
+#define VERSION "0.0.15"
 
 
 // --------------  Settings  --------------
@@ -18,7 +18,7 @@
 // Averages (number of readings in average)
 #define RPM_AVG_READINGS     10
 #define ANGLE_AVG_READINGS   15
-#define TEMP_AVG_READINGS    100
+#define TEMP_AVG_READINGS    200
 
 // If encoder estimation should be used
 #define ENCODER_SPEED_ESTIMATION
