@@ -5,3 +5,8 @@
 **/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+Kicad/**/*-bak
+Kicad/**/*-cache*
+Kicad/**/*.dcm
+Kicad/**/_autosave*
+Kicad/**/*.bck
