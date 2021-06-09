@@ -150,17 +150,14 @@ void updateMotor() {
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         motor.setState(ENABLED);
 
-        // Get the current angle of the motor (multiple reads take a longer time)
-        double actualAngle = getAbsoluteAngle();
-
-        // Calculate the angular deviation
-        float angularDeviation = actualAngle - motor.getDesiredAngle();
+        // Get the angular deviation
+        float angularDeviation = motor.getAngleError();
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
         if (abs(angularDeviation) > motor.getMicrostepAngle()) {
 
             // Set the stepper to move in the correct direction
-            if (angularDeviation > motor.getMicrostepAngle()) {
+            if (angularDeviation > 0) {
 
                 // Motor is at a position larger than the desired one
                 motor.step(CLOCKWISE, false, false);
@@ -175,7 +172,7 @@ void updateMotor() {
             #ifdef ENABLE_STALLFAULT
 
                 // Check to see if the out of position faults have exceeded the maximum amounts
-                if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
+                if (outOfPosCount > (STEP_FAULT_TIME * ((STEP_UPDATE_FREQ * motor.getMicrostepping()) - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
                     
                     // The maximum count has been exceeded, trigger an endstop pulse
                     #if STALLFAULT_PIN != NC 
