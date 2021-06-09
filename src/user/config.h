@@ -5,18 +5,19 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.15"
+#define VERSION "0.0.22"
 
 
 // --------------  Settings  --------------
 
 // Main feature enable
-#define USE_OLED
-#define USE_SERIAL
-//#define USE_CAN
+#define ENABLE_OLED
+#define ENABLE_SERIAL
+#define ENABLE_CAN
 
 // Averages (number of readings in average)
 #define RPM_AVG_READINGS     10
+#define ACCEL_AVG_READINGS   10
 #define ANGLE_AVG_READINGS   15
 #define TEMP_AVG_READINGS    200
 
@@ -27,7 +28,7 @@
 #endif
 
 // Serial configuration settings
-#ifdef USE_SERIAL
+#ifdef ENABLE_SERIAL
     #define STRING_START_MARKER '<'
     #define STRING_END_MARKER '>'
     #define SERIAL_BAUD 115200
@@ -38,35 +39,73 @@
 // Y:7, Y2:8... 
 // Z:11 Z2:12...
 // E:17, E1:18...
-#ifdef USE_CAN
+#ifdef ENABLE_CAN
     #define DEFAULT_CAN_ID X
+    #define CAN_BITRATE BR125K
 #endif
 
 // Motor characteristics
 #define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
-#define STEP_UPDATE_FREQ 500 // in Hz, to step the motor back to the correct position
+#define STEP_UPDATE_FREQ 78 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
 #define MAX_MOTOR_SPEED 50 // deg/s
 
 // Board characteristics
 // ! Do not modify unless you know what you are doing!
 #define BOARD_VOLTAGE           3.3 // The voltage of the main processor
 #define CURRENT_SENSE_RESISTOR  0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
+#define MAX_PEAK_BOARD_CURRENT  3500 // Maximum peak current in mA that the board can manage
 
 // Motor settings
-#define MAX_PEAK_CURRENT        3500 // Maximum peak current in mA
+//#define ENABLE_DYNAMIC_CURRENT
+#ifdef ENABLE_DYNAMIC_CURRENT
+    // A dynamically controller current loop. Uses the equation: accel * accelCurrent + idleCurrent
+    // Limited by the max dynamic current, which will limit the maximum that the dynamic loop can output
+    // All current values are in RMS
+    #define DYNAMIC_ACCEL_CURRENT 10 // Multiplied by deg/s/s, in mA
+    #define DYNAMIC_IDLE_CURRENT  500 // In mA
+    #define DYNAMIC_MAX_CURRENT   750 // In mA
+#else
+    // Classic, static current
+    #define STATIC_RMS_CURRENT     500 // This is the rating of the motor from the manufacturer
+
+    // Overtemperature protection (lowers motor current when motor temperature rises too high)
+    #define ENABLE_OVERTEMP_PROTECTION
+    #ifdef ENABLE_OVERTEMP_PROTECTION
+        #define OVERTEMP_THRESHOLD_TEMP      70 // The temp to trigger a overtemp current reduction (C)
+        #define OVERTEMP_INCREMENT           50 // The increment at which to reduce the current by (RMS mA)
+        #define OVERTEMP_INTERVAL            30 // The minimum interval between current reductions (s)
+        #define OVERTEMP_SHUTDOWN_TEMP       80 // The temp at which to completely shut down the motor, protecting it against burning up
+        #define OVERTEMP_SHUTDOWN_CLEAR_TEMP 70 // Motor can begin movement again once this temp is reached
+    #endif
+#endif
+#define MICROSTEP_MULTIPLIER    2 // The number of microsteps to move per step pulse
 #define MIN_MICROSTEP_DIVISOR   1 // The minimum microstepping divisor
 #define MAX_MICROSTEP_DIVISOR   32 // The maximum microstepping divisor
-#define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
-#define STEP_FAULT_ANGLE        45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
-#define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 #define MOTOR_PWM_FREQ          50 // in kHz
+#define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
-// Button settings
-#ifdef USE_OLED
+// Stallfault
+//#define ENABLE_STALLFAULT
+#ifdef ENABLE_STALLFAULT
+    #define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
+    #define STEP_FAULT_ANGLE        45 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
+
+    // StallFault connection (to mainboard)
+    // Pulls high on a stepper misalignment after the set period
+    // ! Find an actual pin to set
+    #define STALLFAULT_PIN  NC
+#endif
+
+// OLED settings
+#ifdef ENABLE_OLED
+
+    // Button settings
+    //#define INVERTED_DIPS // Enable if your dips are inverted ("on" print is facing away from motor connector)
     #define BUTTON_REPEAT_INTERVAL 250 // Millis
     #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
     #define WARNING_MICROSTEP 32 // The largest microstep to warn on (the denominator of the fraction)
     
+    // Warning thresholds
     #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
     //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
 #endif
@@ -138,10 +177,10 @@
 // DIP_2   |    Microstep 2             |  Closed/Open loop
 // DIP_3   |    Closed/Open loop        |  Microstep 2
 // DIP_4   |    Calibration mode        |  Microstep 1
-#define DIP_1_PIN  PB_10
-#define DIP_2_PIN  PB_11
-#define DIP_3_PIN  PB_3
-#define DIP_4_PIN  PA_15
+#define DIP_1_PIN  PA_15
+#define DIP_2_PIN  PB_3
+#define DIP_3_PIN  PB_11
+#define DIP_4_PIN  PB_10
 
 // LED pin
 #define LED_PIN PC_13
@@ -158,18 +197,13 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 #define ENCODER_MOSI_PIN  PA_7 // SPI1_MOSI
 
 // Stepping interface
-#define STEP_PIN       PA_1 // ! according to the previous files, but this is the same as the dir pin
+#define STEP_PIN       PA_0
 #define ENABLE_PIN     PA_2
 #define DIRECTION_PIN  PA_1
 
 // CAN bus pins
 #define CAN_IN_PIN   PA_11
 #define CAN_OUT_PIN  PA_12
-
-// StallFault connection (to mainboard)
-// Pulls high on a stepper misalignment after the set period
-// ! Find an actual pin to set
-#define STALLFAULT_PIN  NC
 
 
 // --------------  Internal defines  --------------

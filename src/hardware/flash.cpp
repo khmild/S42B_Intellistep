@@ -357,7 +357,9 @@ void saveParametersToFlash() {
     uint16_t savedParameters[11];
 
     // Get the motor current
-    savedParameters[0] = motor.getRMSCurrent();
+    #ifndef ENABLE_DYNAMIC_CURRENT
+        savedParameters[0] = motor.getRMSCurrent();
+    #endif
 
     // Motor stepping angle
     savedParameters[1] = motor.getFullStepAngle();
@@ -384,7 +386,7 @@ void saveParametersToFlash() {
     savedParameters[8] = motor.getDValue();
 
     // CAN ID of the motor controller
-    #ifdef USE_CAN
+    #ifdef ENABLE_CAN
         savedParameters[9] = getCANID();
     #endif
 

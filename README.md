@@ -8,6 +8,8 @@ I am currently working on redoing a lot of the functions found in the firmware. 
 
 ***Note: For the time being, all serial and CAN messages should start with "<" and end with ">". The serial baud rate is 115200.***
 
+***Note: If you're having large oscillations in step correction, then try increasing the microstepping using the dip switches while increasing the microstep multiplier***
+
 New Features:
 
 - Redone stepping for higher torque and quieter operation
@@ -17,7 +19,7 @@ New Features:
 
 Future Features:
 
-- Motor and driver overtemperature current reduction
+- Motor and driver overtemp current reduction
 - Dynamic current control based on speed and acceleration
 - Manual tuning utility for manual PID tuning
 - Much better stepper calibration
@@ -29,6 +31,7 @@ GCode Table
 - M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
 - M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
 - M115 (ex M115) - Prints out firmware information, consisting of the version and any enabled features.
+- M116 (ex M116 S1 M"A message") - Simple forward command that will forward a message across the CAN bus. Can be used for pinging or allowing a Serial to connect to the CAN network
 - M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
 - M307 (ex M307) - Runs an autotune sequence for the PID loop
 - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles

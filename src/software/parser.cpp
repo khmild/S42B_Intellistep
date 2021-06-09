@@ -1,13 +1,13 @@
-// Import the config (needed for the USE_SERIAL or USE_CAN defines)
+// Import the config (needed for the ENABLE_SERIAL or ENABLE_CAN defines)
 #include "config.h"
 
 // Only include if the serial or CAN bus is enabled
-#if defined(USE_SERIAL) || defined(USE_CAN)
+#if defined(ENABLE_SERIAL) || defined(ENABLE_CAN)
 
 #include "parser.h"
 
 // Parses an entire string for any commands
-String parseString(String buffer) {
+String parseCommand(String buffer) {
 
     // GCode Table
     //   - M17 (ex M17) - Enables the motor (overrides enable pin)
@@ -39,17 +39,17 @@ String parseString(String buffer) {
 
             case 17:
                 // M17 (ex M17) - Enables the motor (overrides enable pin)
-                motor.enable(true);
+                motor.setState(ENABLED, true);
                 return FEEDBACK_OK;
 
             case 18:
                 // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
-                motor.disable(true);
+                motor.setState(FORCED_DISABLED);
                 return FEEDBACK_OK;
 
             case 84:
                 // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
-                motor.disable(true);
+                motor.setState(FORCED_DISABLED);
                 return FEEDBACK_OK;
 
             case 93:
@@ -60,6 +60,13 @@ String parseString(String buffer) {
             case 115:
                 // M115 (ex M115) - Prints out firmware information.
                 return FIRMWARE_FEATURE_PRINT;
+
+            #ifdef ENABLE_CAN
+            case 116:
+                // M116 (ex M116 S1) - Simple ping command that will send a message back to the sender. 
+                // S value should be the CAN ID of the sender. If S is -1, then 
+                txCANString(parseValue(buffer, 'S').toInt(), parseString(buffer, 'M'));
+            #endif
 
             case 306:
                 // M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
@@ -76,21 +83,35 @@ String parseString(String buffer) {
             case 308:
                 // M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
 
+                // Disable interrupts (so value printing is never stopped)
+                disableInterrupts();
+
                 // Print a notice to the user that the PID tuning is starting
                 Serial.println("Notice: The manual PID tuning is now starting. To exit, send any serial data.");
 
                 // Wait for the user to read it
                 delay(1000);
 
+                // Clear the serial buffer
+                while (Serial.available() > 0) {
+                    Serial.read();
+                }
+
                 // Loop forever, until a new value is sent
-                while (!Serial.available()) {
+                while (!(Serial.available() > 0)) {
                     Serial.println(getAbsoluteAngle());
                 }
+
+                // Re-enable interrupts
+                enableInterrupts();
+
+                // When all done, the exit is acknowledged
                 return FEEDBACK_OK;
 
             case 350:
                 // M350 (ex M350 V16) - Sets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32
                 motor.setMicrostepping(parseValue(buffer, 'V').toInt());
+                updateCorrectionTimer();
                 return FEEDBACK_OK;
 
             case 352:
@@ -116,7 +137,7 @@ String parseString(String buffer) {
             case 356:
 
                 // Only build in functionality if specified
-                #ifdef USE_CAN
+                #ifdef ENABLE_CAN
                     // M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
                     if (parseValue(buffer, 'V').toInt() == 0) {
 
@@ -211,8 +232,10 @@ String parseString(String buffer) {
 
             case 907:
                 // M907 (ex M907 R3000 or M907 P3000) - Sets the RMS or Peak current in mA
-                motor.setRMSCurrent(parseValue(buffer, 'V').toInt());
-                motor.setPeakCurrent(parseValue(buffer, 'P').toInt());
+                #ifndef ENABLE_DYNAMIC_CURRENT
+                    motor.setRMSCurrent(parseValue(buffer, 'V').toInt());
+                    motor.setPeakCurrent(parseValue(buffer, 'P').toInt());
+                #endif
                 return FEEDBACK_OK;
 
         }
@@ -226,20 +249,38 @@ String parseString(String buffer) {
 // Returns the substring of the value after the letter parameter
 String parseValue(String buffer, char letter) {
 
-    // Search the input string for a V (for the value measurement)
-    uint8_t charIndex = buffer.indexOf(toupper(letter));
+    // Search the input string for the specified letter
+    uint16_t charIndex = buffer.indexOf(toupper(letter));
 
-    // If the index came back with a value, we can convert the value to an integer and set it
+    // If the index came back with a value, we can begin the process of extracting the raw value
     if (charIndex != -1) {
 
-        // Check to see if there is another space in the string before the end (for a string with multiple parameters)
-        if (buffer.lastIndexOf(' ') > charIndex) {
+        // Get the next index of a space
+        uint16_t nextSpaceIndex = buffer.substring(charIndex).indexOf(' ');
 
-            // Return only the substring between the last space and the letter
-            return buffer.substring(charIndex + 1, buffer.lastIndexOf(' '));
+        // Check to see if there is a space between the letter and value
+        if (nextSpaceIndex == charIndex + 1) {
+
+            // We need to find out if there is another space after this parameter
+            uint16_t endSpaceIndex = buffer.substring(nextSpaceIndex + 1).indexOf(' ');
+
+            // Check to see if there is an ending space
+            if (endSpaceIndex != -1) {
+
+                // Return only the substring between the ending space and the space after the letter
+                return buffer.substring(nextSpaceIndex + 1, endSpaceIndex - 1);
+            }
+            else {
+                // That's the end of the string, we can start at the space and just include the rest
+                return buffer.substring(nextSpaceIndex + 1);
+            }
+        }
+        else if (nextSpaceIndex != -1) {
+            // The next space index is after the value, so just include up to it
+            return buffer.substring(charIndex + 1, nextSpaceIndex - 1);
         }
         else {
-            // Get the rest of the string after the letter (should only be a number)
+            // There is no more spaces in the string, therefore just return the rest of the string
             return buffer.substring(charIndex + 1);
         }
     }
@@ -250,4 +291,37 @@ String parseValue(String buffer, char letter) {
     }
 }
 
-#endif // (USE_SERIAL || USE_CAN)
+
+// Returns the substring of the string after the letter parameter
+String parseString(String buffer, char letter) {
+
+    // Search the input string for the specified letter
+    uint16_t charIndex = buffer.indexOf(toupper(letter));
+
+    // If the index came back with a value, we can begin the process of extracting the raw value
+    if (charIndex != -1) {
+
+        // Time to check to see where the double quotations are
+        uint16_t startQuotationIndex = buffer.substring(charIndex + 1).indexOf('"');
+        uint16_t endQuotationIndex = buffer.substring(startQuotationIndex + 1).indexOf('"');
+
+        // Make sure that there are quotations on each side
+        if (startQuotationIndex != -1 && endQuotationIndex != -1) {
+            
+            // Return the string between them
+            return buffer.substring(startQuotationIndex + 1, endQuotationIndex - 1);
+        }
+        else {
+            // Throw an error, we can't find both the quotation marks
+            Serial.println(FEEDBACK_INVALID_STRING);
+            return "-1";
+        }
+    }
+    else {
+        // Index is invalid, letter doesn't exist. Print an output message, then return a null
+        Serial.println(FEEDBACK_NO_VALUE);
+        return "-1";
+    }
+}
+
+#endif // (ENABLE_SERIAL || ENABLE_CAN)

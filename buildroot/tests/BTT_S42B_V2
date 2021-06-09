@@ -10,14 +10,14 @@ set -e
 # Build with the default configurations
 #
 restore_configs
-opt_enable USE_OLED USE_CAN USE_SERIAL
-exec_test $1 $2 "OLED, CAN, Serial" "$3"
+opt_enable ENABLE_OLED ENABLE_CAN ENABLE_SERIAL ENABLE_STALLFAULT ENABLE_DYNAMIC_CURRENT
+exec_test $1 $2 "OLED, CAN, Serial, StallFault, Dynamic Current" "$3"
 
 restore_configs
-opt_enable USE_OLED USE_SERIAL
-opt_disable USE_CAN
-exec_test $1 $2 "OLED, Serial" "$3"
+opt_enable ENABLE_OLED ENABLE_SERIAL ENABLE_STALLFAULT ENABLE_OVERTEMP_PROTECTION
+opt_disable ENABLE_CAN ENABLE_DYNAMIC_CURRENT
+exec_test $1 $2 "OLED, Serial, Stallfault, Overtemp" "$3"
 
 restore_configs
-opt_disable USE_OLED USE_CAN USE_SERIAL
+opt_disable ENABLE_OLED ENABLE_CAN ENABLE_SERIAL ENABLE_STALLFAULT ENABLE_DYNAMIC_CURRENT ENABLE_OVERTEMP_PROTECTION
 exec_test $1 $2 "No extra options" "$3"

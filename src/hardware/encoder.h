@@ -32,6 +32,30 @@
 #define CHANGE_UNIT_TO_INT_9        0x0200    // Used to change an unsigned 9 bit integer into signed
 #define CHECK_BIT_9                 0x0100    // Used to check the 9th bit
 
+// Safety types (for error checking)
+#define SAFE_LOW   0x0000  // Error checking off
+#define SAFE_HIGH  0x0001  // Error checking on
+
+// Bitmasks for several error codes
+#define ENCODER_SYSTEM_ERROR_MASK           0x4000    //!< \brief System error masks for safety words
+#define ENCODER_INTERFACE_ERROR_MASK        0x2000    //!< \brief Interface error masks for safety words
+#define ENCODER_INV_ANGLE_ERROR_MASK        0x1000    //!< \brief Angle error masks for safety words
+
+// CRC calculation values
+#define CRC_POLYNOMIAL  0x1D
+#define CRC_SEED        0xFF
+
+/**
+ * @brief Error types from safety word
+ */
+enum errorTypes {
+	NO_ERROR               = 0x00,  //!< \brief NO_ERROR = Safety word was OK
+	SYSTEM_ERROR           = 0x01,  //!< \brief SYSTEM_ERROR = over/under voltage, VDD negative, GND off, ROM defect
+	INTERFACE_ACCESS_ERROR = 0x02,  //!< \brief INTERFACE_ACCESS_ERROR = wrong address or wrong lock
+	INVALID_ANGLE_ERROR    = 0x03,  //!< \brief INVALID_ANGLE_ERROR = NO_GMR_A = 1 or NO_GMR_XY = 1
+	ANGLE_SPEED_ERROR      = 0x04,  //!< \brief ANGLE_SPEED_ERROR = combined error, angular speed calculation wrong
+	CRC_ERROR              = 0xFF   //!< \brief CRC_ERROR = Cyclic Redundancy Check (CRC), which includes the STAT and RESP bits wrong
+};
 
 // Main address fields
 enum Addr_t {
@@ -233,17 +257,29 @@ enum BitFieldReg_t
 
 // Variables
 extern uint32_t lastAngleSampleTime;
+extern double startupAngleOffset;
 
 // Functions
 void initEncoder();
-uint16_t readEncoderRegister(uint16_t registerAddress);
-void writeToEncoderRegister(uint16_t registerAddress, uint16_t data);
+
+// Low level reading functions
+errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data);
 void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t data[]);
 uint16_t getBitField(BitField_t bitField);
+
+// Low level writing functions
+void writeToEncoderRegister(uint16_t registerAddress, uint16_t data);
 void setBitField(BitField_t bitfield, uint16_t bitFNewValue);
-uint16_t readEncoderState();
+
+// Error checking
+errorTypes checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uint16_t length);
+uint8_t calcCRC(uint8_t *data, uint8_t length);
+void resetSafety();
+
+// High level encoder functions
 double getAngle(bool average = true);
 double getEncoderSpeed();
+double getEncoderAccel();
 double getEncoderTemp();
 double getAbsoluteRev();
 double getAbsoluteAngle();

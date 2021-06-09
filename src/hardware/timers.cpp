@@ -5,42 +5,116 @@
 #pragma GCC optimize ("-Ofast")
 
 // Create a new timer instance
-HardwareTimer *steppingTimer = new HardwareTimer(TIM1);
+HardwareTimer *correctionTimer = new HardwareTimer(TIM1);
+
+// If step correction is enabled (helps to prevent enabling the timer when it is already enabled)
+bool stepCorrection = false;
 
 // A counter for the number of position faults (used for stall detection)
 uint16_t outOfPosCount = 0;
 
+// The number of times the current blocks on the interrupts. All blocks must be cleared to allow the interrupts to start again
+// A block count is needed for nested functions. This ensures that function 1 (cannot be interrupted) will not re-enable the 
+// interrupts before the uninterruptible function 2 that called the first function finishes.
+uint8_t interruptBlockCount = 0;
+
+
+// Tiny little function, just gets the time that the current program has been running
+uint32_t sec() {
+    return (millis() / 1000);
+}
 
 // Sets up the motor update timer
 void setupMotorTimers() {
+    
+    // Interupts are in order of importance as follows -
+    // - 0 - step pin change
+    // - 1 - position correction
 
     // Setup the step and stallfault pin
     pinMode(STEP_PIN, INPUT_PULLDOWN);
-    //pinMode(STALLFAULT_PIN, OUTPUT);
-    pinMode(LED_PIN, OUTPUT);
 
-    // Attach the interupt to the step pin
+    // Check if StallFault is enabled
+    #ifdef ENABLE_STALLFAULT
+
+        // Make sure that StallFault is enabled
+        #if STALLFAULT_PIN != NC
+            pinMode(STALLFAULT_PIN, OUTPUT);
+        #endif
+
+        // Reset the LED pin
+        pinMode(LED_PIN, OUTPUT);
+    #endif
+
+    // Attach the interupt to the step pin (subpriority is set in platformio config file)
     attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, CHANGE);
 
     // Setup the timer for steps
-    steppingTimer -> pause();
-    steppingTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
-    steppingTimer -> setOverflow(STEP_UPDATE_FREQ, HERTZ_FORMAT);
-    steppingTimer -> attachInterrupt(updateMotor);
-    steppingTimer -> refresh();
-    steppingTimer -> resume();
+    correctionTimer -> pause();
+    correctionTimer -> setInterruptPriority(1, 0);
+    correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
+    correctionTimer -> attachInterrupt(updateMotor);
+    correctionTimer -> refresh();
+    correctionTimer -> resume();
 }
 
 
 // Pauses the timers, essentially disabling them for the time being
 void disableInterrupts() {
-    __disable_irq();
+
+    // Add one to the interrupt block counter
+    interruptBlockCount++;
+
+    // Disable the interrupts if this is the first block
+    if (interruptBlockCount == 1) {
+        __disable_irq();
+    }
 }
 
 
 // Resumes the timers, re-enabling them
 void enableInterrupts() {
-    __enable_irq();
+
+    // Remove one of the blocks on the interrupts
+    interruptBlockCount--;
+
+    // If all of the blocks are gone, then re-enable the interrupts
+    if (interruptBlockCount == 0) {
+        __enable_irq();
+    }
+}
+
+
+// Enables the step correction timer
+void enableStepCorrection() {
+
+    // Enable the timer if it isn't already, then set the variable
+    if (!stepCorrection) {
+        correctionTimer -> resume();
+        stepCorrection = true;
+    }
+}
+
+
+// Disables the step correction timer
+void disableStepCorrection() {
+
+    // Disable the timer if it isn't already, then set the variable
+    if (stepCorrection) {
+        correctionTimer -> pause();
+        stepCorrection = false;
+    }
+}
+
+
+// Set the speed of the step correction timer
+void updateCorrectionTimer() {
+
+    // Check the previous value of the timer, only changing if it is different
+    if (correctionTimer -> getCount(HERTZ_FORMAT) != round(STEP_UPDATE_FREQ * motor.getMicrostepping())) {
+        correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
+    }
 }
 
 
@@ -54,31 +128,39 @@ void stepMotor() {
 void updateMotor() {
 
     // Check to see the state of the enable pin
-    if (digitalRead(ENABLE_PIN) == motor.getEnableInversion()) {
+    if (digitalReadFast(ENABLE_PIN) != motor.getEnableInversion()) {
 
         // The enable pin is off, the motor should be disabled
-        motor.disable();
+        motor.setState(DISABLED);
 
-        // Shut off the StallGuard pin just in case
-        //digitalWriteFast(STALLFAULT_PIN, LOW);
-        digitalWriteFast(LED_PIN, LOW);
+        // Only include if StallFault is enabled
+        #ifdef ENABLE_STALLFAULT
+
+            // Shut off the StallGuard pin just in case
+            #if STALLFAULT_PIN != NC
+                digitalWriteFast(STALLFAULT_PIN, LOW);
+            #endif
+
+            // Fix the LED pin
+            digitalWriteFast(LED_PIN, LOW);
+        #endif
     }
     else {
 
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
-        motor.enable();
+        motor.setState(ENABLED);
 
         // Get the current angle of the motor (multiple reads take a longer time)
-        double currentAngle = getAbsoluteAngle();
+        double actualAngle = getAbsoluteAngle();
 
         // Calculate the angular deviation
-        float angularDeviation = currentAngle - motor.getDesiredAngle();
+        float angularDeviation = actualAngle - motor.getDesiredAngle();
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (abs(angularDeviation) > 16 * motor.getMicrostepAngle()) {
+        if (abs(angularDeviation) > motor.getMicrostepAngle()) {
 
             // Set the stepper to move in the correct direction
-            if (angularDeviation > 16 * motor.getMicrostepAngle()) {
+            if (angularDeviation > motor.getMicrostepAngle()) {
 
                 // Motor is at a position larger than the desired one
                 motor.step(CLOCKWISE, false, false);
@@ -86,29 +168,39 @@ void updateMotor() {
             else {
                 // Motor is at a position smaller than the desired one
                 motor.step(COUNTER_CLOCKWISE, false, false);
-            }            
+            }
 
-            // Check to see if the out of position faults have exceeded the maximum amounts
-            if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
-                
-                // The maximum count has been exceeded, trigger an endstop pulse
-                #if STALLFAULT_PIN != NC 
-                    digitalWriteFast(STALLFAULT_PIN, HIGH);
-                #endif
-                digitalWriteFast(LED_PIN, HIGH);
-            }
-            else {
-                // Just count up, motor is out of position but not out of faults
-                outOfPosCount++;
-            }
+
+            // Only use StallFault code if needed
+            #ifdef ENABLE_STALLFAULT
+
+                // Check to see if the out of position faults have exceeded the maximum amounts
+                if (outOfPosCount > (STEP_FAULT_TIME * (STEP_UPDATE_FREQ - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
+                    
+                    // The maximum count has been exceeded, trigger an endstop pulse
+                    #if STALLFAULT_PIN != NC 
+                        digitalWriteFast(STALLFAULT_PIN, HIGH);
+                    #endif
+                    digitalWriteFast(LED_PIN, HIGH);
+                }
+                else {
+                    // Just count up, motor is out of position but not out of faults
+                    outOfPosCount++;
+                }
+            #endif
         }
+        
+        // Only if StallFault is enabled
+        #ifdef ENABLE_STALLFAULT
         else {
+            
             // Reset the out of position count and the StallFault pin
             outOfPosCount = 0;
             #if STALLFAULT_PIN != NC
                 digitalWriteFast(STALLFAULT_PIN, LOW);
             #endif
-            digitalWriteFast(LED_PIN, LOW);
+            digitalWriteFast(LED_PIN, LOW); 
         }
+        #endif
     }
 }

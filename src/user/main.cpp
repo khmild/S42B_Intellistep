@@ -31,12 +31,12 @@ void setup() {
     initEncoder();
 
     // Setup the motor for use
-    motor.enable(true);
+    motor.setState(DISABLED, true);
     //motor.setMicrostepping(16);
     //motor.setDesiredAngle(100);
 
     // Only run if the OLED is enabled
-    #ifdef USE_OLED
+    #ifdef ENABLE_OLED
 
         // Initialize the OLED
         initOLED();
@@ -47,17 +47,24 @@ void setup() {
         // Wait for 3 seconds so everything can boot and user can read the LCD
         delay(3000);
 
+        // Set the inversion (if specified)
+        #ifdef INVERTED_DIPS
+            setDipInverted(true);
+        #else
+            setDipInverted(false);
+        #endif
+
         // Initialize the buttons (for menu)
         initButtons();
     #endif
 
     // Initialize the serial bus
-    #ifdef USE_SERIAL
+    #ifdef ENABLE_SERIAL
         initSerial();
     #endif
 
     // Initialize the CAN bus
-    #ifdef USE_CAN
+    #ifdef ENABLE_CAN
         // Initialize the CAN bus
         initCAN();
     #endif
@@ -75,7 +82,7 @@ void setup() {
     if (!isCalibrated()) {
 
         // Only display to screen if the screen is enabled
-        #ifdef USE_OLED
+        #ifdef ENABLE_OLED
 
             // Display that the motor is not calibrated
             clearOLED();
@@ -95,12 +102,12 @@ void setup() {
         while(true) {
 
             // Only if serial is specified
-            #ifdef USE_SERIAL
+            #ifdef ENABLE_SERIAL
                 // ! Only here for testing
                 runSerialParser();
             #endif
 
-            #ifdef USE_OLED
+            #ifdef ENABLE_OLED
                 // Check to see if any of the buttons are pressed
                 checkButtons(false);
             #endif
@@ -109,7 +116,7 @@ void setup() {
             //blink();
 
             // Only if the OLED is needed
-            #ifdef USE_OLED
+            #ifdef ENABLE_OLED
 
                 // Check to see if the menu button has been clicked
                 if (getMenuDepth() > 0) {
@@ -136,7 +143,7 @@ void setup() {
         // Load the values from flash
         //loadSavedValues();
 
-        #ifdef USE_OLED
+        #ifdef ENABLE_OLED
 
             // Let the user know that the calibration was successfully loaded
             clearOLED();
@@ -150,34 +157,19 @@ void setup() {
 
         // Setup the motor timers and interrupts
         setupMotorTimers();
-        
-        //uint8_t count = 0;
 
         // Loop forever, checking the keys and updating the display
         while(true) {
 
-            /*
-            while(count < 16) {
-                motor.step(CLOCKWISE);
-                displayMotorData();
-                delay(5);
-                count++;
-            }
-
-            while (count > 0) {
-                motor.step(COUNTER_CLOCKWISE);
-                displayMotorData();
-                delay(5);
-                count--;
-            }
-            */
+            // Check the dip switches
+            checkDips();
 
             // Check to see if serial data is available to read
-            #ifdef USE_SERIAL
+            #ifdef ENABLE_SERIAL
                 runSerialParser();
             #endif
 
-            #ifdef USE_OLED
+            #ifdef ENABLE_OLED
                 // Check the buttons
                 checkButtons(true);
 

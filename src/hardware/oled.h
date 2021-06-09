@@ -43,6 +43,7 @@ void exitCurrentMenu();
 MENU_DEPTH getMenuDepth();
 String padNumber(float number, uint8_t leadingZeroCount, uint8_t followingZeroCount);
 float roundToPlace(float number, uint8_t place);
+char * int2bin(unsigned int x);
 
 // BTT Display definitions
 typedef enum {

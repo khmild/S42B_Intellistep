@@ -28,7 +28,7 @@ StepperMotor::StepperMotor(float P, float I, float D) {
     analogWriteFrequency(MOTOR_PWM_FREQ * 1000);
 
     // Disable the motor
-    disable();
+    setState(DISABLED, true);
 }
 
 // Constructor without PID terms
@@ -50,7 +50,7 @@ StepperMotor::StepperMotor() {
     analogWriteFrequency(MOTOR_PWM_FREQ * 1000);
 
     // Disable the motor
-    disable();
+    setState(DISABLED, true);
 }
 
 
@@ -114,6 +114,7 @@ void StepperMotor::setDValue(float newD) {
 }
 
 
+#ifndef ENABLE_DYNAMIC_CURRENT
 // Gets the RMS current of the motor (in mA)
 uint16_t StepperMotor::getRMSCurrent() const {
     return (this -> rmsCurrent);
@@ -133,10 +134,10 @@ void StepperMotor::setRMSCurrent(uint16_t rmsCurrent) {
     if (rmsCurrent != -1) {
 
         // Make sure that the RMS current is within the current bounds of the motor, if so set it
-        this -> rmsCurrent = constrain(rmsCurrent, 0, (uint16_t)MAX_RMS_CURRENT);
+        this -> rmsCurrent = constrain(rmsCurrent, 0, (uint16_t)MAX_RMS_BOARD_CURRENT);
 
         // Also set the peak current
-        this -> peakCurrent = constrain((uint16_t)(rmsCurrent * 1.414), 0, (uint16_t)MAX_PEAK_CURRENT);
+        this -> peakCurrent = constrain((uint16_t)(rmsCurrent * 1.414), 0, (uint16_t)MAX_PEAK_BOARD_CURRENT);
     }
 }
 
@@ -148,13 +149,13 @@ void StepperMotor::setPeakCurrent(uint16_t peakCurrent) {
     if (peakCurrent != -1) {
 
         // Make sure that the peak current is within the current bounds of the motor, if so set it
-        this -> peakCurrent = constrain(peakCurrent, 0, (uint16_t)MAX_PEAK_CURRENT);
+        this -> peakCurrent = constrain(peakCurrent, 0, (uint16_t)MAX_PEAK_BOARD_CURRENT);
 
         // Also set the RMS current
-        this -> rmsCurrent = constrain((uint16_t)(peakCurrent * 0.707), 0, (uint16_t)MAX_RMS_CURRENT);
+        this -> rmsCurrent = constrain((uint16_t)(peakCurrent * 0.707), 0, (uint16_t)MAX_RMS_BOARD_CURRENT);
     }
 }
-
+#endif
 
 // Get the microstepping divisor of the motor
 uint16_t StepperMotor::getMicrostepping() const {
@@ -294,32 +295,29 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
         // Make the angle change in the negative direction
         angleChange *= -1;
     }
-    
-    // Add to the phase angle
-    this -> phaseAngle += abs(angleChange);
-    
-    // If the phaseAngle is greater than 360, we need to bring it back into range
-    if (this -> phaseAngle >= 360) {
-        phaseAngle -= 360;
-    }
 
-    // Check if the angle should be just added to, or actually moved there.
+    // Update the desired angle if specified
     if (updateDesiredAngle) {
 
-        // Angles are basically just added to, not really much to do here
+        // Angles are basically just added to desired, not really much to do here
         this -> desiredAngle += angleChange;
     }
 
+    // Motor's current angle must always be updated to correctly move the coils
+    this -> currentAngle += angleChange;
+
     // Drive the coils to their destination
-    this -> driveCoils(phaseAngle, dir);
+    this -> driveCoils(currentAngle, dir);
 }
 
 
 // Sets the coils of the motor based on the angle (angle should be in degrees)
 void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
-    
-    // Last values used
-    //static int16_t lastCoilAPower = 0, lastCoilBPower = 0;
+
+    // Make sure that the angle range is valid
+    while (degAngle < 0) {
+        degAngle += 360;
+    }
 
     // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
     float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
@@ -330,36 +328,37 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
 
     // Make sure that the phase angle doesn't exceed the steps per phase rotation (4 full steps to a phase rotation * whatever microstepping)
     roundedMicrosteps = roundedMicrosteps % (4 * (this -> microstepDivisor));
-
+    
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor));
-    int16_t angleSin = fastSin(arrayIndex);
-    int16_t angleCos = fastCos(arrayIndex);
-
-    // If in reverse, we swap the sign of one of the angles    
-    if (direction == PIN) {
-        if ((bool)digitalReadFast(DIRECTION_PIN) != (this -> reversed)) {
-            angleCos = -angleCos;
-        }
-    }
-    else if (direction == CLOCKWISE) {
-        angleCos = -angleCos;
-    }
+    int16_t coilAPercent = fastSin(arrayIndex);
+    int16_t coilBPercent = fastCos(arrayIndex);
 
     // Equation comes out to be (effort * -1 to 1) depending on the sine/cosine of the phase angle
-    int16_t coilAPower = ((int16_t)(this -> peakCurrent) * angleSin) / SINE_MAX;
-    int16_t coilBPower = ((int16_t)(this -> peakCurrent) * angleCos) / SINE_MAX;
+    #ifdef ENABLE_DYNAMIC_CURRENT
+
+        // Get the current acceleration
+        double angAccel = abs(getEncoderAccel());
+
+        // Compute the coil power
+        int16_t coilAPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilAPercent) / SINE_MAX;
+        int16_t coilBPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilBPercent) / SINE_MAX;
+    #else
+        // Just use static current multipiers
+        int16_t coilAPower = ((int16_t)(this -> peakCurrent) * coilAPercent) / SINE_MAX;
+        int16_t coilBPower = ((int16_t)(this -> peakCurrent) * coilBPercent) / SINE_MAX;
+    #endif
 
     // Check the if the coil should be energized to move backward or forward
     if (coilAPower > 0) {
 
         // Set first channel for forward movement
-        setCoil(A, FORWARD, coilAPower);
+        setCoil(A, COIL_STATE::FORWARD, coilAPower);
     }
     else if (coilAPower < 0) {
 
         // Set first channel for backward movement
-        setCoil(A, BACKWARD, -coilAPower);
+        setCoil(A, COIL_STATE::BACKWARD, -coilAPower);
     }
     else {
         setCoil(A, BRAKE);
@@ -370,7 +369,7 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
     if (coilBPower > 0) {
 
         // Set first channel for forward movement
-        setCoil(B, FORWARD, coilBPower);
+        setCoil(B, COIL_STATE::FORWARD, coilBPower);
     }
     else if (coilBPower < 0) {
 
@@ -380,10 +379,6 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
     else {
         setCoil(B, BRAKE);
     }
-
-    // Save the old values
-    //lastCoilAPower = coilAPower;
-    //lastCoilBPower = coilBPower;
 }
 
 
@@ -444,48 +439,67 @@ float StepperMotor::speedToHz(float angularSpeed) const {
 }
 
 
-// Enables the motor, powering the coils
-void StepperMotor::enable(bool clearForcedDisable) {
+// Sets a new motor state
+void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
 
-    // Clear the forced disable if needed
-    if (clearForcedDisable && ((this -> state) == FORCED_DISABLED)) {
-        this -> state = DISABLED;
-    }
+    // Check to make sure that the state is different from the current
+    if ((this -> state) != newState) {
 
-    // Check if the motor is enabled yet. No need to set all of the coils if they're already set
-    if ((this -> state) == DISABLED) {
+        // Check if we need to clear the errors
+        if (clearErrors) {
+            switch (newState) {
 
-        // Mod the current angle by total phase angle to estimate the phase angle of the motor, then set the coils to the current position
-        this -> driveCoils(0, COUNTER_CLOCKWISE);
+                // Need to clear the disabled state and start the coils
+                case ENABLED:
 
-        // Set the motor to be enabled
-        this -> state = ENABLED;
-    }
-}
+                    // Drive the coils the current angle of the shaft (just locks the output in place)
+                    driveCoils(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
+                    
+                    // The motor's current angle needs corrected
+                    currentAngle = getAngle() - startupAngleOffset;
+                    this -> state = ENABLED;
 
-
-// Disables the motor, freeing the coils
-void StepperMotor::disable(bool forceDisable) {
-
-    // Check if the motor is not enabled yet. No need to disable the coils if they're already off
-    if ((this -> state) == ENABLED) {
-
-        // Set the A driver to whatever disable mode was set
-        setCoil(A, IDLE_MODE);
-
-        // Set the B driver to whatever disable mode was set
-        setCoil(B, IDLE_MODE);
-
-        // Set the state to disabled (forced if specified)
-        if (forceDisable) {
-            this -> state = FORCED_DISABLED;
+                // No other special processing needed, just disable the coils and set the state
+                default:
+                    motor.setCoil(A, IDLE_MODE);
+                    motor.setCoil(B, IDLE_MODE);
+                    this -> state = newState;
+            }
         }
         else {
-            this -> state = DISABLED;
+            // Only change the state if the current state is either enabled or disabled
+            if ((this -> state) == ENABLED || (this -> state) == DISABLED) {
+                
+                // Decide when needs to happen based on the new state
+                switch (newState) {
+
+                    // Need to clear the disabled state and start the coils
+                    case ENABLED:
+
+                        // Drive the coils the current angle of the shaft (just locks the output in place)
+                        driveCoils(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
+                        
+                        // The motor's current angle needs corrected
+                        currentAngle = getAngle() - startupAngleOffset;
+                        this -> state = ENABLED;
+
+                    // No other special processing needed, just disable the coils and set the state
+                    default:
+                        motor.setCoil(A, IDLE_MODE);
+                        motor.setCoil(B, IDLE_MODE);
+                        this -> state = newState;
+                }
+            }
         }
-        
     }
 }
+
+
+// Return the state of the motor
+MOTOR_STATE StepperMotor::getState() const {
+    return (this -> state);
+}
+
 
 /*
 // Computes the speed of the motor
@@ -530,7 +544,7 @@ void StepperMotor::calibrate() {
     // ! Write yet
 
     // Only include if specified
-    #ifdef USE_OLED
+    #ifdef ENABLE_OLED
 
         // Display that calibration is coming soon
         clearOLED();

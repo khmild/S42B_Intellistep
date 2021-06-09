@@ -40,6 +40,10 @@ typedef enum {
     ENABLED,
     DISABLED,
     FORCED_DISABLED
+
+    #ifdef ENABLE_OVERTEMP_PROTECTION
+    , OVERTEMP
+    #endif
 } MOTOR_STATE;
 
 // Stepper motor class (defined to make life a bit easier when dealing with the motor)
@@ -130,7 +134,7 @@ class StepperMotor {
         float getDesiredAngle() const;
 
         // Calculates the coil values for the motor and updates the set angle. 
-        void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredPosition = true);
+        void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredAngle = true);
 
         // Sets the coils to hold the motor at the desired phase angle
         void driveCoils(float angle, STEP_DIR direction);
@@ -143,12 +147,12 @@ class StepperMotor {
 
         // Sets the speed of the motor (angular speed is in deg/s)
         float speedToHz(float angularSpeed) const;
+        
+        // Sets the current state of the motor
+        void setState(MOTOR_STATE newState, bool clearErrors = false);
 
-        // Enables the coils, preventing motor movement
-        void enable(bool clearForcedDisable = false);
-
-        // Releases the coils, allowing the motor to freewheel. The forced disable will cause it to ignore the enabled pin
-        void disable(bool forcedDisable = false);
+        // Get the current state of the motor
+        MOTOR_STATE getState() const;
 
         // Computes the next speed of the motor
         float compute(float feedback);
@@ -164,11 +168,11 @@ class StepperMotor {
         // Function for turning booleans into -1 for true and 1 for false
         float invertDirection(bool invert) const;
         
-        // Variable to keep the desired angle of the motor
+        // Keeps the desired angle of the motor
         float desiredAngle = 0;
 
-        // Phase angle of the motor (increases in both negative and positive directions)
-        float phaseAngle = 0;
+        // Keeps the current angle of the motor
+        float currentAngle = 0;
 
         // Motor PID controller values
         float pTerm = 0;
@@ -187,10 +191,17 @@ class StepperMotor {
         float rateError;
 
         // Motor characteristics
-        // RMS Current (in mA)
-        uint16_t rmsCurrent = 750;
-        // Peak Current (in mA)
-        uint16_t peakCurrent = (rmsCurrent * 1.414);
+        #ifdef ENABLE_DYNAMIC_CURRENT
+            // Dynamic current settings
+            uint16_t dynamicAccelCurrent = DYNAMIC_ACCEL_CURRENT;
+            uint16_t dynamicIdleCurrent = DYNAMIC_IDLE_CURRENT;
+            uint16_t dynamicMaxCurrent = DYNAMIC_MAX_CURRENT;
+        #else
+            // RMS Current (in mA)
+            uint16_t rmsCurrent = STATIC_RMS_CURRENT;
+            // Peak Current (in mA)
+            uint16_t peakCurrent = (rmsCurrent * 1.414);
+        #endif
 
         // Microstepping divisor
         uint16_t microstepDivisor = 1;
@@ -211,7 +222,7 @@ class StepperMotor {
         bool enableInverted = false;
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
-        float microstepMultiplier = 1;
+        float microstepMultiplier = MICROSTEP_MULTIPLIER;
 };
 
 
