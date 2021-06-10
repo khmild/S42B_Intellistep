@@ -23,10 +23,6 @@ void setup() {
     // Setup the system clock (includes overclocking)
     overclock(RCC_CFGR_PLLMULL16);
 
-    // Initialize the LED
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, HIGH);
-
     // Initialize the encoder
     initEncoder();
 
@@ -224,7 +220,7 @@ void overclock(uint32_t PLLMultiplier) {
 // ! Only here for testing
 void blink() {
     digitalWriteFast(LED_PIN, HIGH);
-    delay(500);
+    delay(250);
     digitalWriteFast(LED_PIN, LOW);
-    delay(500);
+    delay(250);
 }

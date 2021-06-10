@@ -14,9 +14,15 @@ bool stepCorrection = false;
 uint16_t outOfPosCount = 0;
 
 // The number of times the current blocks on the interrupts. All blocks must be cleared to allow the interrupts to start again
-// A block count is needed for nested functions. This ensures that function 1 (cannot be interrupted) will not re-enable the 
+// A block count is needed for nested functions. This ensures that function 1 (cannot be interrupted) will not re-enable the
 // interrupts before the uninterruptible function 2 that called the first function finishes.
 uint8_t interruptBlockCount = 0;
+
+// Create a boolean to store if the StallFault pin has been enabled.
+// Pin is only setup after the first StallFault. This prevents programming interruptions
+#ifdef ENABLE_STALLFAULT
+    bool stallFaultPinSetup = false;
+#endif
 
 
 // Tiny little function, just gets the time that the current program has been running
@@ -26,7 +32,7 @@ uint32_t sec() {
 
 // Sets up the motor update timer
 void setupMotorTimers() {
-    
+
     // Interupts are in order of importance as follows -
     // - 0 - step pin change
     // - 1 - position correction
@@ -137,12 +143,13 @@ void updateMotor() {
         #ifdef ENABLE_STALLFAULT
 
             // Shut off the StallGuard pin just in case
-            #if STALLFAULT_PIN != NC
+            // (No need to check if the pin is valid, the pin will never be set up if it isn't valid)
+            if (stallFaultPinSetup) {
                 digitalWriteFast(STALLFAULT_PIN, LOW);
-            #endif
+            }
 
             // Fix the LED pin
-            digitalWriteFast(LED_PIN, LOW);
+            //digitalWriteFast(LED_PIN, LOW);
         #endif
     }
     else {
@@ -173,11 +180,19 @@ void updateMotor() {
 
                 // Check to see if the out of position faults have exceeded the maximum amounts
                 if (outOfPosCount > (STEP_FAULT_TIME * ((STEP_UPDATE_FREQ * motor.getMicrostepping()) - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
-                    
+
+                    // Setup the StallFault pin if it isn't already
+                    #if (STALLFAULT_PIN != NC)
+                    if (!stallFaultPinSetup && STALLFAULT_PIN != NC) {
+                        //pinMode(STALLFAULT_PIN, OUTPUT);
+                        stallFaultPinSetup = true;
+                    }
+
                     // The maximum count has been exceeded, trigger an endstop pulse
-                    #if STALLFAULT_PIN != NC 
-                        digitalWriteFast(STALLFAULT_PIN, HIGH);
+                    digitalWriteFast(STALLFAULT_PIN, HIGH);
                     #endif
+
+                    // Also give an indicator on the LED
                     digitalWriteFast(LED_PIN, HIGH);
                 }
                 else {
@@ -186,17 +201,24 @@ void updateMotor() {
                 }
             #endif
         }
-        
+
         // Only if StallFault is enabled
         #ifdef ENABLE_STALLFAULT
         else {
-            
+
             // Reset the out of position count and the StallFault pin
             outOfPosCount = 0;
-            #if STALLFAULT_PIN != NC
+
+            // Pull the StallFault low if it's setup
+            // No need to check the validity of the pin here, it wouldn't be setup if it wasn't valid
+            #if (STALLFAULT_PIN != NC)
+            if (stallFaultPinSetup) {
                 digitalWriteFast(STALLFAULT_PIN, LOW);
+            }
             #endif
-            digitalWriteFast(LED_PIN, LOW); 
+
+            // Also toggle the LED for visual purposes
+            digitalWriteFast(LED_PIN, LOW);
         }
         #endif
     }
