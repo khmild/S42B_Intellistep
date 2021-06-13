@@ -114,7 +114,52 @@ void StepperMotor::setDValue(float newD) {
 }
 
 
-#ifndef ENABLE_DYNAMIC_CURRENT
+#ifdef ENABLE_DYNAMIC_CURRENT
+
+// Gets the acceleration factor for dynamic current
+uint16_t StepperMotor::getDynamicAccelCurrent() const {
+    return (this -> dynamicAccelCurrent);
+}
+
+// Gets the idle factor for dynamic current
+uint16_t StepperMotor::getDynamicIdleCurrent() const {
+    return (this -> dynamicIdleCurrent);
+}
+
+// Gets the max current factor for dynamic current
+uint16_t StepperMotor::getDynamicMaxCurrent() const {
+    return (this -> dynamicMaxCurrent);
+}
+
+// Sets the acceleration factor for dynamic current
+void StepperMotor::setDynamicAccelCurrent(uint16_t newAccelFactor) {
+
+    // Make sure that the value being set is positive (no negatives allowed)
+    if (newAccelFactor >= 0) {
+        this -> dynamicAccelCurrent = newAccelFactor;
+    }
+}
+
+// Sets the idle factor for dynamic current
+void StepperMotor::setDynamicIdleCurrent(uint16_t newIdleFactor) {
+
+    // Make sure that the value being set is positive (no negatives allowed)
+    if (newIdleFactor >= 0) {
+        this -> dynamicIdleCurrent = newIdleFactor;
+    }
+}
+
+// Sets the max current factor for dynamic current
+void StepperMotor::setDynamicMaxCurrent(uint16_t newMaxCurrent) {
+
+    // Make sure that the value being set is positive (no negatives allowed)
+    if (newMaxCurrent >= 0) {
+        this -> dynamicMaxCurrent = newMaxCurrent;
+    }
+}
+
+#else // ! ENABLE_DYNAMIC_CURRENT
+
 // Gets the RMS current of the motor (in mA)
 uint16_t StepperMotor::getRMSCurrent() const {
     return (this -> rmsCurrent);
@@ -155,7 +200,7 @@ void StepperMotor::setPeakCurrent(uint16_t peakCurrent) {
         this -> rmsCurrent = constrain((uint16_t)(peakCurrent * 0.707), 0, (uint16_t)MAX_RMS_BOARD_CURRENT);
     }
 }
-#endif
+#endif // ! ENABLE_DYNAMIC_CURRENT
 
 // Get the microstepping divisor of the motor
 uint16_t StepperMotor::getMicrostepping() const {
@@ -458,6 +503,16 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
                     this -> state = ENABLED;
+
+                // Same as enabled, just forced
+                case FORCED_ENABLED:
+
+                    // Drive the coils the current angle of the shaft (just locks the output in place)
+                    driveCoils(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
+                    
+                    // The motor's current angle needs corrected
+                    currentAngle = getAngle() - startupAngleOffset;
+                    this -> state = FORCED_ENABLED;
 
                 // No other special processing needed, just disable the coils and set the state
                 default:

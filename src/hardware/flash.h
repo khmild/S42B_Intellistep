@@ -6,38 +6,74 @@
 #include "buttons.h"
 #include "canMessaging.h"
 #include "timers.h"
+#include "stm32f1xx_hal_flash.h"
 
 // Where the parameters are saved
-#define CALIBRATION_ADDRESS      0x08017C00
+// This is 1024 bits behind the end of flash
+// This allows 32 32-bit values to be stored
+#define CALIB_START_ADDR      0x0801FC00
 
-// Parameter for locking the flash
-#define CR_LOCK_SET              ((uint32_t)0x00000080)
+// Main overview of the format of data storage
+typedef enum {
 
-// Flash control register bits
-#define CR_PG_Set                ((uint32_t)0x00000001)
-#define CR_PG_Reset              ((uint32_t)0x00001FFE)
+    // Valid flash contents marker (bool)
+    VALID_FLASH_CONTENTS = 0,
 
-// Flash timeout period
-#define FLASH_PROGRAM_TIMEOUT    ((uint32_t)0x00002000)
+    // Calibrated marker
+    CALIBRATED_INDEX,
+    
+    // Dynamic current settings
+    #ifdef ENABLE_DYNAMIC_CURRENT
+    DYNAMIC_ACCEL_CURRENT_INDEX,
+    DYNAMIC_IDLE_CURRENT_INDEX,
+    DYNAMIC_MAX_CURRENT_INDEX,
 
-// Where the data samples are stored
-#define SAMPLING_DATA_ADDR      0x08018000
-#define STM32_memory_size       128 // Kb
+    #else // ! ENABLE_DYNAMIC_CURRENT
+    CURRENT_INDEX_0,
+    CURRENT_INDEX_1,
+    CURRENT_INDEX_2,
+    #endif // ! ENABLE_DYNAMIC_CURRENT
 
+    // Motor settings
+    FULL_STEP_ANGLE_INDEX,
+    MICROSTEPPING_INDEX,
+    MOTOR_REVERSED_INDEX,
+    ENABLE_INVERSION_INDEX,
+    MICROSTEP_MULTIPLIER_INDEX,
+
+    // PID values
+    P_TERM_INDEX,
+    I_TERM_INDEX,
+    D_TERM_INDEX,
+
+    // CAN
+    CAN_ID_INDEX,
+
+    // Inverted dips
+    INVERTED_DIPS_INDEX
+
+} FLASH_PARAM_INDEXES;
+
+// The max index of the flash parameters (must be manually updated)
+#define MAX_FLASH_PARAM_INDEX 13
+
+// Functions
 bool isCalibrated();
-uint16_t flashReadHalfWord(uint32_t address);
-uint8_t flashWriteHalfWord(uint32_t address, uint16_t data);
-void flashRead(uint32_t address, uint16_t *pBuffer);
-bool flashWriteNoCheck(uint32_t address, uint16_t *pBuffer);
-bool flashProgramHalfWord(uint32_t Address, uint16_t Data);
-void flashWrite(uint32_t address, uint16_t *pBuffer, uint16_t arrayLength);
-void flashErase32K();
 
-void unlockFlash();
-void lockFlash();
+// Reading flash
+template<typename type>
+type readFlash(uint32_t parameterIndex);
 
-void loadSavedValues();
-void saveParametersToFlash();
+// Writing to flash
+void writeToAddress(uint32_t address, uint16_t data);
+void writeFlash(uint32_t parameterIndex, uint16_t data);
+void writeFlash(uint32_t parameterIndex, uint32_t data);
+// ! Need a 64, bool, and float version of storage
+
+// Load/saving values to flash
+void loadParameters();
+void saveParameters();
+void wipeParameters();
 
 #endif
 

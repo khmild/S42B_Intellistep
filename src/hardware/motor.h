@@ -39,6 +39,7 @@ typedef enum {
 typedef enum {
     ENABLED,
     DISABLED,
+    FORCED_ENABLED,
     FORCED_DISABLED
 
     #ifdef ENABLE_OVERTEMP_PROTECTION
@@ -82,6 +83,30 @@ class StepperMotor {
         // Sets the Derivative of the PID loop
         void setDValue(float newD);
 
+
+        // Dynamic current
+        #ifdef ENABLE_DYNAMIC_CURRENT
+
+        // Gets the acceleration factor for dynamic current
+        uint16_t getDynamicAccelCurrent() const;
+
+        // Gets the idle factor for dynamic current
+        uint16_t getDynamicIdleCurrent() const;
+
+        // Gets the max current factor for dynamic current
+        uint16_t getDynamicMaxCurrent() const;
+
+        // Sets the acceleration factor for dynamic current
+        void setDynamicAccelCurrent(uint16_t newAccelFactor);
+
+        // Sets the idle factor for dynamic current
+        void setDynamicIdleCurrent(uint16_t newIdleFactor);
+
+        // Sets the max current factor for dynamic current
+        void setDynamicMaxCurrent(uint16_t newMaxCurrent);
+
+        #else // ! ENABLE_DYNAMIC_CURRENT
+
         // Gets the RMS current of the motor (in mA)
         uint16_t getRMSCurrent() const;
 
@@ -93,6 +118,8 @@ class StepperMotor {
 
         // Sets the peak current of the motor (in mA)(RMS is adjusted to match)
         void setPeakCurrent(uint16_t peakCurrent);
+        #endif
+
 
         // Gets the microstepping mode of the motor
         uint16_t getMicrostepping() const;
