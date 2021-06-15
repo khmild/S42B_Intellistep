@@ -93,7 +93,7 @@ String parseCommand(String buffer) {
                 }
                 else {
                     // No values are included, get and return the current values
-                    return ("P: " + String(motor.getPValue()) + " | I: " + String(motor.getIValue()) + " | D: " + String(motor.getDValue()) + "\n");
+                    return ("P: " + String(motor.getPValue()) + " | I: " + String(motor.getIValue()) + " | D: " + String(motor.getDValue()));
                 }
             }
 
@@ -310,20 +310,12 @@ String parseCommand(String buffer) {
 
             case 500:
                 // M500 (ex M500) - Saves the currently loaded parameters into flash
-                writeFlash(VALID_FLASH_CONTENTS, (uint16_t)3);
-                //saveParameters();
+                saveParameters();
                 return FEEDBACK_OK;
 
             case 501: {
                 // M501 (ex M501) - Loads all saved parameters from flash
-                //loadParameters();
-                // Unlock the flash for reading
-                HAL_FLASH_Unlock();
-
-                uint16_t value = 0; //readFlash<uint16_t>(VALID_FLASH_CONTENTS);
-
-                HAL_FLASH_Lock();
-                return String(value) + "/n";
+                return loadParameters();
             }
 
             case 502:
@@ -376,7 +368,7 @@ String parseCommand(String buffer) {
     }
 
     // Nothing here, nothing to do
-    return F("No command specified\n");
+    return F("No command specified");
 }
 
 

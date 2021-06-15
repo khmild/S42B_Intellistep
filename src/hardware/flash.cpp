@@ -11,7 +11,7 @@ bool isCalibrated() {
     HAL_FLASH_Unlock();
 
     // Get the calibration flag
-    bool calibrationFlag = readFlash<bool>(CALIBRATED_INDEX);
+    bool calibrationFlag = readFlashBool(CALIBRATED_INDEX);
 
     // Lock the flash again
     HAL_FLASH_Lock();
@@ -25,39 +25,98 @@ bool isCalibrated() {
 
 
 // Raw read function. Reads raw bits into a set type
-template<typename type>
-type readFlash(uint32_t parameterIndex) {
+uint16_t readFlashAddress(uint32_t address) {
 
-    // Wait until the flash is free (continue if not done within 100ms)
-    HAL_StatusTypeDef status = FLASH_WaitForLastOperation(100);
+    // Wait until the flash is free (continue if not done within 10ms)
+    HAL_StatusTypeDef status = FLASH_WaitForLastOperation(10);
 
     // Check if the flash is free
     if (status == HAL_OK) {
 
-        // Calculate the correct address (jump 4 because address is in bytes, byte is 8 bits, intervals are 32 bits)
-        uint32_t address = CALIB_START_ADDR + (parameterIndex * 4);
-
         // Pull the data from said address
-        return *(__IO type *)address;
+        return *(__IO uint16_t *)address;
     }
     else {
         // Flash timed out, just return 0
-        return (type)0;
+        return 0;
     }
 }
 
 
+// Based on the readFlashAddress function, reads a uint16_t at a parameter index
+uint16_t readFlashU16(uint32_t parameterIndex) {
+
+    // Just a basic read
+    return readFlashAddress(DATA_START_ADDR + (parameterIndex * 4));
+}
+
+
+// Based on the readFlashAddress function, reads a uint32_t at a parameter index
+uint32_t readFlashU32(uint32_t parameterIndex) {
+
+    // Create a blank array to store the values in
+    uint16_t intData[2];
+
+    // Pull the values at the specified addresses
+    intData[0] = readFlashAddress(DATA_START_ADDR + (parameterIndex * 4));
+    intData[1] = readFlashAddress(DATA_START_ADDR + (parameterIndex * 4) + 2);
+
+    // Create a variable to store the data in
+    uint32_t data;
+
+    // Copy the 4 bytes of the data over (all of it)
+    memcpy(&data, &intData, 4);
+
+    // Return the data
+    return data;
+}
+
+
+// Based on the readFlashAddress function, reads a bool at a parameter index
+bool readFlashBool(uint32_t parameterIndex) {
+
+    // Return the data stored at the address, converted from native 16 bit int to bool
+    if (readFlashAddress(DATA_START_ADDR + (parameterIndex * 4)) == 1) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+
+// Based on the readFlashAddress function, reads a uint32_t at a parameter index
+float readFlashFloat(uint32_t parameterIndex) {
+
+    // Create a blank array to store the values in
+    uint16_t intData[2];
+
+    // Pull the values at the specified addresses
+    intData[0] = readFlashAddress(DATA_START_ADDR + (parameterIndex * 4));
+    intData[1] = readFlashAddress(DATA_START_ADDR + (parameterIndex * 4) + 2);
+
+    // Create a variable to store the data in
+    float data;
+
+    // Copy the 4 bytes of the data over (all of it)
+    memcpy(&data, &intData, 4);
+
+    // Return the data
+    return data;
+}
+
+
 // Raw write function. Writes out 16 bits to the flash
-void writeToAddress(uint32_t address, uint16_t data) {
+void writeToFlashAddress(uint32_t address, uint16_t data) {
 
     // Disable interrupts (CANNOT BE INTERRUPTED)
     disableInterrupts();
 
     // Set the flash for writing
-    HAL_FLASH_Unlock();
+    CLEAR_BIT(FLASH->CR, FLASH_CR_LOCK);
 
     // Wait for the flash to be ready
-    HAL_StatusTypeDef status = FLASH_WaitForLastOperation(10);
+    HAL_StatusTypeDef status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
 
     // Only continue if the flash is ready
     if (status == HAL_OK) {
@@ -66,96 +125,75 @@ void writeToAddress(uint32_t address, uint16_t data) {
         SET_BIT(FLASH->CR, FLASH_CR_PG);
 
         // Check that the value isn't already stored (reduces wear on the flash)
-        //if (readFlash<type>(parameterIndex) != data) {
+        if (readFlashAddress(address) != data) {
 
             // Write the data
             *(__IO uint16_t*)address = data;
-        //}
+        }
 
         // Wait for the operation to finish
-        FLASH_WaitForLastOperation(10);
+        FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
 
         // Clear the flash programming register
         CLEAR_BIT(FLASH->CR, FLASH_CR_PG);
     }
 
     // Lock the flash (we finished writing)
-    HAL_FLASH_Lock();
+    SET_BIT(FLASH->CR, FLASH_CR_LOCK);
 
     // Re-enable interrupts
     enableInterrupts();
 }
 
+
 // Built on the address function, writes to a parameter index instead
 void writeFlash(uint32_t parameterIndex, uint16_t data) {
 
     // Address is the start address plus 4 bytes for every parameter after
-    writeToAddress(CALIB_START_ADDR + (4 * parameterIndex), data);
+    writeToFlashAddress(DATA_START_ADDR + (parameterIndex * 4), data);
 }
+
 
 // Built on the address function, writes unsigned 32 bit ints instead
 void writeFlash(uint32_t parameterIndex, uint32_t data) {
 
-    // Write each part, but in separate parts. Second call moves up two bytes instead of one
-    writeToAddress(CALIB_START_ADDR + (4 * parameterIndex),     (uint16_t)(data >> 16U));
-    writeToAddress(CALIB_START_ADDR + (4 * parameterIndex) + 2, (uint16_t)(data >> 16U));
+    // Create array for the uint16_ts
+    uint16_t intData[2];
+
+    // Copy the raw data over (4 bytes of information)
+    memcpy(intData, &data, 4);
+
+    // Now send each of the parts to flash
+    writeToFlashAddress(DATA_START_ADDR + (parameterIndex * 4),     intData[0]);
+    writeToFlashAddress(DATA_START_ADDR + (parameterIndex * 4) + 2, intData[1]);
 }
 
-// Built on the address function, writes 64 bits to the flash
 
+// Built on the address function, writes a bool instead
+void writeFlash(uint32_t parameterIndex, bool data) {
 
-// Loads the saved parameters from flash and sets them
-void loadParameters() {
-
-    // Disable interrupts
-    disableInterrupts();
-
-    // Check to see if the data is valid
-    if (readFlash<bool>(VALID_FLASH_CONTENTS)) {
-
-        // Set the motor current
-        #ifdef ENABLE_DYNAMIC_CURRENT
-            motor.setDynamicAccelCurrent(readFlash<uint16_t>(DYNAMIC_ACCEL_CURRENT_INDEX));
-            motor.setDynamicIdleCurrent(readFlash<uint16_t>(DYNAMIC_IDLE_CURRENT_INDEX));
-            motor.setDynamicMaxCurrent(readFlash<uint16_t>(DYNAMIC_MAX_CURRENT_INDEX));
-        #else
-            // Just load the motor current from the idle index
-            motor.setRMSCurrent(readFlash<uint16_t>(CURRENT_INDEX_1));
-        #endif
-
-        // Motor stepping angle
-        motor.setFullStepAngle(readFlash<float>(FULL_STEP_ANGLE_INDEX));
-
-        // Microstepping divisor
-        motor.setMicrostepping(readFlash<uint16_t>(MICROSTEPPING_INDEX));
-
-        // Motor Direction Reversed
-        motor.setReversed(readFlash<bool>(MOTOR_REVERSED_INDEX));
-
-        // Motor Enable Inverted
-        motor.setEnableInversion(readFlash<bool>(ENABLE_INVERSION_INDEX));
-
-        // Motor microstepping multiplier
-        motor.setMicrostepMultiplier(readFlash<float>(MICROSTEP_MULTIPLIER_INDEX));
-
-        // P term of PID
-        motor.setPValue(readFlash<float>(P_TERM_INDEX));
-
-        // I term of PID
-        motor.setIValue(readFlash<float>(I_TERM_INDEX));
-
-        // D term of PID
-        motor.setDValue(readFlash<float>(D_TERM_INDEX));
-
-        // The CAN ID of the motor
-        setCANID(readFlash<AXIS_CAN_ID>(CAN_ID_INDEX));
-
-        // If the dip switches were installed incorrectly
-        setDipInverted(readFlash<bool>(INVERTED_DIPS_INDEX));
+    // Convert the bool to a 16 bit unsigned int (natural flash unit) and write it
+    if (data) {
+        writeToFlashAddress(DATA_START_ADDR + (parameterIndex * 4), 1U);
     }
+    else {
+        writeToFlashAddress(DATA_START_ADDR + (parameterIndex * 4), 0U);
+    }
+}
 
-    // All done, we can re-enable interrupts
-    enableInterrupts();
+
+// Built on the address function, writes a float instead
+void writeFlash(uint32_t parameterIndex, float data) {
+
+    // Create array for the uint16_ts
+    uint16_t intData[2];
+
+    // Copy the raw data over
+    memcpy(intData, &data, 4);
+
+    // Now send each of the parts to flash
+    writeToFlashAddress(DATA_START_ADDR + (parameterIndex * 4),     intData[0]);
+    writeToFlashAddress(DATA_START_ADDR + (parameterIndex * 4) + 2, intData[1]);
 }
 
 
@@ -166,7 +204,7 @@ void saveParameters() {
     disableInterrupts();
 
     // Write that the data is valid
-    // ! writeFlash<bool>(VALID_FLASH_CONTENTS, true);
+    writeFlash(VALID_FLASH_CONTENTS, true);
 
     // No programming needed for the calibration state, that it written once calibrated
 
@@ -183,28 +221,28 @@ void saveParameters() {
     #endif
 
     // Motor stepping angle
-    // ! writeFlash<float>(FULL_STEP_ANGLE_INDEX, motor.getFullStepAngle());
+    writeFlash(FULL_STEP_ANGLE_INDEX, motor.getFullStepAngle());
 
     // Microstepping divisor
     writeFlash(MICROSTEPPING_INDEX, motor.getMicrostepping());
 
     // Motor Direction Reversed
-    // ! writeFlash<bool>(MOTOR_REVERSED_INDEX, motor.getReversed());
+    writeFlash(MOTOR_REVERSED_INDEX, motor.getReversed());
 
     // Motor Enable Inverted
-    // ! writeFlash<bool>(ENABLE_INVERSION_INDEX, motor.getEnableInversion());
+    writeFlash(ENABLE_INVERSION_INDEX, motor.getEnableInversion());
 
     // Microstep multiplier
-    // ! writeFlash<float>(MICROSTEP_MULTIPLIER_INDEX, motor.getMicrostepMultiplier());
+    writeFlash(MICROSTEP_MULTIPLIER_INDEX, motor.getMicrostepMultiplier());
 
     // P term of PID
-    // ! writeFlash<float>(P_TERM_INDEX, motor.getPValue());
+    writeFlash(P_TERM_INDEX, motor.getPValue());
 
     // I term of PID
-    // ! writeFlash<float>(I_TERM_INDEX, motor.getIValue());
+    writeFlash(I_TERM_INDEX, motor.getIValue());
 
     // D term of PID
-    // ! writeFlash<float>(D_TERM_INDEX, motor.getDValue());
+    writeFlash(D_TERM_INDEX, motor.getDValue());
 
     // CAN ID of the motor controller
     #ifdef ENABLE_CAN
@@ -214,10 +252,78 @@ void saveParameters() {
     #endif
 
     // If the dip switches were installed incorrectly
-    // ! writeFlash<bool>(INVERTED_DIPS_INDEX, getDipInverted());
+    writeFlash(INVERTED_DIPS_INDEX, getDipInverted());
 
     // Re-enable interrupts
     enableInterrupts();
+}
+
+
+// Loads the saved parameters from flash and sets them
+String loadParameters() {
+
+    // Disable interrupts
+    disableInterrupts();
+
+    // Create a storage for the output message
+    String outputMessage;
+
+    // Check to see if the data is valid
+    if (readFlashBool(VALID_FLASH_CONTENTS)) {
+
+        // Set the motor current
+        #ifdef ENABLE_DYNAMIC_CURRENT
+            motor.setDynamicAccelCurrent(readFlash<uint16_t>(DYNAMIC_ACCEL_CURRENT_INDEX));
+            motor.setDynamicIdleCurrent(readFlash<uint16_t>(DYNAMIC_IDLE_CURRENT_INDEX));
+            motor.setDynamicMaxCurrent(readFlash<uint16_t>(DYNAMIC_MAX_CURRENT_INDEX));
+        #else
+            // Just load the motor current from the idle index
+            motor.setRMSCurrent(readFlashU16(CURRENT_INDEX_1));
+        #endif
+
+        // Motor stepping angle
+        motor.setFullStepAngle(readFlashFloat(FULL_STEP_ANGLE_INDEX));
+
+        // Microstepping divisor
+        motor.setMicrostepping(readFlashU16(MICROSTEPPING_INDEX));
+
+        // Motor Direction Reversed
+        motor.setReversed(readFlashBool(MOTOR_REVERSED_INDEX));
+
+        // Motor Enable Inverted
+        motor.setEnableInversion(readFlashBool(ENABLE_INVERSION_INDEX));
+
+        // Motor microstepping multiplier
+        motor.setMicrostepMultiplier(readFlashFloat(MICROSTEP_MULTIPLIER_INDEX));
+
+        // P term of PID
+        motor.setPValue(readFlashFloat(P_TERM_INDEX));
+
+        // I term of PID
+        motor.setIValue(readFlashFloat(I_TERM_INDEX));
+
+        // D term of PID
+        motor.setDValue(readFlashFloat(D_TERM_INDEX));
+
+        // The CAN ID of the motor
+        setCANID((AXIS_CAN_ID)readFlashU32(CAN_ID_INDEX));
+
+        // If the dip switches were installed incorrectly
+        setDipInverted(readFlashBool(INVERTED_DIPS_INDEX));
+
+        // If we made it this far, we can set the message to "ok" and move on
+        outputMessage = FEEDBACK_OK;
+    }
+    else {
+        // The data is invalid, so return a message saying that the data was invalid
+        outputMessage = F("Flash data empty or invalid");
+    }
+
+    // All done, we can re-enable interrupts
+    enableInterrupts();
+
+    // All done, we can return the result of the process
+    return outputMessage;
 }
 
 
@@ -226,7 +332,8 @@ void saveParameters() {
 void wipeParameters() {
 
     // Simpler method of just setting the contents to be invalid, rather than erasing everything
-    // ! writeFlash<bool>(VALID_FLASH_CONTENTS, false);
+    // Helps to reduce the wear and tear on the flash
+    writeFlash(VALID_FLASH_CONTENTS, false);
 
     // Loop through all of the addresses, zeroing all of the bits
     //for (uint8_t index = 0; index < MAX_FLASH_PARAM_INDEX; index++) {

@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.24"
+#define VERSION "0.0.25"
 
 
 // --------------  Settings  --------------

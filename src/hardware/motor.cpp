@@ -1,5 +1,8 @@
 #include "motor.h"
+
+// These imports must be here to prevent linking circles
 #include "oled.h"
+#include "flash.h"
 
 // Optimize for speed
 #pragma GCC optimize ("-Ofast")
@@ -611,6 +614,9 @@ void StepperMotor::calibrate() {
     // Calibrate encoder offset
 
     // Calibrate PID loop
+
+    // Write that the module is configured
+    writeFlash(CALIBRATED_INDEX, true);
 }
 
 

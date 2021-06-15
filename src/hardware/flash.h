@@ -1,7 +1,6 @@
 #ifndef __FLASH_H
 #define __FLASH_H
 
-#include "main.h"
 #include "stm32f103xb.h"
 #include "buttons.h"
 #include "canMessaging.h"
@@ -11,7 +10,7 @@
 // Where the parameters are saved
 // This is 1024 bits behind the end of flash
 // This allows 32 32-bit values to be stored
-#define CALIB_START_ADDR      0x0801FC00
+#define DATA_START_ADDR      0x0801FC00
 
 // Main overview of the format of data storage
 typedef enum {
@@ -61,18 +60,22 @@ typedef enum {
 bool isCalibrated();
 
 // Reading flash
-template<typename type>
-type readFlash(uint32_t parameterIndex);
+uint16_t readFlashAddress(uint32_t address);
+uint16_t readFlashU16(uint32_t parameterIndex);
+uint32_t readFlashU32(uint32_t parameterIndex);
+bool     readFlashBool(uint32_t parameterIndex);
+float    readFlashFloat(uint32_t parameterIndex);
 
 // Writing to flash
 void writeToAddress(uint32_t address, uint16_t data);
 void writeFlash(uint32_t parameterIndex, uint16_t data);
 void writeFlash(uint32_t parameterIndex, uint32_t data);
-// ! Need a 64, bool, and float version of storage
+void writeFlash(uint32_t parameterIndex, bool data);
+void writeFlash(uint32_t parameterIndex, float data);
 
 // Load/saving values to flash
-void loadParameters();
 void saveParameters();
+String loadParameters();
 void wipeParameters();
 
 #endif
