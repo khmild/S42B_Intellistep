@@ -306,7 +306,9 @@ String loadParameters() {
         motor.setDValue(readFlashFloat(D_TERM_INDEX));
 
         // The CAN ID of the motor
-        setCANID((AXIS_CAN_ID)readFlashU32(CAN_ID_INDEX));
+        #ifdef ENABLE_CAN
+            setCANID((AXIS_CAN_ID)readFlashU32(CAN_ID_INDEX));
+        #endif
 
         // If the dip switches were installed incorrectly
         setDipInverted(readFlashBool(INVERTED_DIPS_INDEX));
