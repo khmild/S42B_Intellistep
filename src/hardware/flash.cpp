@@ -273,9 +273,9 @@ String loadParameters() {
 
         // Set the motor current
         #ifdef ENABLE_DYNAMIC_CURRENT
-            motor.setDynamicAccelCurrent(readFlash<uint16_t>(DYNAMIC_ACCEL_CURRENT_INDEX));
-            motor.setDynamicIdleCurrent(readFlash<uint16_t>(DYNAMIC_IDLE_CURRENT_INDEX));
-            motor.setDynamicMaxCurrent(readFlash<uint16_t>(DYNAMIC_MAX_CURRENT_INDEX));
+            motor.setDynamicAccelCurrent(readFlashU16(DYNAMIC_ACCEL_CURRENT_INDEX));
+            motor.setDynamicIdleCurrent(readFlashU16(DYNAMIC_IDLE_CURRENT_INDEX));
+            motor.setDynamicMaxCurrent(readFlashU16(DYNAMIC_MAX_CURRENT_INDEX));
         #else
             // Just load the motor current from the idle index
             motor.setRMSCurrent(readFlashU16(CURRENT_INDEX_1));
