@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "stm32f1xx_ll_gpio.h"
 #include "oledfont.h"
+#include "flash.h"
 
 // Enumerations for the different menu values
 typedef enum {
@@ -22,7 +23,8 @@ typedef enum {
     CURRENT,
     MICROSTEP,
     ENABLE_LOGIC,
-    DIR_LOGIC
+    DIR_LOGIC,
+    SAVED_DATA
 } SUBMENU;
 
 // Variables
@@ -59,6 +61,7 @@ typedef enum {
 #define MAX_CHAR_POSX 122
 #define MAX_CHAR_POSY 58
 #define OB_SIZE 32
+#define LINE_HEIGHT 16
 
 // Low level OLED commands
 void initOLED();
