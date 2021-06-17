@@ -115,6 +115,9 @@ void writeToFlashAddress(uint32_t address, uint16_t data) {
     // Set the flash for writing
     CLEAR_BIT(FLASH->CR, FLASH_CR_LOCK);
 
+    // Clear any errors
+    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
+
     // Wait for the flash to be ready
     HAL_StatusTypeDef status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
 
@@ -124,12 +127,8 @@ void writeToFlashAddress(uint32_t address, uint16_t data) {
         // Set the flash programming register
         SET_BIT(FLASH->CR, FLASH_CR_PG);
 
-        // Check that the value isn't already stored (reduces wear on the flash)
-        if (readFlashAddress(address) != data) {
-
-            // Write the data
-            *(__IO uint16_t*)address = data;
-        }
+        // Write the data
+        *(__IO uint16_t*)address = data;
 
         // Wait for the operation to finish
         FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
@@ -197,11 +196,32 @@ void writeFlash(uint32_t parameterIndex, float data) {
 }
 
 
+// Erases all data that is saved in the parameters page
+void eraseParameters() {
+    
+    // Configure the erase type
+    FLASH_EraseInitTypeDef eraseStruct;
+    eraseStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+    eraseStruct.Banks = FLASH_BANK_1;
+    eraseStruct.PageAddress = DATA_START_ADDR;
+    eraseStruct.NbPages = 1;
+
+    // Erase the the entire page (all possible addresses for parameters to be stored)
+    uint32_t pageError;
+    HAL_FLASHEx_Erase(&eraseStruct, &pageError);
+}
+
 // Writes the currently saved parameters to flash memory for long term storage
 void saveParameters() {
 
     // Disable interrupts
     disableInterrupts();
+
+    // Erase the current flash data if old data exists (needed to write new data, flash will not allow
+    // writing 0s in place of 1s for whatever reason).
+    if (readFlashBool(VALID_FLASH_CONTENTS)) {
+        eraseParameters();
+    }
 
     // Write that the data is valid
     writeFlash(VALID_FLASH_CONTENTS, true);
@@ -333,14 +353,8 @@ String loadParameters() {
 // !!! WARNING !!! Reboots processor!
 void wipeParameters() {
 
-    // Simpler method of just setting the contents to be invalid, rather than erasing everything
-    // Helps to reduce the wear and tear on the flash
-    writeFlash(VALID_FLASH_CONTENTS, false);
-
-    // Loop through all of the addresses, zeroing all of the bits
-    //for (uint8_t index = 0; index < MAX_FLASH_PARAM_INDEX; index++) {
-    //    writeFlash<uint32_t>(index, 0);
-    //}
+    // Erase the old parameters
+    eraseParameters();
 
     // Reboot the processor
     NVIC_SystemReset();

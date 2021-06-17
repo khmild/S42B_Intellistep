@@ -73,6 +73,9 @@ void writeFlash(uint32_t parameterIndex, uint32_t data);
 void writeFlash(uint32_t parameterIndex, bool data);
 void writeFlash(uint32_t parameterIndex, float data);
 
+// Erase all of the parameters in flash
+void eraseParameters();
+
 // Load/saving values to flash
 void saveParameters();
 String loadParameters();
