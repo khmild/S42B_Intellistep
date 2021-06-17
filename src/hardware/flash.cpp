@@ -11,7 +11,7 @@ bool isCalibrated() {
     HAL_FLASH_Unlock();
 
     // Get the calibration flag
-    bool calibrationFlag = true; // ! readFlashBool(CALIBRATED_INDEX);
+    bool calibrationFlag = readFlashBool(CALIBRATED_INDEX);
 
     // Lock the flash again
     HAL_FLASH_Lock();
@@ -112,33 +112,17 @@ void writeToFlashAddress(uint32_t address, uint16_t data) {
     // Disable interrupts (CANNOT BE INTERRUPTED)
     disableInterrupts();
 
-    // Set the flash for writing
-    CLEAR_BIT(FLASH->CR, FLASH_CR_LOCK);
+    // Unlock the flash for writing
+    HAL_FLASH_Unlock();
 
     // Clear any errors
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
 
-    // Wait for the flash to be ready
-    HAL_StatusTypeDef status = FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
-
-    // Only continue if the flash is ready
-    if (status == HAL_OK) {
-
-        // Set the flash programming register
-        SET_BIT(FLASH->CR, FLASH_CR_PG);
-
-        // Write the data
-        *(__IO uint16_t*)address = data;
-
-        // Wait for the operation to finish
-        FLASH_WaitForLastOperation(FLASH_TIMEOUT_VALUE);
-
-        // Clear the flash programming register
-        CLEAR_BIT(FLASH->CR, FLASH_CR_PG);
-    }
+    // Write out the data
+    HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, data);
 
     // Lock the flash (we finished writing)
-    SET_BIT(FLASH->CR, FLASH_CR_LOCK);
+    HAL_FLASH_Lock();
 
     // Re-enable interrupts
     enableInterrupts();
@@ -207,7 +191,7 @@ void eraseParameters() {
     eraseStruct.NbPages = 1;
 
     // Erase the the entire page (all possible addresses for parameters to be stored)
-    uint32_t pageError;
+    uint32_t pageError = 0;
     HAL_FLASHEx_Erase(&eraseStruct, &pageError);
 }
 
@@ -334,11 +318,11 @@ String loadParameters() {
         setDipInverted(readFlashBool(INVERTED_DIPS_INDEX));
 
         // If we made it this far, we can set the message to "ok" and move on
-        outputMessage = FEEDBACK_OK;
+        outputMessage = FLASH_LOAD_SUCCESSFUL;
     }
     else {
-        // The data is invalid, so return a message saying that the data was invalid
-        outputMessage = F("Flash data empty or invalid");
+        // The data is invalid, so return a message saying that the load was unsuccessful
+        outputMessage = FLASH_LOAD_UNSUCCESSFUL;
     }
 
     // All done, we can re-enable interrupts
@@ -353,8 +337,11 @@ String loadParameters() {
 // !!! WARNING !!! Reboots processor!
 void wipeParameters() {
 
-    // Erase the old parameters
-    eraseParameters();
+    // Disable interrupts (no need to re-enable, the processor is going to be rebooted)
+    disableInterrupts();
+
+    // Write that the flash is invalid (can write 0 without erasing flash)
+    writeFlash(VALID_FLASH_CONTENTS, false);
 
     // Reboot the processor
     NVIC_SystemReset();

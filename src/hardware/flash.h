@@ -12,6 +12,10 @@
 // This allows 32 32-bit values to be stored
 #define DATA_START_ADDR      0x0801FC00
 
+// Messages for successful and unsuccessful flash reads
+#define FLASH_LOAD_SUCCESSFUL   F("Flash data loaded")
+#define FLASH_LOAD_UNSUCCESSFUL F("Flash data non-existent")
+
 // Main overview of the format of data storage
 typedef enum {
 

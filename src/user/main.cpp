@@ -136,19 +136,35 @@ void setup() {
     else {
         // There is a calibration, load it and move on to the loop
 
-        // Load the values from flash
-        //loadSavedValues();
-
         #ifdef ENABLE_OLED
 
             // Let the user know that the calibration was successfully loaded
             clearOLED();
             writeOLEDString(0, 0, "Calibration", false);
-            writeOLEDString(0, 16, "OK!", true);
+            writeOLEDString(0, 16, "OK!", false);
+
+            // Write base string for flash loading
+            writeOLEDString(0, 32, F("Flash loaded"), false);
+
+            // Attempt to load the parameters from flash
+            if (loadParameters() == FLASH_LOAD_SUCCESSFUL) {
+                writeOLEDString(0, 48, F("successfully"), true);
+            }
+            else {
+                writeOLEDString(0, 48, F("unsuccessfully"), true);
+            }
+            
+            // Let the user read the message
             delay(1000);
+
+            // Clear the display
+            clearOLED();
             
             // Write out the first data to the screen (makes sure that the first write isn't interrupted)
             displayMotorData();
+        #else 
+            // Nothing special, just try to load the flash data
+            loadParameters();
         #endif
 
         // Setup the motor timers and interrupts

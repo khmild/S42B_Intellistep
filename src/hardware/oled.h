@@ -70,6 +70,6 @@ void setOLEDPixel(uint8_t x, uint8_t y, OLED_COLOR color);
 void fillOLED(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, OLED_COLOR color, bool updateScreen = true);
 void writeOLEDChar(uint8_t x, uint8_t y, uint8_t chr, uint8_t fontSize, OLED_COLOR color, bool updateScreen = true);
 void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fontSize, bool updateScreen = true);
-void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen = true);
-void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen = true);
+void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen = true, bool allowOverflow = false);
+void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen = true, bool allowOverflow = false);
 void clearOLED();

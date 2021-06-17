@@ -783,14 +783,30 @@ void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fo
 
 
 // Function to write a string to the screen
-void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen) {
+void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen, bool allowOverflow) {
 
     // Check if we haven't reached the end of the string
     while(*p != '\0') {
 
-        // Make sure that the x and y don't exceed the maximum indexes
-        if(x > MAX_CHAR_POSX || y > MAX_CHAR_POSY){
+        // Make sure that y doesn't exceed the maximum indexes
+        if (y > MAX_CHAR_POSY) {
             break;
+        }
+        // Check the location of the next character in the x direction
+        else if (x + (16 / 2) > MAX_CHAR_POSX) {
+
+            // Check if the display should allow overflow
+            if (allowOverflow) {
+
+                // We're over the edge of the screen
+                // Move the cursor back and down a line
+                x = 0;
+                y += 16;
+            }
+            else {
+                // Overflow is not allowed, exit the function
+                break;
+            }
         }
 
         // Display the character on the screen
@@ -811,8 +827,8 @@ void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen) {
 
 
 // Convience function for writing a specific string to the OLED panel
-void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen) {
-    writeOLEDString(x, y, string.c_str(), updateScreen);
+void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen, bool allowOverflow) {
+    writeOLEDString(x, y, string.c_str(), updateScreen, allowOverflow);
 }
 
 
