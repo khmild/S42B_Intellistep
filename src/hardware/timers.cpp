@@ -60,7 +60,7 @@ void setupMotorTimers() {
     correctionTimer -> setInterruptPriority(1, 0);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
     correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
-    correctionTimer -> attachInterrupt(updateMotor);
+    correctionTimer -> attachInterrupt(correctMotor);
     correctionTimer -> refresh();
     correctionTimer -> resume();
 }
@@ -134,7 +134,7 @@ void stepMotor() {
 
 
 // Need to declare a function to power the motor coils for the step interrupt
-void updateMotor() {
+void correctMotor() {
 
     // Check to see the state of the enable pin
     if ((digitalReadFast(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {

@@ -323,7 +323,7 @@ float StepperMotor::getDesiredAngle() const {
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngle) {
 
     // Main angle change (any inversions * angle of microstep)
-    float angleChange = StepperMotor::invertDirection(this -> reversed) * ((this -> fullStepAngle) / (this -> microstepDivisor));
+    float angleChange = (this -> fullStepAngle) / (this -> microstepDivisor);
 
     // Factor in the multiplier if specified
     if (useMultiplier) {

@@ -33,6 +33,6 @@ void updateCorrectionTimer();
 void stepMotor();
 
 // Function to correct motor position if it is out of place
-void updateMotor();
+void correctMotor();
 
 #endif
