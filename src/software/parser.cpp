@@ -29,9 +29,6 @@ String parseCommand(String buffer) {
     //  - M502 (ex M502) - Wipes all parameters from flash, then reboots the system
     //  - M907 (ex M907 R750, M907 I500) - Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (no dynamic current) or the accel, idle, and max terms (dynamic current) will be returned.
 
-    // Change the string to uppercase (allows flexibility for upper and lower case characters)
-    buffer.toUpperCase();
-
     // ! Check to see if the string contains another set of gcode, if so call the function recursively
 
     // Check to see if the letter is an M (only supported gcode at this point)
@@ -89,9 +86,16 @@ String parseCommand(String buffer) {
                 if (!((pValue == -1) && (iValue == -1) && (dValue == -1))) {
 
                     // There is at least one valid value, therefore set all of the values
-                    motor.setPValue(pValue);
-                    motor.setIValue(iValue);
-                    motor.setDValue(dValue);
+                    if (pValue != -1) {
+                        motor.setPValue(pValue);
+                    }
+                    if (iValue != -1) {
+                        motor.setIValue(iValue);
+                    }
+                    if (dValue != -1) {
+                        motor.setDValue(dValue);
+                    }
+                    
                     return FEEDBACK_OK;
                 }
                 else {
@@ -367,6 +371,11 @@ String parseCommand(String buffer) {
                     }
                 #endif
             }
+            case 1000: {
+                // Just for testing
+                Serial.println("Testing parseString");
+                return parseString(buffer, 'S');
+            }
         }
     }
 
@@ -378,35 +387,38 @@ String parseCommand(String buffer) {
 // Returns the substring of the value after the letter parameter
 String parseValue(String buffer, char letter) {
 
+    // Convert the buffer to all uppercase (easier to read)
+    buffer.toUpperCase();
+
     // Search the input string for the specified letter
-    uint16_t charIndex = buffer.indexOf(toupper(letter));
+    int16_t charIndex = buffer.indexOf(toupper(letter));
 
     // If the index came back with a value, we can begin the process of extracting the raw value
-    if (!(charIndex == -1 || charIndex == 65535)) {
+    if (charIndex != -1) {
 
         // Get the next index of a space
-        uint16_t nextSpaceIndex = buffer.substring(charIndex).indexOf(' ') + charIndex;
+        int16_t nextSpaceIndex = buffer.substring(charIndex).indexOf(' ');
 
         // Check to see if there is a space between the letter and value
-        if (nextSpaceIndex == charIndex + 1) { 
+        if (nextSpaceIndex == 1) { 
 
             // We need to find out if there is another space after this parameter
-            uint16_t endSpaceIndex = buffer.substring(nextSpaceIndex + 1).indexOf(' ') + nextSpaceIndex + 1;
+            int16_t endSpaceIndex = buffer.substring(charIndex + nextSpaceIndex + 1).indexOf(' ');
 
             // Check to see if there is an ending space
             if (endSpaceIndex != -1) {
 
                 // Return only the substring between the ending space and the space after the letter
-                return buffer.substring(nextSpaceIndex + 1, endSpaceIndex);
+                return buffer.substring(charIndex + nextSpaceIndex + 1, charIndex + nextSpaceIndex + endSpaceIndex + 2);
             }
             else {
                 // That's the end of the string, we can start at the space and just include the rest
-                return buffer.substring(nextSpaceIndex + 1);
+                return buffer.substring(charIndex + nextSpaceIndex + 1);
             }
         }
         else if (nextSpaceIndex != -1) {
             // The next space index is after the value, so just include up to it
-            return buffer.substring(charIndex + 1, nextSpaceIndex);
+            return buffer.substring(charIndex + 1, charIndex + nextSpaceIndex);
         }
         else {
             // There is no more spaces in the string, therefore just return the rest of the string
@@ -424,21 +436,39 @@ String parseValue(String buffer, char letter) {
 // Returns the substring of the string after the letter parameter
 String parseString(String buffer, char letter) {
 
-    // Search the input string for the specified letter
-    uint16_t charIndex = buffer.indexOf(toupper(letter));
+    // Create a variable to store the found charIndex
+    int16_t charIndex = -1;
+
+    // Search the input string for the specified letter in both upper and lower case
+    int16_t uppercaseIndex = buffer.indexOf(toupper(letter));
+    int16_t lowercaseIndex = buffer.indexOf(tolower(letter));
+
+    // Check if one of the cases exists
+    if (!(uppercaseIndex == -1 || uppercaseIndex == 65535)) {
+
+        // Uppercase index is valid, save it as the charIndex
+        charIndex = uppercaseIndex;
+    }
+    else if (!(lowercaseIndex == -1 || lowercaseIndex == 65535)) {
+
+        // Lowercase index is valid, save it as the charIndex
+    }
+    // else {
+    //    Leave the charIndex as -1, signifying that it doesn't exist
+    //}
 
     // If the index came back with a value, we can begin the process of extracting the raw value
     if (charIndex != -1) {
 
         // Time to check to see where the double quotations are
-        uint16_t startQuotationIndex = buffer.substring(charIndex + 1).indexOf('"');
-        uint16_t endQuotationIndex = buffer.substring(startQuotationIndex + 1).indexOf('"');
+        int16_t startQuotationIndex = buffer.substring(charIndex + 1).indexOf('"');
+        int16_t endQuotationIndex = buffer.substring(charIndex + startQuotationIndex + 2).indexOf('"');
 
         // Make sure that there are quotations on each side
         if (startQuotationIndex != -1 && endQuotationIndex != -1) {
             
             // Return the string between them
-            return buffer.substring(startQuotationIndex + 1, endQuotationIndex - 1);
+            return buffer.substring(charIndex + startQuotationIndex + 2, charIndex + startQuotationIndex + endQuotationIndex + 2);
         }
         else {
             // Throw an error, we can't find both the quotation marks

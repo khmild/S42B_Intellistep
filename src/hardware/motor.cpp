@@ -234,7 +234,7 @@ void StepperMotor::setFullStepAngle(float newStepAngle) {
 
         // Make sure that the value is one of the 2 common types
         // ! Maybe remove later?
-        if ((newStepAngle == 1.8) || (newStepAngle == 0.9)) {
+        if ((newStepAngle == (float)1.8) || (newStepAngle == (float)0.9)) {
 
             // Save the new full step angle
             this -> fullStepAngle = newStepAngle;

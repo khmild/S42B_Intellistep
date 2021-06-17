@@ -182,17 +182,28 @@ void writeFlash(uint32_t parameterIndex, float data) {
 
 // Erases all data that is saved in the parameters page
 void eraseParameters() {
+
+    // Disable interrupts
+    disableInterrupts();
+
+    // Unlock the flash
+    HAL_FLASH_Unlock();
     
     // Configure the erase type
     FLASH_EraseInitTypeDef eraseStruct;
     eraseStruct.TypeErase = FLASH_TYPEERASE_PAGES;
-    eraseStruct.Banks = FLASH_BANK_1;
     eraseStruct.PageAddress = DATA_START_ADDR;
     eraseStruct.NbPages = 1;
 
     // Erase the the entire page (all possible addresses for parameters to be stored)
     uint32_t pageError = 0;
     HAL_FLASHEx_Erase(&eraseStruct, &pageError);
+    
+    // Good to go, lock the flash again
+    HAL_FLASH_Lock();
+
+    // Enable interrupts
+    enableInterrupts();
 }
 
 // Writes the currently saved parameters to flash memory for long term storage
@@ -201,16 +212,18 @@ void saveParameters() {
     // Disable interrupts
     disableInterrupts();
 
+    // Check to see if the module was calibrated previously
+    bool calibrated = isCalibrated();
+
     // Erase the current flash data if old data exists (needed to write new data, flash will not allow
     // writing 0s in place of 1s for whatever reason).
-    if (readFlashBool(VALID_FLASH_CONTENTS)) {
-        eraseParameters();
-    }
+    eraseParameters();
 
     // Write that the data is valid
     writeFlash(VALID_FLASH_CONTENTS, true);
 
-    // No programming needed for the calibration state, that it written once calibrated
+    // Save the previous state
+    writeFlash(CALIBRATED_INDEX, calibrated);
 
     // Get the motor current
     #ifdef ENABLE_DYNAMIC_CURRENT
