@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.23"
+#define VERSION "0.0.30"
 
 
 // --------------  Settings  --------------
@@ -207,8 +207,13 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 
 // --------------  Internal defines  --------------
 // Under the hood motor setup
-#define SINE_VAL_COUNT ((uint16_t)(128))
+#define SINE_VAL_COUNT (128)
 #define SINE_MAX ((int16_t)(10000))
+
+#define IS_POWER_2(N) (N & (N-1)) // Return 0 if a number is a power of 2.
+#if IS_POWER_2(SINE_VAL_COUNT) != 0
+    #error SINE_VAL_COUNT must be a power of 2 to use in fastSin() and fastCos() defines!!!
+#endif
 
 // Bitwise memory modification
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))

@@ -10,10 +10,6 @@
 //extern uint16_t ReadAngle(void);
 extern void overclock(uint32_t PLLMultiplier);
 
-// Motor interrupts
-extern void setupMotorTimers();
-extern void updateMotor();
-
 extern StepperMotor motor;
 
 extern void setup();

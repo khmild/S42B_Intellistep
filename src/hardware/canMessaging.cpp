@@ -44,27 +44,31 @@ void initCAN() {
 // Send a String over the CAN bus. Strings will have a "<" to start and a ">" to end
 void txCANString(int ID, String string) {
 
-    // Add the beginning character to the string
-    string = '<' + string;
+    // Make sure that the ID is valid
+    if (ID != -1) {
 
-    // Loop through forever, only exiting on sending the last string
-    while (true) {
+        // Add the beginning character to the string
+        string = '<' + string;
 
-        // Check the length of the string (need an extra character for the ">" (ending character))
-        if ((string.length() + 1) > 8) {
+        // Loop through forever, only exiting on sending the last string
+        while (true) {
 
-            // Send the message over the CAN bus
-            can.transmit(ID, string.substring(0, 7).c_str(), 8);
+            // Check the length of the string (need an extra character for the ">" (ending character))
+            if ((string.length() + 1) > 8) {
 
-            // Remove the data sent with this packet
-            string.remove(0, 8);
-        }
-        else {
-            // Send the last CAN message, with a > appended to the end
-            can.transmit(ID, string.c_str() + '>', string.length());
+                // Send the message over the CAN bus
+                can.transmit(ID, string.substring(0, 7).c_str(), 8);
 
-            // Break the loop after finishing
-            break;
+                // Remove the data sent with this packet
+                string.remove(0, 8);
+            }
+            else {
+                // Send the last CAN message, with a > appended to the end
+                can.transmit(ID, string.c_str() + '>', string.length());
+
+                // Break the loop after finishing
+                break;
+            }
         }
     }
 }

@@ -28,9 +28,9 @@ MENU_DEPTH lastMenuDepth = MOTOR_DATA;
 
 // Displays the bootscreen
 void showBootscreen() {
-    writeOLEDString(0, 0,  F("Intellistep"), false);
-    writeOLEDString(0, 32, F("Version: "), false);
-    writeOLEDString(0, 48, F(VERSION), true);
+    writeOLEDString(0, 0,               F("Intellistep"), false);
+    writeOLEDString(0, LINE_HEIGHT * 2, F("Version: "), false);
+    writeOLEDString(0, LINE_HEIGHT * 3, F(VERSION), true);
 }
 
 
@@ -49,11 +49,11 @@ void updateDisplay() {
             // Values must first be determined using the mod function in order to prevent overflow errors
             // Then the strings are converted into character arrays by giving the address of the first character in the string
             clearOLED();
-            writeOLEDString(0, 0, "->", false);
-            writeOLEDString(25, 0,  &submenuItems[(submenu)     % submenuCount][0], false);
-            writeOLEDString(25, 16, &submenuItems[(submenu + 1) % submenuCount][0], false);
-            writeOLEDString(25, 32, &submenuItems[(submenu + 2) % submenuCount][0], false);
-            writeOLEDString(25, 48, &submenuItems[(submenu + 3) % submenuCount][0], true);
+            writeOLEDString(0,  0, "->", false);
+            writeOLEDString(25, 0,               &submenuItems[(submenu)     % submenuCount][0], false);
+            writeOLEDString(25, LINE_HEIGHT,     &submenuItems[(submenu + 1) % submenuCount][0], false);
+            writeOLEDString(25, LINE_HEIGHT * 2, &submenuItems[(submenu + 2) % submenuCount][0], false);
+            writeOLEDString(25, LINE_HEIGHT * 3, &submenuItems[(submenu + 3) % submenuCount][0], true);
             break;
 
         case SUBMENUS:
@@ -62,9 +62,9 @@ void updateDisplay() {
                 case CALIBRATION:
                     // In the first menu, the calibration one. No need to do anything here, besides maybe displaying an progress bar or PID values (later?)
                     clearOLED();
-                    writeOLEDString(0, 0, "Are you sure?", false);
-                    writeOLEDString(0, 16, "Press select", false);
-                    writeOLEDString(0, 32, "to confirm", true);
+                    writeOLEDString(0, 0,               "Are you sure?", false);
+                    writeOLEDString(0, LINE_HEIGHT,     "Press select", false);
+                    writeOLEDString(0, LINE_HEIGHT * 2, "to confirm", true);
                     break;
 
                 case CURRENT:
@@ -89,7 +89,7 @@ void updateDisplay() {
 
                             // Value is in range, display the current on that line
                             snprintf(outBuffer, OB_SIZE, "%dmA", (int)((currentCursorIndex + stringIndex) * 100));
-                            writeOLEDString(25, stringIndex * 16, outBuffer, false);
+                            writeOLEDString(25, stringIndex * LINE_HEIGHT, outBuffer, false);
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
@@ -123,7 +123,7 @@ void updateDisplay() {
 
                             // Value is in range, display the current on that line
                             snprintf(outBuffer, OB_SIZE, "1/%dth", (int)pow(2, currentCursorIndex + stringIndex));
-                            writeOLEDString(25, stringIndex * 16, outBuffer, false);
+                            writeOLEDString(25, stringIndex * LINE_HEIGHT, outBuffer, false);
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
@@ -146,11 +146,11 @@ void updateDisplay() {
                     if (currentCursorIndex % 2 == 0) {
 
                         // The index is even, the logic is inverted
-                        writeOLEDString(0, 24, "Inverted", true);
+                        writeOLEDString(0, (3 * LINE_HEIGHT / 2), "Inverted", true);
                     }
                     else {
                         // Index is odd, the logic is normal
-                        writeOLEDString(0, 24, "Normal", true);
+                        writeOLEDString(0, (3 * LINE_HEIGHT / 2), "Normal", true);
                     }
                     break;
 
@@ -165,12 +165,27 @@ void updateDisplay() {
                     if (currentCursorIndex % 2 == 0) {
 
                         // The index is even, the logic is inverted
-                        writeOLEDString(0, 24, "Inverted", true);
+                        writeOLEDString(0, (3 * LINE_HEIGHT / 2), "Inverted", true);
                     }
                     else {
                         // Index is odd, the logic is normal
-                        writeOLEDString(0, 24, "Normal", true);
+                        writeOLEDString(0, (3 * LINE_HEIGHT / 2), "Normal", true);
                     }
+                    break;
+
+                case SAVED_DATA:
+                    // Clear the screen of old content
+                    clearOLED();
+
+                    // Write cursor to line index based on cursor mod
+                    writeOLEDString(0, (currentCursorIndex % 3) * LINE_HEIGHT, "->", false);
+
+                    // Write out the options
+                    writeOLEDString(25, 0,               F("Save"), false);
+                    writeOLEDString(25, LINE_HEIGHT,     F("Load"), false);
+                    writeOLEDString(25, LINE_HEIGHT * 2, F("Wipe"), true);
+
+                    // All done, break
                     break;
             } // Submenu switch
             break;
@@ -215,25 +230,25 @@ void displayMotorData() {
 
     // Angle error
     snprintf(outBuffer, OB_SIZE, "Err: % 08.2f", motor.getAngleError());
-    writeOLEDString(0, 16, outBuffer, false);
+    writeOLEDString(0, LINE_HEIGHT, outBuffer, false);
 
     // Current angle of the motor
     snprintf(outBuffer, OB_SIZE, "Deg: % 08.2f", getAbsoluteAngle());
-    writeOLEDString(0, 32, outBuffer, false);
+    writeOLEDString(0, LINE_HEIGHT * 2, outBuffer, false);
 
-    // Maybe a 4th line later?
+    // Temp of the encoder (close to the motor temp)
     snprintf(outBuffer, OB_SIZE, "Temp: %.1f C", getEncoderTemp());
-    writeOLEDString(0, 48, outBuffer, true);
+    writeOLEDString(0, LINE_HEIGHT * 3, outBuffer, true);
 }
 
 
 // Display an error message
 void displayWarning(String firstLine, String secondLine, String thirdLine, bool updateScreen) {
     clearOLED();
-    writeOLEDString(0, 0,  firstLine,  false);
-    writeOLEDString(0, 16, secondLine, false);
-    writeOLEDString(0, 32, thirdLine,  false);
-    writeOLEDString(0, 48, F("Select to exit"), updateScreen);
+    writeOLEDString(0, 0,               firstLine,  false);
+    writeOLEDString(0, LINE_HEIGHT,     secondLine, false);
+    writeOLEDString(0, LINE_HEIGHT * 2, thirdLine,  false);
+    writeOLEDString(0, LINE_HEIGHT * 3, F("Select to exit"), updateScreen);
 
     // Save the last menu used (for returning later), then move to the new index
     lastMenuDepth = menuDepth;
@@ -308,6 +323,14 @@ void selectMenuItem() {
                 else {
                     currentCursorIndex = 1;
                 }
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
+
+            case SAVED_DATA:
+                // Just set the cursor to zero, no saving of last position
+                currentCursorIndex = 0;
 
                 // Enter the menu
                 menuDepth = SUBMENUS;
@@ -414,6 +437,25 @@ void selectMenuItem() {
                 // Exit the menu
                 menuDepth = MENU_RETURN_LEVEL;
                 break;
+
+            case SAVED_DATA:
+                // Determine which routine to run based on the division of the cursor
+                uint8_t cursorMod = currentCursorIndex % 3;
+                if (cursorMod == 0) {
+                    // First index, the save parameters, then return
+                    saveParameters();
+                    menuDepth = MENU_RETURN_LEVEL;
+                }
+                else if (cursorMod == 1) {
+                    // Second index, load the parameters
+                    loadParameters();
+                    menuDepth = MENU_RETURN_LEVEL;
+                }
+                else {
+                    // We must be on the third index, wipe the parameters
+                    wipeParameters();
+                    // No need to return here, the processor reboots
+                }
         }
 
         // Update the display with the new menu  
@@ -505,6 +547,7 @@ const char* submenuItems[] = {
     "Microstep",
     "En Logic",
     "Dir. Logic",
+    "Saved config",
     ""
 };
 
@@ -783,14 +826,30 @@ void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fo
 
 
 // Function to write a string to the screen
-void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen) {
+void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen, bool allowOverflow) {
 
     // Check if we haven't reached the end of the string
     while(*p != '\0') {
 
-        // Make sure that the x and y don't exceed the maximum indexes
-        if(x > MAX_CHAR_POSX || y > MAX_CHAR_POSY){
+        // Make sure that y doesn't exceed the maximum indexes
+        if (y > MAX_CHAR_POSY) {
             break;
+        }
+        // Check the location of the next character in the x direction
+        else if (x + (16 / 2) > MAX_CHAR_POSX) {
+
+            // Check if the display should allow overflow
+            if (allowOverflow) {
+
+                // We're over the edge of the screen
+                // Move the cursor back and down a line
+                x = 0;
+                y += LINE_HEIGHT;
+            }
+            else {
+                // Overflow is not allowed, exit the function
+                break;
+            }
         }
 
         // Display the character on the screen
@@ -811,8 +870,8 @@ void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen) {
 
 
 // Convience function for writing a specific string to the OLED panel
-void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen) {
-    writeOLEDString(x, y, string.c_str(), updateScreen);
+void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen, bool allowOverflow) {
+    writeOLEDString(x, y, string.c_str(), updateScreen, allowOverflow);
 }
 
 
