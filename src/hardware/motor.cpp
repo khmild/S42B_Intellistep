@@ -379,7 +379,7 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
     
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor));
-    arrayIndex &= (SINE_VAL_COUNT-1); // Ensure the index is in the sineTable range
+    arrayIndex &= (SINE_VAL_COUNT - 1); // Ensure the index is in the sineTable range
     int16_t coilAPercent = fastSin(arrayIndex);
     int16_t coilBPercent = fastCos(arrayIndex);
 

@@ -11,7 +11,7 @@ bool isCalibrated() {
     HAL_FLASH_Unlock();
 
     // Get the calibration flag
-    bool calibrationFlag = readFlashBool(CALIBRATED_INDEX);
+    bool calibrationFlag = true; // ! readFlashBool(CALIBRATED_INDEX);
 
     // Lock the flash again
     HAL_FLASH_Lock();

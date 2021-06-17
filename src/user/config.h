@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.25"
+#define VERSION "0.0.26"
 
 
 // --------------  Settings  --------------
@@ -207,7 +207,7 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 
 // --------------  Internal defines  --------------
 // Under the hood motor setup
-#define SINE_VAL_COUNT (128) // ((uint16_t)(128))
+#define SINE_VAL_COUNT (128)
 #define SINE_MAX ((int16_t)(10000))
 
 #define IS_POWER_2(N) (N & (N-1)) // Return 0 if a number is a power of 2.
