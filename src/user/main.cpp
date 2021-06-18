@@ -31,6 +31,10 @@ void setup() {
     //motor.setMicrostepping(16);
     //motor.setDesiredAngle(100);
 
+    pinMode(LED_PIN, OUTPUT);
+    digitalWriteFast(LED_PIN, HIGH);
+    //digitalWrite(LED_PIN, HIGH);
+
     // Only run if the OLED is enabled
     #ifdef ENABLE_OLED
 
