@@ -10,12 +10,6 @@
 // Public variables
 extern const int16_t sineTable[SINE_VAL_COUNT];
 
-// Array direction enum
-typedef enum {
-    FRONT,
-    BACK
-} ARRAY_SCAN_DIR;
-
 // Main functions
 #define fastSin(angle) (sineTable[angle])
 #define fastCos(angle) (sineTable[(angle + (SINE_VAL_COUNT / 4)) & (SINE_VAL_COUNT - 1)])

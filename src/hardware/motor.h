@@ -5,6 +5,7 @@
 #include "Arduino.h"
 #include "HardwareTimer.h"
 #include "encoder.h"
+#include "fastAnalogWrite.h"
 
 // For sin() and fmod() function
 //#include "cmath"
@@ -250,6 +251,12 @@ class StepperMotor {
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
         float microstepMultiplier = MICROSTEP_MULTIPLIER;
+
+        // Analog info structures for PWM current pins
+        analogInfo PWMCurrentPinInfo[2];
+
+        // Last coil states (used to save time by not setting the pins unless necessary)
+        COIL_STATE previousCoilStates[2];
 };
 
 
