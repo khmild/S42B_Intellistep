@@ -48,9 +48,9 @@ StepperMotor::StepperMotor() {
     pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
     pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
 
-    // Configure the PWM
-    analogWriteResolution(12); // STM32's is 12 bits max (max 4096)
-    analogWriteFrequency(MOTOR_PWM_FREQ * 1000);
+    // Configure the PWM current output pins
+    this -> PWMCurrentPinInfo[A] = analogSetup(COIL_POWER_OUTPUT_PINS[A], MOTOR_PWM_FREQ * 1000, 0);
+    this -> PWMCurrentPinInfo[B] = analogSetup(COIL_POWER_OUTPUT_PINS[B], MOTOR_PWM_FREQ * 1000, 0);
 
     // Disable the motor
     setState(DISABLED, true);
@@ -379,7 +379,11 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
     
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor));
-    arrayIndex &= (SINE_VAL_COUNT - 1); // Ensure the index is in the sineTable range
+    
+    // Ensure the index is in the sineTable range
+    arrayIndex &= (SINE_VAL_COUNT - 1);
+    
+    // Calculate the coil settings
     int16_t coilAPercent = fastSin(arrayIndex);
     int16_t coilBPercent = fastCos(arrayIndex);
 
@@ -434,10 +438,6 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
 // Function for setting a coil state and current
 void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current) {
 
-    // Disable the coil
-    // ! Make this process faster
-    analogWrite(COIL_POWER_OUTPUT_PINS[coil], 0);
-
     // ! Maybe for later?
     // Check the current. If the current is 0, then this means that the motor should go to its idle mode
     //if (current == 0) {
@@ -463,6 +463,9 @@ void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current)
         digitalWriteFaster(COIL_DIR_1_PINS[coil], LOW);
         digitalWriteFaster(COIL_DIR_2_PINS[coil], LOW);
     }
+
+    // Update the output pin with the correct current
+    analogSet(&PWMCurrentPinInfo[coil], currentToPWM(current));
 }
 
 
