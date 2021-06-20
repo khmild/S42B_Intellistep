@@ -627,6 +627,10 @@ void StepperMotor::calibrate() {
 
     // Calibrate PID loop
 
+    // Erase all of the written parameters
+    // ! Just a quick fix, needs a better fix later
+    eraseParameters();
+
     // Write that the module is configured
     writeFlash(CALIBRATED_INDEX, true);
 }

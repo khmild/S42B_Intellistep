@@ -97,15 +97,9 @@ void setup() {
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
         while(true) {
 
-            // Only if serial is specified
-            #ifdef ENABLE_SERIAL
-                // ! Only here for testing
-                runSerialParser();
-            #endif
-
             #ifdef ENABLE_OLED
                 // Check to see if any of the buttons are pressed
-                checkButtons(false);
+                checkButtons(false, true);
             #endif
 
             // ! Only for testing

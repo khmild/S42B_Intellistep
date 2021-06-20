@@ -42,7 +42,7 @@ void initButtons() {
 #ifdef ENABLE_OLED
 
 // Scan each of the buttons
-void checkButtons(bool updateScreen) {
+void checkButtons(bool updateScreen, bool onlyAllowSelect) {
 
   // Make sure that the buttons don't repeat too fast
   if (millis() - lastButtonClickTime > BUTTON_REPEAT_INTERVAL) {
@@ -64,7 +64,9 @@ void checkButtons(bool updateScreen) {
       lastButtonClickTime = millis();
 
       // Move down
-      moveCursor();
+      if (!onlyAllowSelect) {
+        moveCursor();
+      }
     }
 
     // Check the back button
@@ -74,7 +76,9 @@ void checkButtons(bool updateScreen) {
       lastButtonClickTime = millis();
 
       // Back up
-      exitCurrentMenu();
+      if (!onlyAllowSelect) {
+        exitCurrentMenu();
+      }
     }
   }
 }
