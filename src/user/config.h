@@ -12,6 +12,7 @@
 
 // Main feature enable
 #define ENABLE_OLED
+#define ENABLE_LED // red LED labeled as an 'error' in the schema
 #define ENABLE_SERIAL
 #define ENABLE_CAN
 

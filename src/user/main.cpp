@@ -6,7 +6,8 @@
 #include "flash.h"
 #include "encoder.h"
 #include "oled.h"
-#include "stm32yyxx_ll_rcc.h"
+#include "led.h"
+//#include "stm32yyxx_ll_rcc.h"
 
 // Create a new motor instance
 StepperMotor motor = StepperMotor();
@@ -30,10 +31,6 @@ void setup() {
     motor.setState(DISABLED, true);
     //motor.setMicrostepping(16);
     //motor.setDesiredAngle(100);
-
-    pinMode(LED_PIN, OUTPUT);
-    digitalWriteFast(LED_PIN, HIGH);
-    //digitalWrite(LED_PIN, HIGH);
 
     // Only run if the OLED is enabled
     #ifdef ENABLE_OLED
@@ -67,6 +64,10 @@ void setup() {
     #ifdef ENABLE_CAN
         // Initialize the CAN bus
         initCAN();
+    #endif
+
+    #ifdef ENABLE_LED
+        initLED();
     #endif
 
     // Test the flash if specified
