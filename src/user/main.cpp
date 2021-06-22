@@ -80,7 +80,8 @@ void setup() {
     //writeOLEDString(0, 0, "Close Loop Mode");
 
     // Check if the board is calibrated. Need to force calibration if the board isn't calibrated
-    if (!isCalibrated()) {
+    //if (!isCalibrated()) {
+    if (0) {
 
         // Only display to screen if the screen is enabled
         #ifdef ENABLE_OLED

@@ -226,15 +226,13 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 #define input(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8),n)
 
 // Maybe an even faster digitalWrite, but only if really needed
-/*
-#define digitalWriteFaster(PinName pn, bool high) \
+#define digitalWriteFaster(pn, high) \
     if (high) { \
         WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BSRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
     } \
     else { \
         WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
     }
-*/
 
 // --------------  Debugging  --------------
 //#define TEST_FLASH

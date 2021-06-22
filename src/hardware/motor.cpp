@@ -446,22 +446,22 @@ void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current)
 
     // Decide how to deal with the coil based on current, re-enabling it after setting the direction
     if (desiredState == FORWARD) {
-        digitalWriteFast(COIL_DIR_1_PINS[coil], HIGH);
-        digitalWriteFast(COIL_DIR_2_PINS[coil], LOW);
+        digitalWriteFaster(COIL_DIR_1_PINS[coil], HIGH);
+        digitalWriteFaster(COIL_DIR_2_PINS[coil], LOW);
         analogWrite(COIL_POWER_OUTPUT_PINS[coil], currentToPWM(current));
     }
     else if (desiredState == BACKWARD) {
-        digitalWriteFast(COIL_DIR_1_PINS[coil], LOW);
-        digitalWriteFast(COIL_DIR_2_PINS[coil], HIGH);
+        digitalWriteFaster(COIL_DIR_1_PINS[coil], LOW);
+        digitalWriteFaster(COIL_DIR_2_PINS[coil], HIGH);
         analogWrite(COIL_POWER_OUTPUT_PINS[coil], currentToPWM(current));
     }
     else if (desiredState == BRAKE) {
-        digitalWriteFast(COIL_DIR_1_PINS[coil], HIGH);
-        digitalWriteFast(COIL_DIR_2_PINS[coil], HIGH);
+        digitalWriteFaster(COIL_DIR_1_PINS[coil], HIGH);
+        digitalWriteFaster(COIL_DIR_2_PINS[coil], HIGH);
     }
     else if (desiredState == COAST) {
-        digitalWriteFast(COIL_DIR_1_PINS[coil], LOW);
-        digitalWriteFast(COIL_DIR_2_PINS[coil], LOW);
+        digitalWriteFaster(COIL_DIR_1_PINS[coil], LOW);
+        digitalWriteFaster(COIL_DIR_2_PINS[coil], LOW);
     }
 }
 
