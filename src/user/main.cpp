@@ -21,7 +21,7 @@ void setup() {
 
     // Configure the system clock
 #define SystemClock_Config_Version 2
-#if SystemClock_Config_Version == 2
+#if SystemClock_Config_Version == 0
     // Set processor up
     SystemInit();
 
