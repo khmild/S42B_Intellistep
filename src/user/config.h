@@ -120,11 +120,11 @@
 #endif
 
 // The System Clock frequency of the CPU (in MHz)
-// This can be set to 72 and 128 with HSE_8 (external oscillator)
-// Can be set to 72 with HSE_16 (external oscillator)
-// Can be set to 64 with HSI (internal oscillator)
+// This can be set to 72 and 128 with SYSCLK_SRC of 1 (HSE_8) (external oscillator)
+// Can be set to 72 with SYSCLK_SRC of 0 (HSE_16) (external oscillator)
+// Can be set to 64 with SYSCLK_SRC of 2 (HSI) (internal oscillator)
 #define SYSCLK_FREQ 72
-#define SYSCLK_SRC  "HSE_8"
+#define SYSCLK_SRC  1
 
 
 // --------------  Pins  --------------
