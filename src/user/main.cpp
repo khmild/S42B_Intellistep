@@ -100,8 +100,7 @@ void setup() {
     //writeOLEDString(0, 0, "Close Loop Mode");
 
     // Check if the board is calibrated. Need to force calibration if the board isn't calibrated
-    //if (!isCalibrated()) {
-    if (0) {
+    if (!isCalibrated()) {
 
         // Only display to screen if the screen is enabled
         #ifdef ENABLE_OLED
@@ -212,10 +211,10 @@ void setup() {
             #endif
 
             // We need a little delay to allow the motor time to process if it needs it
-			#ifdef ENABLE_BLINK
-         	// ! Only for testing
-           	blink();
-			#else
+            #ifdef ENABLE_BLINK
+            // ! Only for testing
+            blink();
+            #else
             delay(50);
             #endif
         }
