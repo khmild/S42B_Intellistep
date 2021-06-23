@@ -444,24 +444,32 @@ void StepperMotor::setCoil(COIL coil, COIL_STATE desiredState, uint16_t current)
     //    desiredState = IDLE_MODE;
     //}
 
-    // Decide how to deal with the coil based on current, re-enabling it after setting the direction
-    if (desiredState == FORWARD) {
-        digitalWriteFast(COIL_DIR_1_PINS[coil], HIGH);
-        digitalWriteFast(COIL_DIR_2_PINS[coil], LOW);
-        analogWrite(COIL_POWER_OUTPUT_PINS[coil], currentToPWM(current));
-    }
-    else if (desiredState == BACKWARD) {
-        digitalWriteFast(COIL_DIR_1_PINS[coil], LOW);
-        digitalWriteFast(COIL_DIR_2_PINS[coil], HIGH);
-        analogWrite(COIL_POWER_OUTPUT_PINS[coil], currentToPWM(current));
-    }
-    else if (desiredState == BRAKE) {
-        digitalWriteFast(COIL_DIR_1_PINS[coil], HIGH);
-        digitalWriteFast(COIL_DIR_2_PINS[coil], HIGH);
-    }
-    else if (desiredState == COAST) {
-        digitalWriteFast(COIL_DIR_1_PINS[coil], LOW);
-        digitalWriteFast(COIL_DIR_2_PINS[coil], LOW);
+    // Check if the desired coil state is different from the previous, if so, we need to set the output pins
+    if (desiredState != previousCoilStates[coil]) {
+    
+        // Disable the coil
+        analogSet(&PWMCurrentPinInfo[coil], 0);
+
+        // Decide the state of the direction pins
+        if (desiredState == FORWARD) {
+            digitalWriteFast(COIL_DIR_1_PINS[coil], HIGH);
+            digitalWriteFast(COIL_DIR_2_PINS[coil], LOW);
+        }
+        else if (desiredState == BACKWARD) {
+            digitalWriteFast(COIL_DIR_1_PINS[coil], LOW);
+            digitalWriteFast(COIL_DIR_2_PINS[coil], HIGH);
+        }
+        else if (desiredState == BRAKE) {
+            digitalWriteFast(COIL_DIR_1_PINS[coil], HIGH);
+            digitalWriteFast(COIL_DIR_2_PINS[coil], HIGH);
+        }
+        else if (desiredState == COAST) {
+            digitalWriteFast(COIL_DIR_1_PINS[coil], LOW);
+            digitalWriteFast(COIL_DIR_2_PINS[coil], LOW);
+        }
+        
+        // Update the previous state of the coil with the new one
+        previousCoilStates[coil] = desiredState;
     }
 
     // Update the output pin with the correct current
