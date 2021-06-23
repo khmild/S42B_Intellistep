@@ -5,17 +5,17 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.30"
+#define VERSION "0.0.31"
 
 
 // --------------  Settings  --------------
 
 // Main feature enable
 #define ENABLE_OLED
-#define ENABLE_LED // red LED labeled as an 'error' in the schema
 #define ENABLE_SERIAL
 #define ENABLE_CAN
 
+#define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
     //#define ENABLE_BLINK
 #endif    
@@ -118,6 +118,13 @@
     #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
     //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
 #endif
+
+// The System Clock frequency of the CPU (in MHz)
+// This can be set to 72 and 128 with HSE_8 (external oscillator)
+// Can be set to 72 with HSE_16 (external oscillator)
+// Can be set to 64 with HSI (internal oscillator)
+#define SYSCLK_FREQ 72
+#define SYSCLK_SRC  "HSE_8"
 
 
 // --------------  Pins  --------------
@@ -235,7 +242,7 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 #define input(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8),n)
 
 // Maybe an even faster digitalWrite, but only if really needed
-#define digitalWriteFaster(pn, high) \
+//#define digitalWriteFaster(pn, high) \
     if (high) { \
         WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BSRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
     } \
