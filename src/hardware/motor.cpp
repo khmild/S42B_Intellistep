@@ -565,8 +565,8 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
 
                 // No other special processing needed, just disable the coils and set the state
                 default:
-                    motor.setCoil(A, IDLE_MODE);
-                    motor.setCoil(B, IDLE_MODE);
+                    motor.setCoilA(IDLE_MODE);
+                    motor.setCoilB(IDLE_MODE);
                     this -> state = newState;
             }
         }
@@ -589,8 +589,8 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
 
                     // No other special processing needed, just disable the coils and set the state
                     default:
-                        motor.setCoil(A, IDLE_MODE);
-                        motor.setCoil(B, IDLE_MODE);
+                        motor.setCoilA(IDLE_MODE);
+                        motor.setCoilB(IDLE_MODE);
                         this -> state = newState;
                 }
             }
