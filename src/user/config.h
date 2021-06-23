@@ -16,6 +16,15 @@
 #define ENABLE_SERIAL
 #define ENABLE_CAN
 
+#ifdef ENABLE_LED
+    //#define ENABLE_BLINK
+#endif    
+
+#if !defined(ENABLE_OLED)
+    // MCO is PA8 pin, It also used as OLED_RST_PIN
+    #define CHECK_MCO_OUTPUT // use oscilloscope to measure frequency HSI, HSE, SYSCLK or PLLCLK/2
+#endif
+
 // Averages (number of readings in average)
 #define RPM_AVG_READINGS     10
 #define ACCEL_AVG_READINGS   10

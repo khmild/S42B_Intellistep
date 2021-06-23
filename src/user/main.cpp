@@ -7,6 +7,7 @@
 #include "encoder.h"
 #include "oled.h"
 #include "led.h"
+#include "cube.h"
 //#include "stm32yyxx_ll_rcc.h"
 
 // Create a new motor instance
@@ -15,14 +16,33 @@ StepperMotor motor = StepperMotor();
 // Run the setup
 void setup() {
 
-    // Set up the HAL library
+    // Reset of all peripherals, Initializes the Flash interface and the Systick.
     HAL_Init();
 
+    // Configure the system clock
+#define SystemClock_Config_Version 2
+#if SystemClock_Config_Version == 2
     // Set processor up
     SystemInit();
 
     // Setup the system clock (includes overclocking)
     overclock(RCC_CFGR_PLLMULL16);
+#elif SystemClock_Config_Version == 1
+    SystemClock_Config_HSI_8M_SYSCLK_64M();
+#elif SystemClock_Config_Version == 2
+    SystemClock_Config_HSE_8M_SYSCLK_72M();
+#elif SystemClock_Config_Version == 3
+    SystemClock_Config_HSE_16M_SYSCLK_72M();
+#else
+	#error Unsupported SystemClock_Config_Version 
+#endif
+
+#ifdef CHECK_MCO_OUTPUT
+    MCO_GPIO_Init();
+#endif
+
+    // Update the system clock with the new speed
+    SystemCoreClockUpdate();
 
     // Initialize the encoder
     initEncoder();
@@ -198,7 +218,12 @@ void setup() {
             #endif
 
             // We need a little delay to allow the motor time to process if it needs it
+			#ifdef ENABLE_BLINK
+         	// ! Only for testing
+           	blink();
+			#else
             delay(50);
+            #endif
         }
     }
 }
@@ -234,15 +259,16 @@ void overclock(uint32_t PLLMultiplier) {
     // Use the PLL as the system clock
     RCC -> CFGR |= RCC_SYSCLKSOURCE_PLLCLK;
 
-    // Update the system clock with the new speed
-    SystemCoreClockUpdate();
+#ifdef CHECK_MCO_OUTPUT
+    HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
+#endif	
 }
 
 
 // ! Only here for testing
 void blink() {
     digitalWriteFast(LED_PIN, HIGH);
-    delay(250);
+    delay(500);
     digitalWriteFast(LED_PIN, LOW);
-    delay(250);
+    delay(500);
 }
