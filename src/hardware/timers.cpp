@@ -129,15 +129,12 @@ void updateCorrectionTimer() {
 
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
-    digitalWriteFaster(LED_PIN, HIGH);
     motor.step();
-    digitalWriteFaster(LED_PIN, LOW);
 }
 
 
 // Need to declare a function to power the motor coils for the step interrupt
 void correctMotor() {
-    //digitalWriteFast(LED_PIN, HIGH);
 
     // Check to see the state of the enable pin
     if ((digitalReadFast(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {
@@ -230,5 +227,4 @@ void correctMotor() {
         }
         #endif
     }
-    //digitalWriteFast(LED_PIN, LOW);
 }
