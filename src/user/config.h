@@ -202,9 +202,11 @@
 #define LED_PIN PC_13
 
 // Motor mappings                                   [  A  ,   B  ]
-static const PinName COIL_DIR_1_PINS[]           =  { PB_6, PB_8 };
-static const PinName COIL_DIR_2_PINS[]           =  { PB_7, PB_9 };
 static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
+#define COIL_A_DIR_1_PIN  output(GPIOB_BASE, 6)
+#define COIL_A_DIR_2_PIN  output(GPIOB_BASE, 7)
+#define COIL_B_DIR_1_PIN  output(GPIOB_BASE, 8)
+#define COIL_B_DIR_2_PIN  output(GPIOB_BASE, 9)
 
 // Encoder SPI interface
 #define ENCODER_CS_PIN    PA_4 // SPI1_SS

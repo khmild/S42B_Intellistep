@@ -167,8 +167,11 @@ class StepperMotor {
         // Sets the coils to hold the motor at the desired phase angle
         void driveCoils(float angle, STEP_DIR direction);
 
-        // Sets the state of a coil
-        void setCoil(COIL coil, COIL_STATE desiredState, uint16_t current = 0);
+        // Sets the state of the A coil
+        void setCoilA(COIL_STATE desiredState, uint16_t current = 0);
+
+        // Sets the state of the B coil
+        void setCoilB(COIL_STATE desiredState, uint16_t current = 0);
 
         // Calculates the correct PWM setting based on an input current
         uint32_t currentToPWM(uint16_t current) const;
