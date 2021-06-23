@@ -23,13 +23,13 @@ void setup() {
     SystemInit();
 
     // Configure the system clock
-    #if SYSCLK_SRC == 0 // HSE_16
+    #if defined(SYSCLK_SRC_HSE_16)
         #if SYSCLK_FREQ == 72
             SystemClock_Config_HSE_16M_SYSCLK_72M();
         #else
             #error "Unsupported oscillator speed"
         #endif
-    #elif SYSCLK_SRC == 1 // HSE_8
+    #elif defined(SYSCLK_SRC_HSE_8)
         #if SYSCLK_FREQ == 72
             SystemClock_Config_HSE_8M_SYSCLK_72M();
         #elif SYSCLK_FREQ == 128
@@ -37,14 +37,14 @@ void setup() {
         #else
             #error "Unsupported oscillator speed"
         #endif
-    #elif SYSCLK_SRC == 2 // HSI (8)
+    #elif defined(SYSCLK_SRC_HSI)
         #if SYSCLK_FREQ == 64
             SystemClock_Config_HSI_8M_SYSCLK_64M();
         #else
             #error "Unsupported oscillator speed"
         #endif
     #else
-	    #error "Unsupported oscillator type"
+	    #error "Unsupported oscillator source"
     #endif
 
     #ifdef CHECK_MCO_OUTPUT
