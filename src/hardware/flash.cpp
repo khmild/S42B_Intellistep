@@ -253,13 +253,13 @@ void saveParameters() {
     writeFlash(MICROSTEP_MULTIPLIER_INDEX, motor.getMicrostepMultiplier());
 
     // P term of PID
-    writeFlash(P_TERM_INDEX, motor.getPValue());
+    //writeFlash(P_TERM_INDEX, motor.getPValue());
 
     // I term of PID
-    writeFlash(I_TERM_INDEX, motor.getIValue());
+    //writeFlash(I_TERM_INDEX, motor.getIValue());
 
     // D term of PID
-    writeFlash(D_TERM_INDEX, motor.getDValue());
+    //writeFlash(D_TERM_INDEX, motor.getDValue());
 
     // CAN ID of the motor controller
     #ifdef ENABLE_CAN
@@ -314,13 +314,13 @@ String loadParameters() {
         motor.setMicrostepMultiplier(readFlashFloat(MICROSTEP_MULTIPLIER_INDEX));
 
         // P term of PID
-        motor.setPValue(readFlashFloat(P_TERM_INDEX));
+        //motor.setPValue(readFlashFloat(P_TERM_INDEX));
 
         // I term of PID
-        motor.setIValue(readFlashFloat(I_TERM_INDEX));
+        //motor.setIValue(readFlashFloat(I_TERM_INDEX));
 
         // D term of PID
-        motor.setDValue(readFlashFloat(D_TERM_INDEX));
+        //motor.setDValue(readFlashFloat(D_TERM_INDEX));
 
         // The CAN ID of the motor
         #ifdef ENABLE_CAN
