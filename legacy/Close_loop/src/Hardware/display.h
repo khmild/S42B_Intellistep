@@ -2,7 +2,7 @@
 #define __DISPLAY_H
 
 
-#include "main.h"
+#include "mydef.h"
 
 
 void Oled_display(void);
