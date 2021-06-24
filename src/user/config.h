@@ -102,7 +102,7 @@
 
     // StallFault connection (to mainboard)
     // Pulls high on a stepper misalignment after the set period or angular deviation
-    #define STALLFAULT_PIN PA_13 //output(GPIOA_BASE, 13)
+    #define STALLFAULT_PIN PA_13 //output(GPIOA_BASE_BASE, 13)
 #endif
 
 // OLED settings
@@ -176,11 +176,11 @@
 
 
 // OLED Mappings
-#define OLED_CS_PIN   output(GPIOB, 12)
-#define OLED_RST_PIN  output(GPIOA, 8)
-#define OLED_RS_PIN   output(GPIOB, 13)
-#define OLED_SCLK_PIN output(GPIOB, 15)	//(D0)
-#define OLED_SDIN_PIN output(GPIOB, 14)	//(D1)
+#define OLED_CS_PIN   output(GPIOB_BASE, 12)
+#define OLED_RST_PIN  output(GPIOA_BASE, 8)
+#define OLED_RS_PIN   output(GPIOB_BASE, 13)
+#define OLED_SCLK_PIN output(GPIOB_BASE, 15)	//(D0)
+#define OLED_SDIN_PIN output(GPIOB_BASE, 14)	//(D1)
 
 // Button mappings
 #define DOWN_BUTTON_PIN         PA_3
@@ -203,10 +203,10 @@
 
 // Motor mappings                                   [  A  ,   B  ]
 static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
-#define COIL_A_DIR_1_PIN  output(GPIOB, 6)
-#define COIL_A_DIR_2_PIN  output(GPIOB, 7)
-#define COIL_B_DIR_1_PIN  output(GPIOB, 8)
-#define COIL_B_DIR_2_PIN  output(GPIOB, 9)
+#define COIL_A_DIR_1_PIN  output(GPIOB_BASE, 6)
+#define COIL_A_DIR_2_PIN  output(GPIOB_BASE, 7)
+#define COIL_B_DIR_1_PIN  output(GPIOB_BASE, 8)
+#define COIL_B_DIR_2_PIN  output(GPIOB_BASE, 9)
 
 // Encoder SPI interface
 #define ENCODER_CS_PIN    PA_4 // SPI1_SS
