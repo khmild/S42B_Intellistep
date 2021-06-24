@@ -54,36 +54,14 @@ class StepperMotor {
     // Everything is public, with the expection of some private variables
     public:
 
-        // Initialize the motor with the PID constants
-        StepperMotor(float P, float I, float D);
-
-        // Initialize the motor without the PID constants. Needs constants before moving
+        // Initialize the motor
         StepperMotor();
 
         // Returns the current RPM of the motor to two decimal places
         float getMotorRPM() const;
 
-        // Returns the deviation of the motor from the PID loop
+        // Returns the deviation of the motor from the set position
         float getAngleError() const;
-
-        // Returns the Proportional value of the PID loop
-        float getPValue() const;
-
-        // Returns the Integral value fo the PID loop
-        float getIValue() const;
-
-        // Returns the Derivative value for the PID loop
-        float getDValue() const;
-
-        // Sets the Proportional term of the PID loop
-        void setPValue(float newP);
-
-        // Sets the Integral term of the PID loop
-        void setIValue(float newI);
-
-        // Sets the Derivative of the PID loop
-        void setDValue(float newD);
-
 
         // Dynamic current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -134,7 +112,8 @@ class StepperMotor {
         // Gets the full step angle of the motor
         float getFullStepAngle() const;
 
-        // Get the microstepping angle of the motor. This is the full steps divided by the microsteps. Used to speed up processing
+        // Get the microstepping angle of the motor. This is the full steps divided by the microsteps.
+        // Used to speed up processing
         float getMicrostepAngle() const;
 
         // Set if the motor should be reversed
@@ -154,12 +133,6 @@ class StepperMotor {
 
         // Get the microstep multiplier
         float getMicrostepMultiplier() const;
-
-        // Set the desired motor angle
-        void setDesiredAngle(float newDesiredAngle);
-
-        // Gets the desired motor angle
-        float getDesiredAngle() const;
 
         // Calculates the coil values for the motor and updates the set angle. 
         void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredAngle = true);
@@ -201,22 +174,6 @@ class StepperMotor {
 
         // Keeps the current angle of the motor
         float currentAngle = 0;
-
-        // Motor PID controller values
-        float pTerm = 0;
-        float iTerm = 0;
-        float dTerm = 0;
-
-        // Motor PID variables (to help with computations)
-        float currentTime;
-        float previousTime;
-        float elapsedTime;
-
-        // Performance measurements (updated on compute)
-        float error;
-        float lastError;
-        float cumulativeError;
-        float rateError;
 
         // Motor characteristics
         #ifdef ENABLE_DYNAMIC_CURRENT
