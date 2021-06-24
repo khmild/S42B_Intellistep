@@ -14,3 +14,9 @@ void initLED() {
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
+
+
+// Sets the state of the LED. On is true, off is false
+void setLED(uint8_t state) {
+    LED_PIN_OBJ = state;
+}
