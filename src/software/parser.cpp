@@ -87,20 +87,20 @@ String parseCommand(String buffer) {
 
                     // There is at least one valid value, therefore set all of the values
                     if (pValue != -1) {
-                        motor.setPValue(pValue);
+                        //motor.setPValue(pValue);
                     }
                     if (iValue != -1) {
-                        motor.setIValue(iValue);
+                        //motor.setIValue(iValue);
                     }
                     if (dValue != -1) {
-                        motor.setDValue(dValue);
+                        //motor.setDValue(dValue);
                     }
                     
                     return FEEDBACK_OK;
                 }
                 else {
                     // No values are included, get and return the current values
-                    return ("P: " + String(motor.getPValue()) + " | I: " + String(motor.getIValue()) + " | D: " + String(motor.getDValue()));
+                    return F("Coming soon"); //("P: " + String(motor.getPValue()) + " | I: " + String(motor.getIValue()) + " | D: " + String(motor.getDValue()));
                 }
             }
 
