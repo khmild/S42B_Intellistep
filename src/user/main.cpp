@@ -32,8 +32,6 @@ void setup() {
     #elif defined(SYSCLK_SRC_HSE_8)
         #if SYSCLK_FREQ == 72
             SystemClock_Config_HSE_8M_SYSCLK_72M();
-        #elif SYSCLK_FREQ == 128
-            SystemClock_Config_HSE_8M_SYSCLK_128M();
         #else
             #error "Unsupported oscillator speed"
         #endif
