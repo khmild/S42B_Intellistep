@@ -91,7 +91,7 @@
 #define MICROSTEP_MULTIPLIER    2 // The number of microsteps to move per step pulse
 #define MIN_MICROSTEP_DIVISOR   1 // The minimum microstepping divisor
 #define MAX_MICROSTEP_DIVISOR   32 // The maximum microstepping divisor
-#define MOTOR_PWM_FREQ          50 // in kHz
+#define MOTOR_PWM_FREQ          50000 // in Hz
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
 // Stallfault

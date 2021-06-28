@@ -16,7 +16,7 @@ uint16_t outOfPosCount = 0;
 // The number of times the current blocks on the interrupts. All blocks must be cleared to allow the interrupts to start again
 // A block count is needed for nested functions. This ensures that function 1 (cannot be interrupted) will not re-enable the
 // interrupts before the uninterruptible function 2 that called the first function finishes.
-uint8_t interruptBlockCount = 0;
+static uint8_t interruptBlockCount = 0;
 
 // Create a boolean to store if the StallFault pin has been enabled.
 // Pin is only setup after the first StallFault. This prevents programming interruptions
@@ -69,13 +69,13 @@ void setupMotorTimers() {
 // Pauses the timers, essentially disabling them for the time being
 void disableInterrupts() {
 
-    // Add one to the interrupt block counter
-    interruptBlockCount++;
-
     // Disable the interrupts if this is the first block
-    if (interruptBlockCount == 1) {
+    if (interruptBlockCount == 0) {
         __disable_irq();
     }
+ 
+   // Add one to the interrupt block counter
+    interruptBlockCount++;
 }
 
 
