@@ -78,6 +78,7 @@ String parseCommand(String buffer) {
                 txCANString(parseValue(buffer, 'S').toInt(), parseString(buffer.substring(1), 'M'));
             #endif
 
+            #ifdef ENABLE_PID
             case 306: {
                 // M306 (ex M306 P1 I1 D1 or M306) - Sets or gets the PID values for the motor. If no values are provided, then the current values will be returned.
                 float pValue = parseValue(buffer, 'P').toFloat();
@@ -87,22 +88,23 @@ String parseCommand(String buffer) {
 
                     // There is at least one valid value, therefore set all of the values
                     if (pValue != -1) {
-                        //motor.setPValue(pValue);
+                        pid.setP(pValue);
                     }
                     if (iValue != -1) {
-                        //motor.setIValue(iValue);
+                        pid.setI(iValue);
                     }
                     if (dValue != -1) {
-                        //motor.setDValue(dValue);
+                        pid.setD(dValue);
                     }
                     
                     return FEEDBACK_OK;
                 }
                 else {
                     // No values are included, get and return the current values
-                    return F("Coming soon"); //("P: " + String(motor.getPValue()) + " | I: " + String(motor.getIValue()) + " | D: " + String(motor.getDValue()));
+                    return ("P: " + String(pid.getP()) + " | I: " + String(pid.getI()) + " | D: " + String(pid.getD()));
                 }
             }
+            #endif
 
             case 307:
                 // M307 (ex M307) - Runs a automatic calibration sequence for the PID loop and encoder

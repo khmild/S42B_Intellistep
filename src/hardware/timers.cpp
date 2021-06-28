@@ -25,6 +25,20 @@ uint8_t interruptBlockCount = 0;
 #endif
 
 
+// Setup everything related to the PID timer if needed
+#ifdef ENABLE_PID
+    // Create an instance of the PID class
+    StepperPID pid = StepperPID();
+
+    // Also create a timer that calls the motor stepping function based on the PID's output
+    HardwareTimer *pidMoveTimer = new HardwareTimer(TIM4);
+
+    // Variable to store if the timer is enabled 
+    // Saves large amounts of cycles as the timer only has to be toggled on a change
+    bool pidMoveTimerEnabled = false;
+#endif
+
+
 // Tiny little function, just gets the time that the current program has been running
 uint32_t sec() {
     return (millis() / 1000);
@@ -35,7 +49,8 @@ void setupMotorTimers() {
 
     // Interupts are in order of importance as follows -
     // - 0 - step pin change
-    // - 1 - position correction
+    // - 1.0 - PID correctional movement
+    // - 1.1 - position correction (or PID interval update)
 
     // Setup the step and stallfault pin
     pinMode(STEP_PIN, INPUT_PULLDOWN);
@@ -57,12 +72,22 @@ void setupMotorTimers() {
 
     // Setup the timer for steps
     correctionTimer -> pause();
-    correctionTimer -> setInterruptPriority(1, 0);
-    correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the interrupt
+    correctionTimer -> setInterruptPriority(1, 1);
+    correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
     correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
     correctionTimer -> attachInterrupt(correctMotor);
     correctionTimer -> refresh();
     correctionTimer -> resume();
+
+    // Setup the PID timer if it is enabled
+    #ifdef ENABLE_PID
+        pidMoveTimer -> pause();
+        pidMoveTimer -> setInterruptPriority(1, 0);
+        pidMoveTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
+        pidMoveTimer -> attachInterrupt(stepMotorNoDesiredAngle);
+        pidMoveTimer -> refresh();
+        // Don't resume the timer here, it will be resumed when needed
+    #endif
 }
 
 
@@ -109,6 +134,12 @@ void disableStepCorrection() {
     // Disable the timer if it isn't already, then set the variable
     if (stepCorrection) {
         correctionTimer -> pause();
+
+        // Disable the PID correction timer if needed
+        #ifdef ENABLE_PID
+            pidMoveTimer -> pause();
+        #endif
+
         stepCorrection = false;
     }
 }
@@ -130,6 +161,12 @@ void updateCorrectionTimer() {
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
     motor.step();
+}
+
+
+// Just like the simple stepping function above, except it doesn't update the desired position
+void stepMotorNoDesiredAngle() {
+    motor.step(PIN, false, false);
 }
 
 
@@ -166,16 +203,36 @@ void correctMotor() {
         // Check to make sure that the motor is in range (it hasn't skipped steps)
         if (abs(angularDeviation) > motor.getMicrostepAngle()) {
 
-            // Set the stepper to move in the correct direction
-            if (angularDeviation > 0) {
 
-                // Motor is at a position larger than the desired one
-                motor.step(CLOCKWISE, false, false);
-            }
-            else {
-                // Motor is at a position smaller than the desired one
-                motor.step(COUNTER_CLOCKWISE, false, false);
-            }
+            // Run PID stepping if enabled
+            #ifdef ENABLE_PID
+
+                // Run the PID calcalations
+                double pidOutput = pid.compute();
+
+                // Set the motor timer to call the stepping routine at specified time intervals
+                pidMoveTimer -> setOverflow((DEFAULT_PID_STEP_MAX - pidOutput), HERTZ_FORMAT);
+                
+                // Enable the timer if it isn't already
+                if (!pidMoveTimerEnabled) {
+                    pidMoveTimer -> resume();
+                    pidMoveTimerEnabled = true;
+                }
+                
+
+            #else // ! ENABLE_PID
+                // Just "dumb" correction based on direction
+                // Set the stepper to move in the correct direction
+                if (angularDeviation > 0) {
+
+                    // Motor is at a position larger than the desired one
+                    motor.step(CLOCKWISE, false, false);
+                }
+                else {
+                    // Motor is at a position smaller than the desired one
+                    motor.step(COUNTER_CLOCKWISE, false, false);
+                }
+            #endif // ! ENABLE_PID
 
 
             // Only use StallFault code if needed
@@ -215,10 +272,18 @@ void correctMotor() {
                 }
             #endif
         }
+        else { // Motor is in correct position
 
-        // Only if StallFault is enabled
-        #ifdef ENABLE_STALLFAULT
-        else {
+            // Disable the PID correction timer if PID is enabled
+            #ifdef ENABLE_PID
+                if (pidMoveTimerEnabled) {
+                    pidMoveTimer -> pause();
+                    pidMoveTimerEnabled = false;
+                }
+            #endif
+            
+            // Only if StallFault is enabled
+            #ifdef ENABLE_STALLFAULT
 
             // Reset the out of position count and the StallFault pin
             outOfPosCount = 0;
@@ -233,7 +298,9 @@ void correctMotor() {
 
             // Also toggle the LED for visual purposes
             setLED(LOW);
+            
+            #endif // ! ENABLE_STALLFAULT
         }
-        #endif
+        
     }
 }

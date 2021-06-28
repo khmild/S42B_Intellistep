@@ -94,6 +94,7 @@ void setup() {
         initCAN();
     #endif
 
+    // Initialize the LED
     #ifdef ENABLE_LED
         initLED();
     #endif

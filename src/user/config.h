@@ -10,19 +10,10 @@
 
 // --------------  Settings  --------------
 
-// Main feature enable
-#define ENABLE_OLED
-#define ENABLE_SERIAL
-#define ENABLE_CAN
-
+// LED light functionality
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
     //#define ENABLE_BLINK
-#endif    
-
-#if !defined(ENABLE_OLED)
-    // MCO is PA8 pin, It also used as OLED_RST_PIN
-    #define CHECK_MCO_OUTPUT // use oscilloscope to measure frequency HSI, HSE, SYSCLK or PLLCLK/2
 #endif
 
 // Averages (number of readings in average)
@@ -38,19 +29,26 @@
 #endif
 
 // Serial configuration settings
+#define ENABLE_SERIAL
 #ifdef ENABLE_SERIAL
-    #define STRING_START_MARKER '<'
-    #define STRING_END_MARKER '>'
     #define SERIAL_BAUD 115200
 #endif
 
-// The CAN ID of this board
-// X:2, X2:3...
-// Y:7, Y2:8... 
-// Z:11 Z2:12...
-// E:17, E1:18...
+// Parser settings
+#define STRING_START_MARKER '<'
+#define STRING_END_MARKER '>'
+
+// CAN settings
+#define ENABLE_CAN
 #ifdef ENABLE_CAN
+    // The CAN ID of this board
+    // X:2, X2:3...
+    // Y:7, Y2:8... 
+    // Z:11 Z2:12...
+    // E:17, E1:18...
     #define DEFAULT_CAN_ID X
+
+    // ! Maybe higher later? (Up to 1MHz for fast transmissions)
     #define CAN_BITRATE BR125K
 #endif
 
@@ -65,7 +63,8 @@
 #define CURRENT_SENSE_RESISTOR  0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
 #define MAX_PEAK_BOARD_CURRENT  3500 // Maximum peak current in mA that the board can manage
 
-// Motor settings
+// Dynamic current (adjusts motor current based on acceleration (and therefore torque)
+// required from the motor)
 //#define ENABLE_DYNAMIC_CURRENT
 #ifdef ENABLE_DYNAMIC_CURRENT
     // A dynamically controller current loop. Uses the equation: accel * accelCurrent + idleCurrent
@@ -88,6 +87,22 @@
         #define OVERTEMP_SHUTDOWN_CLEAR_TEMP 70 // Motor can begin movement again once this temp is reached
     #endif
 #endif
+
+// PID settings
+//#define ENABLE_PID
+#ifdef ENABLE_PID
+
+    // Default P, I, and D terms
+    #define DEFAULT_P  0
+    #define DEFAULT_I  0
+    #define DEFAULT_D  0
+
+    // Default min and max for step timing (in ms)
+    #define DEFAULT_PID_STEP_MIN 0
+    #define DEFAULT_PID_STEP_MAX 100
+#endif
+
+// Motor settings
 #define MICROSTEP_MULTIPLIER    2 // The number of microsteps to move per step pulse
 #define MIN_MICROSTEP_DIVISOR   1 // The minimum microstepping divisor
 #define MAX_MICROSTEP_DIVISOR   32 // The maximum microstepping divisor
@@ -106,6 +121,7 @@
 #endif
 
 // OLED settings
+#define ENABLE_OLED
 #ifdef ENABLE_OLED
 
     // Button settings
@@ -117,6 +133,10 @@
     // Warning thresholds
     #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
     //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
+
+#else // !defined(ENABLE_OLED)
+    // MCO is PA8 pin, It also used as OLED_RST_PIN
+    #define CHECK_MCO_OUTPUT // use oscilloscope to measure frequency HSI, HSE, SYSCLK or PLLCLK/2
 #endif
 
 // The System Clock frequency of the CPU (in MHz)

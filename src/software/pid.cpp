@@ -1,18 +1,20 @@
 // Include main PID header
 #include "pid.h"
 
+// Only compile this file if PID is enabled
+#ifdef ENABLE_PID
 
 // Main constructor
-StepperPID::StepperPID(double min, double max) {
+StepperPID::StepperPID() {
 
     // Setup PID library
-    this -> pid = new PID(&input, &output, &setpoint, 0, 0, 0, DIRECT);
+    this -> pid = new PID(&input, &output, &setpoint, DEFAULT_P, DEFAULT_I, DEFAULT_D, DIRECT);
 
     // Set that the PID timings should be handled automatically
     this -> pid -> SetMode(AUTOMATIC);
 
     // Set the minimum and maximum outputs of the PID controller
-    this -> pid -> SetOutputLimits(min, max);
+    this -> pid -> SetOutputLimits(DEFAULT_PID_STEP_MIN, DEFAULT_PID_STEP_MAX);
 }
 
 
@@ -85,11 +87,17 @@ void StepperPID::setDesiredPosition(double angle) {
 }
 
 
+// Set the output limits of the loop
+void StepperPID::setOutputLimits(double min, double max) {
+    this -> pid -> SetOutputLimits(min, max);
+}
+
+
 // Update the PID loop, returning the output
-double StepperPID::update() {
+double StepperPID::compute() {
 
     // Update the input
-    this -> input = getAbsoluteAngle();
+    this -> input = motor.getAngleError();
 
     // Compute the PID
     this -> pid -> Compute();
@@ -97,3 +105,5 @@ double StepperPID::update() {
     // Return the output
     return output;
 }
+
+#endif

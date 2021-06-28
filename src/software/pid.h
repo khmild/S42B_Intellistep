@@ -1,6 +1,12 @@
 #ifndef __PID_H__
 #define __PID_H__
 
+// Include main config
+#include "config.h"
+
+// Only build this file if PID is enabled
+#ifdef ENABLE_PID
+
 // Include Arduino library
 #include "Arduino.h"
 
@@ -10,6 +16,9 @@
 // Encoder library (for getting current position)
 #include "encoder.h"
 
+// Main (for stepper motor class)
+#include "main.h"
+
 // Main class for controlling the motor
 // NOTE: This should be used for time increments between stepping
 class StepperPID {
@@ -18,7 +27,7 @@ class StepperPID {
     public:
 
         // Main constructor
-        StepperPID(double min, double max);
+        StepperPID();
 
         // Get functions for P, I, and D
         double getP() const;
@@ -40,8 +49,11 @@ class StepperPID {
         // meaning that something like 1500 is a valid position)
         void setDesiredPosition(double angle);
 
+        // Sets the min and max outputs of the PID loop
+        void setOutputLimits(double min, double max);
+
         // Runs the PID calculations and returns the output
-        double update();
+        double compute();
 
     // Private info (usually just variables)
     private:
@@ -56,5 +68,6 @@ class StepperPID {
         PID* pid;
 };
 
+#endif // ! ENABLE_PID
 
 #endif // ! __PID_H__

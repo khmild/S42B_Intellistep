@@ -48,7 +48,7 @@ void txCANString(int ID, String string) {
     if (ID != -1) {
 
         // Add the beginning character to the string
-        string = '<' + string;
+        string = STRING_START_MARKER + string;
 
         // Loop through forever, only exiting on sending the last string
         while (true) {
@@ -64,7 +64,7 @@ void txCANString(int ID, String string) {
             }
             else {
                 // Send the last CAN message, with a > appended to the end
-                can.transmit(ID, string.c_str() + '>', string.length());
+                can.transmit(ID, string.c_str() + STRING_END_MARKER, string.length());
 
                 // Break the loop after finishing
                 break;
@@ -93,13 +93,13 @@ void rxCANFrame() {
 void checkCANCmd() {
 
     // Check to see if the command buffer is full ('>' is the termanator)
-    if (CANCommandString.indexOf('>') != -1) {
+    if (CANCommandString.indexOf(STRING_END_MARKER) != -1) {
 
         // Prevent interrupts, this is important
         disableInterrupts();
 
         // Parse the command
-        parseCommand(CANCommandString.substring(0, CANCommandString.indexOf('>')));
+        parseCommand(CANCommandString.substring(0, CANCommandString.indexOf(STRING_END_MARKER)));
 
         // Empty the buffer
         CANCommandString = "";
