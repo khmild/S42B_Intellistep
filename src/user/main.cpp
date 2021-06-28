@@ -7,6 +7,7 @@
 #include "encoder.h"
 #include "oled.h"
 #include "led.h"
+#include "cube.h"
 //#include "stm32yyxx_ll_rcc.h"
 
 // Create a new motor instance
@@ -15,14 +16,41 @@ StepperMotor motor = StepperMotor();
 // Run the setup
 void setup() {
 
-    // Set up the HAL library
+    // Reset of all peripherals, Initializes the Flash interface and the Systick.
     HAL_Init();
 
     // Set processor up
     SystemInit();
 
-    // Setup the system clock (includes overclocking)
-    overclock(RCC_CFGR_PLLMULL16);
+    // Configure the system clock
+    #if defined(SYSCLK_SRC_HSE_16)
+        #if SYSCLK_FREQ == 72
+            SystemClock_Config_HSE_16M_SYSCLK_72M();
+        #else
+            #error "Unsupported oscillator speed"
+        #endif
+    #elif defined(SYSCLK_SRC_HSE_8)
+        #if SYSCLK_FREQ == 72
+            SystemClock_Config_HSE_8M_SYSCLK_72M();
+        #else
+            #error "Unsupported oscillator speed"
+        #endif
+    #elif defined(SYSCLK_SRC_HSI)
+        #if SYSCLK_FREQ == 64
+            SystemClock_Config_HSI_8M_SYSCLK_64M();
+        #else
+            #error "Unsupported oscillator speed"
+        #endif
+    #else
+	    #error "Unsupported oscillator source"
+    #endif
+
+    #ifdef CHECK_MCO_OUTPUT
+        MCO_GPIO_Init();
+    #endif
+
+    // Update the system clock with the new speed
+    SystemCoreClockUpdate();
 
     // Initialize the encoder
     initEncoder();
@@ -168,38 +196,37 @@ void setup() {
 
         // Setup the motor timers and interrupts
         setupMotorTimers();
-
-        // Loop forever, checking the keys and updating the display
-        while(true) {
-
-            // Check the dip switches
-            checkDips();
-
-            // Check to see if serial data is available to read
-            #ifdef ENABLE_SERIAL
-                runSerialParser();
-            #endif
-
-            #ifdef ENABLE_OLED
-                // Check the buttons
-                checkButtons(true);
-
-                // Only update the display if the motor data is being displayed, buttons update the display when clicked
-                if (getMenuDepth() == MOTOR_DATA) {
-                    displayMotorData();
-                }
-            #endif
-
-            // We need a little delay to allow the motor time to process if it needs it
-            delay(50);
-        }
     }
 }
 
 
 // Main loop
 void loop() {
-    blink();
+    // Check the dip switches
+    checkDips();
+
+    // Check to see if serial data is available to read
+    #ifdef ENABLE_SERIAL
+        runSerialParser();
+    #endif
+
+    #ifdef ENABLE_OLED
+        // Check the buttons
+        checkButtons(true);
+
+        // Only update the display if the motor data is being displayed, buttons update the display when clicked
+        if (getMenuDepth() == MOTOR_DATA) {
+            displayMotorData();
+        }
+    #endif
+
+    // We need a little delay to allow the motor time to process if it needs it
+    #ifdef ENABLE_BLINK
+        // ! Only for testing
+        blink();
+    #else
+        delay(50);
+    #endif
 }
 
 
@@ -227,15 +254,16 @@ void overclock(uint32_t PLLMultiplier) {
     // Use the PLL as the system clock
     RCC -> CFGR |= RCC_SYSCLKSOURCE_PLLCLK;
 
-    // Update the system clock with the new speed
-    SystemCoreClockUpdate();
+    #ifdef CHECK_MCO_OUTPUT
+        HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
+    #endif	
 }
 
 
 // ! Only here for testing
 void blink() {
     digitalWriteFast(LED_PIN, HIGH);
-    delay(250);
+    delay(500);
     digitalWriteFast(LED_PIN, LOW);
-    delay(250);
+    delay(500);
 }

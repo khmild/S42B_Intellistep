@@ -44,8 +44,8 @@ void setupMotorTimers() {
     #ifdef ENABLE_STALLFAULT
 
         // Make sure that StallFault is enabled
-        #if STALLFAULT_PIN != NC
-            pinMode(STALLFAULT_PIN, OUTPUT);
+        #ifdef STALLFAULT_PIN
+            //pinMode(STALLFAULT_PIN, OUTPUT);
         #endif
 
         // Reset the LED pin
@@ -147,12 +147,12 @@ void correctMotor() {
 
             // Shut off the StallGuard pin just in case
             // (No need to check if the pin is valid, the pin will never be set up if it isn't valid)
-            if (stallFaultPinSetup) {
+            #ifdef STALLFAULT_PIN
                 digitalWriteFast(STALLFAULT_PIN, LOW);
-            }
+            #endif
 
             // Fix the LED pin
-            //digitalWriteFast(LED_PIN, LOW);
+            setLED(LOW);
         #endif
     }
     else {
@@ -185,9 +185,20 @@ void correctMotor() {
                 if (outOfPosCount > (STEP_FAULT_TIME * ((STEP_UPDATE_FREQ * motor.getMicrostepping()) - 1)) || abs(angularDeviation) > STEP_FAULT_ANGLE) {
 
                     // Setup the StallFault pin if it isn't already
-                    #if (STALLFAULT_PIN != NC)
-                    if (!stallFaultPinSetup && STALLFAULT_PIN != NC) {
-                        //pinMode(STALLFAULT_PIN, OUTPUT);
+                    // We need to wait for a fault because otherwise the programmer will be unable to program the board
+                    #ifdef STALLFAULT_PIN
+                    if (!stallFaultPinSetup) {
+
+                        // Setup the StallFault pin
+                        LL_GPIO_InitTypeDef GPIO_InitStruct;
+                        GPIO_InitStruct.Pin = STM_LL_GPIO_PIN(STALLFAULT_PIN);
+                        GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+                        GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
+                        GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+                        GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
+                        LL_GPIO_Init(get_GPIO_Port(STM_PORT(STALLFAULT_PIN)), &GPIO_InitStruct);
+
+                        // The StallFault pin is all set up
                         stallFaultPinSetup = true;
                     }
 
@@ -196,7 +207,7 @@ void correctMotor() {
                     #endif
 
                     // Also give an indicator on the LED
-                    digitalWriteFast(LED_PIN, HIGH);
+                    setLED(HIGH);
                 }
                 else {
                     // Just count up, motor is out of position but not out of faults
@@ -214,14 +225,14 @@ void correctMotor() {
 
             // Pull the StallFault low if it's setup
             // No need to check the validity of the pin here, it wouldn't be setup if it wasn't valid
-            #if (STALLFAULT_PIN != NC)
+            #ifdef STALLFAULT_PIN
             if (stallFaultPinSetup) {
                 digitalWriteFast(STALLFAULT_PIN, LOW);
             }
             #endif
 
             // Also toggle the LED for visual purposes
-            digitalWriteFast(LED_PIN, LOW);
+            setLED(LOW);
         }
         #endif
     }
