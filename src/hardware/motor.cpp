@@ -7,34 +7,8 @@
 // Optimize for speed
 #pragma GCC optimize ("-Ofast")
 
-// Main constructor (with PID terms)
-StepperMotor::StepperMotor(float P, float I, float D) {
-
-    // Variables for the input, setpoint, and output
-    this -> pTerm = P;
-    this -> iTerm = I;
-    this -> dTerm = D;
-
-    // Set the previous time to the current system time
-    this -> previousTime = millis();
-
-    // Setup the pins as outputs
-    pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
-    pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
-
-    // Configure the PWM
-    //analogWriteResolution(12); // STM32's is 12 bits max (max 4096)
-    //analogWriteFrequency(MOTOR_PWM_FREQ * 1000);
-
-    // Disable the motor
-    setState(DISABLED, true);
-}
-
-// Constructor without PID terms
+// Main constructor
 StepperMotor::StepperMotor() {
-
-    // Just set the previous time to the current system time
-    this -> previousTime = millis();
 
     // Setup the pins as outputs
     pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
@@ -58,54 +32,6 @@ float StepperMotor::getMotorRPM() const {
 // Returns the deviation of the motor from the PID loop
 float StepperMotor::getAngleError() const {
     return (getAbsoluteAngle() - (this -> desiredAngle));
-}
-
-
-// Returns the Proportional value of the PID loop
-float StepperMotor::getPValue() const {
-    return (this -> pTerm);
-}
-
-
-// Returns the Integral value fo the PID loop
-float StepperMotor::getIValue() const {
-    return (this -> iTerm);
-}
-
-
-// Returns the Derivative value for the PID loop
-float StepperMotor::getDValue() const {
-    return (this -> dTerm);
-}
-
-
-// Sets the Proportional term of the PID loop
-void StepperMotor::setPValue(float newP) {
-
-    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
-    if (newP != -1) {
-        this -> pTerm = newP;
-    }
-}
-
-
-// Sets the Integral term of the PID loop
-void StepperMotor::setIValue(float newI) {
-
-    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
-    if (newI != -1) {
-        this -> iTerm = newI;
-    }
-}
-
-
-// Sets the Derivative of the PID loop
-void StepperMotor::setDValue(float newD) {
-
-    // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
-    if (newD != -1) {
-        this -> dTerm = newD;
-    }
 }
 
 
@@ -297,20 +223,6 @@ float StepperMotor::getMicrostepMultiplier() const {
 }
 
 
-// Set the desired angle of the motor
-void StepperMotor::setDesiredAngle(float newDesiredAngle) {
-    this -> desiredAngle = newDesiredAngle;
-}
-
-
-// Get the desired angle of the motor
-float StepperMotor::getDesiredAngle() const {
-
-    // Return the object's value
-    return (this -> desiredAngle);
-}
-
-
 // Computes the coil values for the next step position and increments the set angle
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngle) {
 
@@ -354,9 +266,17 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 // Sets the coils of the motor based on the angle (angle should be in degrees)
 void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
 
-    // Make sure that the angle range is valid
-    while (degAngle < 0) {
-        degAngle += 360;
+    // Constrain the set angle to between 0 and 360
+    while (degAngle < 0 || degAngle > 360) {
+        
+        // The angle is less than 0, add 360
+        if (degAngle < 0) {
+            degAngle += 360;
+        }
+        else {
+            // The angle must be greater than 360, reduce the angle by 360
+            degAngle -= 360;
+        }
     }
 
     // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
