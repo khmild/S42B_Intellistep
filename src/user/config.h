@@ -14,6 +14,14 @@
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
     //#define ENABLE_BLINK
+#endif    
+
+#if !defined(ENABLE_OLED)
+    // MCO is PA_8 pin, It also used as OLED_RST_PIN
+    //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
+    #if !defined(CHECK_MCO_OUTPUT)
+        //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO output switching
+    #endif    
 #endif
 
 // Averages (number of readings in average)
@@ -258,24 +266,63 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
     #error SINE_VAL_COUNT must be a power of 2 to use in fastSin() and fastCos() defines!!!
 #endif
 
-// Bitwise memory modification
+// Bitwise memory modification - ARM bitband
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
 #define MEM_ADDR(addr)  *((volatile unsigned long  *)(addr))
 #define BIT_ADDR(addr, bitnum)   MEM_ADDR(BITBAND(addr, bitnum))
 
 // Low level GPIO configuration (for quicker manipulations than digitalWrites)
-#define output(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12),n)
-#define input(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8),n)
+#define output(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12), n) // ODR
+#define input(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8), n) // IDR
 
 // Maybe an even faster digitalWrite, but only if really needed
-/*#define digitalWriteFaster(pn, high) \
+#define digitalWriteFaster(pn, high) \
     if (high) { \
         WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BSRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
     } \
     else { \
         WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
     }
-*/
+
+#define digitalWriteFastest(pn, high) \
+    if (high) { \
+        get_GPIO_Port(STM_PORT(pn))->BSRR = STM_GPIO_PIN(pn); \
+    } \
+    else { \
+        get_GPIO_Port(STM_PORT(pn))->BRR = STM_GPIO_PIN(pn); \
+    }
+
+#define GPIO_FUNCTION 3
+#if GPIO_FUNCTION == 0
+    #define GPIO_WRITE(pn, high) digitalWrite(pinNametoDigitalPin(pn), high)
+#elif GPIO_FUNCTION == 1
+    #define GPIO_WRITE(pn, high) digitalWriteFast(pn, high)
+#elif GPIO_FUNCTION == 2
+    #define GPIO_WRITE(pn, high) digitalWriteFaster(pn, high)
+#elif GPIO_FUNCTION == 3
+    #define GPIO_WRITE(pn, high) digitalWriteFastest(pn, high)
+#elif GPIO_FUNCTION == 4
+    // pure bitband
+    #define GPIO_WRITE(pn, high) \
+        if (high) { \
+            output((uint32_t)(get_GPIO_Port(STM_PORT(pn))), STM_PIN(pn)) = 1; \
+        } \
+        else { \
+            output((uint32_t)(get_GPIO_Port(STM_PORT(pn))), STM_PIN(pn)) = 0; \
+        }
+#elif GPIO_FUNCTION == 5
+    // covered by HAL functions
+    #define GPIO_WRITE(pn, high) \
+        if (high) { \
+            HAL_GPIO_WritePin(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn), GPIO_PIN_SET); \
+        } \
+        else { \
+            HAL_GPIO_WritePin(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn), GPIO_PIN_RESET); \
+        }
+#else
+    #error GPIO_FUNCTION error
+#endif    
+
 // --------------  Debugging  --------------
 //#define TEST_FLASH
 

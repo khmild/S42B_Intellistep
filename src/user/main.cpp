@@ -99,6 +99,46 @@ void setup() {
         initLED();
     #endif
 
+    #ifdef CHECK_MCO_OUTPUT
+        MCO_GPIO_Init();
+    #endif
+    
+    #ifdef CHECK_GPIO_OUTPUT_SWITCHING
+        PA_8_GPIO_Init();
+        while(true) {
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+
+            // SystemClock_Config_HSE_8M_SYSCLK_72M() is selected:
+            //           | GPIO_FUNCTION | bazed on 
+            //  14,4 kHz | 0             | digitalWrite()
+            //  81.4 kHz | 1             | digitalWriteFast()
+            //  1.64 MHz | 2             | digitalWriteFaster()
+            //  1.67 MHz | 3             | digitalWriteFastest()
+            // 600.1 kHz | 4             | output()
+            // 163.3.kHz | 5             | HAL_GPIO_WritePin()
+        }
+    #endif
+
     // Test the flash if specified
     //#ifdef TEST_FLASH
     //    flash_test();
@@ -250,7 +290,8 @@ void overclock(uint32_t PLLMultiplier) {
     HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
     // Wait for the PLL to be configured
-    while(!(RCC_CR_PLLRDY & RCC -> CR));
+    while(!(RCC_CR_PLLRDY & RCC -> CR))
+        ; // 
 
     // Use the PLL as the system clock
     RCC -> CFGR |= RCC_SYSCLKSOURCE_PLLCLK;

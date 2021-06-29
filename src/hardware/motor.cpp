@@ -272,6 +272,14 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 // Sets the coils of the motor based on the angle (angle should be in degrees)
 void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
 
+    if (degAngle < 0) {
+        degAngle += round(abs(degAngle) / 360) * 360;
+    }
+    else if ( degAngle > 360)
+    {
+        degAngle -= round(degAngle / 360) * 360;
+    }
+            
     // Constrain the set angle to between 0 and 360
     while (degAngle < 0 || degAngle > 360) {
         
