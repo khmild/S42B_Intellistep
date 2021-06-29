@@ -21,8 +21,8 @@ StepperMotor::StepperMotor() {
     pinMode(COIL_B_DIR_2_ARDUINO_PIN, OUTPUT);
 
     // Configure the PWM current output pins
-    this -> PWMCurrentPinInfo[A] = analogSetup(COIL_POWER_OUTPUT_PINS[A], MOTOR_PWM_FREQ * 1000, 0);
-    this -> PWMCurrentPinInfo[B] = analogSetup(COIL_POWER_OUTPUT_PINS[B], MOTOR_PWM_FREQ * 1000, 0);
+    this -> PWMCurrentPinInfo[A] = analogSetup(COIL_POWER_OUTPUT_PINS[A], MOTOR_PWM_FREQ, 0);
+    this -> PWMCurrentPinInfo[B] = analogSetup(COIL_POWER_OUTPUT_PINS[B], MOTOR_PWM_FREQ, 0);
 
     // Disable the motor
     setState(DISABLED, true);
@@ -233,7 +233,7 @@ float StepperMotor::getMicrostepMultiplier() const {
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngle) {
 
     // Main angle change (any inversions * angle of microstep)
-    float angleChange = (this -> fullStepAngle) / (this -> microstepDivisor);
+    float angleChange = this -> microstepAngle;
 
     // Factor in the multiplier if specified
     if (useMultiplier) {
@@ -441,10 +441,10 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
-    uint32_t PWMValue = abs((40.96 * CURRENT_SENSE_RESISTOR * current) / BOARD_VOLTAGE);
+    uint32_t PWMValue = abs((PWM_MAX_DUTY_CYCLE * CURRENT_SENSE_RESISTOR * current) / (BOARD_VOLTAGE * 100));
 
     // Constrain the PWM value, then return it
-    return constrain(PWMValue, 0, 4095);
+    return constrain(PWMValue, 0, PWM_MAX_DUTY_CYCLE);
 }
 
 
@@ -452,7 +452,7 @@ uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 float StepperMotor::speedToHz(float angularSpeed) const {
 
     // Calculate the step angle (including microsteps)
-    float stepAngle = (this -> fullStepAngle) / (this -> microstepDivisor);
+    float stepAngle = this -> microstepAngle;
 
     // Calculate the time between step calls
     return (angularSpeed / stepAngle);

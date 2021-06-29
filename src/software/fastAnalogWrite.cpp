@@ -1,7 +1,7 @@
 #include "fastAnalogWrite.h"
 
 // Sets up an analog pin with the specified value
-// Starting value can be between 0 and 4095
+// Starting value can be between 0 and 4095 (PWM_MAX_DUTY_CYCLE)
 analogInfo analogSetup(PinName pin, uint32_t freq, uint32_t startingValue) {
 
     // Create a structure for the analogInfo
@@ -29,12 +29,12 @@ analogInfo analogSetup(PinName pin, uint32_t freq, uint32_t startingValue) {
 }
 
 // Sets the value to output on the analog pin using the structure that was returned when setting it up
-// Value should be in range of 0 and 4095
+// Value should be in range of 0 and 4095 (PWM_MAX_DUTY_CYCLE)
 void analogSet(analogInfo* pinInfo, uint32_t value) {
 
-    // Check to make sure that the value is between 0 and 4095
+    // Check to make sure that the value is between 0 and 4095 (PWM_MAX_DUTY_CYCLE)
     // Very bad things could happen if this is not checked properly
-    value = constrain(value, 0, 4095);
+    value = constrain(value, 0, PWM_MAX_DUTY_CYCLE);
 
     // Only need to set the capture compare
     pinInfo->HTPointer->setCaptureCompare(pinInfo->channel, value, RESOLUTION_12B_COMPARE_FORMAT);
