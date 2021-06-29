@@ -204,11 +204,11 @@
 
 
 // OLED Mappings
-#define OLED_CS_PIN   output(GPIOB_BASE, 12)
-#define OLED_RST_PIN  output(GPIOA_BASE, 8)
-#define OLED_RS_PIN   output(GPIOB_BASE, 13)
-#define OLED_SCLK_PIN output(GPIOB_BASE, 15)	//(D0)
-#define OLED_SDIN_PIN output(GPIOB_BASE, 14)	//(D1)
+#define OLED_CS_PIN   PB_12
+#define OLED_RST_PIN  PA_8
+#define OLED_RS_PIN   PB_13
+#define OLED_SCLK_PIN PB_15	//(D0)
+#define OLED_SDIN_PIN PB_14	//(D1)
 
 // Button mappings
 #define DOWN_BUTTON_PIN         PA_3
@@ -231,14 +231,10 @@
 
 // Motor mappings                                   [  A  ,   B  ]
 static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
-#define COIL_A_DIR_1_PIN  output(GPIOB_BASE, 6)
-#define COIL_A_DIR_2_PIN  output(GPIOB_BASE, 7)
-#define COIL_B_DIR_1_PIN  output(GPIOB_BASE, 8)
-#define COIL_B_DIR_2_PIN  output(GPIOB_BASE, 9)
-#define COIL_A_DIR_1_ARDUINO_PIN PB_6
-#define COIL_A_DIR_2_ARDUINO_PIN PB_7
-#define COIL_B_DIR_1_ARDUINO_PIN PB_8
-#define COIL_B_DIR_2_ARDUINO_PIN PB_9
+#define COIL_A_DIR_1_PIN  PB_6
+#define COIL_A_DIR_2_PIN  PB_7
+#define COIL_B_DIR_1_PIN  PB_8
+#define COIL_B_DIR_2_PIN  PB_9
 
 // Encoder SPI interface
 #define ENCODER_CS_PIN    PA_4 // SPI1_SS
@@ -292,17 +288,40 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
         get_GPIO_Port(STM_PORT(pn))->BRR = STM_GPIO_PIN(pn); \
     }
 
-#define GPIO_FUNCTION 3
-#if GPIO_FUNCTION == 0
+// Methods for writing to the GPIO
+// When SystemClock_Config_HSE_8M_SYSCLK_72M() is selected:
+//           | GPIO_WRITE_METHOD | based on 
+//  14,4 kHz | GPIO_WRITE_DIGITAL_WRITE          | digitalWrite()
+//  81.4 kHz | GPIO_WRITE_DIGITAL_WRITE_FAST     | digitalWriteFast()
+//  1.64 MHz | GPIO_WRITE_DIGITAL_WRITE_FASTER   | digitalWriteFaster()
+//  1.67 MHz | GPIO_WRITE_DIGITAL_WRITE_FASTEST  | digitalWriteFastest()
+// 600.1 kHz | GPIO_WRITE_REGISTER_SET           | output()
+// 163.3 kHz | GPIO_WRITE_HAL_FUNCTION           | HAL_GPIO_WritePin()
+#define GPIO_WRITE_DIGITAL_WRITE         0
+#define GPIO_WRITE_DIGITAL_WRITE_FAST    1
+#define GPIO_WRITE_DIGITAL_WRITE_FASTER  2
+#define GPIO_WRITE_DIGITAL_WRITE_FASTEST 3
+#define GPIO_WRITE_REGISTER_SET          4
+#define GPIO_WRITE_HAL_FUNCTION          5
+
+// Setting for the GPIO write method
+#define GPIO_WRITE_METHOD GPIO_WRITE_DIGITAL_WRITE_FASTEST
+
+// Define the correct GPIO_WRITE method
+#if (GPIO_WRITE_METHOD == GPIO_WRITE_DIGITAL_WRITE)
     #define GPIO_WRITE(pn, high) digitalWrite(pinNametoDigitalPin(pn), high)
-#elif GPIO_FUNCTION == 1
+
+#elif (GPIO_WRITE_METHOD == GPIO_WRITE_DIGITAL_WRITE_FAST)
     #define GPIO_WRITE(pn, high) digitalWriteFast(pn, high)
-#elif GPIO_FUNCTION == 2
+
+#elif (GPIO_WRITE_METHOD == GPIO_WRITE_DIGITAL_WRITE_FASTER)
     #define GPIO_WRITE(pn, high) digitalWriteFaster(pn, high)
-#elif GPIO_FUNCTION == 3
+
+#elif (GPIO_WRITE_METHOD == GPIO_WRITE_DIGITAL_WRITE_FASTEST)
     #define GPIO_WRITE(pn, high) digitalWriteFastest(pn, high)
-#elif GPIO_FUNCTION == 4
-    // pure bitband
+
+#elif (GPIO_WRITE_METHOD == GPIO_WRITE_REGISTER_SET)
+    // Pure bitsetting
     #define GPIO_WRITE(pn, high) \
         if (high) { \
             output((uint32_t)(get_GPIO_Port(STM_PORT(pn))), STM_PIN(pn)) = 1; \
@@ -310,7 +329,8 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
         else { \
             output((uint32_t)(get_GPIO_Port(STM_PORT(pn))), STM_PIN(pn)) = 0; \
         }
-#elif GPIO_FUNCTION == 5
+
+#elif (GPIO_WRITE_METHOD == GPIO_WRITE_HAL_FUNCTION)
     // covered by HAL functions
     #define GPIO_WRITE(pn, high) \
         if (high) { \
@@ -319,8 +339,9 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
         else { \
             HAL_GPIO_WritePin(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn), GPIO_PIN_RESET); \
         }
+
 #else
-    #error GPIO_FUNCTION error
+    #error GPIO_WRITE_METHOD not a valid value
 #endif    
 
 // --------------  Debugging  --------------

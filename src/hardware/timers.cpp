@@ -185,11 +185,11 @@ void correctMotor() {
             // Shut off the StallGuard pin just in case
             // (No need to check if the pin is valid, the pin will never be set up if it isn't valid)
             #ifdef STALLFAULT_PIN
-                digitalWriteFast(STALLFAULT_PIN, LOW);
+                GPIO_WRITE(STALLFAULT_PIN, LOW);
             #endif
 
             // Fix the LED pin
-            setLED(LOW);
+            GPIO_WRITE(LED_PIN, LOW);
         #endif
     }
     else {
@@ -260,11 +260,11 @@ void correctMotor() {
                     }
 
                     // The maximum count has been exceeded, trigger an endstop pulse
-                    digitalWriteFast(STALLFAULT_PIN, HIGH);
+                    GPIO_WRITE(STALLFAULT_PIN, HIGH);
                     #endif
 
                     // Also give an indicator on the LED
-                    setLED(HIGH);
+                    GPIO_WRITE(LED_PIN, HIGH);
                 }
                 else {
                     // Just count up, motor is out of position but not out of faults
@@ -292,12 +292,12 @@ void correctMotor() {
             // No need to check the validity of the pin here, it wouldn't be setup if it wasn't valid
             #ifdef STALLFAULT_PIN
             if (stallFaultPinSetup) {
-                digitalWriteFast(STALLFAULT_PIN, LOW);
+                GPIO_WRITE(STALLFAULT_PIN, LOW);
             }
             #endif
 
             // Also toggle the LED for visual purposes
-            setLED(LOW);
+            GPIO_WRITE(LED_PIN, LOW);
             
             #endif // ! ENABLE_STALLFAULT
         }

@@ -15,10 +15,10 @@ StepperMotor::StepperMotor() {
     pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
 
     // Setup the coil direction pins 
-    pinMode(COIL_A_DIR_1_ARDUINO_PIN, OUTPUT);
-    pinMode(COIL_A_DIR_2_ARDUINO_PIN, OUTPUT);
-    pinMode(COIL_B_DIR_1_ARDUINO_PIN, OUTPUT);
-    pinMode(COIL_B_DIR_2_ARDUINO_PIN, OUTPUT);
+    pinMode(COIL_A_DIR_1_PIN, OUTPUT);
+    pinMode(COIL_A_DIR_2_PIN, OUTPUT);
+    pinMode(COIL_B_DIR_1_PIN, OUTPUT);
+    pinMode(COIL_B_DIR_2_PIN, OUTPUT);
 
     // Configure the PWM current output pins
     this -> PWMCurrentPinInfo[A] = analogSetup(COIL_POWER_OUTPUT_PINS[A], MOTOR_PWM_FREQ, 0);
@@ -378,20 +378,20 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
 
         // Decide the state of the direction pins
         if (desiredState == FORWARD) {
-            COIL_A_DIR_1_PIN = 1;
-            COIL_A_DIR_2_PIN = 0;
+            GPIO_WRITE(COIL_A_DIR_1_PIN, HIGH);
+            GPIO_WRITE(COIL_A_DIR_2_PIN, LOW);
         }
         else if (desiredState == BACKWARD) {
-            COIL_A_DIR_1_PIN = 0;
-            COIL_A_DIR_2_PIN = 1;
+            GPIO_WRITE(COIL_A_DIR_1_PIN, LOW);
+            GPIO_WRITE(COIL_A_DIR_2_PIN, HIGH);
         }
         else if (desiredState == BRAKE) {
-            COIL_A_DIR_1_PIN = 1;
-            COIL_A_DIR_2_PIN = 1;
+            GPIO_WRITE(COIL_A_DIR_1_PIN, HIGH);
+            GPIO_WRITE(COIL_A_DIR_2_PIN, HIGH);
         }
         else if (desiredState == COAST) {
-            COIL_A_DIR_1_PIN = 0;
-            COIL_A_DIR_2_PIN = 0;
+            GPIO_WRITE(COIL_A_DIR_1_PIN, LOW);
+            GPIO_WRITE(COIL_A_DIR_2_PIN, LOW);
         }
         
         // Update the previous state of the coil with the new one
@@ -419,21 +419,22 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
         analogSet(&PWMCurrentPinInfo[B], 0);
 
         // Decide the state of the direction pins
+        // Decide the state of the direction pins
         if (desiredState == FORWARD) {
-            COIL_B_DIR_1_PIN = 1;
-            COIL_B_DIR_2_PIN = 0;
+            GPIO_WRITE(COIL_B_DIR_1_PIN, HIGH);
+            GPIO_WRITE(COIL_B_DIR_2_PIN, LOW);
         }
         else if (desiredState == BACKWARD) {
-            COIL_B_DIR_1_PIN = 0;
-            COIL_B_DIR_2_PIN = 1;
+            GPIO_WRITE(COIL_B_DIR_1_PIN, LOW);
+            GPIO_WRITE(COIL_B_DIR_2_PIN, HIGH);
         }
         else if (desiredState == BRAKE) {
-            COIL_B_DIR_1_PIN = 1;
-            COIL_B_DIR_2_PIN = 1;
+            GPIO_WRITE(COIL_B_DIR_1_PIN, HIGH);
+            GPIO_WRITE(COIL_B_DIR_2_PIN, HIGH);
         }
         else if (desiredState == COAST) {
-            COIL_B_DIR_1_PIN = 0;
-            COIL_B_DIR_2_PIN = 0;
+            GPIO_WRITE(COIL_B_DIR_1_PIN, LOW);
+            GPIO_WRITE(COIL_B_DIR_2_PIN, LOW);
         }
         
         // Update the previous state of the coil with the new one

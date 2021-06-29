@@ -577,7 +577,7 @@ void initOLED() {
     // Write that pins B12-15 should be general purpose outputs
   	GPIOB -> CRH |= 0b00110011001100110000000000000000;
 
-	OLED_RST_PIN = 1;
+	GPIO_WRITE(OLED_RST_PIN, HIGH);
 	writeOLEDByte(0xAE, COMMAND);//
 	writeOLEDByte(0xD5, COMMAND);//
 	writeOLEDByte(80,   COMMAND);  //[3:0],;[7:4],
@@ -615,36 +615,36 @@ void initOLED() {
 void writeOLEDByte(uint8_t data, OLED_MODE mode) {
 
     // Write the current mode and enable the screen's communcation
-	OLED_RS_PIN = (uint8_t)mode;
-	OLED_CS_PIN = 0;
+	GPIO_WRITE(OLED_RS_PIN, (uint8_t)mode);
+	GPIO_WRITE(OLED_CS_PIN, LOW);
 
     // Write each bit of the byte
 	for(uint8_t i = 0; i < 8; i++) {
 
         // Prevent the screen from reading the data in
-		OLED_SCLK_PIN = 0;
+        GPIO_WRITE(OLED_SCLK_PIN, LOW);
 
         // If the bit is 1 (true)
 		if(data & 0x80) {
 
             // Write true
-            OLED_SDIN_PIN = 1;
+            GPIO_WRITE(OLED_SDIN_PIN, HIGH);
         }
 		else {
             // Write false
-            OLED_SDIN_PIN = 0;
+            GPIO_WRITE(OLED_SDIN_PIN, LOW);
         }
 
         // Signal that the data needs to be sampled again
-		OLED_SCLK_PIN = 1;
+		GPIO_WRITE(OLED_SCLK_PIN, HIGH);
 
         // Shift all of the bits so the next will be read
 		data <<= 1;
 	}
 
     // Disable the screen's communication
-	OLED_CS_PIN = 1;
-	OLED_RS_PIN = 1;
+    GPIO_WRITE(OLED_CS_PIN, HIGH);
+    GPIO_WRITE(OLED_RS_PIN, HIGH);
 }
 
 

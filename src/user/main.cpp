@@ -127,15 +127,6 @@ void setup() {
             GPIO_WRITE(PA_8, LOW);
             GPIO_WRITE(PA_8, LOW);
             GPIO_WRITE(PA_8, LOW);
-
-            // SystemClock_Config_HSE_8M_SYSCLK_72M() is selected:
-            //           | GPIO_FUNCTION | bazed on 
-            //  14,4 kHz | 0             | digitalWrite()
-            //  81.4 kHz | 1             | digitalWriteFast()
-            //  1.64 MHz | 2             | digitalWriteFaster()
-            //  1.67 MHz | 3             | digitalWriteFastest()
-            // 600.1 kHz | 4             | output()
-            // 163.3.kHz | 5             | HAL_GPIO_WritePin()
         }
     #endif
 
@@ -290,8 +281,7 @@ void overclock(uint32_t PLLMultiplier) {
     HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
     // Wait for the PLL to be configured
-    while(!(RCC_CR_PLLRDY & RCC -> CR))
-        ; // 
+    while(!(RCC_CR_PLLRDY & RCC -> CR)); // 
 
     // Use the PLL as the system clock
     RCC -> CFGR |= RCC_SYSCLKSOURCE_PLLCLK;
@@ -304,8 +294,8 @@ void overclock(uint32_t PLLMultiplier) {
 
 // ! Only here for testing
 void blink() {
-    digitalWriteFast(LED_PIN, HIGH);
+    GPIO_WRITE(LED_PIN, HIGH);
     delay(500);
-    digitalWriteFast(LED_PIN, LOW);
+    GPIO_WRITE(LED_PIN, LOW);
     delay(500);
 }
