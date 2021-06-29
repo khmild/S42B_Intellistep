@@ -435,7 +435,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
-    uint32_t PWMValue = abs((40.96 * CURRENT_SENSE_RESISTOR * current) / BOARD_VOLTAGE);
+    uint32_t PWMValue = abs((PWM_MAX_DUTY_CYCLE * CURRENT_SENSE_RESISTOR * current) / (BOARD_VOLTAGE * 100));
 
     // Constrain the PWM value, then return it
     return constrain(PWMValue, 0, PWM_MAX_DUTY_CYCLE);
