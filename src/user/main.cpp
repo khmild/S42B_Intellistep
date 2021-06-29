@@ -99,6 +99,37 @@ void setup() {
         initLED();
     #endif
 
+    #ifdef CHECK_MCO_OUTPUT
+        MCO_GPIO_Init();
+    #endif
+    
+    #ifdef CHECK_GPIO_OUTPUT_SWITCHING
+        PA_8_GPIO_Init();
+        while(true) {
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+            GPIO_WRITE(PA_8, HIGH);
+
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+            GPIO_WRITE(PA_8, LOW);
+        }
+    #endif
+
     // Test the flash if specified
     //#ifdef TEST_FLASH
     //    flash_test();
@@ -250,7 +281,7 @@ void overclock(uint32_t PLLMultiplier) {
     HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
     // Wait for the PLL to be configured
-    while(!(RCC_CR_PLLRDY & RCC -> CR));
+    while(!(RCC_CR_PLLRDY & RCC -> CR)); // 
 
     // Use the PLL as the system clock
     RCC -> CFGR |= RCC_SYSCLKSOURCE_PLLCLK;
@@ -263,8 +294,8 @@ void overclock(uint32_t PLLMultiplier) {
 
 // ! Only here for testing
 void blink() {
-    digitalWriteFast(LED_PIN, HIGH);
+    GPIO_WRITE(LED_PIN, HIGH);
     delay(500);
-    digitalWriteFast(LED_PIN, LOW);
+    GPIO_WRITE(LED_PIN, LOW);
     delay(500);
 }

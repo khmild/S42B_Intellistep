@@ -1,10 +1,10 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-#include "motor.h"
 #include "Arduino.h"
 #include "stdint.h"
 #include "config.h"
+#include "motor.h"
 
 //extern void Output(int32_t theta,uint8_t effort);
 //extern uint16_t ReadAngle(void);

@@ -14,6 +14,22 @@ void MCO_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
+#elif defined(CHECK_GPIO_OUTPUT_SWITCHING)
+void PA_8_GPIO_Init(void)
+{
+  // Initialization structure
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin : PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
 #endif
 
 
@@ -36,7 +52,7 @@ void SystemClock_Config_HSE_16M_SYSCLK_72M(void) {
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-   //Error_Handler();
+    //Error_Handler();
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
@@ -49,7 +65,7 @@ void SystemClock_Config_HSE_16M_SYSCLK_72M(void) {
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
-   //Error_Handler();
+    //Error_Handler();
   }
   #ifdef CHECK_MCO_OUTPUT
     HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
@@ -76,7 +92,7 @@ void SystemClock_Config_HSE_8M_SYSCLK_72M(void) {
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-   //Error_Handler();
+    //Error_Handler();
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
@@ -89,7 +105,7 @@ void SystemClock_Config_HSE_8M_SYSCLK_72M(void) {
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
-   //Error_Handler();
+    //Error_Handler();
   }
 
   #ifdef CHECK_MCO_OUTPUT
@@ -116,7 +132,7 @@ void SystemClock_Config_HSI_8M_SYSCLK_64M(void) {
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-   //Error_Handler();
+    //Error_Handler();
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
@@ -129,7 +145,7 @@ void SystemClock_Config_HSI_8M_SYSCLK_64M(void) {
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
-   //Error_Handler();
+    //Error_Handler();
   }
 
   #ifdef CHECK_MCO_OUTPUT
