@@ -14,6 +14,12 @@ StepperMotor::StepperMotor() {
     pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
     pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
 
+    // Setup the coil direction pins 
+    pinMode(COIL_A_DIR_1_ARDUINO_PIN, OUTPUT);
+    pinMode(COIL_A_DIR_2_ARDUINO_PIN, OUTPUT);
+    pinMode(COIL_B_DIR_1_ARDUINO_PIN, OUTPUT);
+    pinMode(COIL_B_DIR_2_ARDUINO_PIN, OUTPUT);
+
     // Configure the PWM current output pins
     this -> PWMCurrentPinInfo[A] = analogSetup(COIL_POWER_OUTPUT_PINS[A], MOTOR_PWM_FREQ * 1000, 0);
     this -> PWMCurrentPinInfo[B] = analogSetup(COIL_POWER_OUTPUT_PINS[B], MOTOR_PWM_FREQ * 1000, 0);

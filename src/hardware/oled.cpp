@@ -559,20 +559,24 @@ void initOLED() {
 
     // Set all of the menu values back to their defaults (for if the screen needs to be reinitialized)
     submenu = CALIBRATION;
+    currentCursorIndex = 0;
 
-	RCC->APB2ENR |= 1<<3;
-	RCC->APB2ENR |= 1<<2;
+    // Enable the A and B GPIO clocks
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    GPIOA->CRH &= 0XFFFffFF0;
-    GPIOA->CRH |= 0X00000003;
-    GPIOA->ODR |= 1<<8;
+    // Clear the state of pin A8 (pin states are 15, 14, 13, 12, 11, 10, 9, and 8 in groups of 4)
+    GPIOA -> CRH &= 0b11111111111111111111111111110000;
+    
+    // Set that pin A8 should be a general purpose output
+    GPIOA -> CRH |= 0b0011;
 
-  	GPIOB->CRH &= 0X0000FFFF;
-  	GPIOB->CRH |= 0X33330000;
-	GPIOB->ODR |= 0xF<<12;
+    // Clear the settings of pins B12-15
+  	GPIOB -> CRH &= 0b1111111111111111;
 
-	OLED_RST_PIN = 0;
-	delay(100);
+    // Write that pins B12-15 should be general purpose outputs
+  	GPIOB -> CRH |= 0b00110011001100110000000000000000;
+
 	OLED_RST_PIN = 1;
 	writeOLEDByte(0xAE, COMMAND);//
 	writeOLEDByte(0xD5, COMMAND);//

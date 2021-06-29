@@ -227,6 +227,10 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 #define COIL_A_DIR_2_PIN  output(GPIOB_BASE, 7)
 #define COIL_B_DIR_1_PIN  output(GPIOB_BASE, 8)
 #define COIL_B_DIR_2_PIN  output(GPIOB_BASE, 9)
+#define COIL_A_DIR_1_ARDUINO_PIN PB_6
+#define COIL_A_DIR_2_ARDUINO_PIN PB_7
+#define COIL_B_DIR_1_ARDUINO_PIN PB_8
+#define COIL_B_DIR_2_ARDUINO_PIN PB_9
 
 // Encoder SPI interface
 #define ENCODER_CS_PIN    PA_4 // SPI1_SS
