@@ -263,51 +263,21 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 
     // Motor's current angle must always be updated to correctly move the coils
     this -> currentAngle += angleChange;
+    this -> currentStep += getSign(angleChange); // Only moving one step in the specified direction
 
     // Drive the coils to their destination
-    this -> driveCoils(currentAngle, dir);
+    this -> driveCoils(currentStep, dir);
 }
 
 
-// Sets the coils of the motor based on the angle (angle should be in degrees)
-void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
+// Sets the coils of the motor based on the step count
+void StepperMotor::driveCoils(int32_t steps, STEP_DIR direction) {
 
-    if (degAngle < 0) {
-        degAngle += round(abs(degAngle) / 360) * 360;
-    }
-    else if ( degAngle > 360)
-    {
-        degAngle -= round(degAngle / 360) * 360;
-    }
-            
-    // Constrain the set angle to between 0 and 360
-    while (degAngle < 0 || degAngle > 360) {
-        
-        // The angle is less than 0, add 360
-        if (degAngle < 0) {
-            degAngle += 360;
-        }
-        else {
-            // The angle must be greater than 360, reduce the angle by 360
-            degAngle -= 360;
-        }
-    }
+    // Correct the steps so that they're within the valid range
+    steps %= (4 * (this -> microstepDivisor));
 
-    // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
-    float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
-
-    // Round the microstep angle, it has to be a whole value of the number of microsteps available
-    // Also ensures that the coils are being driven to the major step positions (increases torque)
-    uint16_t roundedMicrosteps = round(microstepAngle);
-
-    // Make sure that the phase angle doesn't exceed the steps per phase rotation (4 full steps to a phase rotation * whatever microstepping)
-    roundedMicrosteps = roundedMicrosteps % (4 * (this -> microstepDivisor));
-    
     // Calculate the sine and cosine of the angle
-    uint16_t arrayIndex = roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor));
-    
-    // Ensure the index is in the sineTable range
-    arrayIndex &= (SINE_VAL_COUNT - 1);
+    uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
     
     // Calculate the coil settings
     int16_t coilAPercent = fastSin(arrayIndex);
@@ -358,6 +328,42 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
     else {
         setCoilB(BRAKE);
     }
+}
+
+
+// Sets the coils of the motor based on the angle (angle should be in degrees)
+void StepperMotor::driveCoilsAngle(float degAngle, STEP_DIR direction) {
+
+    // Should be a faster way of constraining the degAngle back into 0-360
+    if (degAngle < 0) {
+        degAngle += round(abs(degAngle) / 360) * 360;
+    }
+    else if ( degAngle > 360) {
+        degAngle -= round(degAngle / 360) * 360;
+    }
+
+    // Constrain the set angle to between 0 and 360
+    while (degAngle < 0 || degAngle > 360) {
+        
+        // The angle is less than 0, add 360
+        if (degAngle < 0) {
+            degAngle += 360;
+        }
+        else {
+            // The angle must be greater than 360, reduce the angle by 360
+            degAngle -= 360;
+        }
+    }
+
+    // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
+    float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
+
+    // Round the microstep angle, it has to be a whole value of the number of microsteps available
+    // Also ensures that the coils are being driven to the major step positions (increases torque)
+    uint16_t roundedMicrosteps = round(microstepAngle);
+
+    // Drive the coils to the found microstep
+    driveCoils(roundedMicrosteps, direction);
 }
 
 
@@ -608,6 +614,17 @@ void StepperMotor::calibrate() {
 // Returns a -1 for true and a 1 for false
 float StepperMotor::invertDirection(bool invert) const {
     if (invert) {
+        return -1;
+    }
+    else {
+        return 1;
+    }
+}
+
+
+// Returns -1 if the number is less than 0, 1 otherwise
+float StepperMotor::getSign(float num) {
+    if (num < 0) {
         return -1;
     }
     else {

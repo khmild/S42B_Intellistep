@@ -137,8 +137,11 @@ class StepperMotor {
         // Calculates the coil values for the motor and updates the set angle. 
         void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredAngle = true);
 
+        // Sets the coils to hold the motor at the desired step number
+        void driveCoils(int32_t steps, STEP_DIR direction);
+
         // Sets the coils to hold the motor at the desired phase angle
-        void driveCoils(float angle, STEP_DIR direction);
+        void driveCoilsAngle(float angle, STEP_DIR direction);
 
         // Sets the state of the A coil
         void setCoilA(COIL_STATE desiredState, uint16_t current = 0);
@@ -171,12 +174,18 @@ class StepperMotor {
 
         // Function for turning booleans into -1 for true and 1 for false
         float invertDirection(bool invert) const;
+
+        // Function for getting the sign of the number (returns -1 if number is less than 0, 1 if 0 or above)
+        float getSign(float num);
         
         // Keeps the desired angle of the motor
         float desiredAngle = 0;
 
         // Keeps the current angle of the motor
         float currentAngle = 0;
+
+        // Keeps the current steps of the motor
+        int32_t currentStep = 0;
 
         // Motor characteristics
         #ifdef ENABLE_DYNAMIC_CURRENT
