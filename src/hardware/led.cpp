@@ -18,5 +18,5 @@ void initLED() {
 
 // Sets the state of the LED. On is true, off is false
 void setLED(uint8_t state) {
-    LED_PIN_OBJ = state;
+    GPIO_WRITE(LED_PIN_OBJ, state);
 }
