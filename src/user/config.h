@@ -97,6 +97,8 @@
 #endif
 
 // PID settings
+// ! At this time this feature is still under development
+// ! Do not enable it, it doesn't work
 //#define ENABLE_PID
 #ifdef ENABLE_PID
 
