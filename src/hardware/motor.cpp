@@ -234,7 +234,7 @@ float StepperMotor::getMicrostepMultiplier() const {
 void StepperMotor::simpleStep() {
 
     // Only moving one step in the specified direction
-    this -> currentStep += DIRECTION(GPIO_READ(DIRECTION_PIN)) * this -> reversed * this -> microstepMultiplier;
+    this -> currentStep += DIRECTION(GPIO_READ(DIRECTION_PIN)) * (this -> reversed) * (this -> microstepMultiplier);
 
     // Drive the coils to their destination
     this -> driveCoils(this -> currentStep);
@@ -246,17 +246,19 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 
     // Main angle change (any inversions * angle of microstep)
     float angleChange = this -> microstepAngle;
+    int32_t stepChange = 1;
 
     // Factor in the multiplier if specified
     if (useMultiplier) {
         angleChange *= (this -> microstepMultiplier);
+        stepChange *= (this -> microstepMultiplier);
     }
 
     // Invert the change based on the direction
     if (dir == PIN) {
 
         // Use the DIR_PIN state
-        angleChange *= DIRECTION(GPIO_READ(DIRECTION_PIN)) * this -> reversed;
+        angleChange *= DIRECTION(GPIO_READ(DIRECTION_PIN)) * (this -> reversed);
     }
     //else if (dir == COUNTER_CLOCKWISE) {
         // Nothing to do here, the value is already positive
@@ -275,7 +277,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 
     // Motor's current angle must always be updated to correctly move the coils
     this -> currentAngle += angleChange;
-    this -> currentStep += DIRECTION(angleChange); // Only moving one step in the specified direction
+    this -> currentStep += getSign(angleChange) * stepChange; // Only moving one step in the specified direction
 
     // Drive the coils to their destination
     this -> driveCoils(currentStep);
