@@ -377,7 +377,7 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
     //}
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
-    if (desiredState != previousCoilStates[A]) {
+    if (desiredState != previousCoilStateA) {
 
         // Disable the coil
         analogSet(&PWMCurrentPinInfo[A], 0);
@@ -401,7 +401,7 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
         }
 
         // Update the previous state of the coil with the new one
-        previousCoilStates[A] = desiredState;
+        previousCoilStateA = desiredState;
     }
 
     // Update the output pin with the correct current
@@ -419,7 +419,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
     //}
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
-    if (desiredState != previousCoilStates[B]) {
+    if (desiredState != previousCoilStateB) {
 
         // Disable the coil
         analogSet(&PWMCurrentPinInfo[B], 0);
@@ -443,7 +443,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
         }
 
         // Update the previous state of the coil with the new one
-        previousCoilStates[B] = desiredState;
+        previousCoilStateB = desiredState;
     }
 
     // Update the output pin with the correct current

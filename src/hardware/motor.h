@@ -225,7 +225,8 @@ class StepperMotor {
         analogInfo PWMCurrentPinInfo[2];
 
         // Last coil states (used to save time by not setting the pins unless necessary)
-        COIL_STATE previousCoilStates[2];
+        COIL_STATE previousCoilStateA = BRAKE;
+        COIL_STATE previousCoilStateB = BRAKE;
 };
 
 #endif
