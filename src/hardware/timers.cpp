@@ -220,13 +220,13 @@ void correctMotor() {
 
                 // Set the motor timer to call the stepping routine at specified time intervals
                 pidMoveTimer -> setOverflow((DEFAULT_PID_STEP_MAX - pidOutput), HERTZ_FORMAT);
-                
+
                 // Enable the timer if it isn't already
                 if (!pidMoveTimerEnabled) {
                     pidMoveTimer -> resume();
                     pidMoveTimerEnabled = true;
                 }
-                
+
 
             #else // ! ENABLE_PID
                 // Just "dumb" correction based on direction
@@ -289,7 +289,7 @@ void correctMotor() {
                     pidMoveTimerEnabled = false;
                 }
             #endif
-            
+
             // Only if StallFault is enabled
             #ifdef ENABLE_STALLFAULT
 
@@ -306,9 +306,9 @@ void correctMotor() {
 
             // Also toggle the LED for visual purposes
             GPIO_WRITE(LED_PIN, LOW);
-            
+
             #endif // ! ENABLE_STALLFAULT
         }
-        
+
     }
 }
