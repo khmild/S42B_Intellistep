@@ -33,7 +33,7 @@ static uint8_t interruptBlockCount = 0;
     // Also create a timer that calls the motor stepping function based on the PID's output
     HardwareTimer *pidMoveTimer = new HardwareTimer(TIM4);
 
-    // Variable to store if the timer is enabled 
+    // Variable to store if the timer is enabled
     // Saves large amounts of cycles as the timer only has to be toggled on a change
     bool pidMoveTimerEnabled = false;
 #endif
@@ -75,7 +75,9 @@ void setupMotorTimers() {
     correctionTimer -> setInterruptPriority(1, 1);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
     correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
+    #ifndef CHECK_STEPPING_RATE
     correctionTimer -> attachInterrupt(correctMotor);
+    #endif
     correctionTimer -> refresh();
     correctionTimer -> resume();
 
@@ -98,7 +100,7 @@ void disableInterrupts() {
     if (interruptBlockCount == 0) {
         __disable_irq();
     }
- 
+
    // Add one to the interrupt block counter
     interruptBlockCount++;
 }
@@ -160,7 +162,13 @@ void updateCorrectionTimer() {
 
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
+    #ifdef CHECK_STEPPING_RATE
+        GPIO_WRITE(LED_PIN, HIGH);
+    #endif
     motor.step();
+    #ifdef CHECK_STEPPING_RATE
+        GPIO_WRITE(LED_PIN, LOW);
+    #endif
 }
 
 
