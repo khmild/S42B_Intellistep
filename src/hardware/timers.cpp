@@ -76,7 +76,7 @@ void setupMotorTimers() {
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
     correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
     #ifndef CHECK_STEPPING_RATE
-    correctionTimer -> attachInterrupt(correctMotor);
+        correctionTimer -> attachInterrupt(correctMotor);
     #endif
     correctionTimer -> refresh();
     correctionTimer -> resume();
@@ -182,7 +182,7 @@ void stepMotorNoDesiredAngle() {
 void correctMotor() {
 
     // Check to see the state of the enable pin
-    if ((digitalReadFast(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {
+    if ((GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {
 
         // The enable pin is off, the motor should be disabled
         motor.setState(DISABLED);

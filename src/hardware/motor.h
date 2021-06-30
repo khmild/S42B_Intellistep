@@ -153,10 +153,7 @@ class StepperMotor {
         void setCoilB(COIL_STATE desiredState, uint16_t current = 0);
 
         // Calculates the correct PWM setting based on an input current
-        uint16_t currentToPWM(uint16_t current) const;
-
-        // Sets the speed of the motor (angular speed is in deg/s)
-        float speedToHz(float angularSpeed) const;
+        uint32_t currentToPWM(uint16_t current) const;
         
         // Sets the current state of the motor
         void setState(MOTOR_STATE newState, bool clearErrors = false);
@@ -175,11 +172,8 @@ class StepperMotor {
     // Things that shouldn't be accessed by the outside
     private:
 
-        // Function for turning booleans into -1 for true and 1 for false
-        int invertDirection(bool invert) const;
-
         // Function for getting the sign of the number (returns -1 if number is less than 0, 1 if 0 or above)
-        int getSign(float num);
+        int32_t getSign(float num);
         
         // Keeps the desired angle of the motor
         float desiredAngle = 0;
@@ -218,7 +212,7 @@ class StepperMotor {
         // reversed is a multiplier for steps and angles
         // 1 - If the motor direction is normal
         // -1 - If the motor direction is inverted
-        int reversed = 1;
+        uint8_t reversed = 1;
 
         // If the motor enable is inverted
         bool enableInverted = false;

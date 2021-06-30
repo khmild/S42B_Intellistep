@@ -5,19 +5,13 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.34"
+#define VERSION "0.0.35"
 
 
 // --------------  Settings  --------------
 
-// Main feature enable
-#define ENABLE_OLED
-#define ENABLE_SERIAL
-#define ENABLE_CAN
-//#define ENABLE_PID
-#define ENABLE_LED // red LED labeled as an 'error' in the schema
-
 // LED light functionality
+#define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
     //#define ENABLE_BLINK
     //#define CHECK_STEPPING_RATE
@@ -27,6 +21,7 @@
     #endif
 #endif
 
+#define ENABLE_OLED
 #if !defined(ENABLE_OLED)
     // MCO is PA_8 pin, It also used as OLED_RST_PIN
     //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
@@ -48,6 +43,7 @@
 #endif
 
 // Serial configuration settings
+#define ENABLE_SERIAL
 #ifdef ENABLE_SERIAL
     #define SERIAL_BAUD 115200
 #endif
@@ -57,6 +53,7 @@
 #define STRING_END_MARKER '>'
 
 // CAN settings
+#define ENABLE_CAN
 #ifdef ENABLE_CAN
     // The CAN ID of this board
     // X:2, X2:3...
@@ -106,6 +103,7 @@
 #endif
 
 // PID settings
+//#define ENABLE_PID
 #ifdef ENABLE_PID
 
     // Default P, I, and D terms

@@ -466,24 +466,13 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 
 
 // Calculates the current of each of the coils (with mapping)(current in mA)
-uint16_t StepperMotor::currentToPWM(uint16_t current) const {
+uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
     uint32_t PWMValue = (PWM_MAX_DUTY_CYCLE * CURRENT_SENSE_RESISTOR * abs(current)) / (BOARD_VOLTAGE * 100);
 
     // Constrain the PWM value, then return it
     return constrain(PWMValue, 0, PWM_MAX_DUTY_CYCLE);
-}
-
-
-// Sets the speed of the motor (basically sets the speed at which the step function is called)
-float StepperMotor::speedToHz(float angularSpeed) const {
-
-    // Calculate the step angle (including microsteps)
-    float stepAngle = this -> microstepAngle;
-
-    // Calculate the time between step calls
-    return (angularSpeed / stepAngle);
 }
 
 
@@ -501,7 +490,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoils(getAngle() - startupAngleOffset);
+                    driveCoilsAngle(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
 
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
@@ -511,7 +500,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case FORCED_ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoils(getAngle() - startupAngleOffset);
+                    driveCoilsAngle(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
 
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
@@ -535,7 +524,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     case ENABLED:
 
                         // Drive the coils the current angle of the shaft (just locks the output in place)
-                        driveCoils(getAngle() - startupAngleOffset);
+                        driveCoilsAngle(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
 
                         // The motor's current angle needs corrected
                         currentAngle = getAngle() - startupAngleOffset;
@@ -623,20 +612,8 @@ void StepperMotor::calibrate() {
     writeFlash(CALIBRATED_INDEX, true);
 }
 
-
-// Returns a -1 for true and a 1 for false
-int StepperMotor::invertDirection(bool invert) const {
-    if (invert) {
-        return -1;
-    }
-    else {
-        return 1;
-    }
-}
-
-
 // Returns -1 if the number is less than 0, 1 otherwise
-int StepperMotor::getSign(float num) {
+int32_t StepperMotor::getSign(float num) {
     if (num < 0) {
         return -1;
     }
