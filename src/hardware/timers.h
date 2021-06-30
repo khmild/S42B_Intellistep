@@ -5,6 +5,15 @@
 #include "Arduino.h"
 #include "config.h"
 #include "main.h"
+#include "led.h"
+#include "pid.h"
+
+// Variables
+// Expose the StepperPID instance to other files
+// (such as the flash for loading or saving parameters)
+#ifdef ENABLE_PID
+    extern StepperPID pid;
+#endif
 
 // Functions
 
@@ -31,6 +40,9 @@ void updateCorrectionTimer();
 
 // Function that steps the motor
 void stepMotor();
+
+// Function that steps motor without adjusting the desired angle
+void stepMotorNoDesiredAngle();
 
 // Function to correct motor position if it is out of place
 void correctMotor();

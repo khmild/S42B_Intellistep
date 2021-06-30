@@ -7,3 +7,5 @@
 .vscode/ipch
 STM32CubeMX/STM32F103CBTx_LQFP48/Core*
 STM32CubeMX/STM32F103CBTx_LQFP48/.mxproject
+img/
+.DS_Store

@@ -181,7 +181,7 @@ void initEncoder() {
 
     // Set the chip select pin high, disabling the encoder's communication
     pinMode(ENCODER_CS_PIN, OUTPUT);
-    digitalWrite(ENCODER_CS_PIN, HIGH);
+    GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
     // Reset the encoder's firmware
     //writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
@@ -225,7 +225,7 @@ errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data) {
     errorTypes error = NO_ERROR;
 
     // Pull CS low to select encoder
-    digitalWrite(ENCODER_CS_PIN, LOW);
+    GPIO_WRITE(ENCODER_CS_PIN, LOW);
 
     // Add read bit to address
     registerAddress |= ENCODER_READ_COMMAND;
@@ -260,7 +260,7 @@ errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data) {
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // Deselect encoder
-    digitalWrite(ENCODER_CS_PIN, HIGH);
+    GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
     // Set data in the specified location (depending on errors)
     if (error == NO_ERROR) {
@@ -288,7 +288,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
     disableInterrupts();
 
     // Pull CS low to select encoder
-    digitalWriteFast(ENCODER_CS_PIN, LOW);
+    GPIO_WRITE(ENCODER_CS_PIN, LOW);
 
     // Setup TX and RX buffers
     registerAddress |= ENCODER_READ_COMMAND + dataLength;
@@ -320,7 +320,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // Deselect encoder
-    digitalWriteFast(ENCODER_CS_PIN, HIGH);
+    GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
     // All done, good to re-enable interrupts
     enableInterrupts();
@@ -335,7 +335,7 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
     disableInterrupts();
 
     // Pull CS low to select encoder
-    digitalWriteFast(ENCODER_CS_PIN, LOW);
+    GPIO_WRITE(ENCODER_CS_PIN, LOW);
 
     // Setup TX and RX buffers
     registerAddress |= ENCODER_WRITE_COMMAND + 1;
@@ -359,7 +359,7 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // Deselect encoder
-    digitalWriteFast(ENCODER_CS_PIN, HIGH);
+    GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
     // All work is done, re-enable the interrupts
     enableInterrupts();

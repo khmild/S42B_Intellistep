@@ -252,20 +252,23 @@ void saveParameters() {
     // Microstep multiplier
     writeFlash(MICROSTEP_MULTIPLIER_INDEX, motor.getMicrostepMultiplier());
 
-    // P term of PID
-    writeFlash(P_TERM_INDEX, motor.getPValue());
+    // Write the PID values if specified
+    #ifdef ENABLE_PID
+        // P term of PID
+        writeFlash(P_TERM_INDEX, (float)pid.getP());
 
-    // I term of PID
-    writeFlash(I_TERM_INDEX, motor.getIValue());
+        // I term of PID
+        writeFlash(I_TERM_INDEX, (float)pid.getI());
 
-    // D term of PID
-    writeFlash(D_TERM_INDEX, motor.getDValue());
+        // D term of PID
+        writeFlash(D_TERM_INDEX, (float)pid.getD());
+    #endif
 
     // CAN ID of the motor controller
     #ifdef ENABLE_CAN
-        writeFlash(CAN_ID_INDEX, (uint32_t)getCANID());
+        writeFlash(CAN_ID_INDEX, (float)getCANID());
     #else
-        writeFlash(CAN_ID_INDEX, (uint32_t)0);
+        writeFlash(CAN_ID_INDEX, (float)NONE);
     #endif
 
     // If the dip switches were installed incorrectly
@@ -313,18 +316,21 @@ String loadParameters() {
         // Motor microstepping multiplier
         motor.setMicrostepMultiplier(readFlashFloat(MICROSTEP_MULTIPLIER_INDEX));
 
-        // P term of PID
-        motor.setPValue(readFlashFloat(P_TERM_INDEX));
+        // Only load PID values if PID is enabled
+        #ifdef ENABLE_PID
+            // P term of PID
+            pid.setP(readFlashFloat(P_TERM_INDEX));
 
-        // I term of PID
-        motor.setIValue(readFlashFloat(I_TERM_INDEX));
+            // I term of PID
+            pid.setI(readFlashFloat(I_TERM_INDEX));
 
-        // D term of PID
-        motor.setDValue(readFlashFloat(D_TERM_INDEX));
+            // D term of PID
+            pid.setD(readFlashFloat(D_TERM_INDEX));
+        #endif
 
         // The CAN ID of the motor
         #ifdef ENABLE_CAN
-            setCANID((AXIS_CAN_ID)readFlashU32(CAN_ID_INDEX));
+            setCANID((AXIS_CAN_ID)readFlashFloat(CAN_ID_INDEX));
         #endif
 
         // If the dip switches were installed incorrectly
