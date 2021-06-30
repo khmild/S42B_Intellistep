@@ -138,7 +138,7 @@ class StepperMotor {
         void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredAngle = true);
 
         // Sets the coils to hold the motor at the desired step number
-        void driveCoils(int32_t steps, STEP_DIR direction);
+        void driveCoils(int32_t steps);
 
         // Sets the coils to hold the motor at the desired phase angle
         void driveCoilsAngle(float angle, STEP_DIR direction);
