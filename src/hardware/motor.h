@@ -144,7 +144,7 @@ class StepperMotor {
         void driveCoils(int32_t steps);
 
         // Sets the coils to hold the motor at the desired phase angle
-        void driveCoilsAngle(float angle, STEP_DIR direction);
+        void driveCoilsAngle(float angle);
 
         // Sets the state of the A coil
         void setCoilA(COIL_STATE desiredState, uint16_t current = 0);
