@@ -452,10 +452,10 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 
 
 // Calculates the current of each of the coils (with mapping)(current in mA)
-uint32_t StepperMotor::currentToPWM(uint16_t current) const {
+uint16_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
-    uint32_t PWMValue = abs((PWM_MAX_DUTY_CYCLE * CURRENT_SENSE_RESISTOR * current) / (BOARD_VOLTAGE * 100));
+    uint32_t PWMValue = (PWM_MAX_DUTY_CYCLE * CURRENT_SENSE_RESISTOR * abs(current)) / (BOARD_VOLTAGE * 100);
 
     // Constrain the PWM value, then return it
     return constrain(PWMValue, 0, PWM_MAX_DUTY_CYCLE);
@@ -611,7 +611,7 @@ void StepperMotor::calibrate() {
 
 
 // Returns a -1 for true and a 1 for false
-float StepperMotor::invertDirection(bool invert) const {
+int StepperMotor::invertDirection(bool invert) const {
     if (invert) {
         return -1;
     }
@@ -622,7 +622,7 @@ float StepperMotor::invertDirection(bool invert) const {
 
 
 // Returns -1 if the number is less than 0, 1 otherwise
-float StepperMotor::getSign(float num) {
+int StepperMotor::getSign(float num) {
     if (num < 0) {
         return -1;
     }

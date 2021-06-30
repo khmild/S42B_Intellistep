@@ -150,7 +150,7 @@ class StepperMotor {
         void setCoilB(COIL_STATE desiredState, uint16_t current = 0);
 
         // Calculates the correct PWM setting based on an input current
-        uint32_t currentToPWM(uint16_t current) const;
+        uint16_t currentToPWM(uint16_t current) const;
 
         // Sets the speed of the motor (angular speed is in deg/s)
         float speedToHz(float angularSpeed) const;
@@ -173,10 +173,10 @@ class StepperMotor {
     private:
 
         // Function for turning booleans into -1 for true and 1 for false
-        float invertDirection(bool invert) const;
+        int invertDirection(bool invert) const;
 
         // Function for getting the sign of the number (returns -1 if number is less than 0, 1 if 0 or above)
-        float getSign(float num);
+        int getSign(float num);
         
         // Keeps the desired angle of the motor
         float desiredAngle = 0;
@@ -219,7 +219,7 @@ class StepperMotor {
         bool enableInverted = false;
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
-        float microstepMultiplier = MICROSTEP_MULTIPLIER;
+        int microstepMultiplier = MICROSTEP_MULTIPLIER;
 
         // Analog info structures for PWM current pins
         analogInfo PWMCurrentPinInfo[2];
@@ -227,6 +227,5 @@ class StepperMotor {
         // Last coil states (used to save time by not setting the pins unless necessary)
         COIL_STATE previousCoilStates[2];
 };
-
 
 #endif
