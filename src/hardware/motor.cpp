@@ -14,7 +14,7 @@ StepperMotor::StepperMotor() {
     pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
     pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
 
-    // Setup the coil direction pins 
+    // Setup the coil direction pins
     pinMode(COIL_A_DIR_1_PIN, OUTPUT);
     pinMode(COIL_A_DIR_2_PIN, OUTPUT);
     pinMode(COIL_B_DIR_1_PIN, OUTPUT);
@@ -184,14 +184,17 @@ float StepperMotor::getMicrostepAngle() const {
 // Set if the motor direction should be reversed or not
 void StepperMotor::setReversed(bool reversed) {
 
-    // Set if the motor should be reversed
-    this -> reversed = reversed;
+    if (reversed)
+        // Set if the motor should be reversed
+        this -> reversed = -1;
+    else
+        this -> reversed = 1;
 }
 
 
 // Get if the motor direction is reversed
 bool StepperMotor::getReversed() const {
-    return (this -> reversed);
+    return (this -> reversed > 0 ? 1 : 0);
 }
 
 
@@ -228,23 +231,34 @@ float StepperMotor::getMicrostepMultiplier() const {
     return (this -> microstepMultiplier);
 }
 
+void StepperMotor::simpleStep() {
+
+    // Only moving one step in the specified direction
+    this -> currentStep += DIRECTION(GPIO_READ(DIRECTION_PIN)) * (this -> reversed) * (this -> microstepMultiplier);
+
+    // Drive the coils to their destination
+    this -> driveCoils(this -> currentStep);
+}
+
 
 // Computes the coil values for the next step position and increments the set angle
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngle) {
 
     // Main angle change (any inversions * angle of microstep)
     float angleChange = this -> microstepAngle;
+    int32_t stepChange = 1;
 
     // Factor in the multiplier if specified
     if (useMultiplier) {
         angleChange *= (this -> microstepMultiplier);
+        stepChange *= (this -> microstepMultiplier);
     }
-    
+
     // Invert the change based on the direction
     if (dir == PIN) {
 
         // Use the DIR_PIN state
-        angleChange *= StepperMotor::invertDirection(digitalReadFast(DIRECTION_PIN) == (this -> reversed));
+        angleChange *= DIRECTION(GPIO_READ(DIRECTION_PIN)) * (this -> reversed);
     }
     //else if (dir == COUNTER_CLOCKWISE) {
         // Nothing to do here, the value is already positive
@@ -263,52 +277,22 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 
     // Motor's current angle must always be updated to correctly move the coils
     this -> currentAngle += angleChange;
+    this -> currentStep += getSign(angleChange) * stepChange; // Only moving one step in the specified direction
 
     // Drive the coils to their destination
-    this -> driveCoils(currentAngle, dir);
+    this -> driveCoils(currentStep);
 }
 
 
-// Sets the coils of the motor based on the angle (angle should be in degrees)
-void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
+// Sets the coils of the motor based on the step count
+void StepperMotor::driveCoils(int32_t steps) {
 
-    if (degAngle < 0) {
-        degAngle += round(abs(degAngle) / 360) * 360;
-    }
-    else if ( degAngle > 360)
-    {
-        degAngle -= round(degAngle / 360) * 360;
-    }
-            
-    // Constrain the set angle to between 0 and 360
-    while (degAngle < 0 || degAngle > 360) {
-        
-        // The angle is less than 0, add 360
-        if (degAngle < 0) {
-            degAngle += 360;
-        }
-        else {
-            // The angle must be greater than 360, reduce the angle by 360
-            degAngle -= 360;
-        }
-    }
+    // Correct the steps so that they're within the valid range
+    steps %= (4 * (this -> microstepDivisor));
 
-    // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
-    float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
-
-    // Round the microstep angle, it has to be a whole value of the number of microsteps available
-    // Also ensures that the coils are being driven to the major step positions (increases torque)
-    uint16_t roundedMicrosteps = round(microstepAngle);
-
-    // Make sure that the phase angle doesn't exceed the steps per phase rotation (4 full steps to a phase rotation * whatever microstepping)
-    roundedMicrosteps = roundedMicrosteps % (4 * (this -> microstepDivisor));
-    
     // Calculate the sine and cosine of the angle
-    uint16_t arrayIndex = roundedMicrosteps * (MAX_MICROSTEP_DIVISOR / (this -> microstepDivisor));
-    
-    // Ensure the index is in the sineTable range
-    arrayIndex &= (SINE_VAL_COUNT - 1);
-    
+    uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
+
     // Calculate the coil settings
     int16_t coilAPercent = fastSin(arrayIndex);
     int16_t coilBPercent = fastCos(arrayIndex);
@@ -361,6 +345,42 @@ void StepperMotor::driveCoils(float degAngle, STEP_DIR direction) {
 }
 
 
+// Sets the coils of the motor based on the angle (angle should be in degrees)
+void StepperMotor::driveCoilsAngle(float degAngle) {
+
+    // Should be a faster way of constraining the degAngle back into 0-360
+    if (degAngle < 0) {
+        degAngle += round(abs(degAngle) / 360) * 360;
+    }
+    else if ( degAngle > 360) {
+        degAngle -= round(degAngle / 360) * 360;
+    }
+
+    // Constrain the set angle to between 0 and 360
+    while (degAngle < 0 || degAngle > 360) {
+
+        // The angle is less than 0, add 360
+        if (degAngle < 0) {
+            degAngle += 360;
+        }
+        else {
+            // The angle must be greater than 360, reduce the angle by 360
+            degAngle -= 360;
+        }
+    }
+
+    // Convert the angle to microstep values (formula uses degAngle * full steps for rotation * microsteps)
+    float microstepAngle = (degAngle / this -> fullStepAngle) * (this -> microstepDivisor);
+
+    // Round the microstep angle, it has to be a whole value of the number of microsteps available
+    // Also ensures that the coils are being driven to the major step positions (increases torque)
+    uint16_t roundedMicrosteps = round(microstepAngle);
+
+    // Drive the coils to the found microstep
+    driveCoils(roundedMicrosteps);
+}
+
+
 // Function for setting the A coil state and current
 void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
 
@@ -371,8 +391,8 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
     //}
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
-    if (desiredState != previousCoilStates[A]) {
-    
+    if (desiredState != previousCoilStateA) {
+
         // Disable the coil
         analogSet(&PWMCurrentPinInfo[A], 0);
 
@@ -393,9 +413,9 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
             GPIO_WRITE(COIL_A_DIR_1_PIN, LOW);
             GPIO_WRITE(COIL_A_DIR_2_PIN, LOW);
         }
-        
+
         // Update the previous state of the coil with the new one
-        previousCoilStates[A] = desiredState;
+        previousCoilStateA = desiredState;
     }
 
     // Update the output pin with the correct current
@@ -413,12 +433,11 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
     //}
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
-    if (desiredState != previousCoilStates[B]) {
-    
+    if (desiredState != previousCoilStateB) {
+
         // Disable the coil
         analogSet(&PWMCurrentPinInfo[B], 0);
 
-        // Decide the state of the direction pins
         // Decide the state of the direction pins
         if (desiredState == FORWARD) {
             GPIO_WRITE(COIL_B_DIR_1_PIN, HIGH);
@@ -436,9 +455,9 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
             GPIO_WRITE(COIL_B_DIR_1_PIN, LOW);
             GPIO_WRITE(COIL_B_DIR_2_PIN, LOW);
         }
-        
+
         // Update the previous state of the coil with the new one
-        previousCoilStates[B] = desiredState;
+        previousCoilStateB = desiredState;
     }
 
     // Update the output pin with the correct current
@@ -450,21 +469,10 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
-    uint32_t PWMValue = abs((PWM_MAX_DUTY_CYCLE * CURRENT_SENSE_RESISTOR * current) / (BOARD_VOLTAGE * 100));
+    uint32_t PWMValue = (PWM_MAX_DUTY_CYCLE * CURRENT_SENSE_RESISTOR * abs(current)) / (BOARD_VOLTAGE * 100);
 
     // Constrain the PWM value, then return it
     return constrain(PWMValue, 0, PWM_MAX_DUTY_CYCLE);
-}
-
-
-// Sets the speed of the motor (basically sets the speed at which the step function is called)
-float StepperMotor::speedToHz(float angularSpeed) const {
-
-    // Calculate the step angle (including microsteps)
-    float stepAngle = this -> microstepAngle;
-
-    // Calculate the time between step calls
-    return (angularSpeed / stepAngle);
 }
 
 
@@ -482,8 +490,8 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoils(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
-                    
+                    driveCoilsAngle(getAngle() - startupAngleOffset);
+
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
                     this -> state = ENABLED;
@@ -492,8 +500,8 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case FORCED_ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoils(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
-                    
+                    driveCoilsAngle(getAngle() - startupAngleOffset);
+
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
                     this -> state = FORCED_ENABLED;
@@ -508,7 +516,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
         else {
             // Only change the state if the current state is either enabled or disabled
             if ((this -> state) == ENABLED || (this -> state) == DISABLED) {
-                
+
                 // Decide when needs to happen based on the new state
                 switch (newState) {
 
@@ -516,8 +524,8 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     case ENABLED:
 
                         // Drive the coils the current angle of the shaft (just locks the output in place)
-                        driveCoils(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
-                        
+                        driveCoilsAngle(getAngle() - startupAngleOffset);
+
                         // The motor's current angle needs corrected
                         currentAngle = getAngle() - startupAngleOffset;
                         this -> state = ENABLED;
@@ -604,10 +612,9 @@ void StepperMotor::calibrate() {
     writeFlash(CALIBRATED_INDEX, true);
 }
 
-
-// Returns a -1 for true and a 1 for false
-float StepperMotor::invertDirection(bool invert) const {
-    if (invert) {
+// Returns -1 if the number is less than 0, 1 otherwise
+int32_t StepperMotor::getSign(float num) {
+    if (num < 0) {
         return -1;
     }
     else {

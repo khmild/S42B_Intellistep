@@ -268,7 +268,7 @@ void saveParameters() {
     #ifdef ENABLE_CAN
         writeFlash(CAN_ID_INDEX, (float)getCANID());
     #else
-        writeFlash(CAN_ID_INDEX, (float)-1);
+        writeFlash(CAN_ID_INDEX, (float)NONE);
     #endif
 
     // If the dip switches were installed incorrectly

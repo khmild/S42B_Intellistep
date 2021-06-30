@@ -33,7 +33,7 @@ static uint8_t interruptBlockCount = 0;
     // Also create a timer that calls the motor stepping function based on the PID's output
     HardwareTimer *pidMoveTimer = new HardwareTimer(TIM4);
 
-    // Variable to store if the timer is enabled 
+    // Variable to store if the timer is enabled
     // Saves large amounts of cycles as the timer only has to be toggled on a change
     bool pidMoveTimerEnabled = false;
 #endif
@@ -75,7 +75,9 @@ void setupMotorTimers() {
     correctionTimer -> setInterruptPriority(1, 1);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
     correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
-    correctionTimer -> attachInterrupt(correctMotor);
+    #ifndef CHECK_STEPPING_RATE
+        correctionTimer -> attachInterrupt(correctMotor);
+    #endif
     correctionTimer -> refresh();
     correctionTimer -> resume();
 
@@ -98,7 +100,7 @@ void disableInterrupts() {
     if (interruptBlockCount == 0) {
         __disable_irq();
     }
- 
+
    // Add one to the interrupt block counter
     interruptBlockCount++;
 }
@@ -160,7 +162,13 @@ void updateCorrectionTimer() {
 
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
+    #ifdef CHECK_STEPPING_RATE
+        GPIO_WRITE(LED_PIN, HIGH);
+    #endif
     motor.step();
+    #ifdef CHECK_STEPPING_RATE
+        GPIO_WRITE(LED_PIN, LOW);
+    #endif
 }
 
 
@@ -174,7 +182,7 @@ void stepMotorNoDesiredAngle() {
 void correctMotor() {
 
     // Check to see the state of the enable pin
-    if ((digitalReadFast(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {
+    if ((GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {
 
         // The enable pin is off, the motor should be disabled
         motor.setState(DISABLED);
@@ -212,13 +220,13 @@ void correctMotor() {
 
                 // Set the motor timer to call the stepping routine at specified time intervals
                 pidMoveTimer -> setOverflow((DEFAULT_PID_STEP_MAX - pidOutput), HERTZ_FORMAT);
-                
+
                 // Enable the timer if it isn't already
                 if (!pidMoveTimerEnabled) {
                     pidMoveTimer -> resume();
                     pidMoveTimerEnabled = true;
                 }
-                
+
 
             #else // ! ENABLE_PID
                 // Just "dumb" correction based on direction
@@ -281,7 +289,7 @@ void correctMotor() {
                     pidMoveTimerEnabled = false;
                 }
             #endif
-            
+
             // Only if StallFault is enabled
             #ifdef ENABLE_STALLFAULT
 
@@ -298,9 +306,9 @@ void correctMotor() {
 
             // Also toggle the LED for visual purposes
             GPIO_WRITE(LED_PIN, LOW);
-            
+
             #endif // ! ENABLE_STALLFAULT
         }
-        
+
     }
 }

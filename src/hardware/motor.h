@@ -134,11 +134,17 @@ class StepperMotor {
         // Get the microstep multiplier
         float getMicrostepMultiplier() const;
 
+        // Test
+        void simpleStep();
+
         // Calculates the coil values for the motor and updates the set angle. 
         void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredAngle = true);
 
+        // Sets the coils to hold the motor at the desired step number
+        void driveCoils(int32_t steps);
+
         // Sets the coils to hold the motor at the desired phase angle
-        void driveCoils(float angle, STEP_DIR direction);
+        void driveCoilsAngle(float angle);
 
         // Sets the state of the A coil
         void setCoilA(COIL_STATE desiredState, uint16_t current = 0);
@@ -148,9 +154,6 @@ class StepperMotor {
 
         // Calculates the correct PWM setting based on an input current
         uint32_t currentToPWM(uint16_t current) const;
-
-        // Sets the speed of the motor (angular speed is in deg/s)
-        float speedToHz(float angularSpeed) const;
         
         // Sets the current state of the motor
         void setState(MOTOR_STATE newState, bool clearErrors = false);
@@ -169,14 +172,17 @@ class StepperMotor {
     // Things that shouldn't be accessed by the outside
     private:
 
-        // Function for turning booleans into -1 for true and 1 for false
-        float invertDirection(bool invert) const;
+        // Function for getting the sign of the number (returns -1 if number is less than 0, 1 if 0 or above)
+        int32_t getSign(float num);
         
         // Keeps the desired angle of the motor
         float desiredAngle = 0;
 
         // Keeps the current angle of the motor
         float currentAngle = 0;
+
+        // Keeps the current steps of the motor
+        int32_t currentStep = 0;
 
         // Motor characteristics
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -203,21 +209,23 @@ class StepperMotor {
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
         MOTOR_STATE state = DISABLED;
 
-        // If the motor direction is inverted
-        bool reversed = false;
+        // reversed is a multiplier for steps and angles
+        // 1 - If the motor direction is normal
+        // -1 - If the motor direction is inverted
+        uint8_t reversed = 1;
 
         // If the motor enable is inverted
         bool enableInverted = false;
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
-        float microstepMultiplier = MICROSTEP_MULTIPLIER;
+        int microstepMultiplier = MICROSTEP_MULTIPLIER;
 
         // Analog info structures for PWM current pins
         analogInfo PWMCurrentPinInfo[2];
 
         // Last coil states (used to save time by not setting the pins unless necessary)
-        COIL_STATE previousCoilStates[2];
+        COIL_STATE previousCoilStateA = BRAKE;
+        COIL_STATE previousCoilStateB = BRAKE;
 };
-
 
 #endif
