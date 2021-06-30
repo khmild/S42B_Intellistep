@@ -5,6 +5,7 @@ import math
 
 # Constants
 trailingZeros = 0
+#PWM_MAX_DUTY_CYCLE = 4095  # 2**12 - 1
 
 # Main function
 def main():
@@ -21,6 +22,12 @@ def main():
     except Exception:
         Exception("Invalid values per line. Number of values must be an integer.")
 
+    # Ask for the number of elements per line
+    try:
+        sineMax = int(input("Enter the maximum sine value: "))
+    except Exception:
+        Exception("Invalid maximum sine value. The maximum must be an integer.")
+
     # Create a master string for storing the final print
     finalString = ""
 
@@ -34,7 +41,7 @@ def main():
     while (((360 * counter) / (4 * divisor)) < 360):
 
         # Calculate the sine with the degree value
-        value = math.trunc(math.sin(math.radians((360 * counter) / (4 * divisor))) * 10000)
+        value = math.trunc(math.sin(math.radians((360 * counter) / (4 * divisor))) * sineMax)
 
         # Add a space if the value is positive or negative sign if value is negative, but don't pad the first values
         if (value >= 0):
@@ -86,7 +93,7 @@ def main():
         counter += 1
 
     # Add the ending bracket
-    finalString += "\n};\n"
+    finalString += "};\n"
 
     # Print out the string that was created
     print(finalString)
