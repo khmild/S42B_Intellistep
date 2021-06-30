@@ -7,7 +7,7 @@
 // Import libraries
 #include "oled.h"
 #include "cstring"
-#include "math.h"
+//#include "math.h"
 
 // Screen data is stored in an array. Each set of 8 pixels is written one by one
 // Each set of 8 is stored as an integer. The panel is written to horizontally, then vertically
