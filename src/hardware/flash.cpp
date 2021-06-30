@@ -266,9 +266,9 @@ void saveParameters() {
 
     // CAN ID of the motor controller
     #ifdef ENABLE_CAN
-        writeFlash(CAN_ID_INDEX, (uint32_t)getCANID());
+        writeFlash(CAN_ID_INDEX, (float)getCANID());
     #else
-        writeFlash(CAN_ID_INDEX, (uint32_t)NONE);
+        writeFlash(CAN_ID_INDEX, (float)NONE);
     #endif
 
     // If the dip switches were installed incorrectly
@@ -330,7 +330,7 @@ String loadParameters() {
 
         // The CAN ID of the motor
         #ifdef ENABLE_CAN
-            setCANID((AXIS_CAN_ID)readFlashU32(CAN_ID_INDEX));
+            setCANID((AXIS_CAN_ID)readFlashFloat(CAN_ID_INDEX));
         #endif
 
         // If the dip switches were installed incorrectly
