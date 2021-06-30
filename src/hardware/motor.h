@@ -134,6 +134,9 @@ class StepperMotor {
         // Get the microstep multiplier
         float getMicrostepMultiplier() const;
 
+        // Test
+        void simpleStep();
+
         // Calculates the coil values for the motor and updates the set angle. 
         void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredAngle = true);
 

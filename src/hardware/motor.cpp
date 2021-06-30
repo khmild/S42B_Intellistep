@@ -231,6 +231,15 @@ float StepperMotor::getMicrostepMultiplier() const {
     return (this -> microstepMultiplier);
 }
 
+void StepperMotor::simpleStep() {
+
+    // Only moving one step in the specified direction
+    this -> currentStep += DIRECTION(GPIO_READ(DIRECTION_PIN)) * this -> reversed * this -> microstepMultiplier;
+
+    // Drive the coils to their destination
+    this -> driveCoils(this -> currentStep);
+}
+
 
 // Computes the coil values for the next step position and increments the set angle
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngle) {
