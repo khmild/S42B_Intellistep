@@ -6,9 +6,12 @@ import math
 # Constants
 trailingZeros = 0
 
+PWM_MAX_DUTY_CYCLE = 4095  # 2**12 - 1
+SINE_MAX =  10_000  # PWM_MAX_DUTY_CYCLE
+
 # Main function
 def main():
-
+ 
     # Ask for the microstep divisions
     try:
         divisor = int(input("Enter the maximum supported divisor (number under the 1/, such as 32 for 1/32): "))
@@ -34,7 +37,7 @@ def main():
     while (((360 * counter) / (4 * divisor)) < 360):
 
         # Calculate the sine with the degree value
-        value = math.trunc(math.sin(math.radians((360 * counter) / (4 * divisor))) * 10000)
+        value = math.trunc(math.sin(math.radians((360 * counter) / (4 * divisor))) * SINE_MAX)
 
         # Add a space if the value is positive or negative sign if value is negative, but don't pad the first values
         if (value >= 0):
@@ -86,7 +89,7 @@ def main():
         counter += 1
 
     # Add the ending bracket
-    finalString += "\n};\n"
+    finalString += "};\n"
 
     # Print out the string that was created
     print(finalString)
