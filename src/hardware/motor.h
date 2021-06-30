@@ -212,8 +212,10 @@ class StepperMotor {
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
         MOTOR_STATE state = DISABLED;
 
-        // If the motor direction is inverted
-        bool reversed = false;
+        // reversed is a multiplier for steps and angles
+        // 1 - If the motor direction is normal
+        // -1 - If the motor direction is inverted
+        int reversed = 1;
 
         // If the motor enable is inverted
         bool enableInverted = false;

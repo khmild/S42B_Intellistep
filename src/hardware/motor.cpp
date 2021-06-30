@@ -184,14 +184,17 @@ float StepperMotor::getMicrostepAngle() const {
 // Set if the motor direction should be reversed or not
 void StepperMotor::setReversed(bool reversed) {
 
-    // Set if the motor should be reversed
-    this -> reversed = reversed;
+    if (reversed)
+        // Set if the motor should be reversed
+        this -> reversed = -1;
+    else
+        this -> reversed = 1;
 }
 
 
 // Get if the motor direction is reversed
 bool StepperMotor::getReversed() const {
-    return (this -> reversed);
+    return (this -> reversed > 0 ? 1 : 0);
 }
 
 
@@ -244,7 +247,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
     if (dir == PIN) {
 
         // Use the DIR_PIN state
-        angleChange *= StepperMotor::invertDirection(digitalReadFast(DIRECTION_PIN) == (this -> reversed));
+        angleChange *= DIRECTION(GPIO_READ(DIRECTION_PIN)) * this -> reversed;
     }
     //else if (dir == COUNTER_CLOCKWISE) {
         // Nothing to do here, the value is already positive
@@ -263,7 +266,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 
     // Motor's current angle must always be updated to correctly move the coils
     this -> currentAngle += angleChange;
-    this -> currentStep += getSign(angleChange); // Only moving one step in the specified direction
+    this -> currentStep += DIRECTION(angleChange); // Only moving one step in the specified direction
 
     // Drive the coils to their destination
     this -> driveCoils(currentStep);
