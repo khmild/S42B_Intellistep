@@ -11,6 +11,7 @@
 
 // Enumeration for CAN IDs with axis characters
 typedef enum {
+    NONE = -1,
     MAINBOARD, // The mainboard of the controller
     HOST, // The computer that is connected
     X, X2, X3, X4, X5,

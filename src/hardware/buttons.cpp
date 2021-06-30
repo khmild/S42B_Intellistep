@@ -87,13 +87,13 @@ void checkButtons(bool updateScreen, bool onlyAllowSelect) {
 bool checkButtonState(PinName buttonPin) {
 
   // Check to see if the select button is clicked (pins are pulled high by default)
-  if(digitalReadFast(buttonPin) == LOW){
+  if(GPIO_READ(buttonPin) == LOW){
 
     // Wait to make sure it wasn't a misread
     delay(10);
 
     // Check again
-    if(digitalReadFast(buttonPin) == LOW){
+    if(GPIO_READ(buttonPin) == LOW){
 
       // The button is still clicked, it's valid
       return true;
@@ -124,17 +124,17 @@ void readDipMicrostepping() {
     if (dipInverted) {
 
         // If they were installed incorrectly, they have to be read opposite
-        if (!digitalReadFast(DIP_4_PIN) && !digitalReadFast(DIP_3_PIN)) {
+        if (!GPIO_READ(DIP_4_PIN) && !GPIO_READ(DIP_3_PIN)) {
 
             // Set the microstepping to 1/32 if both dips are on
             motor.setMicrostepping(32);
         }
-        else if (digitalReadFast(DIP_4_PIN) && !digitalReadFast(DIP_3_PIN)) {
+        else if (GPIO_READ(DIP_4_PIN) && !GPIO_READ(DIP_3_PIN)) {
 
             // Set the microstepping to 1/16 if the left dip is off and the right is on
             motor.setMicrostepping(16);
         }
-        else if (!digitalReadFast(DIP_4_PIN) && digitalReadFast(DIP_3_PIN)) {
+        else if (!GPIO_READ(DIP_4_PIN) && GPIO_READ(DIP_3_PIN)) {
 
             // Set the microstepping to 1/8 if the right dip is off and the left on
             motor.setMicrostepping(8);
@@ -146,17 +146,17 @@ void readDipMicrostepping() {
     }
     else {
         // Dips are not inverted, they are installed correctly
-        if (!digitalReadFast(DIP_1_PIN) && !digitalReadFast(DIP_2_PIN)) {
+        if (!GPIO_READ(DIP_1_PIN) && !GPIO_READ(DIP_2_PIN)) {
 
             // Set the microstepping to 1/32 if both dips are on
             motor.setMicrostepping(32);
         }
-        else if (digitalReadFast(DIP_1_PIN) && !digitalReadFast(DIP_2_PIN)) {
+        else if (GPIO_READ(DIP_1_PIN) && !GPIO_READ(DIP_2_PIN)) {
 
             // Set the microstepping to 1/16 if the left dip is off and the right is on
             motor.setMicrostepping(16);
         }
-        else if (!digitalReadFast(DIP_1_PIN) && digitalReadFast(DIP_2_PIN)) {
+        else if (!GPIO_READ(DIP_1_PIN) && GPIO_READ(DIP_2_PIN)) {
 
             // Set the microstepping to 1/8 if the right dip is off and the left on
             motor.setMicrostepping(8);
@@ -185,7 +185,7 @@ void checkDips() {
   if (dipInverted) {
 
     // Check open/closed loop
-    if (!digitalReadFast(DIP_2_PIN)) {
+    if (!GPIO_READ(DIP_2_PIN)) {
       enableStepCorrection();
     }
     else {
@@ -194,7 +194,7 @@ void checkDips() {
   }
   else {
     // Check open/closed loop
-    if (!digitalReadFast(DIP_3_PIN)) {
+    if (!GPIO_READ(DIP_3_PIN)) {
       enableStepCorrection();
     }
     else {

@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.34"
+#define VERSION "0.0.35"
 
 
 // --------------  Settings  --------------
@@ -14,14 +14,20 @@
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
     //#define ENABLE_BLINK
-#endif    
+    //#define CHECK_STEPPING_RATE
 
+    #if defined(ENABLE_BLINK) && defined(CHECK_STEPPING_RATE)
+        #error Only one of #define is possible at a time in this section
+    #endif
+#endif
+
+#define ENABLE_OLED
 #if !defined(ENABLE_OLED)
     // MCO is PA_8 pin, It also used as OLED_RST_PIN
     //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
     #if !defined(CHECK_MCO_OUTPUT)
         //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO output switching
-    #endif    
+    #endif
 #endif
 
 // Averages (number of readings in average)
@@ -51,7 +57,7 @@
 #ifdef ENABLE_CAN
     // The CAN ID of this board
     // X:2, X2:3...
-    // Y:7, Y2:8... 
+    // Y:7, Y2:8...
     // Z:11 Z2:12...
     // E:17, E1:18...
     #define DEFAULT_CAN_ID X
@@ -129,7 +135,6 @@
 #endif
 
 // OLED settings
-#define ENABLE_OLED
 #ifdef ENABLE_OLED
 
     // Button settings
@@ -137,14 +142,10 @@
     #define BUTTON_REPEAT_INTERVAL 250 // Millis
     #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
     #define WARNING_MICROSTEP 32 // The largest microstep to warn on (the denominator of the fraction)
-    
+
     // Warning thresholds
     #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
     //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
-
-#else // !defined(ENABLE_OLED)
-    // MCO is PA8 pin, It also used as OLED_RST_PIN
-    #define CHECK_MCO_OUTPUT // use oscilloscope to measure frequency HSI, HSE, SYSCLK or PLLCLK/2
 #endif
 
 // The System Clock frequency of the CPU (in MHz)
@@ -290,7 +291,7 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 
 // Methods for writing to the GPIO
 // When SystemClock_Config_HSE_8M_SYSCLK_72M() is selected:
-//           | GPIO_WRITE_METHOD | based on 
+// F         | GPIO_WRITE_METHOD                 | based on
 //  14,4 kHz | GPIO_WRITE_DIGITAL_WRITE          | digitalWrite()
 //  81.4 kHz | GPIO_WRITE_DIGITAL_WRITE_FAST     | digitalWriteFast()
 //  1.64 MHz | GPIO_WRITE_DIGITAL_WRITE_FASTER   | digitalWriteFaster()
@@ -342,7 +343,13 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 
 #else
     #error GPIO_WRITE_METHOD not a valid value
-#endif    
+#endif
+
+//#define GPIO_READ(pn) digitalReadFast(pn)
+//#define GPIO_READ(pn) digital_io_read(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn))
+#define GPIO_READ(pn) LL_GPIO_IsInputPinSet(get_GPIO_Port(STM_PORT(pn)), STM_LL_GPIO_PIN(pn))
+
+#define DIRECTION(x) ((x) > 0 ? 1 : (-1))  // Note: zero 'x' is not allowed
 
 // --------------  Debugging  --------------
 //#define TEST_FLASH

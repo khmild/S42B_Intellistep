@@ -102,7 +102,7 @@ void setup() {
     #ifdef CHECK_MCO_OUTPUT
         MCO_GPIO_Init();
     #endif
-    
+
     #ifdef CHECK_GPIO_OUTPUT_SWITCHING
         PA_8_GPIO_Init();
         while(true) {
@@ -281,7 +281,8 @@ void overclock(uint32_t PLLMultiplier) {
     HAL_RCC_OscConfig(&RCC_OscInitStruct);
 
     // Wait for the PLL to be configured
-    while(!(RCC_CR_PLLRDY & RCC -> CR)); // 
+    while(!(RCC_CR_PLLRDY & RCC -> CR))
+        ; // 
 
     // Use the PLL as the system clock
     RCC -> CFGR |= RCC_SYSCLKSOURCE_PLLCLK;
