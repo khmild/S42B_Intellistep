@@ -346,7 +346,7 @@ void StepperMotor::driveCoils(int32_t steps) {
 
 
 // Sets the coils of the motor based on the angle (angle should be in degrees)
-void StepperMotor::driveCoilsAngle(float degAngle, STEP_DIR direction) {
+void StepperMotor::driveCoilsAngle(float degAngle) {
 
     // Should be a faster way of constraining the degAngle back into 0-360
     if (degAngle < 0) {
@@ -490,7 +490,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
+                    driveCoilsAngle(getAngle() - startupAngleOffset);
 
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
@@ -500,7 +500,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case FORCED_ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
+                    driveCoilsAngle(getAngle() - startupAngleOffset);
 
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
@@ -524,7 +524,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     case ENABLED:
 
                         // Drive the coils the current angle of the shaft (just locks the output in place)
-                        driveCoilsAngle(getAngle() - startupAngleOffset, COUNTER_CLOCKWISE);
+                        driveCoilsAngle(getAngle() - startupAngleOffset);
 
                         // The motor's current angle needs corrected
                         currentAngle = getAngle() - startupAngleOffset;
