@@ -11,7 +11,7 @@ SINE_MAX =  10_000  # PWM_MAX_DUTY_CYCLE
 
 # Main function
 def main():
- 
+
     # Ask for the microstep divisions
     try:
         divisor = int(input("Enter the maximum supported divisor (number under the 1/, such as 32 for 1/32): "))
