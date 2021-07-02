@@ -11,8 +11,8 @@
 StepperMotor::StepperMotor() {
 
     // Setup the pins as outputs
-    pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
-    pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
+    pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
+    pinMode(COIL_B_POWER_OUTPUT_PIN, OUTPUT);
 
     // Setup the coil direction pins
     pinMode(COIL_A_DIR_1_PIN, OUTPUT);
@@ -21,8 +21,8 @@ StepperMotor::StepperMotor() {
     pinMode(COIL_B_DIR_2_PIN, OUTPUT);
 
     // Configure the PWM current output pins
-    this -> PWMCurrentPinInfo[A] = analogSetup(COIL_POWER_OUTPUT_PINS[A], MOTOR_PWM_FREQ, 0);
-    this -> PWMCurrentPinInfo[B] = analogSetup(COIL_POWER_OUTPUT_PINS[B], MOTOR_PWM_FREQ, 0);
+    this -> PWMCurrentPinInfoA = analogSetup(COIL_A_POWER_OUTPUT_PIN, MOTOR_PWM_FREQ, 0);
+    this -> PWMCurrentPinInfoB = analogSetup(COIL_B_POWER_OUTPUT_PIN, MOTOR_PWM_FREQ, 0);
 
     // Disable the motor
     setState(DISABLED, true);
@@ -31,7 +31,9 @@ StepperMotor::StepperMotor() {
 
 // Returns the current RPM of the motor to two decimal places
 float StepperMotor::getMotorRPM() {
-    return (getEncoderSpeed() / 360);
+
+    // Convert getEncoderSpeed() (in deg/s) to RPM
+    return (getEncoderSpeed() * 60 / 360);
 }
 
 
@@ -298,7 +300,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
 void StepperMotor::driveCoils(int32_t steps) {
 
     // Correct the steps so that they're within the valid range
-    steps %= (4 * (this -> microstepDivisor));
+    //steps %= (4 * (this -> microstepDivisor));
 
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
@@ -314,12 +316,12 @@ void StepperMotor::driveCoils(int32_t steps) {
         double angAccel = abs(getEncoderAccel());
 
         // Compute the coil power
-        int16_t coilAPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilAPercent) / SINE_MAX;
-        int16_t coilBPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilBPercent) / SINE_MAX;
+        int16_t coilAPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilAPercent) >> SINE_POWER;
+        int16_t coilBPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilBPercent) >> SINE_POWER;
     #else
         // Just use static current multipiers
-        int16_t coilAPower = ((int16_t)(this -> peakCurrent) * coilAPercent) / SINE_MAX;
-        int16_t coilBPower = ((int16_t)(this -> peakCurrent) * coilBPercent) / SINE_MAX;
+        int16_t coilAPower = ((int16_t)(this -> peakCurrent) * coilAPercent) >> SINE_POWER; // i.e. / SINE_MAX
+        int16_t coilBPower = ((int16_t)(this -> peakCurrent) * coilBPercent) >> SINE_POWER; // i.e. / SINE_MAX
     #endif
 
     // Check the if the coil should be energized to move backward or forward
@@ -404,7 +406,7 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
     if (desiredState != previousCoilStateA) {
 
         // Disable the coil
-        analogSet(&PWMCurrentPinInfo[A], 0);
+        analogSet(&PWMCurrentPinInfoA, 0);
 
         // Decide the state of the direction pins
         if (desiredState == FORWARD) {
@@ -429,7 +431,7 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
     }
 
     // Update the output pin with the correct current
-    analogSet(&PWMCurrentPinInfo[A], currentToPWM(current));
+    analogSet(&PWMCurrentPinInfoA, currentToPWM(current));
 }
 
 
@@ -446,7 +448,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
     if (desiredState != previousCoilStateB) {
 
         // Disable the coil
-        analogSet(&PWMCurrentPinInfo[B], 0);
+        analogSet(&PWMCurrentPinInfoB, 0);
 
         // Decide the state of the direction pins
         if (desiredState == FORWARD) {
@@ -471,7 +473,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
     }
 
     // Update the output pin with the correct current
-    analogSet(&PWMCurrentPinInfo[B], currentToPWM(current));
+    analogSet(&PWMCurrentPinInfoB, currentToPWM(current));
 }
 
 
@@ -479,7 +481,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
-    uint32_t PWMValue = (PWM_MAX_DUTY_CYCLE * CURRENT_SENSE_RESISTOR * abs(current)) / (BOARD_VOLTAGE * 100);
+    uint32_t PWMValue = (CURRENT_SENSE_RESISTOR * PWM_MAX_DUTY_CYCLE * abs(current)) / (BOARD_VOLTAGE * 100);
 
     // Constrain the PWM value, then return it
     return constrain(PWMValue, 0, PWM_MAX_DUTY_CYCLE);

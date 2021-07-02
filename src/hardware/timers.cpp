@@ -68,7 +68,9 @@ void setupMotorTimers() {
     #endif
 
     // Attach the interupt to the step pin (subpriority is set in platformio config file)
-    attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, RISING);
+    // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004
+    // the optocoupler inverts the signal. Therefore, the falling edge is the correct value.
+    attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, FALLING); // input is pull-upped to VDD
 
     // Setup the timer for steps
     correctionTimer -> pause();

@@ -23,12 +23,6 @@ typedef enum {
     COAST
 } COIL_STATE;
 
-// Enumeration for coil letter
-typedef enum {
-    A,
-    B
-} COIL;
-
 // Enumeration for stepping direction
 typedef enum {
     PIN,
@@ -140,7 +134,7 @@ class StepperMotor {
         // Test
         void simpleStep();
 
-        // Calculates the coil values for the motor and updates the set angle. 
+        // Calculates the coil values for the motor and updates the set angle.
         void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredPos = true);
 
         // Sets the coils to hold the motor at the desired step number
@@ -157,7 +151,7 @@ class StepperMotor {
 
         // Calculates the correct PWM setting based on an input current
         uint32_t currentToPWM(uint16_t current) const;
-        
+
         // Sets the current state of the motor
         void setState(MOTOR_STATE newState, bool clearErrors = false);
 
@@ -177,7 +171,7 @@ class StepperMotor {
 
         // Function for getting the sign of the number (returns -1 if number is less than 0, 1 if 0 or above)
         int32_t getSign(float num);
-        
+
         // Keeps the desired angle of the motor
         float desiredAngle = 0;
 
@@ -218,7 +212,7 @@ class StepperMotor {
         // reversed is a multiplier for steps and angles
         // 1 - If the motor direction is normal
         // -1 - If the motor direction is inverted
-        uint8_t reversed = 1;
+        int8_t reversed = 1;
 
         // If the motor enable is inverted
         bool enableInverted = false;
@@ -227,7 +221,8 @@ class StepperMotor {
         int microstepMultiplier = MICROSTEP_MULTIPLIER;
 
         // Analog info structures for PWM current pins
-        analogInfo PWMCurrentPinInfo[2];
+        analogInfo PWMCurrentPinInfoA;
+        analogInfo PWMCurrentPinInfoB;
 
         // Last coil states (used to save time by not setting the pins unless necessary)
         COIL_STATE previousCoilStateA = BRAKE;
