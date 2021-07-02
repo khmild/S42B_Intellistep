@@ -554,7 +554,7 @@ double getAngle(bool average) {
 // For average velocity calculations instead of hardware readings from the TLE5012
 #ifdef ENCODER_SPEED_ESTIMATION
 
-// Reads the speed of the encoder (for later)
+// Reads the speed of the encoder in deg/s
 // ! Needs fixed yet, readings are off
 double getEncoderSpeed() {
 
@@ -586,7 +586,7 @@ double getEncoderSpeed() {
 
 #else // ENCODER_ESTIMATION
 
-// Reads the speed of the encoder (for later)
+// Reads the speed of the encoder in deg/s (for later)
 double getEncoderSpeed() {
 
     // This function cannot be interrupted

@@ -150,7 +150,7 @@ class StepperMotor {
         void setCoilB(COIL_STATE desiredState, uint16_t current = 0);
 
         // Calculates the correct PWM setting based on an input current
-        uint16_t currentToPWM(uint16_t current) const;
+        uint32_t currentToPWM(uint16_t current) const;
 
         // Sets the current state of the motor
         void setState(MOTOR_STATE newState, bool clearErrors = false);

@@ -31,6 +31,8 @@ StepperMotor::StepperMotor() {
 
 // Returns the current RPM of the motor to two decimal places
 float StepperMotor::getMotorRPM() {
+
+    // Convert getEncoderSpeed() (in deg/s) to RPM
     return (getEncoderSpeed() * 60 / 360);
 }
 
@@ -476,7 +478,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 
 
 // Calculates the current of each of the coils (with mapping)(current in mA)
-uint16_t StepperMotor::currentToPWM(uint16_t current) const {
+uint32_t StepperMotor::currentToPWM(uint16_t current) const {
 
     // Calculate the value to set the PWM interface to (based on algebraically manipulated equations from the datasheet)
     uint32_t PWMValue = (CURRENT_SENSE_RESISTOR * PWM_MAX_DUTY_CYCLE * abs(current)) / (BOARD_VOLTAGE * 100);

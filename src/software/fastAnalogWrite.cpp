@@ -2,7 +2,7 @@
 
 // Sets up an analog pin with the specified value
 // Starting value can be between 0 and 4095 (PWM_MAX_DUTY_CYCLE)
-analogInfo analogSetup(PinName pin, uint32_t freq, uint16_t startingValue) {
+analogInfo analogSetup(PinName pin, uint32_t freq, uint32_t startingValue) {
 
     // Create a structure for the analogInfo
     analogInfo pinInfo;
@@ -30,7 +30,7 @@ analogInfo analogSetup(PinName pin, uint32_t freq, uint16_t startingValue) {
 
 // Sets the value to output on the analog pin using the structure that was returned when setting it up
 // Value should be in range of 0 and 4095 (PWM_MAX_DUTY_CYCLE)
-void analogSet(analogInfo* pinInfo, uint16_t value) {
+void analogSet(analogInfo* pinInfo, uint32_t value) {
 
     // Check to make sure that the value is between 0 and 4095 (PWM_MAX_DUTY_CYCLE)
     // Very bad things could happen if this is not checked properly

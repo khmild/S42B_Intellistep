@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.35"
+#define VERSION "0.0.36"
 
 
 // --------------  Settings  --------------
@@ -14,7 +14,7 @@
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
     //#define ENABLE_BLINK
-    #define CHECK_STEPPING_RATE
+    //#define CHECK_STEPPING_RATE
 
     #if defined(ENABLE_BLINK) && defined(CHECK_STEPPING_RATE)
         #error Only one of #define is possible at a time in this section
@@ -264,16 +264,20 @@
 // Under the hood motor setup
 #define SINE_VAL_COUNT (128)
 //#define SINE_MAX ((int16_t)(10000))
-#define SINE_POWER 14
 #define SINE_MAX (16384) // 2^SINE_POWER == 2^14 == 16384
-
 #define IS_POWER_2(N) ((N) & ((N)-1)) // Return 0 if a number is a power of 2.
+
+// Check to make sure that the SINE_MAX and SINE_VAL_COUNT is valid
 #if IS_POWER_2(SINE_VAL_COUNT) != 0
     #error SINE_VAL_COUNT must be a power of 2 to use in fastSin() and fastCos() defines!!!
 #endif
 #if IS_POWER_2(SINE_MAX) != 0
     #error SINE_MAX must be a power of 2 to fast division to SINE_MAX, i.e { y = x / SINE_MAX } is equal to  { y = x >> SINE_POWER }
 #endif
+
+// Use a integer version of the log of SINE_MAX
+// Used to speed up division much faster
+#define SINE_POWER (uint16_t)log2(SINE_MAX)
 
 // Bitwise memory modification - ARM bitband
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
