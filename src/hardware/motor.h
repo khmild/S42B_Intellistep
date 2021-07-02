@@ -23,12 +23,6 @@ typedef enum {
     COAST
 } COIL_STATE;
 
-// Enumeration for coil letter
-typedef enum {
-    A,
-    B
-} COIL;
-
 // Enumeration for stepping direction
 typedef enum {
     PIN,
@@ -221,7 +215,8 @@ class StepperMotor {
         int microstepMultiplier = MICROSTEP_MULTIPLIER;
 
         // Analog info structures for PWM current pins
-        analogInfo PWMCurrentPinInfo[2];
+        analogInfo PWMCurrentPinInfoA;
+        analogInfo PWMCurrentPinInfoB;
 
         // Last coil states (used to save time by not setting the pins unless necessary)
         COIL_STATE previousCoilStateA = BRAKE;

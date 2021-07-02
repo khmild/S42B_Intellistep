@@ -236,8 +236,9 @@
 // LED pin
 #define LED_PIN PC_13
 
-// Motor mappings                                   [  A  ,   B  ]
-static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
+// Motor mappings
+#define COIL_A_POWER_OUTPUT_PIN  PB_5
+#define COIL_B_POWER_OUTPUT_PIN  PB_4
 #define COIL_A_DIR_1_PIN  PB_6
 #define COIL_A_DIR_2_PIN  PB_7
 #define COIL_B_DIR_1_PIN  PB_8

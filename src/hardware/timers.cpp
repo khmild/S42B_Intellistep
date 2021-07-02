@@ -68,7 +68,7 @@ void setupMotorTimers() {
     #endif
 
     // Attach the interupt to the step pin (subpriority is set in platformio config file)
-    attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, RISING);
+    attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, FALLING); // input is pull-upped to VDD
 
     // Setup the timer for steps
     correctionTimer -> pause();

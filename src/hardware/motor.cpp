@@ -11,8 +11,8 @@
 StepperMotor::StepperMotor() {
 
     // Setup the pins as outputs
-    pinMode(COIL_POWER_OUTPUT_PINS[A], OUTPUT);
-    pinMode(COIL_POWER_OUTPUT_PINS[B], OUTPUT);
+    pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
+    pinMode(COIL_B_POWER_OUTPUT_PIN, OUTPUT);
 
     // Setup the coil direction pins
     pinMode(COIL_A_DIR_1_PIN, OUTPUT);
@@ -21,8 +21,8 @@ StepperMotor::StepperMotor() {
     pinMode(COIL_B_DIR_2_PIN, OUTPUT);
 
     // Configure the PWM current output pins
-    this -> PWMCurrentPinInfo[A] = analogSetup(COIL_POWER_OUTPUT_PINS[A], MOTOR_PWM_FREQ, 0);
-    this -> PWMCurrentPinInfo[B] = analogSetup(COIL_POWER_OUTPUT_PINS[B], MOTOR_PWM_FREQ, 0);
+    this -> PWMCurrentPinInfoA = analogSetup(COIL_A_POWER_OUTPUT_PIN, MOTOR_PWM_FREQ, 0);
+    this -> PWMCurrentPinInfoB = analogSetup(COIL_B_POWER_OUTPUT_PIN, MOTOR_PWM_FREQ, 0);
 
     // Disable the motor
     setState(DISABLED, true);
@@ -394,7 +394,7 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
     if (desiredState != previousCoilStateA) {
 
         // Disable the coil
-        analogSet(&PWMCurrentPinInfo[A], 0);
+        analogSet(&PWMCurrentPinInfoA, 0);
 
         // Decide the state of the direction pins
         if (desiredState == FORWARD) {
@@ -419,7 +419,7 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
     }
 
     // Update the output pin with the correct current
-    analogSet(&PWMCurrentPinInfo[A], currentToPWM(current));
+    analogSet(&PWMCurrentPinInfoA, currentToPWM(current));
 }
 
 
@@ -436,7 +436,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
     if (desiredState != previousCoilStateB) {
 
         // Disable the coil
-        analogSet(&PWMCurrentPinInfo[B], 0);
+        analogSet(&PWMCurrentPinInfoB, 0);
 
         // Decide the state of the direction pins
         if (desiredState == FORWARD) {
@@ -461,7 +461,7 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
     }
 
     // Update the output pin with the correct current
-    analogSet(&PWMCurrentPinInfo[B], currentToPWM(current));
+    analogSet(&PWMCurrentPinInfoB, currentToPWM(current));
 }
 
 
