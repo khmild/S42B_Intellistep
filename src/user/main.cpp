@@ -8,7 +8,6 @@
 #include "oled.h"
 #include "led.h"
 #include "cube.h"
-//#include "stm32yyxx_ll_rcc.h"
 
 // Create a new motor instance
 StepperMotor motor = StepperMotor();
@@ -234,6 +233,7 @@ void setup() {
 
 // Main loop
 void loop() {
+
     // Check the dip switches
     checkDips();
 
