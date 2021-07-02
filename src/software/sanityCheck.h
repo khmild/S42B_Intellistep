@@ -4,6 +4,9 @@
 // Import the config
 #include "config.h"
 
+// Checking functions
+#define IS_POWER_2(N) ((N) & ((N)-1)) // Return 0 if a number is a power of 2.
+
 
 // Check to make sure that at least a peak or RMS max current is defined
 #if !(defined(MAX_PEAK_BOARD_CURRENT) || defined(MAX_RMS_BOARD_CURRENT))
@@ -54,4 +57,13 @@
     #else
         #define STATIC_PEAK_CURRENT (uint16_t)(STATIC_RMS_CURRENT * 1.414)
     #endif
+#endif
+
+
+// Check to make sure that the SINE_MAX and SINE_VAL_COUNT is valid
+#if IS_POWER_2(SINE_VAL_COUNT) != 0
+    #error SINE_VAL_COUNT must be a power of 2 to use in fastSin() and fastCos() defines!!!
+#endif
+#if IS_POWER_2(SINE_MAX) != 0
+    #error SINE_MAX must be a power of 2 to fast division to SINE_MAX, i.e { y = x / SINE_MAX } is equal to  { y = x >> SINE_POWER }
 #endif

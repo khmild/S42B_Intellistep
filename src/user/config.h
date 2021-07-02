@@ -265,15 +265,6 @@
 #define SINE_VAL_COUNT (128)
 //#define SINE_MAX ((int16_t)(10000))
 #define SINE_MAX (16384) // 2^SINE_POWER == 2^14 == 16384
-#define IS_POWER_2(N) ((N) & ((N)-1)) // Return 0 if a number is a power of 2.
-
-// Check to make sure that the SINE_MAX and SINE_VAL_COUNT is valid
-#if IS_POWER_2(SINE_VAL_COUNT) != 0
-    #error SINE_VAL_COUNT must be a power of 2 to use in fastSin() and fastCos() defines!!!
-#endif
-#if IS_POWER_2(SINE_MAX) != 0
-    #error SINE_MAX must be a power of 2 to fast division to SINE_MAX, i.e { y = x / SINE_MAX } is equal to  { y = x >> SINE_POWER }
-#endif
 
 // Use a integer version of the log of SINE_MAX
 // Used to speed up division much faster
