@@ -30,14 +30,20 @@ StepperMotor::StepperMotor() {
 
 
 // Returns the current RPM of the motor to two decimal places
-float StepperMotor::getMotorRPM() const {
+float StepperMotor::getMotorRPM() {
     return (getEncoderSpeed() * 60 / 360);
 }
 
 
-// Returns the deviation of the motor from the PID loop
-float StepperMotor::getAngleError() const {
+// Returns the angular deviation of the motor from the desired angle
+float StepperMotor::getAngleError() {
     return (getAbsoluteAngle() - (this -> desiredAngle));
+}
+
+
+// Returns the step deviation of the motor from the desired step
+int32_t StepperMotor::getStepError() {
+    return (round(getAbsoluteAngle() / (this -> microstepAngle)) - (this -> desiredStep));
 }
 
 
@@ -242,7 +248,7 @@ void StepperMotor::simpleStep() {
 
 
 // Computes the coil values for the next step position and increments the set angle
-void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngle) {
+void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos) {
 
     // Main angle change (any inversions * angle of microstep)
     float angleChange = this -> microstepAngle;
@@ -268,16 +274,20 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
         angleChange *= -1;
     }
 
+    // Fix the step change's sign
+    stepChange *= getSign(angleChange);
+
     // Update the desired angle if specified
-    if (updateDesiredAngle) {
+    if (updateDesiredPos) {
 
         // Angles are basically just added to desired, not really much to do here
         this -> desiredAngle += angleChange;
+        this -> desiredStep += stepChange;
     }
 
     // Motor's current angle must always be updated to correctly move the coils
     this -> currentAngle += angleChange;
-    this -> currentStep += getSign(angleChange) * stepChange; // Only moving one step in the specified direction
+    this -> currentStep += stepChange; // Only moving one step in the specified direction
 
     // Drive the coils to their destination
     this -> driveCoils(currentStep);
@@ -547,44 +557,6 @@ MOTOR_STATE StepperMotor::getState() const {
     return (this -> state);
 }
 
-
-/*
-// Computes the speed of the motor
-float StepperMotor::compute(float currentAngle) {
-
-    // Update the current time
-    this -> currentTime = (float)millis();
-
-    // Calculate the elapsed time
-    this -> elapsedTime = (float)((this -> currentTime) - (this -> previousTime));
-
-    // Calculate the error
-    this -> error = (float)((this -> desiredAngle) - currentAngle);
-
-    // Calculate the cumulative error (used with I term)
-    this -> cumulativeError += (this -> error) * (this -> elapsedTime);
-
-    // Calculate the rate error
-    this -> rateError = ((this -> error) - (this -> lastError)) / elapsedTime;
-
-    // Calculate the output with the errors and the coefficients
-    float output = ((this -> pTerm) * (this -> error)) + ((this -> iTerm) * (this -> cumulativeError)) + ((this -> dTerm) * (this -> rateError));
-
-    // Constrain the output to the maximum set output
-    if (abs(output) > MAX_MOTOR_SPEED) {
-
-        // Set the new output to the maximum output with the sign of the original output
-        output = MAX_MOTOR_SPEED * (output / abs(output));
-    }
-
-    // Update the last computation parameters
-    this -> lastError = this -> error;
-    this -> previousTime = this -> currentTime;
-
-    // Return the output of the PID loop
-    return output;
-}
-*/
 
 // Calibrates the encoder and the PID loop
 void StepperMotor::calibrate() {

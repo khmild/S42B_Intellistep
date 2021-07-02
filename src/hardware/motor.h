@@ -52,10 +52,13 @@ class StepperMotor {
         StepperMotor();
 
         // Returns the current RPM of the motor to two decimal places
-        float getMotorRPM() const;
+        float getMotorRPM();
 
-        // Returns the deviation of the motor from the set position
-        float getAngleError() const;
+        // Returns the angular deviation of the motor from the set position
+        float getAngleError();
+
+        // Returns the step deviation of the motor from the set position
+        int32_t getStepError();
 
         // Dynamic current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -132,7 +135,7 @@ class StepperMotor {
         void simpleStep();
 
         // Calculates the coil values for the motor and updates the set angle.
-        void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredAngle = true);
+        void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredPos = true);
 
         // Sets the coils to hold the motor at the desired step number
         void driveCoils(int32_t steps);
@@ -171,6 +174,9 @@ class StepperMotor {
 
         // Keeps the desired angle of the motor
         float desiredAngle = 0;
+
+        // Keeps the desired step of the motor
+        int32_t desiredStep = 0;
 
         // Keeps the current angle of the motor
         float currentAngle = 0;

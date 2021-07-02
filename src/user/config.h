@@ -133,7 +133,7 @@
 //#define ENABLE_STALLFAULT
 #ifdef ENABLE_STALLFAULT
     #define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
-    #define STEP_FAULT_ANGLE        10 // The maximum allowable deviation between the actual and set angles before StallFault is triggered
+    #define STEP_FAULT_STEP_COUNT   10 // The maximum allowable deviation between the actual and set steps before StallFault is triggered
 
     // StallFault connection (to mainboard)
     // Pulls high on a stepper misalignment after the set period or angular deviation
