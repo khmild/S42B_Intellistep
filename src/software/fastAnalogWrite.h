@@ -18,7 +18,7 @@ class analogInfo {
 };
 
 // Functions
-analogInfo analogSetup(PinName pin, uint32_t freq, uint32_t startingValue);
-void analogSet(analogInfo* pinInfo, uint32_t value);
+analogInfo analogSetup(PinName pin, uint32_t freq, uint16_t startingValue);
+void analogSet(analogInfo* pinInfo, uint16_t value);
 
 #endif // ! __FAST_ANALOG_WRITE__
