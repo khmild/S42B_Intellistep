@@ -14,7 +14,7 @@
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
     //#define ENABLE_BLINK
-    //#define CHECK_STEPPING_RATE
+    #define CHECK_STEPPING_RATE
 
     #if defined(ENABLE_BLINK) && defined(CHECK_STEPPING_RATE)
         #error Only one of #define is possible at a time in this section
@@ -25,8 +25,12 @@
 #if !defined(ENABLE_OLED)
     // MCO is PA_8 pin, It also used as OLED_RST_PIN
     //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
-    #if !defined(CHECK_MCO_OUTPUT)
-        //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO output switching
+
+    // The PA_8 pin is used
+    //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO PA_8 output switching
+
+    #if defined(CHECK_MCO_OUTPUT) && defined(CHECK_GPIO_OUTPUT_SWITCHING)
+        #error Only one of #define is possible at a time in this section
     #endif
 #endif
 
@@ -143,7 +147,7 @@
     //#define INVERTED_DIPS // Enable if your dips are inverted ("on" print is facing away from motor connector)
     #define BUTTON_REPEAT_INTERVAL 250 // Millis
     #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
-    #define WARNING_MICROSTEP 32 // The largest microstep to warn on (the denominator of the fraction)
+    #define WARNING_MICROSTEP MAX_MICROSTEP_DIVISOR // The largest microstep to warn on (the denominator of the fraction)
 
     // Warning thresholds
     #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
@@ -173,8 +177,8 @@
 #define PA8  8   // | 8       |        |            |           |            |           |
 #define PA9  9   // | 9       |        | USART1_TX  |           |            |           |
 #define PA10 10  // | 10      |        | USART1_RX  |           |            |           |
-#define PA11 11  // | 11      |        |            |           |            | USB_DN    |
-#define PA12 12  // | 12      |        |            |           |            | USB_DP    |
+#define PA11 11  // | 11      |        |            |           |            | USB_DN    | CAN_IN
+#define PA12 12  // | 12      |        |            |           |            | USB_DP    | CAN_OUT
 #define PA13 13  // | 13      |        |            |           |            | SWD_SWDIO |
 #define PA14 14  // | 14      |        |            |           |            | SWD_SWCLK |
 #define PA15 15  // | 15      |        |            |           | SPI1_SS    |           |
@@ -258,11 +262,16 @@ static const PinName COIL_POWER_OUTPUT_PINS[]    =  { PB_5, PB_4 };
 // --------------  Internal defines  --------------
 // Under the hood motor setup
 #define SINE_VAL_COUNT (128)
-#define SINE_MAX ((int16_t)(10000))
+//#define SINE_MAX ((int16_t)(10000))
+#define SINE_POWER 14
+#define SINE_MAX (16384) // 2^SINE_POWER == 2^14 == 16384
 
-#define IS_POWER_2(N) (N & (N-1)) // Return 0 if a number is a power of 2.
+#define IS_POWER_2(N) ((N) & ((N)-1)) // Return 0 if a number is a power of 2.
 #if IS_POWER_2(SINE_VAL_COUNT) != 0
     #error SINE_VAL_COUNT must be a power of 2 to use in fastSin() and fastCos() defines!!!
+#endif
+#if IS_POWER_2(SINE_MAX) != 0
+    #error SINE_MAX must be a power of 2 to fast division to SINE_MAX, i.e { y = x / SINE_MAX } is equal to  { y = x >> SINE_POWER }
 #endif
 
 // Bitwise memory modification - ARM bitband

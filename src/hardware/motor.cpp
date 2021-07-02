@@ -31,7 +31,7 @@ StepperMotor::StepperMotor() {
 
 // Returns the current RPM of the motor to two decimal places
 float StepperMotor::getMotorRPM() const {
-    return (getEncoderSpeed() / 360);
+    return (getEncoderSpeed() * 60 / 360);
 }
 
 
@@ -288,7 +288,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredAngl
 void StepperMotor::driveCoils(int32_t steps) {
 
     // Correct the steps so that they're within the valid range
-    steps %= (4 * (this -> microstepDivisor));
+    //steps %= (4 * (this -> microstepDivisor));
 
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
@@ -304,12 +304,12 @@ void StepperMotor::driveCoils(int32_t steps) {
         double angAccel = abs(getEncoderAccel());
 
         // Compute the coil power
-        int16_t coilAPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilAPercent) / SINE_MAX;
-        int16_t coilBPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilBPercent) / SINE_MAX;
+        int16_t coilAPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilAPercent) >> SINE_POWER;
+        int16_t coilBPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilBPercent) >> SINE_POWER;
     #else
         // Just use static current multipiers
-        int16_t coilAPower = ((int16_t)(this -> peakCurrent) * coilAPercent) / SINE_MAX;
-        int16_t coilBPower = ((int16_t)(this -> peakCurrent) * coilBPercent) / SINE_MAX;
+        int16_t coilAPower = ((int16_t)(this -> peakCurrent) * coilAPercent) >> SINE_POWER; // i.e. / SINE_MAX
+        int16_t coilBPower = ((int16_t)(this -> peakCurrent) * coilBPercent) >> SINE_POWER; // i.e. / SINE_MAX
     #endif
 
     // Check the if the coil should be energized to move backward or forward
