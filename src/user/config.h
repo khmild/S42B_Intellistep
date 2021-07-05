@@ -5,7 +5,9 @@
 #include "Arduino.h"
 
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
-#define VERSION "0.0.36"
+#define MAJOR_VERSION (uint16_t)0
+#define MINOR_VERSION (uint16_t)0
+#define PATCH_VERSION (uint16_t)37
 
 
 // --------------  Settings  --------------
@@ -35,10 +37,10 @@
 #endif
 
 // Averages (number of readings in average)
-#define RPM_AVG_READINGS     10
-#define ACCEL_AVG_READINGS   10
-#define ANGLE_AVG_READINGS   15
-#define TEMP_AVG_READINGS    200
+#define RPM_AVG_READINGS     (uint16_t)10
+#define ACCEL_AVG_READINGS   (uint16_t)10
+#define ANGLE_AVG_READINGS   (uint16_t)15
+#define TEMP_AVG_READINGS    (uint16_t)200
 
 // If encoder estimation should be used
 #define ENCODER_SPEED_ESTIMATION
@@ -71,15 +73,14 @@
 #endif
 
 // Motor characteristics
-#define STEP_ANGLE 1.8 // ! Check to see for .9 deg motors as well
+#define STEP_ANGLE (float)1.8 // ! Check to see for .9 deg motors as well
 #define STEP_UPDATE_FREQ 78 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
-#define MAX_MOTOR_SPEED 50 // deg/s
 
 // Board characteristics
 // ! Do not modify unless you know what you are doing!
-#define BOARD_VOLTAGE           3.3 // The voltage of the main processor
-#define CURRENT_SENSE_RESISTOR  0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
-#define MAX_PEAK_BOARD_CURRENT  3500 // Maximum peak current in mA that the board can manage
+#define BOARD_VOLTAGE              (float)3.3 // The voltage of the main processor
+#define CURRENT_SENSE_RESISTOR     (float)0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
+#define MAX_PEAK_BOARD_CURRENT  (uint16_t)3500 // Maximum peak current in mA that the board can manage
 
 // Dynamic current (adjusts motor current based on acceleration (and therefore torque)
 // required from the motor)
@@ -93,7 +94,7 @@
     #define DYNAMIC_MAX_CURRENT   750 // In mA
 #else
     // Classic, static current
-    #define STATIC_RMS_CURRENT     500 // This is the rating of the motor from the manufacturer
+    #define STATIC_RMS_CURRENT     (uint16_t)500 // This is the rating of the motor from the manufacturer
 
     // Overtemperature protection (lowers motor current when motor temperature rises too high)
     #define ENABLE_OVERTEMP_PROTECTION
@@ -125,15 +126,15 @@
 // Motor settings
 // The number of microsteps to move per step pulse
 // Doesn't affect correctional movements
-#define MICROSTEP_MULTIPLIER    2
+#define MICROSTEP_MULTIPLIER    (uint32_t)2
 
 // The min/max microstepping divisors
 // Microstepping divisors are the numbers underneath the fraction of the microstepping
 // For example, 1/16th microstepping would have a divisor of 16
-#define MIN_MICROSTEP_DIVISOR   1
-#define MAX_MICROSTEP_DIVISOR   32
+#define MIN_MICROSTEP_DIVISOR   (uint8_t)1
+#define MAX_MICROSTEP_DIVISOR   (uint8_t)32
 
-#define MOTOR_PWM_FREQ          30000 // in Hz
+#define MOTOR_PWM_FREQ          (uint32_t)30000 // in Hz
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
 // Stallfault
@@ -165,7 +166,7 @@
 // This can be set to 72 and 128 with SYSCLK_SRC_HSE_8 (external oscillator)
 // Can be set to 72 with SYSCLK_SRC_HSE_16 (external oscillator)
 // Can be set to 64 with SYSCLK_SRC_HSI (internal oscillator)
-#define SYSCLK_FREQ 128
+#define SYSCLK_FREQ 72
 #define SYSCLK_SRC_HSE_8
 
 

@@ -233,18 +233,20 @@ void correctMotor() {
             #else // ! ENABLE_PID
                 // Just "dumb" correction based on direction
                 // Set the stepper to move in the correct direction
-                if (stepDeviation > 0) {
+                if (/*motor.getStepPhase() != */ true) {
+                    if (stepDeviation > 0) {
 
-                    // Motor is at a position larger than the desired one
-                    // Use the current angle to find the current step, then subtract 1
-                    motor.step(CLOCKWISE, false, false);
-                    //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) - 1));
-                }
-                else {
-                    // Motor is at a position smaller than the desired one
-                    // Use the current angle to find the current step, then add 1
-                    motor.step(COUNTER_CLOCKWISE, false, false);
-                    //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) + 1));
+                        // Motor is at a position larger than the desired one
+                        // Use the current angle to find the current step, then subtract 1
+                        motor.step(CLOCKWISE, false, false);
+                        //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) - (motor.getMicrostepping())));
+                    }
+                    else {
+                        // Motor is at a position smaller than the desired one
+                        // Use the current angle to find the current step, then add 1
+                        motor.step(COUNTER_CLOCKWISE, false, false);
+                        //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) + (motor.getMicrostepping())));
+                    }
                 }
             #endif // ! ENABLE_PID
 
