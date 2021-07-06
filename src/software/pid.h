@@ -10,9 +10,6 @@
 // Include Arduino library
 #include "Arduino.h"
 
-// Include main PID library
-#include "PID_v1.h"
-
 // Encoder library (for getting current position)
 #include "encoder.h"
 
@@ -30,42 +27,59 @@ class StepperPID {
         StepperPID();
 
         // Get functions for P, I, and D
-        double getP() const;
-        double getI() const;
-        double getD() const;
+        float getP() const;
+        float getI() const;
+        float getD() const;
+        float getMaxI() const;
 
         // Set functions for P, I, and D
-        void setP(double newP);
-        void setI(double newI);
-        void setD(double newD);
-
-        // Updates the PID loop with the P, I, and D variables
-        void updateTunings();
+        void setP(float newP);
+        void setI(float newI);
+        void setD(float newD);
+        void setMaxI(float newMaxI);
 
         // Gets the desired motor angle
-        double getDesiredPosition();
+        float getDesiredPosition();
 
         // Set the desired motor angle (this is in absolute postioning,
         // meaning that something like 1500 is a valid position)
-        void setDesiredPosition(double angle);
+        void setDesiredPosition(float angle);
 
         // Sets the min and max outputs of the PID loop
-        void setOutputLimits(double min, double max);
+        void setOutputLimits(float min, float max);
 
         // Runs the PID calculations and returns the output
-        double compute();
+        float compute();
 
     // Private info (usually just variables)
     private:
 
         // Main variables for storing input, output, and setpoint
-        double input = 0, output = 0, setpoint = 0;
+        float input = 0, output = 0, setpoint = 0;
 
         // P, I, and D terms for loop
-        double P = 0, I = 0, D = 0;
+        // Term is multiplied by degrees of error to find stepping rate back
+        float kP = DEFAULT_P;
+        float kI = DEFAULT_I;
+        float kD = DEFAULT_D;
 
-        // PID object (modified)
-        PID* pid;
+        // I windup clamping
+        float maxI = DEFAULT_MAX_I;
+
+        // Min and max caps
+        float min = 0;
+        float max = 0;
+
+        // Time storage
+        uint32_t currentTime;
+        uint32_t previousTime = 0;
+        float elapsedTime;
+
+        // Intermediate calculation variables
+        float error;
+        float lastError = 0;
+        float cumulativeError;
+        float rateError;
 };
 
 #endif // ! ENABLE_PID

@@ -54,6 +54,12 @@ int32_t StepperMotor::getStepPhase() {
     return (this -> currentStep);
 }
 
+
+// Returns the desired angle of the motor
+float StepperMotor::getDesiredAngle() {
+    return (this -> desiredAngle);
+}
+
 // Returns the desired step of the motor
 int32_t StepperMotor::getDesiredStep() {
     return (this -> desiredStep);
@@ -519,6 +525,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
                     this -> state = ENABLED;
+                    break;
 
                 // Same as enabled, just forced
                 case FORCED_ENABLED:
@@ -529,17 +536,19 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     // The motor's current angle needs corrected
                     currentAngle = getAngle() - startupAngleOffset;
                     this -> state = FORCED_ENABLED;
+                    break;
 
                 // No other special processing needed, just disable the coils and set the state
                 default:
                     motor.setCoilA(IDLE_MODE);
                     motor.setCoilB(IDLE_MODE);
                     this -> state = newState;
+                    break;
             }
         }
         else {
-            // Only change the state if the current state is either enabled or disabled
-            if ((this -> state) == ENABLED || (this -> state) == DISABLED) {
+            // Only change the state if the current state is either enabled or disabled (or not set)
+            if ((this -> state) == ENABLED || (this -> state) == DISABLED || (this -> state) == MOTOR_NOT_SET) {
 
                 // Decide when needs to happen based on the new state
                 switch (newState) {
@@ -553,12 +562,14 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                         // The motor's current angle needs corrected
                         currentAngle = getAngle() - startupAngleOffset;
                         this -> state = ENABLED;
+                        break;
 
                     // No other special processing needed, just disable the coils and set the state
                     default:
                         motor.setCoilA(IDLE_MODE);
                         motor.setCoilB(IDLE_MODE);
                         this -> state = newState;
+                        break;
                 }
             }
         }

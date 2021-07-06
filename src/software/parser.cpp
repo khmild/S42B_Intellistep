@@ -15,7 +15,7 @@ String parseCommand(String buffer) {
     //  - M93 (ex M93 V1.8 or M93) - Sets the angle of a full step. This value should be 1.8° or 0.9°. If no value is provided, then the current value will be returned.
     //  - M115 (ex M115) - Prints out firmware information, consisting of the version and any enabled features.
     //  - M116 (ex M116 S1 M"A message") - Simple forward command that will forward a message across the CAN bus. Can be used for pinging or allowing a Serial to connect to the CAN network
-    //  - M306 (ex M306 P1 I1 D1 or M306) - Sets or gets the PID values for the motor. If no values are provided, then the current values will be returned.
+    //  - M306 (ex M306 P1 I1 D1 W10 or M306) - Sets or gets the PID values for the motor. W term is the maximum value of the I windup. If no values are provided, then the current values will be returned.
     //  - M307 (ex M307) - Runs an autotune sequence for the PID loop
     //  - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
     //  - M350 (ex M350 V16 or M350) - Sets or gets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32. If no value is provided, then the current microstepping divisor will be returned.
@@ -81,9 +81,10 @@ String parseCommand(String buffer) {
             #ifdef ENABLE_PID
             case 306: {
                 // M306 (ex M306 P1 I1 D1 or M306) - Sets or gets the PID values for the motor. If no values are provided, then the current values will be returned.
-                float pValue = parseValue(buffer, 'P').toFloat();
-                float iValue = parseValue(buffer, 'I').toFloat();
-                float dValue = parseValue(buffer, 'D').toFloat();
+                float pValue =    parseValue(buffer, 'P').toFloat();
+                float iValue =    parseValue(buffer, 'I').toFloat();
+                float dValue =    parseValue(buffer, 'D').toFloat();
+                float maxIValue = parseValue(buffer, 'W').toFloat();
                 if (!((pValue == -1) && (iValue == -1) && (dValue == -1))) {
 
                     // There is at least one valid value, therefore set all of the values
@@ -96,12 +97,15 @@ String parseCommand(String buffer) {
                     if (dValue != -1) {
                         pid.setD(dValue);
                     }
-                    
+                    if (maxIValue != -1) {
+                        pid.setMaxI(maxIValue);
+                    }
+
                     return FEEDBACK_OK;
                 }
                 else {
                     // No values are included, get and return the current values
-                    return ("P: " + String(pid.getP()) + " | I: " + String(pid.getI()) + " | D: " + String(pid.getD()));
+                    return ("P: " + String(pid.getP()) + " | I: " + String(pid.getI()) + " | D: " + String(pid.getD()) + " | W: " + String(pid.getMaxI()));
                 }
             }
             #endif
@@ -220,7 +224,7 @@ String parseCommand(String buffer) {
                 // Only build in functionality if specified
                 #ifdef ENABLE_CAN
                     // M356 (ex M356 V1 or M356 VX2 or M356) - Sets or gets the CAN ID of the board. Can be set using the axis character or actual ID. If no value is provided, then the current value will be returned.
-                    
+
                     // Check the value of the axis
                     String axisValue = parseValue(buffer, 'V');
 
@@ -352,7 +356,7 @@ String parseCommand(String buffer) {
                         // No valid values, therefore just return the current values
                         return ("A:" + String(motor.getDynamicAccelCurrent()) + " I: " + String(motor.getDynamicIdleCurrent()) + " M: " + String(motor.getDynamicMaxCurrent()) + "\n");
                     }
-                    
+
                 #else
                     // Read the set values (one of them should be -1 (no value exists))
                     uint16_t rmsCurrent = parseValue(buffer, 'R').toInt();
@@ -402,7 +406,7 @@ String parseValue(String buffer, char letter) {
         int16_t nextSpaceIndex = buffer.substring(charIndex).indexOf(' ');
 
         // Check to see if there is a space between the letter and value
-        if (nextSpaceIndex == 1) { 
+        if (nextSpaceIndex == 1) {
 
             // We need to find out if there is another space after this parameter
             int16_t endSpaceIndex = buffer.substring(charIndex + nextSpaceIndex + 1).indexOf(' ');
@@ -468,7 +472,7 @@ String parseString(String buffer, char letter) {
 
         // Make sure that there are quotations on each side
         if (startQuotationIndex != -1 && endQuotationIndex != -1) {
-            
+
             // Return the string between them
             return buffer.substring(charIndex + startQuotationIndex + 2, charIndex + startQuotationIndex + endQuotationIndex + 2);
         }

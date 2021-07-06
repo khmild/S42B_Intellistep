@@ -17,7 +17,7 @@
 
 // Enumeration for coil states
 typedef enum {
-    NOT_SET,
+    COIL_NOT_SET,
     FORWARD,
     BACKWARD,
     BRAKE,
@@ -33,6 +33,7 @@ typedef enum {
 
 // Enumeration for the enable state of the motor
 typedef enum {
+    MOTOR_NOT_SET,
     ENABLED,
     DISABLED,
     FORCED_ENABLED,
@@ -63,6 +64,9 @@ class StepperMotor {
 
         // Returns the current phase setting of the motor
         int32_t getStepPhase();
+
+        // Returns the desired angle of the motor
+        float getDesiredAngle();
 
         // Returns the desired step of the motor
         int32_t getDesiredStep();
@@ -220,7 +224,7 @@ class StepperMotor {
         int32_t microstepsPerRotation = (360.0 / getFullStepAngle());
 
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
-        MOTOR_STATE state = DISABLED;
+        MOTOR_STATE state = MOTOR_NOT_SET;
 
         // reversed is a multiplier for steps and angles
         // 1 - If the motor direction is normal
@@ -238,8 +242,8 @@ class StepperMotor {
         analogInfo PWMCurrentPinInfoB;
 
         // Last coil states (used to save time by not setting the pins unless necessary)
-        COIL_STATE previousCoilStateA = NOT_SET;
-        COIL_STATE previousCoilStateB = NOT_SET;
+        COIL_STATE previousCoilStateA = COIL_NOT_SET;
+        COIL_STATE previousCoilStateB = COIL_NOT_SET;
 };
 
 #endif

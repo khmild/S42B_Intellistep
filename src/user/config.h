@@ -7,7 +7,7 @@
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)37
+#define PATCH_VERSION (uint16_t)38
 
 
 // --------------  Settings  --------------
@@ -109,18 +109,25 @@
 
 // PID settings
 // ! At this time this feature is still under development
-// ! Do not enable it, it doesn't work
 //#define ENABLE_PID
 #ifdef ENABLE_PID
 
     // Default P, I, and D terms
-    #define DEFAULT_P  0
-    #define DEFAULT_I  0
+    #define DEFAULT_P  1000
+    #define DEFAULT_I  2
     #define DEFAULT_D  0
 
-    // Default min and max for step timing (in ms)
-    #define DEFAULT_PID_STEP_MIN 0
-    #define DEFAULT_PID_STEP_MAX 100
+    // I windup protection
+    #define DEFAULT_MAX_I 10
+
+    // Minimum sample time (in ms)
+    //#define PID_MIN_SAMPLE_TIME 10
+
+    // Default min and max for step timing (per second)
+    #define DEFAULT_PID_STEP_MAX 50000
+
+    // PID output that the motor should disable at (set to 0 to never disable motor)
+    #define DEFAULT_PID_DISABLE_THRESHOLD 0 //1000
 #endif
 
 // Motor settings
@@ -284,8 +291,8 @@
 #define BIT_ADDR(addr, bitnum)   MEM_ADDR(BITBAND(addr, bitnum))
 
 // Low level GPIO configuration (for quicker manipulations than digitalWrites)
-#define output(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12), n) // ODR
-#define input(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8), n) // IDR
+#define outputPin(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12), n) // ODR
+#define inputPin(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8), n) // IDR
 
 // Maybe an even faster digitalWrite, but only if really needed
 #define digitalWriteFaster(pn, high) \

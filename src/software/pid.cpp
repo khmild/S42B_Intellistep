@@ -6,104 +6,129 @@
 
 // Main constructor
 StepperPID::StepperPID() {
-
-    // Setup PID library
-    this -> pid = new PID(&input, &output, &setpoint, DEFAULT_P, DEFAULT_I, DEFAULT_D, DIRECT);
-
-    // Set that the PID timings should be handled automatically
-    this -> pid -> SetMode(AUTOMATIC);
-
-    // Set the minimum and maximum outputs of the PID controller
-    this -> pid -> SetOutputLimits(DEFAULT_PID_STEP_MIN, DEFAULT_PID_STEP_MAX);
+    // Nothing to here
 }
 
 
 // Returns the Proportional value of the PID loop
-double StepperPID::getP() const {
-    return (this -> pid -> GetKp());
+float StepperPID::getP() const {
+    return (this -> kP);
 }
 
 
 // Returns the Integral value fo the PID loop
-double StepperPID::getI() const {
-    return (this -> pid -> GetKi());
+float StepperPID::getI() const {
+    return (this -> kI);
 }
 
 
 // Returns the Derivative value for the PID loop
-double StepperPID::getD() const {
-    return (this -> pid -> GetKd());
+float StepperPID::getD() const {
+    return (this -> kD);
+}
+
+
+// Returns the maximum value of the I term of the PID loop
+float StepperPID::getMaxI() const {
+    return (this -> maxI);
 }
 
 
 // Sets the Proportional term of the PID loop
-void StepperPID::setP(double newP) {
+void StepperPID::setP(float newP) {
 
-    // Update the local reference
-    P = newP;
-
-    // Update the overall tunings
-    updateTunings();
+    // Update the term if the new value isn't negative
+    if (newP >= 0) {
+        kP = newP;
+    }
 }
 
 
 // Sets the Integral term of the PID loop
-void StepperPID::setI(double newI) {
+void StepperPID::setI(float newI) {
 
-    // Update the local reference
-    I = newI;
-
-    // Update the overall tunings
-    updateTunings();
+    // Update the term if the new value isn't negative
+    if (newI >= 0) {
+        kI = newI;
+    }
 }
 
 
 // Sets the Derivative of the PID loop
-void StepperPID::setD(double newD) {
-    
-    // Update the local reference
-    D = newD;
+void StepperPID::setD(float newD) {
 
-    // Update the overall tunings
-    updateTunings();
+    // Update the term if the new value isn't negative
+    if (newD >= 0) {
+        kD = newD;
+    }
 }
 
 
-// Updates the tunings of the PID loop with the variable values
-void StepperPID::updateTunings() {
-    this -> pid -> SetTunings(P, I, D);
-}
+// Sets the maximum value of the I term of the PID loop
+void StepperPID::setMaxI(float newMaxI) {
 
+    // Update the term if the new value isn't negative
+    if (newMaxI >= 0) {
+        maxI = newMaxI;
+    }
+}
 
 // Get the desired position
-double StepperPID::getDesiredPosition() {
+float StepperPID::getDesiredPosition() {
     return (this -> setpoint);
 }
 
 
 // Set the desired position
-void StepperPID::setDesiredPosition(double angle) {
+void StepperPID::setDesiredPosition(float angle) {
     this -> setpoint = angle;
 }
 
 
 // Set the output limits of the loop
-void StepperPID::setOutputLimits(double min, double max) {
-    this -> pid -> SetOutputLimits(min, max);
+void StepperPID::setOutputLimits(float newMin, float newMax) {
+    this -> min = newMin;
+    this -> max = newMax;
 }
 
 
 // Update the PID loop, returning the output
-double StepperPID::compute() {
+float StepperPID::compute() {
 
     // Update the input
-    this -> input = motor.getAngleError();
+    this -> input = (float)getAbsoluteAngle();
+
+    // Update the setpoint
+    this -> setpoint = motor.getDesiredAngle();
 
     // Compute the PID
-    this -> pid -> Compute();
+    // Update the current time
+    this -> currentTime = millis();
 
-    // Return the output
-    return output;
+    // Calculate the elapsed time
+    this -> elapsedTime = (float)((this -> currentTime) - (this -> previousTime));
+
+    // Calculate the error
+    this -> error = (setpoint - input);
+
+    // Calculate the cumulative error (used with I term)
+    this -> cumulativeError += ((this -> error) * (this -> elapsedTime));
+
+    // Clamp the cumulative error, preventing I term windup
+    this -> cumulativeError = constrain(cumulativeError, -maxI, maxI);
+
+    // Calculate the rate error
+    this -> rateError = ((this -> error) - (this -> lastError)) / elapsedTime;
+
+    // Calculate the output with the errors and the coefficients
+    this -> output = ((this -> kP) * (this -> error)) + ((this -> kI) * (this -> cumulativeError)) + ((this -> kD) * (this -> rateError));
+
+    // Update the last computation parameters
+    this -> lastError = this -> error;
+    this -> previousTime = this -> currentTime;
+
+    // Return the output of the PID loop
+    return constrain(this -> output, -DEFAULT_PID_STEP_MAX, DEFAULT_PID_STEP_MAX);
 }
 
 #endif
