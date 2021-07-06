@@ -17,6 +17,7 @@
 
 // Enumeration for coil states
 typedef enum {
+    NOT_SET,
     FORWARD,
     BACKWARD,
     BRAKE,
@@ -237,8 +238,8 @@ class StepperMotor {
         analogInfo PWMCurrentPinInfoB;
 
         // Last coil states (used to save time by not setting the pins unless necessary)
-        COIL_STATE previousCoilStateA = BRAKE;
-        COIL_STATE previousCoilStateB = BRAKE;
+        COIL_STATE previousCoilStateA = NOT_SET;
+        COIL_STATE previousCoilStateB = NOT_SET;
 };
 
 #endif
