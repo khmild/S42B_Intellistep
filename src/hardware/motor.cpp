@@ -420,13 +420,6 @@ void StepperMotor::driveCoilsAngle(float degAngle) {
 // Function for setting the A coil state and current
 void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
 
-    // Check the current. If the current is 0, then this means that the motor should go to its idle mode
-    /*
-    if (current == 0) {
-        desiredState = IDLE_MODE;
-    }
-    */
-
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
     if (desiredState != previousCoilStateA) {
 
@@ -462,13 +455,6 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
 
 // Function for setting the B coil state and current
 void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
-
-    // Check the current. If the current is 0, then this means that the motor should go to its idle mode
-    /*
-    if (current == 0) {
-        desiredState = IDLE_MODE;
-    }
-    */
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
     if (desiredState != previousCoilStateB) {
