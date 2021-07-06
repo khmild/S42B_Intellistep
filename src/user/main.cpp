@@ -100,10 +100,6 @@ void setup() {
         initLED();
     #endif
 
-    #ifdef CHECK_MCO_OUTPUT
-        MCO_GPIO_Init();
-    #endif
-
     #ifdef CHECK_GPIO_OUTPUT_SWITCHING
         PA_8_GPIO_Init();
         while(true) {
@@ -176,7 +172,7 @@ void setup() {
                     // Calibrate the motor (board reboots afterward)
                     motor.calibrate();
                 }
- 
+
             #else
                 // Just jump to calibrating the motor (board reboots afterward)
                 motor.calibrate();
@@ -203,16 +199,16 @@ void setup() {
             else {
                 writeOLEDString(0, LINE_HEIGHT * 3, F("unsuccessfully"), true);
             }
-            
+
             // Let the user read the message
             delay(1000);
 
             // Clear the display
             clearOLED();
-            
+
             // Write out the first data to the screen (makes sure that the first write isn't interrupted)
             displayMotorData();
-        #else 
+        #else
             // Nothing special, just try to load the flash data
             loadParameters();
         #endif
