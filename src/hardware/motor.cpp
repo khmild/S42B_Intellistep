@@ -421,9 +421,11 @@ void StepperMotor::driveCoilsAngle(float degAngle) {
 void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
 
     // Check the current. If the current is 0, then this means that the motor should go to its idle mode
+    /*
     if (current == 0) {
         desiredState = IDLE_MODE;
     }
+    */
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
     if (desiredState != previousCoilStateA) {
@@ -462,9 +464,11 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
 void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 
     // Check the current. If the current is 0, then this means that the motor should go to its idle mode
+    /*
     if (current == 0) {
         desiredState = IDLE_MODE;
     }
+    */
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
     if (desiredState != previousCoilStateB) {
@@ -593,7 +597,7 @@ void StepperMotor::calibrate() {
         writeOLEDString(0, 0,               F("Starting"), false);
         writeOLEDString(0, LINE_HEIGHT * 1, F("Do not move"), false);
         writeOLEDString(0, LINE_HEIGHT * 2, F("motor shaft"), true);
-        
+
     #endif
 
     // Wait for the user to take their hands away
@@ -611,7 +615,7 @@ void StepperMotor::calibrate() {
     // Force the encoder to be read a couple of times, wiping the previous position out of the average
     // (this reading needs to be as precise as possible)
     for (uint8_t readings = 0; readings < (ANGLE_AVG_READINGS * 2); readings++) {
-        
+
         // Get the angle, then wait for 10ms to allow encoder to update
         getAngle();
     }
