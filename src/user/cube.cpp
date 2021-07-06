@@ -11,7 +11,7 @@ void MCO_GPIO_Init(void)
   /*Configure GPIO pin : PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 #elif defined(CHECK_GPIO_OUTPUT_SWITCHING)
@@ -110,7 +110,7 @@ void SystemClock_Config_HSE_8M_SYSCLK_72M(void) {
 
   #ifdef CHECK_MCO_OUTPUT
     HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
-  #endif  
+  #endif
 }
 
 
@@ -150,8 +150,8 @@ void SystemClock_Config_HSE_8M_SYSCLK_128M(void) {
   }
 
   #ifdef CHECK_MCO_OUTPUT
-    HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
-  #endif  
+    HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_PLLCLK, RCC_MCODIV_1);
+  #endif
 }
 
 
@@ -191,5 +191,5 @@ void SystemClock_Config_HSI_8M_SYSCLK_64M(void) {
 
   #ifdef CHECK_MCO_OUTPUT
     HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
-  #endif  
+  #endif
 }
