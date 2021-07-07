@@ -95,7 +95,7 @@ void writeToFlashAddress(uint32_t address, uint16_t data) {
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
 
     // Write out the data
-    HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, data);
+    HAL_FLASH_Program_IT(FLASH_TYPEPROGRAM_HALFWORD, address, data);
 
     // Lock the flash (we finished writing)
     HAL_FLASH_Lock();
@@ -164,7 +164,7 @@ void eraseParameters() {
 
     // Unlock the flash
     HAL_FLASH_Unlock();
-    
+
     // Configure the erase type
     FLASH_EraseInitTypeDef eraseStruct;
     eraseStruct.TypeErase = FLASH_TYPEERASE_PAGES;
@@ -174,7 +174,7 @@ void eraseParameters() {
     // Erase the the entire page (all possible addresses for parameters to be stored)
     uint32_t pageError = 0;
     HAL_FLASHEx_Erase(&eraseStruct, &pageError);
-    
+
     // Good to go, lock the flash again (writeFlash has it's own locks and unlocks)
     HAL_FLASH_Lock();
 
@@ -275,21 +275,21 @@ bool checkVersionMatch() {
 
     // Read the major version number
     if (readFlashU16(FLASH_CONTENTS_MAJOR_VERSION_INDEX) != MAJOR_VERSION) {
-        
+
         // Major version doesn't match
         return false;
     }
 
     // Read the minor version number
     if (readFlashU16(FLASH_CONTENTS_MINOR_VERSION_INDEX) != MINOR_VERSION) {
-        
+
         // Minor version doesn't match
         return false;
     }
 
     // Read the patch version number
     if (readFlashU16(FLASH_CONTENTS_PATCH_VERSION_INDEX) != PATCH_VERSION) {
-        
+
         // Patch version doesn't match
         return false;
     }
