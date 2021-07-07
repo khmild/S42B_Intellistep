@@ -31,6 +31,8 @@ void setup() {
     #elif defined(SYSCLK_SRC_HSE_8)
         #if SYSCLK_FREQ == 72
             SystemClock_Config_HSE_8M_SYSCLK_72M();
+        #elif SYSCLK_FREQ == 128
+            SystemClock_Config_HSE_8M_SYSCLK_128M();
         #else
             #error "Unsupported oscillator speed"
         #endif
@@ -98,10 +100,6 @@ void setup() {
         initLED();
     #endif
 
-    #ifdef CHECK_MCO_OUTPUT
-        MCO_GPIO_Init();
-    #endif
-
     #ifdef CHECK_GPIO_OUTPUT_SWITCHING
         PA_8_GPIO_Init();
         while(true) {
@@ -129,11 +127,6 @@ void setup() {
         }
     #endif
 
-    // Test the flash if specified
-    //#ifdef TEST_FLASH
-    //    flash_test();
-    //#endif
-
     // Clear the display, then write that we're using the closed loop mode
     //clearOLED();
     //writeOLEDString(0, 0, "Close Loop Mode");
@@ -146,16 +139,17 @@ void setup() {
 
             // Display that the motor is not calibrated
             clearOLED();
-            writeOLEDString(0, 0, "NOT", false);
-            writeOLEDString(0, 16, "Calibrated!", false);
-            writeOLEDString(0, 32, "Please calibrate", true);
+            writeOLEDString(0, 0,               F("NOT"), false);
+            writeOLEDString(0, LINE_HEIGHT * 1, F("Calibrated!"), false);
+            writeOLEDString(0, LINE_HEIGHT * 2, F("Please"), false);
+            writeOLEDString(0, LINE_HEIGHT * 3, F("calibrate"), true);
             delay(3000);
 
             // Display that the select key can be clicked to run calibration
             clearOLED();
-            writeOLEDString(0, 0, "Use the", false);
-            writeOLEDString(0, 16, "select key", false);
-            writeOLEDString(0, 32, "to calibrate", true);
+            writeOLEDString(0, 0,               F("Use the"), false);
+            writeOLEDString(0, LINE_HEIGHT * 1, F("select key"), false);
+            writeOLEDString(0, LINE_HEIGHT * 2, F("to calibrate"), true);
         #endif
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
@@ -175,19 +169,13 @@ void setup() {
                 // Check to see if the menu button has been clicked
                 if (getMenuDepth() > 0) {
 
-                    // Calibrate the motor
+                    // Calibrate the motor (board reboots afterward)
                     motor.calibrate();
-
-                    // Reboot the chip
-                    NVIC_SystemReset();
                 }
- 
+
             #else
-
-                // Just jump to calibrating the motor and reset the system afterward
+                // Just jump to calibrating the motor (board reboots afterward)
                 motor.calibrate();
-                NVIC_SystemReset();
-
             #endif
         }
     }
@@ -198,29 +186,29 @@ void setup() {
 
             // Let the user know that the calibration was successfully loaded
             clearOLED();
-            writeOLEDString(0, 0, "Calibration", false);
-            writeOLEDString(0, 16, "OK!", false);
+            writeOLEDString(0, 0,               F("Calibration"), false);
+            writeOLEDString(0, LINE_HEIGHT * 1, F("OK!"), false);
 
             // Write base string for flash loading
-            writeOLEDString(0, 32, F("Flash loaded"), false);
+            writeOLEDString(0, LINE_HEIGHT * 2, F("Flash loaded"), false);
 
             // Attempt to load the parameters from flash
             if (loadParameters() == FLASH_LOAD_SUCCESSFUL) {
-                writeOLEDString(0, 48, F("successfully"), true);
+                writeOLEDString(0, LINE_HEIGHT * 3, F("successfully"), true);
             }
             else {
-                writeOLEDString(0, 48, F("unsuccessfully"), true);
+                writeOLEDString(0, LINE_HEIGHT * 3, F("unsuccessfully"), true);
             }
-            
+
             // Let the user read the message
             delay(1000);
 
             // Clear the display
             clearOLED();
-            
+
             // Write out the first data to the screen (makes sure that the first write isn't interrupted)
             displayMotorData();
-        #else 
+        #else
             // Nothing special, just try to load the flash data
             loadParameters();
         #endif
@@ -233,6 +221,10 @@ void setup() {
 
 // Main loop
 void loop() {
+
+    // ! TESTING ONLY
+    //Serial.println("P:" + String(motor.getStepPhase() % 32) + " S:" + String(motor.getDesiredStep() % 32));
+    //Serial.println("P:" + String(pid.compute()) + " DA:" + String(motor.getDesiredAngle()) + " AA:" + String(getAbsoluteAngle()));
 
     // Check the dip switches
     checkDips();
@@ -259,37 +251,6 @@ void loop() {
     #else
         delay(50);
     #endif
-}
-
-
-// Overclocks the processor to the desired value
-void overclock(uint32_t PLLMultiplier) {
-
-    // Tune the HSI
-    //HSI_CalibrateMinError();
-
-    // Initialization structure
-    RCC_OscInitTypeDef RCC_OscInitStruct;
-
-    /* Enable HSE Oscillator and activate PLL with HSI as source */
-    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    RCC_OscInitStruct.HSEState = RCC_HSE_OFF;
-    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
-    RCC_OscInitStruct.PLL.PLLMUL = PLLMultiplier;
-    HAL_RCC_OscConfig(&RCC_OscInitStruct);
-
-    // Wait for the PLL to be configured
-    while(!(RCC_CR_PLLRDY & RCC -> CR))
-        ; // 
-
-    // Use the PLL as the system clock
-    RCC -> CFGR |= RCC_SYSCLKSOURCE_PLLCLK;
-
-    #ifdef CHECK_MCO_OUTPUT
-        HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
-    #endif	
 }
 
 

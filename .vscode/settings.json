@@ -20,7 +20,10 @@
         "algorithm": "cpp",
         "cstring": "cpp",
         "atomic": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "random": "cpp",
+        "iosfwd": "cpp",
+        "streambuf": "cpp"
     },
     "cSpell.words": [
         "CANID",

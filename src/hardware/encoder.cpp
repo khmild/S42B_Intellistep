@@ -30,6 +30,7 @@ MovingAverage <float> encoderTempAvg;
 // The startup angle and rev offsets
 double startupAngleOffset = 0;
 double startupAngleRevOffset = 0;
+double encoderStepOffset = 0;
 
 // A map of the known registers
 uint16_t regMap[MAX_NUM_REG];              //!< Register map */
@@ -309,7 +310,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
         txbuf[i] = 0xFF;
     }
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, dataLength * 2, 100);
-    
+
     // Write the received data into the array
     for (uint8_t i = 0; i < dataLength; i++) {
         data[i] = rxbuf[i * 2] << 8 | rxbuf[i * 2 + 1];
@@ -369,7 +370,7 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
 // Checks the encoder's response for any errors
 // Warning: this function cannot be interrupted, so make sure that it is called in a function that disables interrupts
 errorTypes checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uint16_t length) {
-	
+
     // A final accumulator for there was an error
     errorTypes error;
 
@@ -536,7 +537,7 @@ double getAngle(bool average) {
     rawData = (rawData & (DELETE_BIT_15));
 
     // Add the averaged value (equation from TLE5012 library)
-    double angle = ((360.0 / POW_2_15) * ((double) rawData)) - startupAngleOffset;
+    double angle = ((360.0 / POW_2_15) * ((double) rawData)) - (startupAngleOffset + encoderStepOffset);
     encoderAngleAvg.add(angle);
 
     // All important functions are done, re-enable interrupts
@@ -736,7 +737,7 @@ double getEncoderTemp() {
 
     // All important work is done
     enableInterrupts();
-    
+
     // Return the temperature
     return temp;
 }
@@ -751,7 +752,7 @@ double getAbsoluteRev() {
     // Create an accumulator for the raw data and converted data
     uint16_t rawData;
     int16_t convertedData;
-    
+
     // Loop continuously until there is no error
     while (readEncoderRegister(ENCODER_ANGLE_REV_REG, rawData) != NO_ERROR);
 
@@ -791,9 +792,15 @@ double getAbsoluteAngle() {
 }
 
 
+// Sets the encoder's step offset (used for calibration)
+void setEncoderStepOffset(double offset) {
+    encoderStepOffset = offset;
+}
+
+
 // Set encoder zero point
 void zeroEncoder() {
-    
+
     // This function cannot be interrupted
     disableInterrupts();
 

@@ -36,6 +36,9 @@ static uint8_t interruptBlockCount = 0;
     // Variable to store if the timer is enabled
     // Saves large amounts of cycles as the timer only has to be toggled on a change
     bool pidMoveTimerEnabled = false;
+
+    // Direction of movement for PID steps
+    STEP_DIR pidStepDirection = COUNTER_CLOCKWISE;
 #endif
 
 
@@ -49,11 +52,8 @@ void setupMotorTimers() {
 
     // Interupts are in order of importance as follows -
     // - 0 - step pin change
-    // - 1.0 - PID correctional movement
-    // - 1.1 - position correction (or PID interval update)
-
-    // Setup the step and stallfault pin
-    pinMode(STEP_PIN, INPUT_PULLDOWN);
+    // - 1.0 - position correction (or PID interval update)
+    // - 1.1 - PID correctional movement
 
     // Check if StallFault is enabled
     #ifdef ENABLE_STALLFAULT
@@ -67,14 +67,14 @@ void setupMotorTimers() {
         pinMode(LED_PIN, OUTPUT);
     #endif
 
-    // Attach the interupt to the step pin (subpriority is set in platformio config file)
+    // Attach the interupt to the step pin (subpriority is set in Platformio config file)
     // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004
     // the optocoupler inverts the signal. Therefore, the falling edge is the correct value.
     attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, FALLING); // input is pull-upped to VDD
 
     // Setup the timer for steps
     correctionTimer -> pause();
-    correctionTimer -> setInterruptPriority(1, 1);
+    correctionTimer -> setInterruptPriority(1, 0);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
     correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
     #ifndef CHECK_STEPPING_RATE
@@ -86,7 +86,7 @@ void setupMotorTimers() {
     // Setup the PID timer if it is enabled
     #ifdef ENABLE_PID
         pidMoveTimer -> pause();
-        pidMoveTimer -> setInterruptPriority(1, 0);
+        pidMoveTimer -> setInterruptPriority(1, 1);
         pidMoveTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         pidMoveTimer -> attachInterrupt(stepMotorNoDesiredAngle);
         pidMoveTimer -> refresh();
@@ -174,10 +174,12 @@ void stepMotor() {
 }
 
 
-// Just like the simple stepping function above, except it doesn't update the desired position
-void stepMotorNoDesiredAngle() {
-    motor.step(PIN, false, false);
-}
+#ifdef ENABLE_PID
+    // Just like the simple stepping function above, except it doesn't update the desired position
+    void stepMotorNoDesiredAngle() {
+        motor.step(pidStepDirection, false, false);
+    }
+#endif
 
 
 // Need to declare a function to power the motor coils for the step interrupt
@@ -213,38 +215,80 @@ void correctMotor() {
         // Check to make sure that the motor is in range (it hasn't skipped steps)
         if (abs(stepDeviation) > 1) {
 
-
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
 
+                // This can't be interrupted
+                disableInterrupts();
+
                 // Run the PID calcalations
-                double pidOutput = pid.compute();
+                int32_t pidOutput = round(pid.compute());
+                uint32_t stepFreq = abs(pidOutput); //(DEFAULT_PID_STEP_MAX - abs(pidOutput));
 
-                // Set the motor timer to call the stepping routine at specified time intervals
-                pidMoveTimer -> setOverflow((DEFAULT_PID_STEP_MAX - pidOutput), HERTZ_FORMAT);
+                // Check if the value is 0 (meaning that the timer needs disabled)
+                if (stepFreq == 0) {
 
-                // Enable the timer if it isn't already
-                if (!pidMoveTimerEnabled) {
-                    pidMoveTimer -> resume();
-                    pidMoveTimerEnabled = true;
+                    // Check if the timer needs disabled
+                    //if (pidMoveTimerEnabled) {
+                        pidMoveTimer -> pause();
+                        pidMoveTimerEnabled = false;
+                    //}
+                }
+                else {
+                    // Check if there's a movement threshold
+                    #if (DEFAULT_PID_DISABLE_THRESHOLD > 0)
+
+                        // Check to make sure that the movement threshold is exceeded, otherwise disable the motor
+                        if (stepFreq > DEFAULT_PID_DISABLE_THRESHOLD) {
+                            pidMoveTimer -> resume();
+                            pidMoveTimer -> setOverflow(stepFreq, HERTZ_FORMAT);
+                            motor.setState(ENABLED);
+                        }
+                        else {
+                            pidMoveTimer -> pause();
+                            motor.setState(DISABLED);
+                        }
+                    #else
+                        // Set the motor timer to call the stepping routine at specified time intervals
+                        pidMoveTimer -> setOverflow(stepFreq, HERTZ_FORMAT);
+                    #endif
+
+
+                    // Set the direction
+                    if (pidOutput > 0) {
+                        pidStepDirection = COUNTER_CLOCKWISE;
+                    }
+                    else {
+                        pidStepDirection = CLOCKWISE;
+                    }
+
+                    // Enable the timer if it isn't already
+                    //if (!pidMoveTimerEnabled) {
+                        pidMoveTimer -> resume();
+                        pidMoveTimerEnabled = true;
+                    //}
                 }
 
+                // All done, we can re-enable interrupts
+                enableInterrupts();
 
             #else // ! ENABLE_PID
                 // Just "dumb" correction based on direction
                 // Set the stepper to move in the correct direction
-                if (stepDeviation > 0) {
+                if (/*motor.getStepPhase() != */ true) {
+                    if (stepDeviation > 0) {
 
-                    // Motor is at a position larger than the desired one
-                    // Use the current angle to find the current step, then subtract 1
-                    motor.step(CLOCKWISE, false, false);
-                    //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) - 1));
-                }
-                else {
-                    // Motor is at a position smaller than the desired one
-                    // Use the current angle to find the current step, then add 1
-                    motor.step(COUNTER_CLOCKWISE, false, false);
-                    //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) + 1));
+                        // Motor is at a position larger than the desired one
+                        // Use the current angle to find the current step, then subtract 1
+                        motor.step(CLOCKWISE, false, false);
+                        //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) - (motor.getMicrostepping())));
+                    }
+                    else {
+                        // Motor is at a position smaller than the desired one
+                        // Use the current angle to find the current step, then add 1
+                        motor.step(COUNTER_CLOCKWISE, false, false);
+                        //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) + (motor.getMicrostepping())));
+                    }
                 }
             #endif // ! ENABLE_PID
 
@@ -290,10 +334,10 @@ void correctMotor() {
 
             // Disable the PID correction timer if PID is enabled
             #ifdef ENABLE_PID
-                if (pidMoveTimerEnabled) {
+                //if (pidMoveTimerEnabled) {
                     pidMoveTimer -> pause();
                     pidMoveTimerEnabled = false;
-                }
+                //}
             #endif
 
             // Only if StallFault is enabled

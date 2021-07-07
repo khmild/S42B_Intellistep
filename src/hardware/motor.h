@@ -17,6 +17,7 @@
 
 // Enumeration for coil states
 typedef enum {
+    COIL_NOT_SET,
     FORWARD,
     BACKWARD,
     BRAKE,
@@ -32,6 +33,7 @@ typedef enum {
 
 // Enumeration for the enable state of the motor
 typedef enum {
+    MOTOR_NOT_SET,
     ENABLED,
     DISABLED,
     FORCED_ENABLED,
@@ -59,6 +61,15 @@ class StepperMotor {
 
         // Returns the step deviation of the motor from the set position
         int32_t getStepError();
+
+        // Returns the current phase setting of the motor
+        int32_t getStepPhase();
+
+        // Returns the desired angle of the motor
+        float getDesiredAngle();
+
+        // Returns the desired step of the motor
+        int32_t getDesiredStep();
 
         // Dynamic current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -112,6 +123,9 @@ class StepperMotor {
         // Get the microstepping angle of the motor. This is the full steps divided by the microsteps.
         // Used to speed up processing
         float getMicrostepAngle() const;
+
+        // Get the microsteps per rotation of the motor
+        int32_t getMicrostepsPerRotation() const;
 
         // Set if the motor should be reversed
         void setReversed(bool reversed);
@@ -192,7 +206,7 @@ class StepperMotor {
             uint16_t dynamicMaxCurrent = DYNAMIC_MAX_CURRENT;
         #else
             // RMS Current (in mA)
-            uint16_t rmsCurrent = STATIC_RMS_CURRENT;
+            uint16_t rmsCurrent = (uint16_t)STATIC_RMS_CURRENT;
             // Peak Current (in mA)
             uint16_t peakCurrent = (rmsCurrent * 1.414);
         #endif
@@ -206,8 +220,11 @@ class StepperMotor {
         // Microstep angle (full step / microstepping divisor)
         float microstepAngle = 1.8;
 
+        // Microstep count in a full rotation
+        int32_t microstepsPerRotation = (360.0 / getFullStepAngle());
+
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
-        MOTOR_STATE state = DISABLED;
+        MOTOR_STATE state = MOTOR_NOT_SET;
 
         // reversed is a multiplier for steps and angles
         // 1 - If the motor direction is normal
@@ -218,15 +235,15 @@ class StepperMotor {
         bool enableInverted = false;
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
-        int microstepMultiplier = MICROSTEP_MULTIPLIER;
+        uint32_t microstepMultiplier = MICROSTEP_MULTIPLIER;
 
         // Analog info structures for PWM current pins
         analogInfo PWMCurrentPinInfoA;
         analogInfo PWMCurrentPinInfoB;
 
         // Last coil states (used to save time by not setting the pins unless necessary)
-        COIL_STATE previousCoilStateA = BRAKE;
-        COIL_STATE previousCoilStateB = BRAKE;
+        COIL_STATE previousCoilStateA = COIL_NOT_SET;
+        COIL_STATE previousCoilStateB = COIL_NOT_SET;
 };
 
 #endif

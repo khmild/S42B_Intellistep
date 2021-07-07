@@ -32,7 +32,7 @@ GCode Table
 - M93 (ex M93 V1.8 or M93) - Sets the angle of a full step. This value should be 1.8° or 0.9°. If no value is provided, then the current value will be returned.
 - M115 (ex M115) - Prints out firmware information, consisting of the version and any enabled features.
 - M116 (ex M116 S1 M"A message") - Simple forward command that will forward a message across the CAN bus. Can be used for pinging or allowing a Serial to connect to the CAN network
-- M306 (ex M306 P1 I1 D1 or M306) - Sets or gets the PID values for the motor. If no values are provided, then the current values will be returned.
+- M306 (ex M306 P1 I1 D1 W10 or M306) - Sets or gets the PID values for the motor. W term is the maximum value of the I windup. If no values are provided, then the current values will be returned.
 - M307 (ex M307) - Runs an autotune sequence for the PID loop
 - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
 - M350 (ex M350 V16 or M350) - Sets or gets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32. If no value is provided, then the current microstepping divisor will be returned.

@@ -1,29 +1,5 @@
 #include "flash.h"
 
-
-// Check if the stepper is calibrated
-bool isCalibrated() {
-
-    // Disable interrupts (CANNOT BE INTERRUPTED)
-    disableInterrupts();
-
-    // Unlock the flash for reading
-    HAL_FLASH_Unlock();
-
-    // Get the calibration flag
-    bool calibrationFlag = readFlashBool(CALIBRATED_INDEX);
-
-    // Lock the flash again
-    HAL_FLASH_Lock();
-
-    // Flash is locked again, no need to worry
-    enableInterrupts();
-
-    // Return if the unit is calibrated
-    return calibrationFlag;
-}
-
-
 // Raw read function. Reads raw bits into a set type
 uint16_t readFlashAddress(uint32_t address) {
 
@@ -119,7 +95,7 @@ void writeToFlashAddress(uint32_t address, uint16_t data) {
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
 
     // Write out the data
-    HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, data);
+    HAL_FLASH_Program_IT(FLASH_TYPEPROGRAM_HALFWORD, address, data);
 
     // Lock the flash (we finished writing)
     HAL_FLASH_Lock();
@@ -188,7 +164,7 @@ void eraseParameters() {
 
     // Unlock the flash
     HAL_FLASH_Unlock();
-    
+
     // Configure the erase type
     FLASH_EraseInitTypeDef eraseStruct;
     eraseStruct.TypeErase = FLASH_TYPEERASE_PAGES;
@@ -198,13 +174,19 @@ void eraseParameters() {
     // Erase the the entire page (all possible addresses for parameters to be stored)
     uint32_t pageError = 0;
     HAL_FLASHEx_Erase(&eraseStruct, &pageError);
-    
-    // Good to go, lock the flash again
+
+    // Good to go, lock the flash again (writeFlash has it's own locks and unlocks)
     HAL_FLASH_Lock();
+
+    // Write the major, minor, and patch numbers to flash
+    writeFlash(FLASH_CONTENTS_MAJOR_VERSION_INDEX, MAJOR_VERSION);
+    writeFlash(FLASH_CONTENTS_MINOR_VERSION_INDEX, MINOR_VERSION);
+    writeFlash(FLASH_CONTENTS_PATCH_VERSION_INDEX, PATCH_VERSION);
 
     // Enable interrupts
     enableInterrupts();
 }
+
 
 // Writes the currently saved parameters to flash memory for long term storage
 void saveParameters() {
@@ -279,6 +261,44 @@ void saveParameters() {
 }
 
 
+// Check if the stepper is calibrated
+bool isCalibrated() {
+
+    // Return if the unit is calibrated
+    return readFlashBool(CALIBRATED_INDEX) && checkVersionMatch();
+}
+
+
+// Reads the version number from flash
+// Returns true if the version matches, false if it doesn't
+bool checkVersionMatch() {
+
+    // Read the major version number
+    if (readFlashU16(FLASH_CONTENTS_MAJOR_VERSION_INDEX) != MAJOR_VERSION) {
+
+        // Major version doesn't match
+        return false;
+    }
+
+    // Read the minor version number
+    if (readFlashU16(FLASH_CONTENTS_MINOR_VERSION_INDEX) != MINOR_VERSION) {
+
+        // Minor version doesn't match
+        return false;
+    }
+
+    // Read the patch version number
+    if (readFlashU16(FLASH_CONTENTS_PATCH_VERSION_INDEX) != PATCH_VERSION) {
+
+        // Patch version doesn't match
+        return false;
+    }
+
+    // If we made it this far, return true
+    return true;
+}
+
+
 // Loads the saved parameters from flash and sets them
 String loadParameters() {
 
@@ -290,6 +310,14 @@ String loadParameters() {
 
     // Check to see if the data is valid
     if (readFlashBool(VALID_FLASH_CONTENTS)) {
+
+        // Check the version number
+        if (!checkVersionMatch()) {
+            return FLASH_LOAD_INVALID_VERSION;
+        }
+
+        // Load the calibration offset
+        setEncoderStepOffset(readFlashFloat(STEP_OFFSET_INDEX));
 
         // Set the motor current
         #ifdef ENABLE_DYNAMIC_CURRENT
