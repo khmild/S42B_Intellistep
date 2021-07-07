@@ -348,7 +348,7 @@ void StepperMotor::driveCoils(int32_t steps) {
     #ifdef ENABLE_DYNAMIC_CURRENT
 
         // Get the current acceleration
-        double angAccel = abs(getEncoderAccel());
+        double angAccel = abs(motor.encoder.getAccel());
 
         // Compute the coil power
         int16_t coilAPower = ((int16_t)(((angAccel * (this -> dynamicAccelCurrent)) + (this -> dynamicIdleCurrent)) * 1.414) * coilAPercent) >> SINE_POWER;
