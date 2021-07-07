@@ -53,7 +53,7 @@ void setup() {
     // Update the system clock with the new speed
     SystemCoreClockUpdate();
 
-    initDriverInputs();
+    initDriverInputPins();
 
     // Initialize the encoder
     initEncoder();
