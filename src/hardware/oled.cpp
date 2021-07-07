@@ -214,7 +214,7 @@ void displayMotorData() {
     #ifdef ENCODER_SPEED_ESTIMATION
 
     // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
-    if (micros() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL) {
+    if (motor.encoder.sampleTimeExceeded()) {
         snprintf(outBuffer, OB_SIZE, "RPM: % 06.2f", motor.getMotorRPM());
         writeOLEDString(0, 0, outBuffer, false);
     }
@@ -232,11 +232,11 @@ void displayMotorData() {
     writeOLEDString(0, LINE_HEIGHT, outBuffer, false);
 
     // Current angle of the motor
-    snprintf(outBuffer, OB_SIZE, "Deg: % 08.2f", getAbsoluteAngle());
+    snprintf(outBuffer, OB_SIZE, "Deg: % 08.2f", motor.encoder.getAbsoluteAngle());
     writeOLEDString(0, LINE_HEIGHT * 2, outBuffer, false);
 
     // Temp of the encoder (close to the motor temp)
-    snprintf(outBuffer, OB_SIZE, "Temp: %.1f C", getEncoderTemp());
+    snprintf(outBuffer, OB_SIZE, "Temp: %.1f C", motor.encoder.getTemp());
     writeOLEDString(0, LINE_HEIGHT * 3, outBuffer, true);
 }
 
@@ -368,11 +368,11 @@ void selectMenuItem() {
                     #ifndef ENABLE_DYNAMIC_CURRENT
                         motor.setRMSCurrent(rmsCurrentSetting % (uint16_t)MAX_RMS_BOARD_CURRENT);
                     #endif
-                    
+
                     // Exit the menu
                     menuDepth = MENU_RETURN_LEVEL;
                 }
-           
+
                 // We're done here, time to head out
                 break;
             }
@@ -394,11 +394,11 @@ void selectMenuItem() {
                 else {
                     // Set the value
                     motor.setMicrostepping(microstepSetting);
-                    
+
                     // Exit the menu
                     menuDepth = MENU_RETURN_LEVEL;
                 }
-                
+
                 // We're done here, time to head out
                 break;
             }
@@ -455,7 +455,7 @@ void selectMenuItem() {
                 }
         }
 
-        // Update the display with the new menu  
+        // Update the display with the new menu
         updateDisplay();
     }
 
@@ -564,7 +564,7 @@ void initOLED() {
 
     // Clear the state of pin A8 (pin states are 15, 14, 13, 12, 11, 10, 9, and 8 in groups of 4)
     GPIOA -> CRH &= 0b11111111111111111111111111110000;
-    
+
     // Set that pin A8 should be a general purpose output
     GPIOA -> CRH |= 0b0011;
 
@@ -738,7 +738,7 @@ void fillOLED(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, OLED_COLOR color, 
 
 // Writes a characer to the display
 void writeOLEDChar(uint8_t x, uint8_t y, uint8_t chr, uint8_t fontSize, OLED_COLOR color, bool updateScreen) {
-	
+
     // Create the variables to be used
     uint8_t pixelData;
 	uint8_t y0 = y;
@@ -787,7 +787,7 @@ void writeOLEDChar(uint8_t x, uint8_t y, uint8_t chr, uint8_t fontSize, OLED_COL
     if (updateScreen) {
         writeOLEDBuffer();
     }
-	
+
 }
 
 

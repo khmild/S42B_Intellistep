@@ -178,7 +178,8 @@ class StepperMotor {
         // Calibrates the encoder and PID loop
         void calibrate();
 
-
+        // Encoder object
+        Encoder encoder;
 
     // Things that shouldn't be accessed by the outside
     private:

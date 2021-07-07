@@ -95,7 +95,7 @@ void writeToFlashAddress(uint32_t address, uint16_t data) {
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
 
     // Write out the data
-    HAL_FLASH_Program_IT(FLASH_TYPEPROGRAM_HALFWORD, address, data);
+    HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, data);
 
     // Lock the flash (we finished writing)
     HAL_FLASH_Lock();
@@ -317,7 +317,7 @@ String loadParameters() {
         }
 
         // Load the calibration offset
-        setEncoderStepOffset(readFlashFloat(STEP_OFFSET_INDEX));
+        motor.encoder.setStepOffset(readFlashFloat(STEP_OFFSET_INDEX));
 
         // Set the motor current
         #ifdef ENABLE_DYNAMIC_CURRENT

@@ -255,36 +255,75 @@ enum BitFieldReg_t
     REG_T25O_RESERVED1,
 };
 
-// Variables
-extern uint32_t lastAngleSampleTime;
-extern double startupAngleOffset;
+// Encoder class
+class Encoder {
 
-// Functions
-void initEncoder();
+    public:
+        // Functions
+        // Constructor
+        Encoder();
 
-// Low level reading functions
-errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data);
-void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t data[]);
-uint16_t getBitField(BitField_t bitField);
+        // Low level reading functions
+        errorTypes readRegister(uint16_t registerAddress, uint16_t &data);
+        void readMultipleRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength);
+        uint16_t getBitField(BitField_t bitField);
 
-// Low level writing functions
-void writeToEncoderRegister(uint16_t registerAddress, uint16_t data);
-void setBitField(BitField_t bitfield, uint16_t bitFNewValue);
+        // Low level writing functions
+        void writeToRegister(uint16_t registerAddress, uint16_t data);
+        void setBitField(BitField_t bitfield, uint16_t bitFNewValue);
 
-// Error checking
-errorTypes checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uint16_t length);
-uint8_t calcCRC(uint8_t *data, uint8_t length);
-void resetSafety();
+        // Error checking
+        errorTypes checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uint16_t length);
+        uint8_t calcCRC(uint8_t *data, uint8_t length);
+        void resetSafety();
 
-// High level encoder functions
-double getAngle(bool average = true);
-double getEncoderSpeed();
-double getEncoderAccel();
-double getEncoderTemp();
-double getAbsoluteRev();
-double getAbsoluteAngle();
-void setEncoderStepOffset(double offset);
-void zeroEncoder();
+        // High level encoder functions
+        double getRawAngle(bool average = true);
+        double getAngle(bool average = true);
+        double getSpeed();
+        double getAccel();
+        double getTemp();
+        double getRawRev();
+        double getRev();
+        double getAbsoluteAngle();
+        void setStepOffset(double offset);
+        void zero();
+
+        // Encoder estimation
+        #ifdef ENCODER_SPEED_ESTIMATION
+
+            // Checks if the minimum sample time for the speed has been exceeded
+            bool sampleTimeExceeded();
+        #endif
+
+    private:
+        // Variables
+        uint32_t lastAngleSampleTime;
+        double lastEncoderAngle = 0;
+
+        // Moving average instances
+        MovingAverage <float> encoderSpeedAvg;
+        MovingAverage <float> encoderAccelAvg;
+        MovingAverage <float> encoderAngleAvg;
+        MovingAverage <float> encoderAbsoluteAngleAvg;
+        MovingAverage <float> encoderTempAvg;
+
+        // The startup angle and rev offsets
+        double startupAngleOffset = 0;
+        double startupRevOffset = 0;
+        double encoderStepOffset = 0;
+
+        // SPI init structure
+        SPI_HandleTypeDef spiConfig;
+
+        // Main initialization structure
+        GPIO_InitTypeDef GPIO_InitStructure;
+
+        // Storage for the last overtemp time
+        #ifdef ENABLE_OVERTEMP_PROTECTION
+            uint32_t lastOvertempTime = 0;
+        #endif
+};
 
 #endif
 

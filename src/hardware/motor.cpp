@@ -38,19 +38,19 @@ StepperMotor::StepperMotor() {
 float StepperMotor::getMotorRPM() {
 
     // Convert getEncoderSpeed() (in deg/s) to RPM
-    return (getEncoderSpeed() * 60 / 360);
+    return (encoder.getSpeed() * 60 / 360);
 }
 
 
 // Returns the angular deviation of the motor from the desired angle
 float StepperMotor::getAngleError() {
-    return (getAbsoluteAngle() - (this -> desiredAngle));
+    return (encoder.getAbsoluteAngle() - (this -> desiredAngle));
 }
 
 
 // Returns the step deviation of the motor from the desired step
 int32_t StepperMotor::getStepError() {
-    return (round(getAbsoluteAngle() / (this -> microstepAngle)) - (this -> desiredStep));
+    return (round(encoder.getAbsoluteAngle() / (this -> microstepAngle)) - (this -> desiredStep));
 }
 
 
@@ -525,10 +525,10 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(getAngle() - startupAngleOffset);
+                    driveCoilsAngle(encoder.getRawAngle());
 
                     // The motor's current angle needs corrected
-                    currentAngle = getAngle() - startupAngleOffset;
+                    currentAngle = encoder.getRawAngle();
                     this -> state = ENABLED;
                     break;
 
@@ -536,10 +536,10 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case FORCED_ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(getAngle() - startupAngleOffset);
+                    driveCoilsAngle(encoder.getRawAngle());
 
                     // The motor's current angle needs corrected
-                    currentAngle = getAngle() - startupAngleOffset;
+                    currentAngle = encoder.getRawAngle();
                     this -> state = FORCED_ENABLED;
                     break;
 
@@ -562,10 +562,10 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     case ENABLED:
 
                         // Drive the coils the current angle of the shaft (just locks the output in place)
-                        driveCoilsAngle(getAngle() - startupAngleOffset);
+                        driveCoilsAngle(encoder.getRawAngle());
 
                         // The motor's current angle needs corrected
-                        currentAngle = getAngle() - startupAngleOffset;
+                        currentAngle = encoder.getRawAngle();
                         this -> state = ENABLED;
                         break;
 
@@ -619,11 +619,11 @@ void StepperMotor::calibrate() {
     for (uint8_t readings = 0; readings < (ANGLE_AVG_READINGS * 2); readings++) {
 
         // Get the angle, then wait for 10ms to allow encoder to update
-        getAngle();
+        encoder.getRawAngle();
     }
 
     // Measure encoder offset
-    float stepOffset = getAngle();
+    float stepOffset = encoder.getRawAngle();
 
     // Add/subtract the full step angle till the rawStepOffset is within the range of a full step
     while (stepOffset < 0) {

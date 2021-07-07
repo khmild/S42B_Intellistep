@@ -50,11 +50,8 @@ void setup() {
         MCO_GPIO_Init();
     #endif
 
-    // Update the system clock with the new speed
-    SystemCoreClockUpdate();
-
-    // Initialize the encoder
-    initEncoder();
+    // Zero the encoder
+    motor.encoder.zero();
 
     // Setup the motor for use
     motor.setState(DISABLED, true);
@@ -149,7 +146,8 @@ void setup() {
             clearOLED();
             writeOLEDString(0, 0,               F("Use the"), false);
             writeOLEDString(0, LINE_HEIGHT * 1, F("select key"), false);
-            writeOLEDString(0, LINE_HEIGHT * 2, F("to calibrate"), true);
+            writeOLEDString(0, LINE_HEIGHT * 2, F("to calibrate"), false);
+            writeOLEDString(0, LINE_HEIGHT * 3, F("Requires power"), true);
         #endif
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)

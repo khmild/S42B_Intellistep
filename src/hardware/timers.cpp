@@ -4,6 +4,12 @@
 // Optimize for speed
 #pragma GCC optimize ("-Ofast")
 
+// Timer uses:
+// - TIM1 - Used to time correction calculations
+// - TIM2 - Used to time PID steps
+// - TIM3 - Used to generate PWM signal for motor
+// - TIM4 - Used to directly step the motor
+
 // Create a new timer instance
 HardwareTimer *correctionTimer = new HardwareTimer(TIM1);
 
@@ -46,7 +52,7 @@ static uint8_t interruptBlockCount = 0;
 #ifdef ENABLE_DIRECT_STEPPING
 
     // Main timer for scheduling steps
-    HardwareTimer *stepScheduleTimer = new HardwareTimer(TIM3);
+    HardwareTimer *stepScheduleTimer = new HardwareTimer(TIM4);
 
     // Direction of movement for direct steps
     STEP_DIR scheduledStepDir = COUNTER_CLOCKWISE;
@@ -397,6 +403,7 @@ void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
     // Configure the speed of the timer, then re-enable it
     stepScheduleTimer -> setOverflow(rate, HERTZ_FORMAT);
     stepScheduleTimer -> resume();
+    stepScheduleTimer -> refresh();
 }
 
 

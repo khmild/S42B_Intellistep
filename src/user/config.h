@@ -7,7 +7,7 @@
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)39
+#define PATCH_VERSION (uint16_t)40
 
 
 // --------------  Settings  --------------
@@ -109,7 +109,7 @@
 
 // PID settings
 // ! At this time this feature is still under development
-//#define ENABLE_PID
+#define ENABLE_PID
 #ifdef ENABLE_PID
 
     // Default P, I, and D terms
