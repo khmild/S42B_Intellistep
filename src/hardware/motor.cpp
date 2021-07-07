@@ -10,6 +10,11 @@
 // Main constructor
 StepperMotor::StepperMotor() {
 
+    // Setup step signal pins
+    pinMode(STEP_PIN, INPUT_PULLUP);
+    pinMode(ENABLE_PIN, INPUT);
+    pinMode(DIRECTION_PIN, INPUT);
+
     // Setup the pins as outputs
     pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
     pinMode(COIL_B_POWER_OUTPUT_PIN, OUTPUT);
