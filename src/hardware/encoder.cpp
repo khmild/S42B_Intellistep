@@ -200,7 +200,7 @@ void initEncoder() {
     }
 
     // Set the offsets
-    //startupAngleOffset = getAngle();
+    startupAngleOffset = getAngle();
     startupAngleRevOffset = getAbsoluteRev();
 
     // Set the correct starting values for the estimation if using estimation
@@ -310,7 +310,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
         txbuf[i] = 0xFF;
     }
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, dataLength * 2, 100);
-    
+
     // Write the received data into the array
     for (uint8_t i = 0; i < dataLength; i++) {
         data[i] = rxbuf[i * 2] << 8 | rxbuf[i * 2 + 1];
@@ -370,7 +370,7 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
 // Checks the encoder's response for any errors
 // Warning: this function cannot be interrupted, so make sure that it is called in a function that disables interrupts
 errorTypes checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uint16_t length) {
-	
+
     // A final accumulator for there was an error
     errorTypes error;
 
@@ -737,7 +737,7 @@ double getEncoderTemp() {
 
     // All important work is done
     enableInterrupts();
-    
+
     // Return the temperature
     return temp;
 }
@@ -752,7 +752,7 @@ double getAbsoluteRev() {
     // Create an accumulator for the raw data and converted data
     uint16_t rawData;
     int16_t convertedData;
-    
+
     // Loop continuously until there is no error
     while (readEncoderRegister(ENCODER_ANGLE_REV_REG, rawData) != NO_ERROR);
 
@@ -800,7 +800,7 @@ void setEncoderStepOffset(double offset) {
 
 // Set encoder zero point
 void zeroEncoder() {
-    
+
     // This function cannot be interrupted
     disableInterrupts();
 

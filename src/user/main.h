@@ -13,6 +13,4 @@ void loop();
 
 void blink();
 
-void initDriverInputPins();
-
 #endif
