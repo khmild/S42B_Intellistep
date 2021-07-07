@@ -53,6 +53,8 @@ void setup() {
     // Update the system clock with the new speed
     SystemCoreClockUpdate();
 
+    initDriverInputs();
+
     // Initialize the encoder
     initEncoder();
 
@@ -260,4 +262,10 @@ void blink() {
     delay(500);
     GPIO_WRITE(LED_PIN, LOW);
     delay(500);
+}
+
+void initDriverInputPins() {
+    pinMode(STEP_PIN, INPUT);
+    pinMode(ENABLE_PIN, INPUT);
+    pinMode(DIRECTION_PIN, INPUT);
 }

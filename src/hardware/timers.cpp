@@ -55,9 +55,6 @@ void setupMotorTimers() {
     // - 1.0 - position correction (or PID interval update)
     // - 1.1 - PID correctional movement
 
-    // Setup the step and stallfault pin
-    pinMode(STEP_PIN, INPUT_PULLDOWN);
-
     // Check if StallFault is enabled
     #ifdef ENABLE_STALLFAULT
 
