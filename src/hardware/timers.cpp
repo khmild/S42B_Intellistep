@@ -31,7 +31,7 @@ static uint8_t interruptBlockCount = 0;
     StepperPID pid = StepperPID();
 
     // Also create a timer that calls the motor stepping function based on the PID's output
-    HardwareTimer *pidMoveTimer = new HardwareTimer(TIM4);
+    HardwareTimer *pidMoveTimer = new HardwareTimer(TIM2);
 
     // Variable to store if the timer is enabled
     // Saves large amounts of cycles as the timer only has to be toggled on a change
@@ -41,6 +41,19 @@ static uint8_t interruptBlockCount = 0;
     STEP_DIR pidStepDirection = COUNTER_CLOCKWISE;
 #endif
 
+
+// Setup everything related to step scheduling
+#ifdef ENABLE_DIRECT_STEPPING
+
+    // Main timer for scheduling steps
+    HardwareTimer *stepScheduleTimer = new HardwareTimer(TIM3);
+
+    // Direction of movement for direct steps
+    STEP_DIR scheduledStepDir = COUNTER_CLOCKWISE;
+
+    // Remaining step count
+    int64_t remainingScheduledSteps = 0;
+#endif
 
 // Tiny little function, just gets the time that the current program has been running
 uint32_t sec() {
@@ -52,8 +65,9 @@ void setupMotorTimers() {
 
     // Interupts are in order of importance as follows -
     // - 0 - step pin change
-    // - 1.0 - position correction (or PID interval update)
-    // - 1.1 - PID correctional movement
+    // - 1.0 - scheduled steps (if ENABLE_DIRECT_STEPPING)
+    // - 1.1 - position correction (or PID interval update)
+    // - 1.2 - PID correctional movement
 
     // Check if StallFault is enabled
     #ifdef ENABLE_STALLFAULT
@@ -62,9 +76,6 @@ void setupMotorTimers() {
         #ifdef STALLFAULT_PIN
             //pinMode(STALLFAULT_PIN, OUTPUT);
         #endif
-
-        // Reset the LED pin
-        pinMode(LED_PIN, OUTPUT);
     #endif
 
     // Attach the interupt to the step pin (subpriority is set in Platformio config file)
@@ -74,7 +85,7 @@ void setupMotorTimers() {
 
     // Setup the timer for steps
     correctionTimer -> pause();
-    correctionTimer -> setInterruptPriority(1, 0);
+    correctionTimer -> setInterruptPriority(1, 1);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
     correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
     #ifndef CHECK_STEPPING_RATE
@@ -86,11 +97,21 @@ void setupMotorTimers() {
     // Setup the PID timer if it is enabled
     #ifdef ENABLE_PID
         pidMoveTimer -> pause();
-        pidMoveTimer -> setInterruptPriority(1, 1);
+        pidMoveTimer -> setInterruptPriority(1, 2);
         pidMoveTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         pidMoveTimer -> attachInterrupt(stepMotorNoDesiredAngle);
         pidMoveTimer -> refresh();
         // Don't resume the timer here, it will be resumed when needed
+    #endif
+
+    // Setup step schedule timer if it is enabled
+    #ifdef ENABLE_DIRECT_STEPPING
+        stepScheduleTimer -> pause();
+        stepScheduleTimer -> setInterruptPriority(1, 0);
+        stepScheduleTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
+        stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
+        stepScheduleTimer -> refresh();
+        // Don't re-enable the motor, that will be done when the steps are scheduled
     #endif
 }
 
@@ -362,3 +383,35 @@ void correctMotor() {
 
     }
 }
+
+
+// Direct stepping
+#ifdef ENABLE_DIRECT_STEPPING
+// Configure a specific number of steps to execute at a set rate (rate is in Hz)
+void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
+
+    // Set the count and step direction
+    remainingScheduledSteps = abs(count);
+    scheduledStepDir = stepDir;
+
+    // Configure the speed of the timer, then re-enable it
+    stepScheduleTimer -> setOverflow(rate, HERTZ_FORMAT);
+    stepScheduleTimer -> resume();
+}
+
+
+// Handles a step schedule event
+void stepScheduleHandler() {
+
+    // Increment the motor in the correct direction
+    motor.step(scheduledStepDir);
+
+    // Increment the counter down (we completed a step)
+    remainingScheduledSteps--;
+
+    // Disable the timer if there are no remaining steps
+    if (remainingScheduledSteps <= 0) {
+        stepScheduleTimer -> pause();
+    }
+}
+#endif // ! ENABLE_DIRECT_STEPPING

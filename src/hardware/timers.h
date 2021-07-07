@@ -47,4 +47,13 @@ void stepMotorNoDesiredAngle();
 // Function to correct motor position if it is out of place
 void correctMotor();
 
-#endif
+// Direct stepping
+#ifdef ENABLE_DIRECT_STEPPING
+// Schedule steps for the motor to execute (rate is in Hz)
+void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir);
+
+// Step schedule handler (runs when the interrupt is triggered)
+void stepScheduleHandler();
+#endif // ! ENABLE_DIRECT_STEPPING
+
+#endif // ! __TIMERS_H__

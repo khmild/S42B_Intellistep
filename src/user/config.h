@@ -7,7 +7,7 @@
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)38
+#define PATCH_VERSION (uint16_t)39
 
 
 // --------------  Settings  --------------
@@ -128,6 +128,14 @@
 
     // PID output that the motor should disable at (set to 0 to never disable motor)
     #define DEFAULT_PID_DISABLE_THRESHOLD 0 //1000
+#endif
+
+// Direct step functionality (used to command motor to move over Serial/CAN)
+#define ENABLE_DIRECT_STEPPING
+#ifdef ENABLE_DIRECT_STEPPING
+
+    // The default stepping rate (in Hz) to move in the event that no parameter is specified
+    #define DEFAULT_STEPPING_RATE 1000
 #endif
 
 // Motor settings

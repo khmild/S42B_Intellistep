@@ -10,10 +10,8 @@ SPI_HandleTypeDef spiConfig;
 GPIO_InitTypeDef GPIO_InitStructure;
 
 // A storage for the last angle sampled
-#ifdef ENCODER_SPEED_ESTIMATION
-    double lastEncoderAngle = 0;
-    uint32_t lastAngleSampleTime = 0;
-#endif
+double lastEncoderAngle = 0;
+uint32_t lastAngleSampleTime = 0;
 
 // Storage for the last overtemp time
 #ifdef ENABLE_OVERTEMP_PROTECTION
