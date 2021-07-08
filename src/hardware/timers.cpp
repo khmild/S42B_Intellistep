@@ -70,10 +70,10 @@ uint32_t sec() {
 void setupMotorTimers() {
 
     // Interupts are in order of importance as follows -
-    // - 0 - step pin change
-    // - 1.0 - scheduled steps (if ENABLE_DIRECT_STEPPING)
-    // - 1.1 - position correction (or PID interval update)
-    // - 1.2 - PID correctional movement
+    // - 6 - step pin change
+    // - 7.0 - scheduled steps (if ENABLE_DIRECT_STEPPING)
+    // - 7.1 - position correction (or PID interval update)
+    // - 7.2 - PID correctional movement
 
     // Check if StallFault is enabled
     #ifdef ENABLE_STALLFAULT
@@ -91,7 +91,7 @@ void setupMotorTimers() {
 
     // Setup the timer for steps
     correctionTimer -> pause();
-    correctionTimer -> setInterruptPriority(1, 1);
+    correctionTimer -> setInterruptPriority(7, 1);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
     correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
     #ifndef CHECK_STEPPING_RATE
@@ -103,7 +103,7 @@ void setupMotorTimers() {
     // Setup the PID timer if it is enabled
     #ifdef ENABLE_PID
         pidMoveTimer -> pause();
-        pidMoveTimer -> setInterruptPriority(1, 2);
+        pidMoveTimer -> setInterruptPriority(7, 2);
         pidMoveTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         pidMoveTimer -> attachInterrupt(stepMotorNoDesiredAngle);
         pidMoveTimer -> refresh();
@@ -114,7 +114,7 @@ void setupMotorTimers() {
     // Setup step schedule timer if it is enabled
     #ifdef ENABLE_DIRECT_STEPPING
         stepScheduleTimer -> pause();
-        stepScheduleTimer -> setInterruptPriority(1, 0);
+        stepScheduleTimer -> setInterruptPriority(7, 0);
         stepScheduleTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
         stepScheduleTimer -> refresh();

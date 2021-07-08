@@ -7,7 +7,7 @@
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)41
+#define PATCH_VERSION (uint16_t)42
 
 
 // --------------  Settings  --------------
@@ -195,7 +195,6 @@
 // The compare format and maximum value for PWM (lower values = higher max freq)
 #define PWM_COMPARE_FORMAT RESOLUTION_9B_COMPARE_FORMAT
 #define PWM_MAX_VALUE (pow(2, (uint8_t)PWM_COMPARE_FORMAT) - 1)
-
 
 // --------------  Pins  --------------
 /*
