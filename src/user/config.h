@@ -193,7 +193,7 @@
 #define SYSCLK_SRC_HSE_8
 
 // The compare format and maximum value for PWM (lower values = higher max freq)
-#define PWM_COMPARE_FORMAT RESOLUTION_12B_COMPARE_FORMAT
+#define PWM_COMPARE_FORMAT RESOLUTION_9B_COMPARE_FORMAT
 #define PWM_MAX_VALUE (pow(2, (uint8_t)PWM_COMPARE_FORMAT) - 1)
 
 
