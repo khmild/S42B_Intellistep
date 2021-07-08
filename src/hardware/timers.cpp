@@ -87,7 +87,7 @@ void setupMotorTimers() {
     // Attach the interupt to the step pin (subpriority is set in Platformio config file)
     // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004
     // the optocoupler inverts the signal. Therefore, the falling edge is the correct value.
-    attachInterrupt(digitalPinToInterrupt(STEP_PIN), stepMotor, FALLING); // input is pull-upped to VDD
+    attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
 
     // Setup the timer for steps
     correctionTimer -> pause();
@@ -118,6 +118,48 @@ void setupMotorTimers() {
         stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
         stepScheduleTimer -> refresh();
         // Don't re-enable the motor, that will be done when the steps are scheduled
+    #endif
+}
+
+
+// Disables all of the motor timers (in case the motor cannot be messed with)
+void disableMotorTimers() {
+
+    // Detach the step interrupt
+    detachInterrupt(STEP_PIN);
+
+    // Disable the correctional timer
+    correctionTimer -> pause();
+
+    // Disable the PID move timer if PID is enabled
+    #ifdef ENABLE_PID
+        pidMoveTimer -> pause();
+    #endif
+
+    // Disable the direct stepping timer if it is enabled
+    #ifdef ENABLE_DIRECT_STEPPING
+        stepScheduleTimer -> pause();
+    #endif
+}
+
+
+// Enable all of the motor timers
+void enableMotorTimers() {
+
+    // Attach the step interrupt
+    attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
+
+    // Enable the correctional timer
+    correctionTimer -> resume();
+
+    // Enable the PID move timer if PID is enabled
+    #ifdef ENABLE_PID
+        //pidMoveTimer -> resume();
+    #endif
+
+    // Enable the direct stepping timer if it is enabled
+    #ifdef ENABLE_DIRECT_STEPPING
+        stepScheduleTimer -> resume();
     #endif
 }
 
@@ -205,6 +247,41 @@ void stepMotor() {
     // Just like the simple stepping function above, except it doesn't update the desired position
     void stepMotorNoDesiredAngle() {
         motor.step(pidStepDirection, false, false);
+
+        /*
+        // FOC based correction
+        if (pidStepDirection == COUNTER_CLOCKWISE) {
+            motor.driveCoilsAngle(motor.encoder.getRawAngle() - motor.getMicrostepAngle() - motor.getFullStepAngle());
+        }
+        else if (pidStepDirection == CLOCKWISE) {
+            motor.driveCoilsAngle(motor.encoder.getRawAngle() + motor.getMicrostepAngle() - motor.getFullStepAngle());
+        }
+        */
+
+
+        /*
+        // Main angle change (any inversions * angle of microstep)
+        float angleChange = motor.getMicrostepAngle();
+        int32_t stepChange = 1;
+
+        //else if (dir == COUNTER_CLOCKWISE) {
+            // Nothing to do here, the value is already positive
+        //}
+        if (pidStepDirection == CLOCKWISE) {
+            // Make the angle change in the negative direction
+            angleChange *= -1;
+        }
+
+        // Fix the step change's sign
+        stepChange *= getSign(angleChange);
+
+        // Motor's current angle must always be updated to correctly move the coils
+        this -> currentAngle += angleChange;
+        this -> currentStep += stepChange; // Only moving one step in the specified direction
+
+        // Drive the coils to their destination
+        motor.driveCoils(currentStep);
+        */
     }
 #endif
 
@@ -244,9 +321,6 @@ void correctMotor() {
 
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
-
-                // This can't be interrupted
-                disableInterrupts();
 
                 // Run the PID calcalations
                 int32_t pidOutput = round(pid.compute());
@@ -295,9 +369,6 @@ void correctMotor() {
                         pidMoveTimerEnabled = true;
                     //}
                 }
-
-                // All done, we can re-enable interrupts
-                enableInterrupts();
 
             #else // ! ENABLE_PID
                 // Just "dumb" correction based on direction

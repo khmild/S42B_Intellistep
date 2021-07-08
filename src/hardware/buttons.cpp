@@ -117,9 +117,6 @@ bool checkButtonState(PinName buttonPin) {
 // Function for reading the microstepping set via the dip switches
 void readDipMicrostepping() {
 
-    // Disable interrupts during the check, it cannot be interrupted
-    disableInterrupts();
-
     // Check if the dip switches are inverted
     if (dipInverted) {
 
@@ -169,9 +166,6 @@ void readDipMicrostepping() {
 
     // Update the timer based on the new microstepping
     updateCorrectionTimer();
-
-    // All work is done, we can re-enable interrupts
-    enableInterrupts();
 }
 
 

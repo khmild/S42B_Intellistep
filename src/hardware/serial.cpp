@@ -26,9 +26,6 @@ void sendSerialMessage(String message) {
 // Reads the string in the buffer
 String readSerialBuffer() {
 
-    // Disable interrupts, they can't interfere with the processing
-    disableInterrupts();
-
     // Local variables for storing relevant information
     String receivedString;
     char readChar;
@@ -52,27 +49,16 @@ String readSerialBuffer() {
                     receivedString.concat(readChar);
                 }
                 else {
-                    // Re-enable the interrupts before exiting
-                    enableInterrupts();
 
                     // End character reached, terminate the string and return
                     return receivedString;
                 }
 
-                // Reenable interrupts while waiting for the next character
-                enableInterrupts();
-
                 // Delay to allow next serial character to come in (1 second / time to send 1 character) (baud rate is bits/s, a character is 8 bits)
                 delay(1000/(SERIAL_BAUD/8));
-
-                // Disable them again, we need to move on to the next character and can't be interrupted
-                disableInterrupts();
             }
         }
     }
-
-    // Re-enable interrupts before exiting
-    enableInterrupts();
 
     // If we made it this far, the read failed and we should return a -1 (will be ignored)
     return "-1";

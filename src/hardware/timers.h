@@ -23,6 +23,12 @@ uint32_t sec();
 // Sets up the motor timers and interrupts
 void setupMotorTimers();
 
+// Disables all motor timers (used when the motor cannot be messed with)
+void disableMotorTimers();
+
+// Enables the motor timers (used to reset the motor after the timers have been disabled)
+void enableMotorTimers();
+
 // Pauses the timers, temporarily disabling them
 void disableInterrupts();
 

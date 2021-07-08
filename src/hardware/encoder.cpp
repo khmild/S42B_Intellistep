@@ -190,8 +190,8 @@ Encoder::Encoder() {
 // Read the value of a register
 errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
-    // This cannot be interrupted
-    disableInterrupts();
+    // Disable interrupts
+    disableMotorTimers();
 
     // Create an accumulator for error checking
     errorTypes error = NO_ERROR;
@@ -209,7 +209,7 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     uint8_t txbuf[2] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
 
     // Send address we want to read, response seems to be equal to request
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx1buf, 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx1buf, 2, 10);
 
     // Set the MOSI pin to open drain
     GPIO_InitStructure.Pin = GPIO_PIN_7;
@@ -218,7 +218,7 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx2buf, 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx2buf, 2, 10);
 
     // Combine the first rxbuf into a single, unsigned 16 bit value
     //uint16_t combinedRX1Buf = (rx1buf[0] << 8 | rx1buf[1]);
@@ -245,8 +245,8 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
         data = 0;
     }
 
-    // All important work is done, we're good to re-enable interrupts
-    enableInterrupts();
+    // All done, we can re-enable interrupts
+    enableMotorTimers();
 
     // Return error
     return error;
@@ -255,9 +255,6 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
 // Read multiple registers
 void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength) {
-
-    // This cannot be interrupted
-    disableInterrupts();
 
     // Pull CS low to select encoder
     GPIO_WRITE(ENCODER_CS_PIN, LOW);
@@ -268,7 +265,7 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
     uint8_t rxbuf[dataLength * 2];
 
     // Send address we want to read, response seems to be equal to request
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
 
     // Set the MOSI pin to open drain
     GPIO_InitStructure.Pin = GPIO_PIN_7;
@@ -280,7 +277,7 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
     for (uint8_t i = 0; i < dataLength * 2; i++) {
         txbuf[i] = 0xFF;
     }
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, dataLength * 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, dataLength * 2, 10);
 
     // Write the received data into the array
     for (uint8_t i = 0; i < dataLength; i++) {
@@ -293,9 +290,6 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
-
-    // All done, good to re-enable interrupts
-    enableInterrupts();
 }
 
 
@@ -303,8 +297,8 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
 // ! Untested
 void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
 
-    // This cannot be interrupted
-    disableInterrupts();
+    // Disable the motor timers
+    disableMotorTimers();
 
     // Pull CS low to select encoder
     GPIO_WRITE(ENCODER_CS_PIN, LOW);
@@ -333,8 +327,8 @@ void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
-    // All work is done, re-enable the interrupts
-    enableInterrupts();
+    // Re-enable the motor timers
+    enableMotorTimers();
 }
 
 
@@ -430,6 +424,9 @@ uint8_t Encoder::calcCRC(uint8_t *data, uint8_t length) {
 // Warning: this function cannot be interrupted, so make sure that it is called in a function that disables interrupts
 void Encoder::resetSafety() {
 
+    // Disable the motor timers
+    disableMotorTimers();
+
     // Build the command
 	uint16_t command = ENCODER_READ_COMMAND + SAFE_HIGH;
 
@@ -446,14 +443,14 @@ void Encoder::resetSafety() {
     // TX/RX twice, just reading the response (response doesn't matter)
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
+
+    // Re-enable the motor timers
+    enableMotorTimers();
 }
 
 
 // Get a bit field from a register
 uint16_t Encoder::getBitField(BitField_t bitField) {
-
-    // This cannot be interrupted
-    disableInterrupts();
 
     // Check to make sure that the value can be read
 	if ((REG_ACCESS_R & bitField.regAccess) == REG_ACCESS_R) {
@@ -467,9 +464,6 @@ uint16_t Encoder::getBitField(BitField_t bitField) {
         }
     }
 
-    // All important work is done, re-enable interrupts
-    enableInterrupts();
-
     // Not able to read that address, just return a -1
     return -1;
 }
@@ -478,25 +472,16 @@ uint16_t Encoder::getBitField(BitField_t bitField) {
 // Write out a bit field to the register
 void Encoder::setBitField(BitField_t bitField, uint16_t bitFNewValue) {
 
-    // This is important, it should not be interrupted
-    disableInterrupts();
-
     // Write the correct value
 	if ((REG_ACCESS_W & bitField.regAccess) == REG_ACCESS_W) {
 		regMap[bitField.posMap] = (regMap[bitField.posMap] & ~bitField.mask) | ((bitFNewValue << bitField.position) & bitField.mask);
 		writeToRegister(addrFields[bitField.posMap].regAddress, regMap[bitField.posMap]);
 	}
-
-    // Re-enable interrupts
-    enableInterrupts();
 }
 
 
 // Reads the raw value from the angle of the encoder (unadjusted)
 double Encoder::getRawAngle(bool average) {
-
-    // Disable interrupts
-    disableInterrupts();
 
     // Create an accumulator for the raw data
     uint16_t rawData;
@@ -510,9 +495,6 @@ double Encoder::getRawAngle(bool average) {
     // Add the averaged value (equation from TLE5012 library)
     double angle = ((360.0 / POW_2_15) * (double)rawData) - encoderStepOffset;
     encoderAngleAvg.add(angle);
-
-    // All important functions are done, re-enable interrupts
-    enableInterrupts();
 
     // Return the average if desired, otherwise just the raw angle
     if (average) {
@@ -535,9 +517,6 @@ double Encoder::getAngle(bool average) {
 // ! Needs fixed yet, readings are off
 double Encoder::getSpeed() {
 
-    // This function cannot suffer being interrupted, disable the interrupts
-    disableInterrupts();
-
     // Get the newest angle
     double newAngle = getAbsoluteAngle();
 
@@ -554,9 +533,6 @@ double Encoder::getSpeed() {
     // Add the value to the averaging list
     encoderSpeedAvg.add(avgVelocity);
 
-    // All important tasks are done, re-enable the interrupts
-    enableInterrupts();
-
     // Return the averaged velocity
     return encoderSpeedAvg.get();
 }
@@ -572,9 +548,6 @@ bool Encoder::sampleTimeExceeded() {
 
 // Reads the speed of the encoder in deg/s
 double Encoder::getSpeed() {
-
-    // This function cannot be interrupted
-    disableInterrupts();
 
     // Prepare the variables to store data in
 	uint16_t rawData[4];
@@ -617,9 +590,6 @@ double Encoder::getSpeed() {
     // Calculate and average angle speed in degree per second
 	encoderSpeedAvg.add(((360.0 / POW_2_15) * rawSpeed) / (2.0 * firMDVal * 0.000001));
 
-    // All done, re-enable the interrupts
-    enableInterrupts();
-
     // Return the result
     return encoderSpeedAvg.get();
 }
@@ -629,9 +599,6 @@ double Encoder::getSpeed() {
 
 // Calculates the angular acceleration. Done by looking at position over time^2
 double Encoder::getAccel() {
-
-    // This cannot be interrupted
-    disableInterrupts();
 
     // Get the newest angle
     double newAngle = getAbsoluteAngle();
@@ -649,18 +616,12 @@ double Encoder::getAccel() {
     // Add the value to the averaging list
     encoderAccelAvg.add(avgAccel);
 
-    // All important work is done, time to re-enable interrupts
-    enableInterrupts();
-
     // Return the averaged velocity
     return encoderAccelAvg.get();
 }
 
 // Reads the temperature of the encoder
 double Encoder::getTemp() {
-
-    // This function cannot be interrupted
-    disableInterrupts();
 
     // Create an accumulator for the raw data
     uint16_t rawData;
@@ -718,9 +679,6 @@ double Encoder::getTemp() {
 
     #endif // ENABLE_OVERTEMP_PROTECTION
 
-    // All important work is done
-    enableInterrupts();
-
     // Return the temperature
     return temp;
 }
@@ -728,9 +686,6 @@ double Encoder::getTemp() {
 
 // Gets the raw revolutions from the motor
 double Encoder::getRawRev() {
-
-    // This cannot be interrupted
-    disableInterrupts();
 
     // Create an accumulator for the raw data and converted data
     uint16_t rawData;
@@ -750,9 +705,6 @@ double Encoder::getRawRev() {
         convertedData -= 512;
     }
 
-    // All important work is done
-    enableInterrupts();
-
     // Return the angle measurement
     return ((double)convertedData);
 }
@@ -767,14 +719,8 @@ double Encoder::getRev() {
 // Gets the absolute angle of the motor
 double Encoder::getAbsoluteAngle() {
 
-    // Anything with averaging needs interrupts disabled (so it isn't interfered with)
-    disableInterrupts();
-
     // Perform actual averaging
     encoderAbsoluteAngleAvg.add((getRev() * 360) + getAngle(false));
-
-    // Re-enable interrupts
-    enableInterrupts();
 
     // Return the average
     return encoderAbsoluteAngleAvg.get();
@@ -790,13 +736,7 @@ void Encoder::setStepOffset(double offset) {
 // Set encoder zero point
 void Encoder::zero() {
 
-    // This function cannot be interrupted
-    disableInterrupts();
-
     // Fix offsets
     startupAngleOffset = getRawAngle();
     startupRevOffset = getRawRev();
-
-    // All work is done, re-enable interrupts
-    enableInterrupts();
 }

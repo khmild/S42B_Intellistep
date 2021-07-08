@@ -118,9 +118,6 @@ String parseCommand(String buffer) {
             case 308:
                 // M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
 
-                // Disable interrupts (so value printing is never stopped)
-                disableInterrupts();
-
                 // Print a notice to the user that the PID tuning is starting
                 Serial.println("Notice: The manual PID tuning is now starting. To exit, send any serial data.");
 
@@ -136,9 +133,6 @@ String parseCommand(String buffer) {
                 while (!(Serial.available() > 0)) {
                     Serial.println(motor.encoder.getAbsoluteAngle());
                 }
-
-                // Re-enable interrupts
-                enableInterrupts();
 
                 // When all done, the exit is acknowledged
                 return FEEDBACK_OK;

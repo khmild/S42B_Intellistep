@@ -605,14 +605,14 @@ void StepperMotor::calibrate() {
     // Wait for the user to take their hands away
     delay(3000);
 
-    // Disable all interrupts (the motor needs to be left alone during calibration)
-    disableInterrupts();
+    // Disable the motor timers (the motor needs to be left alone during calibration)
+    disableMotorTimers();
 
     // Set the coils of the motor to move to step 0 (meaning the separation between full steps)
     driveCoils(0);
 
     // Delay three seconds, giving the motor time to settle
-    //delay(3000);
+    delay(3000);
 
     // Force the encoder to be read a couple of times, wiping the previous position out of the average
     // (this reading needs to be as precise as possible)

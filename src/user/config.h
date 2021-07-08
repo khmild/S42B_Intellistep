@@ -7,7 +7,7 @@
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)40
+#define PATCH_VERSION (uint16_t)41
 
 
 // --------------  Settings  --------------
@@ -141,7 +141,7 @@
 // Motor settings
 // The number of microsteps to move per step pulse
 // Doesn't affect correctional movements
-#define MICROSTEP_MULTIPLIER    (uint32_t)2
+#define MICROSTEP_MULTIPLIER    (uint32_t)1
 
 // The min/max microstepping divisors
 // Microstepping divisors are the numbers underneath the fraction of the microstepping
