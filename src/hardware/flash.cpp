@@ -86,7 +86,7 @@ float readFlashFloat(uint32_t parameterIndex) {
 void writeToFlashAddress(uint32_t address, uint16_t data) {
 
     // Disable the motor timers
-    disableMotorTimers();
+    disableInterrupts();
 
     // Unlock the flash for writing
     HAL_FLASH_Unlock();
@@ -101,7 +101,7 @@ void writeToFlashAddress(uint32_t address, uint16_t data) {
     HAL_FLASH_Lock();
 
     // Enable the motor timers
-    enableMotorTimers();
+    enableInterrupts();
 }
 
 
@@ -160,7 +160,7 @@ void writeFlash(uint32_t parameterIndex, float data) {
 void eraseParameters() {
 
     // Disable the motor timers
-    disableMotorTimers();
+    disableInterrupts();
 
     // Unlock the flash
     HAL_FLASH_Unlock();
@@ -184,7 +184,7 @@ void eraseParameters() {
     writeFlash(FLASH_CONTENTS_PATCH_VERSION_INDEX, PATCH_VERSION);
 
     // Re-enable the motor timers
-    setupMotorTimers();
+    enableInterrupts();
 }
 
 

@@ -191,7 +191,7 @@ Encoder::Encoder() {
 errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
     // Disable interrupts
-    disableMotorTimers();
+    disableInterrupts();
 
     // Create an accumulator for error checking
     errorTypes error = NO_ERROR;
@@ -246,7 +246,7 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     }
 
     // All done, we can re-enable interrupts
-    enableMotorTimers();
+    enableInterrupts();
 
     // Return error
     return error;
@@ -298,7 +298,7 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
 void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
 
     // Disable the motor timers
-    disableMotorTimers();
+    disableInterrupts();
 
     // Pull CS low to select encoder
     GPIO_WRITE(ENCODER_CS_PIN, LOW);
@@ -328,7 +328,7 @@ void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
     // Re-enable the motor timers
-    enableMotorTimers();
+    enableInterrupts();
 }
 
 
@@ -425,7 +425,7 @@ uint8_t Encoder::calcCRC(uint8_t *data, uint8_t length) {
 void Encoder::resetSafety() {
 
     // Disable the motor timers
-    disableMotorTimers();
+    disableInterrupts();
 
     // Build the command
 	uint16_t command = ENCODER_READ_COMMAND + SAFE_HIGH;
@@ -445,7 +445,7 @@ void Encoder::resetSafety() {
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
 
     // Re-enable the motor timers
-    enableMotorTimers();
+    enableInterrupts();
 }
 
 
