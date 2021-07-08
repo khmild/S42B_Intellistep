@@ -15,11 +15,11 @@ New Features:
 - Redone stepping for higher torque and quieter operation
 - Redone serial commands (based on gcode)
 - Temperature readout on the display
-- CAN subnetwork for driver configuration
+- Motor and driver overtemp current reduction
 
 Future Features:
 
-- Motor and driver overtemp current reduction
+- CAN subnetwork for driver configuration
 - Dynamic current control based on speed and acceleration
 - Manual tuning utility for manual PID tuning
 - Much better stepper calibration

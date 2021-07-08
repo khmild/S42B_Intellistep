@@ -131,7 +131,7 @@
 #endif
 
 // Direct step functionality (used to command motor to move over Serial/CAN)
-#define ENABLE_DIRECT_STEPPING
+//#define ENABLE_DIRECT_STEPPING
 #ifdef ENABLE_DIRECT_STEPPING
 
     // The default stepping rate (in Hz) to move in the event that no parameter is specified
@@ -149,7 +149,9 @@
 #define MIN_MICROSTEP_DIVISOR   (uint8_t)1
 #define MAX_MICROSTEP_DIVISOR   (uint8_t)32
 
-#define MOTOR_PWM_FREQ          (uint32_t)30000 // in Hz
+#define MOTOR_PWM_FREQ          (uint32_t)140000 // in Hz
+// Note: The measured internal PWM frequency of the A4950 is 22.5 kHz.
+// Noise is a design feature when the A4950 drives a stepper motor. :(
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
 // Stallfault
@@ -183,6 +185,10 @@
 // Can be set to 64 with SYSCLK_SRC_HSI (internal oscillator)
 #define SYSCLK_FREQ 128
 #define SYSCLK_SRC_HSE_8
+
+// The compare format and maximum value for PWM (lower values = higher max freq)
+#define PWM_COMPARE_FORMAT RESOLUTION_12B_COMPARE_FORMAT
+#define PWM_MAX_VALUE (pow(2, (uint8_t)PWM_COMPARE_FORMAT) - 1)
 
 
 // --------------  Pins  --------------
