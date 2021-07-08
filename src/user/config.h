@@ -155,7 +155,7 @@
 // 62000 in fact 69.8kHz and 10bit resolution
 // Tested: higher resolution causes more noise when the motor is stopped after moving.
 //
-// Note: The measured internal PWM frequency of the A4950 is 22.5 kHz.
+// Note: The measured internal PWM frequency of the A4950(Pins 7, 2 and 3) is 22.5 kHz.
 // Noise is a design feature when the A4950 drives a stepper motor. :(
 
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
