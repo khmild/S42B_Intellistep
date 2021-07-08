@@ -149,7 +149,7 @@
 #define MIN_MICROSTEP_DIVISOR   (uint8_t)1
 #define MAX_MICROSTEP_DIVISOR   (uint8_t)32
 
-#define MOTOR_PWM_FREQ          (uint32_t)30000 // in Hz
+#define MOTOR_PWM_FREQ          (uint32_t)140000 // in Hz
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
 // Stallfault
