@@ -149,9 +149,15 @@
 #define MIN_MICROSTEP_DIVISOR   (uint8_t)1
 #define MAX_MICROSTEP_DIVISOR   (uint8_t)32
 
-#define MOTOR_PWM_FREQ          (uint32_t)140000 // in Hz
+#define MOTOR_PWM_FREQ          (uint32_t)124000 // in Hz
+// https://deepbluembedded.com/wp-content/uploads/2020/06/STM32-PWM-Resolution-Example-STM32-Timer-PWM-Mode-Output-Compare-768x291.jpg
+// 124000 in fact 139.5kHz and 9bit resolution
+// 62000 in fact 69.8kHz and 10bit resolution
+// Tested: higher resolution causes more noise when the motor is stopped after moving.
+//
 // Note: The measured internal PWM frequency of the A4950 is 22.5 kHz.
 // Noise is a design feature when the A4950 drives a stepper motor. :(
+
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
 // Stallfault
