@@ -150,6 +150,8 @@
 #define MAX_MICROSTEP_DIVISOR   (uint8_t)32
 
 #define MOTOR_PWM_FREQ          (uint32_t)140000 // in Hz
+// Note: The measured internal PWM frequency of the A4950 is 22.5 kHz.
+// Noise is a design feature when the A4950 drives a stepper motor. :(
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
 // Stallfault
