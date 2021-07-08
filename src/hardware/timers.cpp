@@ -107,6 +107,7 @@ void setupMotorTimers() {
         pidMoveTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         pidMoveTimer -> attachInterrupt(stepMotorNoDesiredAngle);
         pidMoveTimer -> refresh();
+        pidMoveTimer -> pause();
         // Don't resume the timer here, it will be resumed when needed
     #endif
 
@@ -117,6 +118,7 @@ void setupMotorTimers() {
         stepScheduleTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
         stepScheduleTimer -> refresh();
+        stepScheduleTimer -> pause();
         // Don't re-enable the motor, that will be done when the steps are scheduled
     #endif
 }

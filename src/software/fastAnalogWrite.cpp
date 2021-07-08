@@ -12,9 +12,9 @@ analogInfo analogSetup(PinName pin, uint32_t freq, uint32_t startingValue) {
 
     // Setup the pin
     pinMode(pin, OUTPUT);
-    
+
     // Start the PWM with the Arduino style function, using the highest possible resolution
-    pwm_start(pin, freq, startingValue, RESOLUTION_12B_COMPARE_FORMAT);
+    pwm_start(pin, freq, startingValue, PWM_COMPARE_FORMAT);
 
     // Find the timer that is used with the pin, set it in the analogInfo
     TIM_TypeDef *Instance = (TIM_TypeDef *)pinmap_peripheral(pin, PinMap_PWM);
@@ -29,13 +29,13 @@ analogInfo analogSetup(PinName pin, uint32_t freq, uint32_t startingValue) {
 }
 
 // Sets the value to output on the analog pin using the structure that was returned when setting it up
-// Value should be in range of 0 and 4095 (PWM_MAX_DUTY_CYCLE)
+// Value should be in range of 0 and PWM_MAX_VALUE
 void analogSet(analogInfo* pinInfo, uint32_t value) {
 
-    // Check to make sure that the value is between 0 and 4095 (PWM_MAX_DUTY_CYCLE)
+    // Check to make sure that the value is between 0 and PWM_MAX_VALUE
     // Very bad things could happen if this is not checked properly
-    value = constrain(value, 0, PWM_MAX_DUTY_CYCLE);
+    value = constrain(value, 0, PWM_MAX_VALUE);
 
     // Only need to set the capture compare
-    pinInfo->HTPointer->setCaptureCompare(pinInfo->channel, value, RESOLUTION_12B_COMPARE_FORMAT);
+    pinInfo->HTPointer->setCaptureCompare(pinInfo->channel, value, PWM_COMPARE_FORMAT);
 }
