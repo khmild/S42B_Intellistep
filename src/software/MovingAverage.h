@@ -19,6 +19,9 @@ class MovingAverage {
     uint16_t readingsPosition = 0; // Current position in the array
     uint16_t readingsNum = 0; // Number of readings currently being averaged
     T *readings; // Array of readings
+                 // readings[readingsFactor]
+                 // readings are stored in an array in an unusual sequence to win/remove one subtraction in code
+                 // X(0), X(readingsFactor-1), ..., X(2), X(1)
 
     // ! Dynamically decide which type to use for the total
     double runningTotal = 0.0; // A cache of the total of the array, speeds up getting the average
@@ -83,15 +86,15 @@ void MovingAverage<T>::add (T newReading) {
     // Store immediate value in the array
     readings[readingsPosition] = newReading;
 
-    // If at the end of the array
-    if (readingsPosition == (readingsFactor - 1)) {
+    // If at the begin of the array
+    if (readingsPosition == 0) {
 
-        // Increment to the beginning of the array
-        readingsPosition = 0;
+        // Set position to the end of the array
+        readingsPosition = readingsFactor - 1;
     }
     else {
-        // Increment to next array position position
-        readingsPosition++;
+        // Decrement to previous array position
+        readingsPosition--;
     }
 }
 
@@ -112,7 +115,7 @@ T MovingAverage<T>::getLast() {
         return readings[readingsFactor - 1];
     }
     else {
-        return readings[readingsPosition - 1];
+        return readings[readingsPosition + 1];
     }
 }
 
