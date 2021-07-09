@@ -18,7 +18,7 @@
     //#define ENABLE_BLINK
     //#define CHECK_STEPPING_RATE
     //#define CHECK_CORRECT_MOTOR_RATE
-    #define CHECK_ENCODER_SPEED
+    //#define CHECK_ENCODER_SPEED
 
     #if defined(ENABLE_BLINK) && defined(CHECK_STEPPING_RATE) && defined(CHECK_CORRECT_MOTOR_RATE) && defined(CHECK_ENCODER_SPEED)
         #error Only one of #define is possible at a time in this section
