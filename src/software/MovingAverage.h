@@ -57,7 +57,7 @@ void MovingAverage<T>::begin (uint16_t smoothFactor) {
     readings = new T[readingsFactor];
 
     // Initialise all the values in the array to zero
-    for (uint16_t thisReading = 0; thisReading < readingsNum; thisReading++) {
+    for (uint16_t thisReading = 0; thisReading < readingsFactor; thisReading++) {
         readings[thisReading] = 0;
     }
 }
