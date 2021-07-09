@@ -279,7 +279,8 @@ class Encoder {
 
         // High level encoder functions
         double getRawAngle(bool average = true);
-        double getAngle(bool average = true);
+        double getAngleNow();
+        double getAngleAvg();
         double getSpeed();
         double getAccel();
         double getTemp();
