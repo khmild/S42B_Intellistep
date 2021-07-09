@@ -15,7 +15,7 @@
 template <typename T>
 class MovingAverage {
   private:
-    uint16_t readingsFactor = 10; // The smoothing factor. In average mode, this is the number of readings to average. 
+    uint16_t readingsFactor = 10; // The smoothing factor. In average mode, this is the number of readings to average.
     uint16_t readingsPosition = 0; // Current position in the array
     uint16_t readingsNum = 0; // Number of readings currently being averaged
     T *readings; // Array of readings
@@ -54,11 +54,11 @@ bool MovingAverage<T>::begin (uint16_t smoothFactor) {
     readingsFactor = smoothFactor;
 
     // Create the actual array of the required size
-    readings = new T[readingsFactor]; 
-    
+    readings = new T[readingsFactor];
+
     // Initialise all the values in the array to zero
     for (uint16_t thisReading = 0; thisReading < readingsNum; thisReading++) {
-    readings[thisReading] = 0;
+        readings[thisReading] = 0;
     }
 
     // Set the running total to zero
@@ -71,10 +71,10 @@ bool MovingAverage<T>::begin (uint16_t smoothFactor) {
 // Add a value to the array
 template <typename T>
 bool MovingAverage<T>::add (T newReading) {
-    
+
     // Keep record of the number of readings being averaged
     // This will count up to the array size then stay at that number
-    if(readingsNum < readingsFactor) { 
+    if(readingsNum < readingsFactor) {
         readingsNum++;
 
         // Add the new value to the running total
@@ -99,7 +99,7 @@ bool MovingAverage<T>::add (T newReading) {
 
         // Increment to the beginning of the array
         readingsPosition = 0;
-    } 
+    }
     else {
         // Increment to next array position position
         readingsPosition++;
@@ -123,20 +123,20 @@ T MovingAverage<T>::getLast() {
 
     // Just return the last reading
     if (readingsPosition == 0) {
-        return readings[readingsFactor - 1]; 
-    } 
+        return readings[readingsFactor - 1];
+    }
     else {
         return readings[readingsPosition - 1];
-    }         
+    }
 }
 
 
 // Clears all stored values
 template <typename T>
 bool MovingAverage<T>::clear () {
-  
+
     // Reset the counters
-    readingsPosition = 0; 
+    readingsPosition = 0;
     readingsNum = 0;
     runningTotal = 0;
 
