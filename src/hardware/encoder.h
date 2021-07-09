@@ -278,7 +278,8 @@ class Encoder {
         void resetSafety();
 
         // High level encoder functions
-        double getRawAngle(bool average = true);
+        double getRawAngleNow();
+        double getRawAngleAvg();
         double getAngleNow();
         double getAngleAvg();
         double getSpeed();
