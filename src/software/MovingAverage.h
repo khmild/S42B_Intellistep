@@ -26,11 +26,11 @@ class MovingAverage {
   public:
     MovingAverage();
     ~MovingAverage(); // Destructor to clean up when class instance killed
-    bool begin(uint16_t smoothFactor = 10);
-    bool add(T newReading);
+    void begin(uint16_t smoothFactor = 10);
+    void add(T newReading);
     T get();
     T getLast();
-    bool clear();
+    void clear();
 };
 
 
@@ -48,7 +48,7 @@ MovingAverage<T>::~MovingAverage () { // Destructor
 
 // Initialize the array for storing sensor values
 template <typename T>
-bool MovingAverage<T>::begin (uint16_t smoothFactor) {
+void MovingAverage<T>::begin (uint16_t smoothFactor) {
 
     // Store the number of readings in the array
     readingsFactor = smoothFactor;
@@ -63,14 +63,12 @@ bool MovingAverage<T>::begin (uint16_t smoothFactor) {
 
     // Set the running total to zero
     runningTotal = 0;
-
-    return true;
 }
 
 
 // Add a value to the array
 template <typename T>
-bool MovingAverage<T>::add (T newReading) {
+void MovingAverage<T>::add (T newReading) {
 
     // Keep record of the number of readings being averaged
     // This will count up to the array size then stay at that number
@@ -104,9 +102,6 @@ bool MovingAverage<T>::add (T newReading) {
         // Increment to next array position position
         readingsPosition++;
     }
-
-    // Return that we were able to successfully finish the process
-    return true;
 }
 
 
@@ -133,13 +128,10 @@ T MovingAverage<T>::getLast() {
 
 // Clears all stored values
 template <typename T>
-bool MovingAverage<T>::clear () {
+void MovingAverage<T>::clear () {
 
     // Reset the counters
     readingsPosition = 0;
     readingsNum = 0;
     runningTotal = 0;
-
-    // Return true if successful
-    return true;
 }
