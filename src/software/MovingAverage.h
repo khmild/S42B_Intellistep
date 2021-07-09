@@ -2,7 +2,7 @@
  *  Based on Smoothed.h
  *  Store and calculate smoothed values from sensors.
  *  Created by Matt Fryer on 2017-11-17, rewritten by Christian Piper (CAP1Sup) on 2020-5-10
- *  Licensed under LGPL (free to modify and use as you wish)
+ *  Licensed under LGPL
  */
 
 #pragma once
