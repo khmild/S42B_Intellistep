@@ -167,11 +167,11 @@ Encoder::Encoder() {
 
     // Populate the average angle reading table
     for (uint8_t index = 0; index < ANGLE_AVG_READINGS; index++) {
-        getAngle();
+        getAngleAvg();
     }
 
     // Set the offsets
-    startupAngleOffset = getRawAngle();
+    startupAngleOffset = getRawAngleAvg();
     startupRevOffset = getRawRev();
 
     // Set the correct starting values for the estimation if using estimation
@@ -480,9 +480,8 @@ void Encoder::setBitField(BitField_t bitField, uint16_t bitFNewValue) {
 }
 
 
-// Reads the raw value from the angle of the encoder (unadjusted)
-double Encoder::getRawAngle(bool average) {
-
+// Reads the raw momentary value from the angle of the encoder (unadjusted)
+double Encoder::getRawAngleNow() {
     // Create an accumulator for the raw data
     uint16_t rawData;
 
@@ -492,22 +491,33 @@ double Encoder::getRawAngle(bool average) {
     // Delete the first bit, saving the last 15
     rawData = (rawData & (DELETE_BIT_15));
 
-    // Add the averaged value (equation from TLE5012 library)
+    // Calc the value (equation from TLE5012 library)
     double angle = ((360.0 / POW_2_15) * (double)rawData) - encoderStepOffset;
-    encoderAngleAvg.add(angle);
 
-    // Return the average if desired, otherwise just the raw angle
-    if (average) {
-        return encoderAngleAvg.get();
-    }
-    else {
-        return angle;
-    }
+    return angle;
 }
 
-// Reads the value for the angle of the encoder (ranges from 0-360)
-double Encoder::getAngle(bool average) {
-    return (getRawAngle(average) - startupAngleOffset);
+// Reads the raw average value from the angle of the encoder (unadjusted)
+double Encoder::getRawAngleAvg() {
+
+    // Read the raw momentary angle
+    double angle = getRawAngleNow();
+
+    // Add the value to the filter
+    encoderAngleAvg.add(angle);
+
+    // Return the average
+    return encoderAngleAvg.get();
+}
+
+// Reads the momentary value for the angle of the encoder (ranges from 0-360)
+double Encoder::getAngleNow() {
+    return (getRawAngleNow() - startupAngleOffset);
+}
+
+// Reads the average value for the angle of the encoder (ranges from 0-360)
+double Encoder::getAngleAvg() {
+    return (getRawAngleAvg() - startupAngleOffset);
 }
 
 // For average velocity calculations instead of hardware readings from the TLE5012
@@ -720,7 +730,7 @@ double Encoder::getRev() {
 double Encoder::getAbsoluteAngle() {
 
     // Perform actual averaging
-    encoderAbsoluteAngleAvg.add((getRev() * 360) + getAngle(false));
+    encoderAbsoluteAngleAvg.add((getRev() * 360) + getAngleNow());
 
     // Return the average
     return encoderAbsoluteAngleAvg.get();
@@ -737,6 +747,6 @@ void Encoder::setStepOffset(double offset) {
 void Encoder::zero() {
 
     // Fix offsets
-    startupAngleOffset = getRawAngle();
+    startupAngleOffset = getRawAngleAvg();
     startupRevOffset = getRawRev();
 }

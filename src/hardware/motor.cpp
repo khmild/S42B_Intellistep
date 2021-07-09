@@ -525,10 +525,10 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(encoder.getRawAngle());
+                    driveCoilsAngle(encoder.getRawAngleAvg());
 
                     // The motor's current angle needs corrected
-                    currentAngle = encoder.getRawAngle();
+                    currentAngle = encoder.getRawAngleAvg();
                     this -> state = ENABLED;
                     break;
 
@@ -536,10 +536,10 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 case FORCED_ENABLED:
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(encoder.getRawAngle());
+                    driveCoilsAngle(encoder.getRawAngleAvg());
 
                     // The motor's current angle needs corrected
-                    currentAngle = encoder.getRawAngle();
+                    currentAngle = encoder.getRawAngleAvg();
                     this -> state = FORCED_ENABLED;
                     break;
 
@@ -562,10 +562,10 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     case ENABLED:
 
                         // Drive the coils the current angle of the shaft (just locks the output in place)
-                        driveCoilsAngle(encoder.getRawAngle());
+                        driveCoilsAngle(encoder.getRawAngleAvg());
 
                         // The motor's current angle needs corrected
-                        currentAngle = encoder.getRawAngle();
+                        currentAngle = encoder.getRawAngleAvg();
                         this -> state = ENABLED;
                         break;
 
@@ -619,11 +619,11 @@ void StepperMotor::calibrate() {
     for (uint8_t readings = 0; readings < (ANGLE_AVG_READINGS * 2); readings++) {
 
         // Get the angle, then wait for 10ms to allow encoder to update
-        encoder.getRawAngle();
+        encoder.getRawAngleAvg();
     }
 
     // Measure encoder offset
-    float stepOffset = encoder.getRawAngle();
+    float stepOffset = encoder.getRawAngleAvg();
 
     // Add/subtract the full step angle till the rawStepOffset is within the range of a full step
     while (stepOffset < 0) {
