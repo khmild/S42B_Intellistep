@@ -50,8 +50,21 @@ void setup() {
         MCO_GPIO_Init();
     #endif
 
+    // Initialize the LED
+    #ifdef ENABLE_LED
+        initLED();
+    #endif
+
     // Zero the encoder
     motor.encoder.zero();
+    #ifdef CHECK_ENCODER_SPEED
+        while(true) {
+            GPIO_WRITE(LED_PIN, HIGH);
+            motor.encoder.getRawAngle();
+            GPIO_WRITE(LED_PIN, LOW);
+            delayMicroseconds(1);
+        }
+    #endif
 
     // Setup the motor for use
     motor.setState(DISABLED, true);
@@ -90,11 +103,6 @@ void setup() {
     #ifdef ENABLE_CAN
         // Initialize the CAN bus
         initCAN();
-    #endif
-
-    // Initialize the LED
-    #ifdef ENABLE_LED
-        initLED();
     #endif
 
     #ifdef CHECK_GPIO_OUTPUT_SWITCHING

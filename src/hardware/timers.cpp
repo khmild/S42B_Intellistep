@@ -290,6 +290,9 @@ void stepMotor() {
 
 // Need to declare a function to power the motor coils for the step interrupt
 void correctMotor() {
+    #ifdef CHECK_CORRECT_MOTOR_RATE
+        GPIO_WRITE(LED_PIN, HIGH);
+    #endif
 
     // Check to see the state of the enable pin
     if ((GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {
@@ -461,6 +464,9 @@ void correctMotor() {
         }
 
     }
+    #ifdef CHECK_CORRECT_MOTOR_RATE
+        GPIO_WRITE(LED_PIN, LOW);
+    #endif
 }
 
 
