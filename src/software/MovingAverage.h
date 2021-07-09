@@ -21,7 +21,7 @@ class MovingAverage {
     T *readings; // Array of readings
 
     // ! Dynamically decide which type to use for the total
-    double runningTotal; // A cache of the total of the array, speeds up getting the average
+    double runningTotal = 0.0; // A cache of the total of the array, speeds up getting the average
 
   public:
     MovingAverage();
@@ -60,9 +60,6 @@ void MovingAverage<T>::begin (uint16_t smoothFactor) {
     for (uint16_t thisReading = 0; thisReading < readingsNum; thisReading++) {
         readings[thisReading] = 0;
     }
-
-    // Set the running total to zero
-    runningTotal = 0;
 }
 
 
@@ -133,5 +130,5 @@ void MovingAverage<T>::clear () {
     // Reset the counters
     readingsPosition = 0;
     readingsNum = 0;
-    runningTotal = 0;
+    runningTotal = 0.0;
 }
