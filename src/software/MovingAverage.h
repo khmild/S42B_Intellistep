@@ -71,23 +71,17 @@ void MovingAverage<T>::add (T newReading) {
     // This will count up to the array size then stay at that number
     if(readingsNum < readingsFactor) {
         readingsNum++;
-
-        // Add the new value to the running total
-        runningTotal += newReading;
-
-        // Replace the zero in the array
-        readings[readingsPosition] = newReading;
     }
     else {
-        // Add the new value to the running total
-        runningTotal += newReading;
-
         // Remove the old value from the running total
         runningTotal -= readings[readingsPosition];
-
-        // Replace the old value in the array
-        readings[readingsPosition] = newReading;
     }
+
+    // Add the new value to the running total
+    runningTotal += newReading;
+
+    // Store immediate value in the array
+    readings[readingsPosition] = newReading;
 
     // If at the end of the array
     if (readingsPosition == (readingsFactor - 1)) {
