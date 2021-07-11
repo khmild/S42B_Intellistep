@@ -277,6 +277,9 @@ class Encoder {
         uint8_t calcCRC(uint8_t *data, uint8_t length);
         void resetSafety();
 
+        // DMA SPI transfers
+        void waitForTransfer();
+
         // Fast functions
         uint16_t getRawStepsNow();
         uint16_t getRawStepsAvg();
@@ -298,6 +301,7 @@ class Encoder {
         double getAbsoluteAngle();
         void setStepOffset(double offset);
         void zero();
+
 
         // Encoder estimation
         #ifdef ENCODER_SPEED_ESTIMATION
@@ -322,7 +326,9 @@ class Encoder {
         double startupRevOffset = 0;
         double encoderStepOffset = 0;
 
-        // SPI init structure
+        // DMA and SPI init structures
+        DMA_HandleTypeDef dmaTXConfig;
+        DMA_HandleTypeDef dmaRXConfig;
         SPI_HandleTypeDef spiConfig;
 
         // Main initialization structure
@@ -333,6 +339,11 @@ class Encoder {
             uint32_t lastOvertempTime = 0;
         #endif
 };
+
+// DMA transfer complete
+void DMATransferComplete(DMA_HandleTypeDef *_hdma);
+
+extern bool dmaFinished;
 
 #endif
 

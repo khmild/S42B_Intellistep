@@ -3,6 +3,9 @@
 // Include timers.h here so there isn't a linking circle
 #include "timers.h"
 
+// DMA finished transaction?
+bool dmaFinished = false;
+
 // A map of the known registers
 uint16_t regMap[MAX_NUM_REG];              //!< Register map */
 
@@ -129,8 +132,13 @@ Encoder::Encoder() {
     GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // Enable the clock for the SPI bus
+    // Enable the clock for the SPI bus and DMA
     __HAL_RCC_SPI1_CLK_ENABLE();
+    __HAL_RCC_DMA1_CLK_ENABLE();
+
+    // Set the interrupt priority of DMA SPI communication (must be higher than the step interrupt)
+    HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
     // Set the peripheral to be used
     spiConfig.Instance = SPI1;
@@ -144,12 +152,43 @@ Encoder::Encoder() {
     spiConfig.Init.NSS = SPI_NSS_SOFT;
     spiConfig.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
     spiConfig.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    spiConfig.Init.TIMode = SPI_TIMODE_DISABLE;
     spiConfig.Init.CRCPolynomial = 7;
+
+    // Configure the DMA (TX)
+    dmaTXConfig.Instance = DMA1_Channel1;
+    dmaTXConfig.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    dmaTXConfig.Init.PeriphInc = DMA_PINC_DISABLE;
+    dmaTXConfig.Init.MemInc = DMA_MINC_ENABLE;
+    dmaTXConfig.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    dmaTXConfig.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    dmaTXConfig.Init.Mode = DMA_NORMAL;
+    dmaTXConfig.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    HAL_DMA_Init(&dmaTXConfig);
+
+    // Configure the DMA (RX)
+    dmaRXConfig.Instance = DMA1_Channel2;
+    dmaRXConfig.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    dmaRXConfig.Init.PeriphInc = DMA_PINC_DISABLE;
+    dmaRXConfig.Init.MemInc = DMA_MINC_ENABLE;
+    dmaRXConfig.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    dmaRXConfig.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    dmaRXConfig.Init.Mode = DMA_NORMAL;
+    dmaRXConfig.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    HAL_DMA_Init(&dmaRXConfig);
+
+    // Configure the SPI's DMA
+    __HAL_LINKDMA(&spiConfig, hdmatx, dmaTXConfig);
+    __HAL_LINKDMA(&spiConfig, hdmarx, dmaRXConfig);
 
     // Initialize the SPI bus with the parameters we set
     if (HAL_SPI_Init(&spiConfig) != HAL_OK) {
         Serial.println(F("SPI not initialized!"));
     }
+
+    // Register the DMA callback
+    HAL_DMA_RegisterCallback(&dmaRXConfig, HAL_DMA_XFER_CPLT_CB_ID,
+                            &DMATransferComplete);
 
     // Set the chip select pin high, disabling the encoder's communication
     pinMode(ENCODER_CS_PIN, OUTPUT);
@@ -189,9 +228,6 @@ Encoder::Encoder() {
 // Read the value of a register
 errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
-    // Disable interrupts
-    disableInterrupts();
-
     // Create an accumulator for error checking
     errorTypes error = NO_ERROR;
 
@@ -207,8 +243,12 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     uint8_t rx2buf[2];
     uint8_t txbuf[2] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
 
-    // Send address we want to read, response seems to be equal to request
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx1buf, 2, 10);
+    // Schedule sending the address we want to read, response seems to be equal to request
+    //HAL_SPI_TransmitReceive_IT(&spiConfig, txbuf, rx1buf, 2);
+    HAL_SPI_TransmitReceive_DMA(&spiConfig, txbuf, rx1buf, 2);
+
+    // Wait until the transaction completes (allows other interrupts to run awhile)
+    //waitForTransfer();
 
     // Set the MOSI pin to open drain
     GPIO_InitStructure.Pin = GPIO_PIN_7;
@@ -217,7 +257,11 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx2buf, 2, 10);
+    //HAL_SPI_TransmitReceive_IT(&spiConfig, txbuf, rx2buf, 2);
+    HAL_SPI_TransmitReceive_DMA(&spiConfig, txbuf, rx1buf, 2);
+
+    // Wait for the transfer to complete
+    //waitForTransfer();
 
     // Combine the first rxbuf into a single, unsigned 16 bit value
     //uint16_t combinedRX1Buf = (rx1buf[0] << 8 | rx1buf[1]);
@@ -244,9 +288,6 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
         data = 0;
     }
 
-    // All done, we can re-enable interrupts
-    enableInterrupts();
-
     // Return error
     return error;
 }
@@ -254,6 +295,9 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
 // Read multiple registers
 void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength) {
+
+    // Disable interrupts
+    disableInterrupts();
 
     // Pull CS low to select encoder
     GPIO_WRITE(ENCODER_CS_PIN, LOW);
@@ -289,6 +333,9 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
+
+    // All done, we can re-enable interrupts
+    enableInterrupts();
 }
 
 
@@ -766,4 +813,25 @@ void Encoder::zero() {
     // Fix offsets
     startupAngleOffset = getRawAngleAvg();
     startupRevOffset = getRawRev();
+}
+
+
+// Waits until the SPI communication has completed
+void Encoder::waitForTransfer() {
+
+    // Loop forever, until the finished variable is set to true by the interrupt callback
+    while (!dmaFinished);
+
+    // Set the boolean to false for the next time
+    dmaFinished = false;
+}
+
+
+// Called after a scheduled transation has completed
+void DMATransferComplete(DMA_HandleTypeDef *_hdma) {
+
+    // Set the boolean to let the code continue
+    dmaFinished = true;
+
+    //HAL_SPI_IRQHandler(motor.encoder.spiConfig);
 }

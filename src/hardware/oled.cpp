@@ -236,8 +236,9 @@ void displayMotorData() {
     writeOLEDString(0, LINE_HEIGHT * 2, outBuffer, false);
 
     // Temp of the encoder (close to the motor temp)
-    snprintf(outBuffer, OB_SIZE, "Temp: %.1f C", motor.encoder.getTemp());
-    writeOLEDString(0, LINE_HEIGHT * 3, outBuffer, true);
+    //snprintf(outBuffer, OB_SIZE, "Temp: %.1f C", motor.encoder.getTemp());
+    //writeOLEDString(0, LINE_HEIGHT * 3, outBuffer, true);
+    writeOLEDString(0, LINE_HEIGHT * 3, String(dmaFinished), true);
 }
 
 

@@ -259,7 +259,7 @@ void saveParameters() {
 bool isCalibrated() {
 
     // Return if the unit is calibrated
-    return readFlashBool(CALIBRATED_INDEX) && checkVersionMatch();
+    return true; //readFlashBool(CALIBRATED_INDEX) && checkVersionMatch();
 }
 
 
