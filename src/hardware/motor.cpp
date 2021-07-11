@@ -606,7 +606,7 @@ void StepperMotor::calibrate() {
     delay(3000);
 
     // Disable the motor timers (the motor needs to be left alone during calibration)
-    disableInterrupts();
+    disableMotorTimers();
 
     // Set the coils of the motor to move to step 0 (meaning the separation between full steps)
     driveCoils(0);
@@ -647,7 +647,6 @@ void StepperMotor::calibrate() {
 
     // Reboot the chip
     NVIC_SystemReset();
-
 }
 
 // Returns -1 if the number is less than 0, 1 otherwise
