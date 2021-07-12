@@ -652,8 +652,8 @@ double Encoder::getAccel() {
     return encoderAccelAvg.get();
 }
 
-// Reads the temperature of the encoder
-double Encoder::getTemp() {
+// Reads the raw momentary temperature of the encoder
+int16_t Encoder::getRawTempNow() {
 
     // Create an accumulator for the raw data
     uint16_t rawData;
@@ -666,14 +666,24 @@ double Encoder::getTemp() {
 
     // Check if the value received is positive or negative
     if (rawData & CHECK_BIT_9) {
-        rawData = rawData - CHANGE_UNIT_TO_INT_9;
+        rawData -= CHANGE_UNIT_TO_INT_9;
     }
 
-    // Return the value (equation from TLE5012 library)
-    encoderTempAvg.add(((int16_t)rawData + TEMP_OFFSET) / (TEMP_DIV));
+    // Return the raw momentary value
+    return (int16_t)rawData;
+}
 
-    // Calculate the new temperature
-    double temp = encoderTempAvg.get();
+// Reads the temperature of the encoder
+double Encoder::getTemp() {
+
+    // Get the momentary temperature
+    int16_t rawTemp = getRawTempNow();
+
+    // Add to MovingAverage filter
+    encoderTempAvg.add(rawTemp);
+
+    // Calculate the new temperature (equation from TLE5012 library)
+    double temp = (encoderTempAvg.getDouble() + TEMP_OFFSET) / TEMP_DIV;
 
     // Only compile if overtemp protection is enabled
     #ifdef ENABLE_OVERTEMP_PROTECTION

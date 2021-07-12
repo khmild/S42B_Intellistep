@@ -292,6 +292,7 @@ class Encoder {
         double getAngleAvg();
         double getSpeed();
         double getAccel();
+        int16_t getRawTempNow();
         double getTemp();
         int16_t getRawRev();
         double getRev();
@@ -321,7 +322,7 @@ class Encoder {
         MovingAverage <float> encoderSpeedAvg;
         MovingAverage <float> encoderAccelAvg;
         MovingAverage <uint16_t> encoderStepsAvg;
-        MovingAverage <float> encoderTempAvg;
+        MovingAverage <int16_t> encoderTempAvg;
 
         // The startup angle and rev offsets
         double startupAngleOffset = 0;
