@@ -19,23 +19,28 @@
     //#define CHECK_STEPPING_RATE
     //#define CHECK_CORRECT_MOTOR_RATE
     //#define CHECK_ENCODER_SPEED
-
-    #if defined(ENABLE_BLINK) && defined(CHECK_STEPPING_RATE) && defined(CHECK_CORRECT_MOTOR_RATE) && defined(CHECK_ENCODER_SPEED)
-        #error Only one of #define is possible at a time in this section
-    #endif
 #endif
 
+// OLED (display)
 #define ENABLE_OLED
-#if !defined(ENABLE_OLED)
+#ifdef ENABLE_OLED
+
+    // Button settings
+    //#define INVERTED_DIPS // Enable if your dips are inverted ("on" print is facing away from motor connector)
+    #define BUTTON_REPEAT_INTERVAL 250 // Millis
+    #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
+    #define WARNING_MICROSTEP MAX_MICROSTEP_DIVISOR // The largest microstep to warn on (the denominator of the fraction)
+
+    // Warning thresholds
+    #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
+    //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
+
+#else // ! ENABLE_OLED
     // MCO is PA_8 pin, It also used as OLED_RST_PIN
     //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
 
     // The PA_8 pin is used
     //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO PA_8 output switching
-
-    #if defined(CHECK_MCO_OUTPUT) && defined(CHECK_GPIO_OUTPUT_SWITCHING)
-        #error Only one of #define is possible at a time in this section
-    #endif
 #endif
 
 // Averages (number of readings in average)
@@ -171,20 +176,6 @@
     // StallFault connection (to mainboard)
     // Pulls high on a stepper misalignment after the set period or angular deviation
     #define STALLFAULT_PIN PA_13 //output(GPIOA_BASE_BASE, 13)
-#endif
-
-// OLED settings
-#ifdef ENABLE_OLED
-
-    // Button settings
-    //#define INVERTED_DIPS // Enable if your dips are inverted ("on" print is facing away from motor connector)
-    #define BUTTON_REPEAT_INTERVAL 250 // Millis
-    #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
-    #define WARNING_MICROSTEP MAX_MICROSTEP_DIVISOR // The largest microstep to warn on (the denominator of the fraction)
-
-    // Warning thresholds
-    #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
-    //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
 #endif
 
 // The System Clock frequency of the CPU (in MHz)
