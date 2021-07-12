@@ -3,8 +3,11 @@
 // Include timers.h here so there isn't a linking circle
 #include "timers.h"
 
+// Include the HAL SPI file so that the callback function can be registered
+#include "stm32f1xx_hal_spi.h"
+
 // DMA finished transaction?
-bool dmaFinished = false;
+bool transferFinished = false;
 
 // A map of the known registers
 uint16_t regMap[MAX_NUM_REG];              //!< Register map */
@@ -136,7 +139,9 @@ Encoder::Encoder() {
     __HAL_RCC_SPI1_CLK_ENABLE();
     __HAL_RCC_DMA1_CLK_ENABLE();
 
-    // Set the interrupt priority of DMA SPI communication (must be higher than the step interrupt)
+    // Set the interrupt priority of DMA SPI communication channels (must be higher than the step interrupt)
+    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
     HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
@@ -186,9 +191,11 @@ Encoder::Encoder() {
         Serial.println(F("SPI not initialized!"));
     }
 
+    // Register the SPI callback
+    HAL_SPI_RegisterCallback(&spiConfig, HAL_SPI_TX_RX_COMPLETE_CB_ID, SPITransferComplete);
+
     // Register the DMA callback
-    HAL_DMA_RegisterCallback(&dmaRXConfig, HAL_DMA_XFER_CPLT_CB_ID,
-                            &DMATransferComplete);
+    //HAL_DMA_RegisterCallback(&dmaRXConfig, HAL_DMA_XFER_CPLT_CB_ID, &DMATransferComplete);
 
     // Set the chip select pin high, disabling the encoder's communication
     pinMode(ENCODER_CS_PIN, OUTPUT);
@@ -228,8 +235,10 @@ Encoder::Encoder() {
 // Read the value of a register
 errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
+    #ifdef ENCODER_SAFETY_CHECK
     // Create an accumulator for error checking
     errorTypes error = NO_ERROR;
+    #endif
 
     // Pull CS low to select encoder
     GPIO_WRITE(ENCODER_CS_PIN, LOW);
@@ -258,17 +267,19 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     // Send 0xFFFF (like BTT code), this returns the wanted value
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
     //HAL_SPI_TransmitReceive_IT(&spiConfig, txbuf, rx2buf, 2);
-    HAL_SPI_TransmitReceive_DMA(&spiConfig, txbuf, rx1buf, 2);
+    HAL_SPI_TransmitReceive_DMA(&spiConfig, txbuf, rx2buf, 2);
 
     // Wait for the transfer to complete
     //waitForTransfer();
 
+    #ifdef ENCODER_SAFETY_CHECK
     // Combine the first rxbuf into a single, unsigned 16 bit value
-    //uint16_t combinedRX1Buf = (rx1buf[0] << 8 | rx1buf[1]);
-    //uint16_t combinedRX2Buf = (rx2buf[0] << 8 | rx2buf[1]);
+    uint16_t combinedRX1Buf = (rx1buf[0] << 8 | rx1buf[1]);
+    uint16_t combinedRX2Buf = (rx2buf[0] << 8 | rx2buf[1]);
 
     // Check to see if the communication was valid
-    //error = checkSafety(combinedRX1Buf, registerAddress, &combinedRX2Buf, 1);
+    error = checkSafety(combinedRX1Buf, registerAddress, &combinedRX2Buf, 1);
+    #endif
 
     // Set MOSI back to Push/Pull
     GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
@@ -277,6 +288,7 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
+    #ifdef ENCODER_SAFETY_CHECK
     // Set data in the specified location (depending on errors)
     if (error == NO_ERROR) {
 
@@ -290,6 +302,17 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
     // Return error
     return error;
+
+    #else // ! ENCODER_SAFETY_CHECK
+
+    // Write out the data
+    data = (rx2buf[0] << 8 | rx2buf[1]);
+
+    // Return that everything went well
+    return NO_ERROR;
+    #endif
+
+
 }
 
 
@@ -820,18 +843,26 @@ void Encoder::zero() {
 void Encoder::waitForTransfer() {
 
     // Loop forever, until the finished variable is set to true by the interrupt callback
-    while (!dmaFinished);
+    while (!transferFinished);
 
     // Set the boolean to false for the next time
-    dmaFinished = false;
+    transferFinished = false;
 }
 
 
 // Called after a scheduled transation has completed
-void DMATransferComplete(DMA_HandleTypeDef *_hdma) {
+//void DMATransferComplete(DMA_HandleTypeDef *_hdma) {
 
     // Set the boolean to let the code continue
-    dmaFinished = true;
+    //transferFinished = true;
 
     //HAL_SPI_IRQHandler(motor.encoder.spiConfig);
+//}
+
+
+// SPI complete handling for the encoder
+void SPITransferComplete(SPI_HandleTypeDef * hspi) {
+
+    // TX-RX done, set the boolean
+    transferFinished = true;
 }

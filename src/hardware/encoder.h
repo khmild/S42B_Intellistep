@@ -6,6 +6,9 @@
 #include "config.h"
 #include <MovingAverage.h>
 
+// If the encoder comminations should be safety checked
+//#define ENCODER_SAFETY_CHECK
+
 // Register locations (reading)
 #define ENCODER_READ_COMMAND    0x8000 // 8000
 #define ENCODER_STATUS_REG     (0x0000U) // Same as base
@@ -342,8 +345,9 @@ class Encoder {
 
 // DMA transfer complete
 void DMATransferComplete(DMA_HandleTypeDef *_hdma);
+void SPITransferComplete(SPI_HandleTypeDef * hspi);
 
-extern bool dmaFinished;
+extern bool transferFinished;
 
 #endif
 
