@@ -293,7 +293,7 @@ class Encoder {
         double getSpeed();
         double getAccel();
         double getTemp();
-        double getRawRev();
+        int16_t getRawRev();
         double getRev();
         double getAbsoluteAngle();
         void setStepOffset(double offset);
@@ -310,6 +310,12 @@ class Encoder {
         // Variables
         uint32_t lastAngleSampleTime;
         double lastEncoderAngle = 0;
+
+        // Last state of getRawRev()
+        int16_t lastRawRev = 0;
+        // Revolutions extender variable
+        int32_t revolutions = 0;
+        // Total revolutions = revolutions * 512 + getRawRev()
 
         // Moving average instances
         MovingAverage <float> encoderSpeedAvg;

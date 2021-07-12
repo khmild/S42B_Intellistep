@@ -164,6 +164,8 @@ Encoder::Encoder() {
     encoderStepsAvg.begin(ANGLE_AVG_READINGS);
     encoderTempAvg.begin(TEMP_AVG_READINGS);
 
+    lastRawRev = getRawRev();
+
     // Populate the average angle reading table
     for (uint8_t index = 0; index < ANGLE_AVG_READINGS; index++) {
         getAngleAvg();
@@ -574,7 +576,7 @@ bool Encoder::sampleTimeExceeded() {
 }
 
 
-#else // ENCODER_ESTIMATION
+#else // !ENCODER_SPEED_ESTIMATION
 
 // Reads the speed of the encoder in deg/s
 double Encoder::getSpeed() {
@@ -591,7 +593,7 @@ double Encoder::getSpeed() {
 
 	// If bit 14 is set, the value is negative
 	if (rawSpeed & CHECK_BIT_14) {
-		rawSpeed = rawSpeed - CHANGE_UINT_TO_INT_15;
+		rawSpeed -= CHANGE_UINT_TO_INT_15;
 	}
 
 	// Get FIR_MD from bits 15 and 16 of register 0x06
@@ -624,7 +626,7 @@ double Encoder::getSpeed() {
     return encoderSpeedAvg.get();
 }
 
-#endif // ! ENCODER_ESTIMATION
+#endif // ! ENCODER_SPEED_ESTIMATION
 
 
 // Calculates the angular acceleration. Done by looking at position over time^2
@@ -714,12 +716,11 @@ double Encoder::getTemp() {
 }
 
 
-// Gets the raw revolutions from the motor
-double Encoder::getRawRev() {
+// Gets the raw revolutions from the motor in range [-258 ... +257]
+int16_t Encoder::getRawRev() {
 
     // Create an accumulator for the raw data and converted data
     uint16_t rawData;
-    int16_t convertedData;
 
     // Loop continuously until there is no error
     while (readRegister(ENCODER_ANGLE_REV_REG, rawData) != NO_ERROR);
@@ -727,22 +728,25 @@ double Encoder::getRawRev() {
     // Delete the first 7 bits, they are not needed
     rawData = (rawData & (DELETE_7_BITS));
 
-    // Copy the raw data over, now that it's almost converted
-    convertedData = rawData;
-
     // Check if the value is negative, if so it needs 512 subtracted from it
-    if (convertedData & CHECK_BIT_9) {
-        convertedData -= 512;
+    if (rawData & CHECK_BIT_9) {
+        rawData -= CHANGE_UNIT_TO_INT_9;
     }
 
     // Return the angle measurement
-    return ((double)convertedData);
+    return (int16_t)rawData;
 }
 
 
 // Gets the revolutions of the motor
 double Encoder::getRev() {
-    return (getRawRev() - startupRevOffset);
+    int16_t rawRevNow = getRawRev();
+    if ((lastRawRev > 0) && (rawRevNow < 0)) // overwlow
+        revolutions++;
+    else if ((lastRawRev < 0) && (rawRevNow > 0)) // borrow
+        revolutions--;
+    lastRawRev = rawRevNow;
+    return (double)revolutions * 512 + rawRevNow - startupRevOffset;
 }
 
 
