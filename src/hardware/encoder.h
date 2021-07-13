@@ -278,8 +278,8 @@ class Encoder {
         void resetSafety();
 
         // Fast functions
-        uint16_t getRawSteps();
-        uint16_t getRawStepsAvg();
+        uint16_t getRawIncrements();
+        uint16_t getRawIncrementsAvg();
 
         // High level encoder functions
         // Reads the raw momentary value from the angle of the encoder (unadjusted)
@@ -287,6 +287,10 @@ class Encoder {
 
         // Reads the raw average value from the angle of the encoder (unadjusted)
         double getRawAngleAvg();
+
+        // Returns a smoothed value of angle of the encoder
+        // More expensive than getAngle(), but transitions between 0 and 360 are smoother
+        double getSmoothAngle();
 
         // Reads the momentary value for the angle of the encoder (ranges from 0-360)
         double getAngle();
@@ -300,6 +304,7 @@ class Encoder {
         int16_t getRawRev();
         double getRev();
         double getAbsoluteAngleAvg();
+        float getAbsoluteAngleAvgFloat();
         void setStepOffset(double offset);
         void zero();
 
@@ -325,9 +330,9 @@ class Encoder {
         // Moving average instances
         MovingAverage <float> speedAvg;
         MovingAverage <float> accelAvg;
-        MovingAverage <uint16_t> stepAvg;
+        MovingAverage <uint16_t> incrementAvg;
         MovingAverage <float> absAngleAvg;
-        MovingAverage <int16_t> tempAvg;
+        MovingAverage <int16_t> rawTempAvg;
 
         // The startup angle and rev offsets
         double startupAngleOffset = 0;
