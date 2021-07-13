@@ -590,6 +590,25 @@ bool Encoder::sampleTimeExceeded() {
 
 #else // !ENCODER_SPEED_ESTIMATION
 
+int16_t Encoder::getRawSpeed() {
+
+    // Prepare the variables to store data in
+	uint16_t rawData;
+
+    // Read the encoder
+    while (readRegister(ENCODER_SPEED_REG, rawData) != NO_ERROR);
+
+    // Get raw speed reading
+    rawData &= DELETE_BIT_15;
+
+    // If bit 14 is set, the value is negative
+    if (rawData & CHECK_BIT_14) {
+        rawData -= CHANGE_UINT_TO_INT_15;
+    }
+
+    return (int16_t)rawData;
+}
+
 // Reads the speed of the encoder in deg/s
 double Encoder::getSpeed() {
 
@@ -627,15 +646,15 @@ double Encoder::getSpeed() {
             firMDVal = 170.6;
             break;
         default:
-            firMDVal = 0.0;
+            firMDVal = 0.0; // ??? zero division
             break;
     }
 
     // Calculate and average angle speed in degree per second
-	encoderSpeedAvg.add((1000000.0 * 0.5 * (360.0 / POW_2_15) * rawSpeed) / firMDVal);
+	speedAvg.add((1000000.0 * 0.5 * (360.0 / POW_2_15) * rawSpeed) / firMDVal);
 
     // Return the result
-    return encoderSpeedAvg.get();
+    return speedAvg.get();
 }
 
 #endif // !ENCODER_SPEED_ESTIMATION
