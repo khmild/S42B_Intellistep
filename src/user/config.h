@@ -4,6 +4,9 @@
 // Need the Arduino library for pin conversion
 #include "Arduino.h"
 
+// Macros file (for convience functions)
+#include "macros.h"
+
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
@@ -185,9 +188,6 @@
 #define SYSCLK_FREQ 128
 #define SYSCLK_SRC_HSE_8
 
-// Power of 2, N is positive integer
-#define POWER_2(N) (1U << (N))
-
 // The compare format and maximum value for PWM (lower values = higher max freq)
 #define PWM_COMPARE_FORMAT RESOLUTION_9B_COMPARE_FORMAT
 #define PWM_MAX_VALUE (POWER_2(PWM_COMPARE_FORMAT) - 1)
@@ -303,32 +303,6 @@
 // Used to speed up division much faster
 #define SINE_POWER ((uint16_t)log2(SINE_MAX))
 
-// Bitwise memory modification - ARM bitband
-#define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
-#define MEM_ADDR(addr)  *((volatile unsigned long  *)(addr))
-#define BIT_ADDR(addr, bitnum)   MEM_ADDR(BITBAND(addr, bitnum))
-
-// Low level GPIO configuration (for quicker manipulations than digitalWrites)
-#define outputPin(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12), n) // ODR
-#define inputPin(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8), n) // IDR
-
-// Maybe an even faster digitalWrite, but only if really needed
-#define digitalWriteFaster(pn, high) \
-    if (high) { \
-        WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BSRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
-    } \
-    else { \
-        WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
-    }
-
-#define digitalWriteFastest(pn, high) \
-    if (high) { \
-        get_GPIO_Port(STM_PORT(pn))->BSRR = STM_GPIO_PIN(pn); \
-    } \
-    else { \
-        get_GPIO_Port(STM_PORT(pn))->BRR = STM_GPIO_PIN(pn); \
-    }
-
 // Methods for writing to the GPIO
 // When SystemClock_Config_HSE_8M_SYSCLK_72M() is selected:
 // F         | GPIO_WRITE_METHOD                 | based on
@@ -338,12 +312,6 @@
 //  1.67 MHz | GPIO_WRITE_DIGITAL_WRITE_FASTEST  | digitalWriteFastest()
 // 600.1 kHz | GPIO_WRITE_REGISTER_SET           | output()
 // 163.3 kHz | GPIO_WRITE_HAL_FUNCTION           | HAL_GPIO_WritePin()
-#define GPIO_WRITE_DIGITAL_WRITE         0
-#define GPIO_WRITE_DIGITAL_WRITE_FAST    1
-#define GPIO_WRITE_DIGITAL_WRITE_FASTER  2
-#define GPIO_WRITE_DIGITAL_WRITE_FASTEST 3
-#define GPIO_WRITE_REGISTER_SET          4
-#define GPIO_WRITE_HAL_FUNCTION          5
 
 // Setting for the GPIO write method
 #define GPIO_WRITE_METHOD GPIO_WRITE_DIGITAL_WRITE_FASTEST
@@ -388,11 +356,6 @@
 //#define GPIO_READ(pn) digitalReadFast(pn)
 //#define GPIO_READ(pn) digital_io_read(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn))
 #define GPIO_READ(pn) LL_GPIO_IsInputPinSet(get_GPIO_Port(STM_PORT(pn)), STM_LL_GPIO_PIN(pn))
-
-#define DIRECTION(x) ((x) > 0 ? 1 : (-1))  // Note: zero 'x' is not allowed
-
-// --------------  Debugging  --------------
-//#define TEST_FLASH
 
 // Import the sanity check (needed so all files have the defines done in the sanity check file)
 // Must be last so that it can use the defines above
