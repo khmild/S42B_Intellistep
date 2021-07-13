@@ -6,12 +6,15 @@
 
 // Timer uses:
 // - TIM1 - Used to time correction calculations
-// - TIM2 - Used to time PID steps
+// - TIM2 - Used to count steps (stores master record of steps)
 // - TIM3 - Used to generate PWM signal for motor
-// - TIM4 - Used to directly step the motor
+// - TIM4 - Used to schedule steps for the motor (used by PID and direct stepping)
 
 // Create a new timer instance
 HardwareTimer *correctionTimer = new HardwareTimer(TIM1);
+
+// The frequency at which to update the correction timer
+uint32_t correctionUpdateFreq = round(STEP_UPDATE_FREQ * motor.getMicrostepping());
 
 // If step correction is enabled (helps to prevent enabling the timer when it is already enabled)
 bool stepCorrection = false;
@@ -35,21 +38,11 @@ static uint8_t interruptBlockCount = 0;
 #ifdef ENABLE_PID
     // Create an instance of the PID class
     StepperPID pid = StepperPID();
-
-    // Also create a timer that calls the motor stepping function based on the PID's output
-    HardwareTimer *pidMoveTimer = new HardwareTimer(TIM2);
-
-    // Variable to store if the timer is enabled
-    // Saves large amounts of cycles as the timer only has to be toggled on a change
-    bool pidMoveTimerEnabled = false;
-
-    // Direction of movement for PID steps
-    STEP_DIR pidStepDirection = COUNTER_CLOCKWISE;
 #endif
 
 
 // Setup everything related to step scheduling
-#ifdef ENABLE_DIRECT_STEPPING
+#if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
 
     // Main timer for scheduling steps
     HardwareTimer *stepScheduleTimer = new HardwareTimer(TIM4);
@@ -59,6 +52,13 @@ static uint8_t interruptBlockCount = 0;
 
     // Remaining step count
     int64_t remainingScheduledSteps = 0;
+
+    // Stores if the timer is enabled
+    // Saves large amounts of cycles as the timer only has to be toggled on a change
+    bool stepScheduleTimerEnabled = false;
+
+    // Stores if the timer should decrement the number of steps left
+    bool decrementRemainingSteps = false;
 #endif
 
 // Tiny little function, just gets the time that the current program has been running
@@ -71,9 +71,8 @@ void setupMotorTimers() {
 
     // Interupts are in order of importance as follows -
     // - 6 - step pin change
-    // - 7.0 - scheduled steps (if ENABLE_DIRECT_STEPPING)
     // - 7.1 - position correction (or PID interval update)
-    // - 7.2 - PID correctional movement
+    // - 7.2 - scheduled steps (if ENABLE_DIRECT_STEPPING or ENABLE_PID)
 
     // Check if StallFault is enabled
     #ifdef ENABLE_STALLFAULT
@@ -93,32 +92,24 @@ void setupMotorTimers() {
     correctionTimer -> pause();
     correctionTimer -> setInterruptPriority(7, 1);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
-    correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
+
+    // Set the update rate and the variable that stores it
+    correctionUpdateFreq = round(STEP_UPDATE_FREQ * motor.getMicrostepping());
+    correctionTimer -> setOverflow(correctionUpdateFreq, HERTZ_FORMAT);
+
+    // Finish setting up the correction timer
     #ifndef CHECK_STEPPING_RATE
         correctionTimer -> attachInterrupt(correctMotor);
     #endif
     correctionTimer -> refresh();
-    correctionTimer -> resume();
-
-    // Setup the PID timer if it is enabled
-    #ifdef ENABLE_PID
-        pidMoveTimer -> pause();
-        pidMoveTimer -> setInterruptPriority(7, 2);
-        pidMoveTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
-        pidMoveTimer -> attachInterrupt(stepMotorNoDesiredAngle);
-        pidMoveTimer -> refresh();
-        pidMoveTimer -> pause();
-        // Don't resume the timer here, it will be resumed when needed
-    #endif
 
     // Setup step schedule timer if it is enabled
-    #ifdef ENABLE_DIRECT_STEPPING
+    #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
         stepScheduleTimer -> pause();
-        stepScheduleTimer -> setInterruptPriority(7, 0);
+        stepScheduleTimer -> setInterruptPriority(7, 2);
         stepScheduleTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
         stepScheduleTimer -> refresh();
-        stepScheduleTimer -> pause();
         // Don't re-enable the motor, that will be done when the steps are scheduled
     #endif
 }
@@ -131,16 +122,14 @@ void disableMotorTimers() {
     detachInterrupt(STEP_PIN);
 
     // Disable the correctional timer
-    correctionTimer -> pause();
+    if (stepCorrection) {
+        correctionTimer -> pause();
+        syncInstructions();
+    }
 
-    // Disable the PID move timer if PID is enabled
-    #ifdef ENABLE_PID
-        pidMoveTimer -> pause();
-    #endif
-
-    // Disable the direct stepping timer if it is enabled
-    #ifdef ENABLE_DIRECT_STEPPING
-        stepScheduleTimer -> pause();
+    // Disable the stepping timer if it is enabled
+    #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
+    disableStepScheduleTimer();
     #endif
 }
 
@@ -152,17 +141,10 @@ void enableMotorTimers() {
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
 
     // Enable the correctional timer
-    correctionTimer -> resume();
-
-    // Enable the PID move timer if PID is enabled
-    #ifdef ENABLE_PID
-        //pidMoveTimer -> resume();
-    #endif
-
-    // Enable the direct stepping timer if it is enabled
-    #ifdef ENABLE_DIRECT_STEPPING
-        stepScheduleTimer -> resume();
-    #endif
+    if (stepCorrection) {
+        correctionTimer -> resume();
+        syncInstructions();
+    }
 }
 
 
@@ -172,6 +154,7 @@ void disableInterrupts() {
     // Disable the interrupts if this is the first block
     if (interruptBlockCount == 0) {
         __disable_irq();
+        syncInstructions();
     }
 
    // Add one to the interrupt block counter
@@ -188,6 +171,7 @@ void enableInterrupts() {
     // If all of the blocks are gone, then re-enable the interrupts
     if (interruptBlockCount == 0) {
         __enable_irq();
+        syncInstructions();
     }
 }
 
@@ -199,6 +183,7 @@ void enableStepCorrection() {
     if (!stepCorrection) {
         correctionTimer -> resume();
         stepCorrection = true;
+        syncInstructions();
     }
 }
 
@@ -206,17 +191,21 @@ void enableStepCorrection() {
 // Disables the step correction timer
 void disableStepCorrection() {
 
-    // Disable the timer if it isn't already, then set the variable
+    // Check if the timer is disabled
     if (stepCorrection) {
+
+        // Disable the timer
         correctionTimer -> pause();
 
-        // Disable the PID correction timer if needed
-        #ifdef ENABLE_PID
-            pidMoveTimer -> pause();
-        #endif
-
+        // Set that there will be no more step correction
         stepCorrection = false;
+        syncInstructions();
     }
+
+    // Disable the stepping timer if needed
+    #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
+    disableStepScheduleTimer();
+    #endif
 }
 
 
@@ -224,11 +213,20 @@ void disableStepCorrection() {
 void updateCorrectionTimer() {
 
     // Check the previous value of the timer, only changing if it is different
-    if (correctionTimer -> getCount(HERTZ_FORMAT) != round(STEP_UPDATE_FREQ * motor.getMicrostepping())) {
-        correctionTimer -> pause();
-        correctionTimer -> setOverflow(round(STEP_UPDATE_FREQ * motor.getMicrostepping()), HERTZ_FORMAT);
+    if (correctionUpdateFreq != (uint32_t)round(STEP_UPDATE_FREQ * (uint32_t)motor.getMicrostepping())) {
+
+        // Compute the new freq, then set it
+        correctionUpdateFreq = (uint32_t)round(STEP_UPDATE_FREQ * motor.getMicrostepping());
+        correctionTimer -> setOverflow(correctionUpdateFreq, HERTZ_FORMAT);
+
+        // Refresh the timer, then enable it if step correction is enabled
         correctionTimer -> refresh();
-        correctionTimer -> resume();
+        if (stepCorrection) {
+            correctionTimer -> resume();
+        }
+
+        // Sync the instruction barrier
+        syncInstructions();
     }
 }
 
@@ -243,49 +241,6 @@ void stepMotor() {
         GPIO_WRITE(LED_PIN, LOW);
     #endif
 }
-
-
-#ifdef ENABLE_PID
-    // Just like the simple stepping function above, except it doesn't update the desired position
-    void stepMotorNoDesiredAngle() {
-        motor.step(pidStepDirection, false, false);
-
-        /*
-        // FOC based correction
-        if (pidStepDirection == COUNTER_CLOCKWISE) {
-            motor.driveCoilsAngle(motor.encoder.getRawAngle() - motor.getMicrostepAngle() - motor.getFullStepAngle());
-        }
-        else if (pidStepDirection == CLOCKWISE) {
-            motor.driveCoilsAngle(motor.encoder.getRawAngle() + motor.getMicrostepAngle() - motor.getFullStepAngle());
-        }
-        */
-
-
-        /*
-        // Main angle change (any inversions * angle of microstep)
-        float angleChange = motor.getMicrostepAngle();
-        int32_t stepChange = 1;
-
-        //else if (dir == COUNTER_CLOCKWISE) {
-            // Nothing to do here, the value is already positive
-        //}
-        if (pidStepDirection == CLOCKWISE) {
-            // Make the angle change in the negative direction
-            angleChange *= -1;
-        }
-
-        // Fix the step change's sign
-        stepChange *= getSign(angleChange);
-
-        // Motor's current angle must always be updated to correctly move the coils
-        this -> currentAngle += angleChange;
-        this -> currentStep += stepChange; // Only moving one step in the specified direction
-
-        // Drive the coils to their destination
-        motor.driveCoils(currentStep);
-        */
-    }
-#endif
 
 
 // Need to declare a function to power the motor coils for the step interrupt
@@ -334,45 +289,48 @@ void correctMotor() {
                 // Check if the value is 0 (meaning that the timer needs disabled)
                 if (stepFreq == 0) {
 
-                    // Check if the timer needs disabled
-                    //if (pidMoveTimerEnabled) {
-                        pidMoveTimer -> pause();
-                        pidMoveTimerEnabled = false;
-                    //}
+                    // The timer needs disabled
+                    disableStepScheduleTimer();
                 }
                 else {
+                    // Set the direction
+                    if (pidOutput > 0) {
+                        scheduledStepDir = COUNTER_CLOCKWISE;
+                    }
+                    else {
+                        scheduledStepDir = CLOCKWISE;
+                    }
+
+                    // Set that we don't want to decrement the counter
+                    decrementRemainingSteps = false;
+
                     // Check if there's a movement threshold
                     #if (DEFAULT_PID_DISABLE_THRESHOLD > 0)
 
                         // Check to make sure that the movement threshold is exceeded, otherwise disable the motor
                         if (stepFreq > DEFAULT_PID_DISABLE_THRESHOLD) {
-                            pidMoveTimer -> resume();
-                            pidMoveTimer -> setOverflow(stepFreq, HERTZ_FORMAT);
+
+                            // Set the speed
+                            stepScheduleTimer -> setOverflow(stepFreq, HERTZ_FORMAT);
+
+                            // Enable the timer if it isn't already
+                            enableStepScheduleTimer();
+
+                            // Enable the motor
                             motor.setState(ENABLED);
                         }
                         else {
-                            pidMoveTimer -> pause();
+                            // No correction needed, pause the timer
+                            disableStepScheduleTimer();
                             motor.setState(DISABLED);
                         }
                     #else
                         // Set the motor timer to call the stepping routine at specified time intervals
-                        pidMoveTimer -> setOverflow(stepFreq, HERTZ_FORMAT);
+                        stepScheduleTimer -> setOverflow(stepFreq, HERTZ_FORMAT);
+
+                        // Enable the timer if it isn't already
+                        enableStepScheduleTimer();
                     #endif
-
-
-                    // Set the direction
-                    if (pidOutput > 0) {
-                        pidStepDirection = COUNTER_CLOCKWISE;
-                    }
-                    else {
-                        pidStepDirection = CLOCKWISE;
-                    }
-
-                    // Enable the timer if it isn't already
-                    //if (!pidMoveTimerEnabled) {
-                        pidMoveTimer -> resume();
-                        pidMoveTimerEnabled = true;
-                    //}
                 }
 
             #else // ! ENABLE_PID
@@ -437,10 +395,7 @@ void correctMotor() {
 
             // Disable the PID correction timer if PID is enabled
             #ifdef ENABLE_PID
-                //if (pidMoveTimerEnabled) {
-                    pidMoveTimer -> pause();
-                    pidMoveTimerEnabled = false;
-                //}
+                disableStepScheduleTimer();
             #endif
 
             // Only if StallFault is enabled
@@ -475,29 +430,79 @@ void correctMotor() {
 // Configure a specific number of steps to execute at a set rate (rate is in Hz)
 void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
 
+    // Disable the correctional timer (needed to prevent both using the step timer at once)
+    correctionTimer -> pause();
+    syncInstructions();
+
     // Set the count and step direction
     remainingScheduledSteps = abs(count);
+    decrementRemainingSteps = true;
     scheduledStepDir = stepDir;
 
     // Configure the speed of the timer, then re-enable it
     stepScheduleTimer -> setOverflow(rate, HERTZ_FORMAT);
-    stepScheduleTimer -> resume();
-    stepScheduleTimer -> refresh();
+    enableStepScheduleTimer();
 }
+#endif
 
-
+#if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
 // Handles a step schedule event
 void stepScheduleHandler() {
 
-    // Increment the motor in the correct direction
-    motor.step(scheduledStepDir);
+    // Check if we should be worrying about remaining steps
+    if (decrementRemainingSteps) {
 
-    // Increment the counter down (we completed a step)
-    remainingScheduledSteps--;
+        // Increment the motor in the correct direction
+        motor.step(scheduledStepDir);
 
-    // Disable the timer if there are no remaining steps
-    if (remainingScheduledSteps <= 0) {
+        // Increment the counter down (we completed a step)
+        remainingScheduledSteps--;
+
+        // Disable the timer if there are no remaining steps
+        if (remainingScheduledSteps <= 0) {
+
+            // Pause the step timer (will be re-enabled by the PID loop)
+            disableStepScheduleTimer();
+
+            // Resume the correctional timer if it is enabled
+            if (stepCorrection) {
+                correctionTimer -> resume();
+                syncInstructions();
+            }
+        }
+    }
+    else {
+        // Just step the motor in the desired direction
+        motor.step(scheduledStepDir, false, false);
+    }
+}
+
+
+// Convenience function to handle enabling the step schedule timer
+void enableStepScheduleTimer() {
+    if (!stepScheduleTimerEnabled) {
+        stepScheduleTimer -> resume();
+        stepScheduleTimerEnabled = true;
+        syncInstructions();
+    }
+}
+
+
+// Convenience function to handle disabling the step schedule timer
+void disableStepScheduleTimer() {
+    if (stepScheduleTimerEnabled) {
         stepScheduleTimer -> pause();
+        stepScheduleTimerEnabled = false;
+        syncInstructions();
     }
 }
 #endif // ! ENABLE_DIRECT_STEPPING
+
+
+// Makes sure that all cached calls respect the current config
+void syncInstructions() {
+
+    // Make sure that the instruction cache is synced
+    __DSB();
+    __ISB();
+}
