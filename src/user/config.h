@@ -185,9 +185,12 @@
 #define SYSCLK_FREQ 128
 #define SYSCLK_SRC_HSE_8
 
+// Power of 2, N is positive integer
+#define POWER_2(N) (1U << (N))
+
 // The compare format and maximum value for PWM (lower values = higher max freq)
 #define PWM_COMPARE_FORMAT RESOLUTION_9B_COMPARE_FORMAT
-#define PWM_MAX_VALUE (pow(2, (uint8_t)PWM_COMPARE_FORMAT) - 1)
+#define PWM_MAX_VALUE (POWER_2(PWM_COMPARE_FORMAT) - 1)
 
 // --------------  Pins  --------------
 /*
