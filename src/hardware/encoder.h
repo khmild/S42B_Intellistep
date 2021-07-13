@@ -297,6 +297,9 @@ class Encoder {
 
         // Reads the average value for the angle of the encoder (ranges from 0-360)
         double getAngleAvg();
+        #ifndef ENCODER_SPEED_ESTIMATION
+        int16_t getRawSpeed();
+        #endif
         double getSpeed();
         double getAccel();
         int16_t getRawTemp();
