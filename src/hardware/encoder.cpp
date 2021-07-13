@@ -559,7 +559,7 @@ double Encoder::getSpeed() {
     uint32_t currentTime = micros();
 
     // Compute the average velocity
-    double avgVelocity = 1000000 * (newAngle - lastEncoderAngle) / (currentTime - lastAngleSampleTime);
+    double avgVelocity = 1000000.0 * (newAngle - lastEncoderAngle) / (currentTime - lastAngleSampleTime);
 
     // Correct the last angle and sample time
     lastEncoderAngle = newAngle;
@@ -623,13 +623,13 @@ double Encoder::getSpeed() {
     }
 
     // Calculate and average angle speed in degree per second
-	encoderSpeedAvg.add(((360.0 / POW_2_15) * rawSpeed) / (2.0 * firMDVal * 0.000001));
+	encoderSpeedAvg.add((1000000.0 * 0.5 * (360.0 / POW_2_15) * rawSpeed) / firMDVal);
 
     // Return the result
     return encoderSpeedAvg.get();
 }
 
-#endif // ! ENCODER_SPEED_ESTIMATION
+#endif // !ENCODER_SPEED_ESTIMATION
 
 
 // Calculates the angular acceleration. Done by looking at position over time^2
