@@ -12,6 +12,7 @@
 #define MINOR_VERSION (uint16_t)0
 #define PATCH_VERSION (uint16_t)42
 
+//#define ENABLE_STEPPING_VELOCITY
 
 // --------------  Settings  --------------
 
