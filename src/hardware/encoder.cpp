@@ -789,21 +789,21 @@ double Encoder::getTemp() {
 int16_t Encoder::getRawRev() {
 
     // Create an accumulator for the raw data and converted data
-    uint16_t rawData;
+    int16_t rawData;
 
     // Loop continuously until there is no error
-    while (readRegister(ENCODER_ANGLE_REV_REG, rawData) != NO_ERROR);
+    while (readRegister(ENCODER_ANGLE_REV_REG, (uint16_t &)rawData) != NO_ERROR);
 
     // Delete the first 7 bits, they are not needed
-    rawData = (rawData & (DELETE_7_BITS));
+    // Delete everything before the 9 LSB's
+    rawData <<= 7;
 
-    // Check if the value is negative, if so it needs 512 subtracted from it
-    if (rawData & CHECK_BIT_9) {
-        rawData -= CHANGE_UNIT_TO_INT_9;
-    }
+    // If bit 8 is set, the value is negative
+    // Propagate sign of integer
+    rawData >>= 7;
 
     // Return the angle measurement
-    return (int16_t)rawData;
+    return rawData;
 }
 
 
