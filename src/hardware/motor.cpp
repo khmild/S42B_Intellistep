@@ -67,7 +67,7 @@ float StepperMotor::getDegreesPS() {
 float  StepperMotor::getSteppingRPM() {
     return DPS_TO_RPM(getDegreesPS());
 }
-#endif
+#endif // ! ENABLE_STEPPING_VELOCITY
 
 
 // Returns the angular deviation of the motor from the desired angle
@@ -322,9 +322,10 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
         prevStepingSampleTime = nowStepingSampleTime;
         nowStepingSampleTime = micros();
 
-    #else
+    #else // ! ENABLE_STEPPING_VELOCITY
         float angleChange;
     #endif
+
     // Main angle change (any inversions * angle of microstep)
     angleChange = this -> microstepAngle;
     int32_t stepChange = 1;

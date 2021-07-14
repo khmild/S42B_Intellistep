@@ -304,7 +304,7 @@ class Encoder {
         int16_t getRawTemp();
         double getTemp();
         int16_t getRawRev();
-        double getRev();
+        int32_t getRev();
         double getAbsoluteAngleAvg();
         float getAbsoluteAngleAvgFloat();
         void setStepOffset(double offset);
@@ -339,7 +339,7 @@ class Encoder {
 
         // The startup angle and rev offsets
         double startupAngleOffset = 0;
-        double startupRevOffset = 0;
+        int32_t startupRevOffset = 0;
         double encoderStepOffset = 0;
 
         // SPI init structure
