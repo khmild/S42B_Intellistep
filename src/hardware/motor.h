@@ -6,6 +6,7 @@
 #include "HardwareTimer.h"
 #include "encoder.h"
 #include "fastAnalogWrite.h"
+#include "stm32f1xx_hal_tim.h"
 
 // For sin() and fmod() function
 //#include "cmath"
@@ -70,6 +71,9 @@ class StepperMotor {
 
         // Returns the desired step of the motor
         int32_t getDesiredStep();
+
+        // Returns the count according to the TIM2 hardware step counter
+        uint16_t getHardStepCNT();
 
         // Dynamic current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -245,6 +249,11 @@ class StepperMotor {
         // Last coil states (used to save time by not setting the pins unless necessary)
         COIL_STATE previousCoilStateA = COIL_NOT_SET;
         COIL_STATE previousCoilStateB = COIL_NOT_SET;
+
+        // Configuration for TIM2
+        TIM_HandleTypeDef tim2Config;
+        TIM_ClockConfigTypeDef tim2ClkConfig;
+        TIM_MasterConfigTypeDef tim2MSConfig;
 };
 
 #endif

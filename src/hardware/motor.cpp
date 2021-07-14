@@ -10,10 +10,46 @@
 // Main constructor
 StepperMotor::StepperMotor() {
 
-    // Setup step signal pins
-    pinMode(STEP_PIN, INPUT_PULLUP);
-    pinMode(ENABLE_PIN, INPUT);
+    // Setup the input pins
+    pinMode(STEP_PIN, INPUT);
     pinMode(DIRECTION_PIN, INPUT);
+
+    // Setup TIM2 (the base)
+    tim2Config.Instance = TIM2;
+    tim2Config.Init.Prescaler = 0;
+    tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP;
+    tim2Config.Init.Period = 0xFFFF;
+    tim2Config.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    HAL_TIM_Base_Init(&tim2Config);
+
+    // Set that the step pin should be an external trigger for the timer to count
+    tim2ClkConfig.ClockFilter = 7;
+    tim2ClkConfig.ClockPolarity = TIM_CLOCKPOLARITY_INVERTED;
+    tim2ClkConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
+    tim2ClkConfig.ClockSource = TIM_CLOCKSOURCE_ETRMODE2;
+    HAL_TIM_ConfigClockSource(&tim2Config, &tim2ClkConfig);
+
+    // Configure the master/slave mode of the timer
+    tim2MSConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    tim2MSConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    HAL_TIMEx_MasterConfigSynchronization(&tim2Config, &tim2MSConfig);
+
+    // Set that the direction pin should be used as a direction control
+    // Clear the encoder mode bit, then set it
+    tim2Config.Instance -> SMCR &= ~TIM_SMCR_SMS;
+    tim2Config.Instance -> SMCR |= TIM_ENCODERMODE_TI1;
+
+    // Reset TIM2's counter
+    __HAL_TIM_SET_COUNTER(&tim2Config, 0);
+
+    // Enable TIM2
+    __HAL_TIM_ENABLE(&tim2Config);
+
+    // Set the overflow and underflow interrupts (must be after enable due to init event triggering interrupt)
+    // Clear flag before enabling IT
+    __HAL_TIM_CLEAR_FLAG(&tim2Config, TIM_FLAG_UPDATE);
+    __HAL_TIM_ENABLE_IT(&tim2Config, TIM_IT_UPDATE);
 
     // Setup the pins as outputs
     pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
@@ -65,10 +101,18 @@ float StepperMotor::getDesiredAngle() {
     return (this -> desiredAngle);
 }
 
+
 // Returns the desired step of the motor
 int32_t StepperMotor::getDesiredStep() {
     return (this -> desiredStep);
 }
+
+
+// Returns the count value of the timer-based step counter
+uint16_t StepperMotor::getHardStepCNT() {
+    return ((tim2Config.Instance -> CNT) >> 2);
+}
+
 
 #ifdef ENABLE_DYNAMIC_CURRENT
 

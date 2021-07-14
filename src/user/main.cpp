@@ -231,6 +231,7 @@ void loop() {
     // ! TESTING ONLY
     //Serial.println("P:" + String(motor.getStepPhase() % 32) + " S:" + String(motor.getDesiredStep() % 32));
     //Serial.println("P:" + String(pid.compute()) + " DA:" + String(motor.getDesiredAngle()) + " AA:" + String(getAbsoluteAngle()));
+    Serial.println(motor.getHardStepCNT());
 
     // Check the dip switches
     checkDips();
