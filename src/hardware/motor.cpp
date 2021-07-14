@@ -46,10 +46,9 @@ StepperMotor::StepperMotor() {
     // Enable TIM2
     __HAL_TIM_ENABLE(&tim2Config);
 
-    // Set the overflow and underflow interrupts (must be after enable due to init event triggering interrupt)
-    // Clear flag before enabling IT
-    __HAL_TIM_CLEAR_FLAG(&tim2Config, TIM_FLAG_UPDATE);
-    __HAL_TIM_ENABLE_IT(&tim2Config, TIM_IT_UPDATE);
+    // No need to enable the interrupts here, the step interruptAttach will do that for us
+    //__HAL_TIM_CLEAR_FLAG(&tim2Config, TIM_FLAG_UPDATE);
+    //__HAL_TIM_ENABLE_IT(&tim2Config, TIM_IT_UPDATE);
 
     // Setup the pins as outputs
     pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
@@ -68,7 +67,6 @@ StepperMotor::StepperMotor() {
     // Disable the motor
     setState(DISABLED, true);
 }
-
 
 // Returns the current RPM of the motor to two decimal places
 float StepperMotor::getMotorRPM() {
@@ -110,9 +108,27 @@ int32_t StepperMotor::getDesiredStep() {
 
 // Returns the count value of the timer-based step counter
 uint16_t StepperMotor::getHardStepCNT() {
-    return ((tim2Config.Instance -> CNT) >> 2);
+    return ((tim2Config.Instance -> CNT) + (stepOverflowCount * 65535));
 }
 
+
+// Interrupt routine for step overflows
+void StepperMotor::checkStepOverflow() {
+
+    // Decide if there was an overflow
+    if (TIM2 -> CNT < (TIM_MAX_VALUE / 2) && previousTIM2Count > (TIM_MAX_VALUE / 2)) {
+
+        // New value is on lower end, meaning we had an overflow
+        stepOverflowCount++;
+    }
+    else if (TIM2 -> CNT > (TIM_MAX_VALUE / 2) && previousTIM2Count < (TIM_MAX_VALUE / 2)) {
+        // New value is on the high end, we had an underflow
+        stepOverflowCount--;
+    }
+
+    // Update the previous count
+    previousTIM2Count = TIM2 -> CNT;
+}
 
 #ifdef ENABLE_DYNAMIC_CURRENT
 

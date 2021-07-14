@@ -16,6 +16,9 @@
 // Import the pin mapping
 #include "config.h"
 
+// Maximum value for timer counters
+#define TIM_MAX_VALUE (uint16_t)65535
+
 // Enumeration for coil states
 typedef enum {
     COIL_NOT_SET,
@@ -74,6 +77,9 @@ class StepperMotor {
 
         // Returns the count according to the TIM2 hardware step counter
         uint16_t getHardStepCNT();
+
+        // Function for checking for step overflows on TIM2
+        void checkStepOverflow();
 
         // Dynamic current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -185,6 +191,7 @@ class StepperMotor {
         // Encoder object
         Encoder encoder;
 
+
     // Things that shouldn't be accessed by the outside
     private:
 
@@ -254,6 +261,13 @@ class StepperMotor {
         TIM_HandleTypeDef tim2Config;
         TIM_ClockConfigTypeDef tim2ClkConfig;
         TIM_MasterConfigTypeDef tim2MSConfig;
+
+        // Counter for number of overflows
+        int32_t stepOverflowCount = 0;
+
+        // The previous count for TIM2
+        uint16_t previousTIM2Count = 0;
 };
+
 
 #endif

@@ -233,10 +233,17 @@ void updateCorrectionTimer() {
 
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
+
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
+
+    // Check if there was a step overflow
+    motor.checkStepOverflow();
+
+    // Step the motor
     motor.step();
+
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, LOW);
     #endif
