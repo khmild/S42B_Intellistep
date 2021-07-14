@@ -49,6 +49,7 @@
 
 // Averages (number of readings in average)
 #define RPM_AVG_READINGS     (uint16_t)10
+#define SPEED_AVG_READINGS   (uint16_t)100
 #define ACCEL_AVG_READINGS   (uint16_t)10
 #define ANGLE_AVG_READINGS   (uint16_t)15
 #define TEMP_AVG_READINGS    (uint16_t)200
@@ -120,7 +121,7 @@
 
 // PID settings
 // ! At this time this feature is still under development
-#define ENABLE_PID
+//#define ENABLE_PID
 #ifdef ENABLE_PID
 
     // Default P, I, and D terms

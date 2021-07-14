@@ -160,6 +160,7 @@ Encoder::Encoder() {
 
     // Setup the moving average calculations
     speedAvg.begin(RPM_AVG_READINGS);
+    rawSpeedAvg.begin(SPEED_AVG_READINGS);
     accelAvg.begin(ACCEL_AVG_READINGS);
     incrementAvg.begin(ANGLE_AVG_READINGS);
     absAngleAvg.begin(ANGLE_AVG_READINGS);
@@ -194,7 +195,7 @@ Encoder::Encoder() {
 errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
     // Disable interrupts
-    disableInterrupts();
+    //disableInterrupts();
 
     // Create an accumulator for error checking
     errorTypes error = NO_ERROR;
@@ -249,7 +250,7 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     }
 
     // All done, we can re-enable interrupts
-    enableInterrupts();
+    //enableInterrupts();
 
     // Return error
     return error;
@@ -555,11 +556,9 @@ double Encoder::getAngleAvg() {
 
 
 // For average velocity calculations instead of hardware readings from the TLE5012
-#ifdef ENCODER_SPEED_ESTIMATION
-
-// Reads the speed of the encoder in deg/s
+// Returns the speed of the encoder in deg/s
 // ! Needs fixed yet, readings are off
-double Encoder::getSpeed() {
+double Encoder::getEstimSpeed() {
 
     // Get the newest angle
     double newAngle = getAbsoluteAngleAvg();
@@ -577,21 +576,20 @@ double Encoder::getSpeed() {
     // Add the value to the averaging list
     speedAvg.add(avgVelocity);
 
-    // Return the averaged velocity
+    // Return the averaged velocity in deg/s
     return speedAvg.get();
 }
 
 
+#ifdef ENCODER_SPEED_ESTIMATION
 // Returns true if the encoder's minimum speed sample interval has been exceeded
 bool Encoder::sampleTimeExceeded() {
     return (micros() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL);
 }
-
-
-#else // !ENCODER_SPEED_ESTIMATION
+#endif
 
 int16_t Encoder::getRawSpeed() {
-
+#if 0
     // Prepare the variables to store data in
 	uint16_t rawData;
 
@@ -607,6 +605,22 @@ int16_t Encoder::getRawSpeed() {
     }
 
     return (int16_t)rawData;
+#else
+    // Prepare the variables to store data in
+	int16_t rawData;
+
+    // Read the encoder
+    while (readRegister(ENCODER_SPEED_REG, (uint16_t &)rawData) != NO_ERROR);
+
+    // Delete everything before the 14 LSB's
+    rawData <<= 1;
+
+    // If bit 14 is set, the value is negative
+    // Propagate sign of integer
+    rawData >>= 1;
+
+    return rawData;
+#endif
 }
 
 // Reads the speed of the encoder in deg/s
@@ -620,12 +634,21 @@ double Encoder::getSpeed() {
 
 	// Get raw speed reading
 	int16_t rawSpeed = rawData[0];
-	rawSpeed = rawSpeed & DELETE_BIT_15;
+    #if 0
+        rawSpeed = rawSpeed & DELETE_BIT_15;
 
-	// If bit 14 is set, the value is negative
-	if (rawSpeed & CHECK_BIT_14) {
-		rawSpeed -= CHANGE_UINT_TO_INT_15;
-	}
+        // If bit 14 is set, the value is negative
+        if (rawSpeed & CHECK_BIT_14) {
+            rawSpeed -= CHANGE_UINT_TO_INT_15;
+        }
+    #else
+        // Delete everything before the 14 LSB's
+        rawSpeed <<= 1;
+
+        // If bit 14 is set, the value is negative
+        // Propagate sign of integer
+        rawSpeed >>= 1;
+    #endif
 
 	// Get FIR_MD from bits 15 and 16 of register 0x06
 	uint16_t firMD = rawData[3] >> 14;
@@ -651,13 +674,11 @@ double Encoder::getSpeed() {
     }
 
     // Calculate and average angle speed in degree per second
-	speedAvg.add((1000000.0 * 0.5 * (360.0 / POW_2_15) * rawSpeed) / firMDVal);
+	rawSpeedAvg.add(rawSpeed);
 
-    // Return the result
-    return speedAvg.get();
+    // Return the result in deg/s
+    return (1000000.0 * 0.5 * (360.0 / POW_2_15) * rawSpeedAvg.getDouble() / firMDVal);
 }
-
-#endif // !ENCODER_SPEED_ESTIMATION
 
 
 // Calculates the angular acceleration. Done by looking at position over time^2
@@ -686,7 +707,7 @@ double Encoder::getAccel() {
 
 // Reads the raw momentary temperature of the encoder
 int16_t Encoder::getRawTemp() {
-
+#if 0
     // Create an accumulator for the raw data
     uint16_t rawData;
 
@@ -703,6 +724,23 @@ int16_t Encoder::getRawTemp() {
 
     // Return the raw momentary value
     return (int16_t)rawData;
+#else
+    // Create an accumulator for the raw data
+    int16_t rawData;
+
+    // Loop until a valid reading
+    while (readRegister(ENCODER_TEMP_REG, (uint16_t &)rawData) != NO_ERROR);
+
+    // Delete everything before the 9 LSB's
+    rawData <<= 7;
+
+    // If bit 9 is set, the value is negative
+    // Propagate sign of integer
+    rawData >>= 7;
+
+    // Return the raw momentary value
+    return rawData;
+#endif
 }
 
 
@@ -761,7 +799,7 @@ double Encoder::getTemp() {
 
 // Gets the raw revolutions from the motor in range [-258 ... +257]
 int16_t Encoder::getRawRev() {
-
+#if 0
     // Create an accumulator for the raw data and converted data
     uint16_t rawData;
 
@@ -778,6 +816,23 @@ int16_t Encoder::getRawRev() {
 
     // Return the angle measurement
     return (int16_t)rawData;
+#else
+    // Create an accumulator for the raw data and converted data
+    int16_t rawData;
+
+    // Loop continuously until there is no error
+    while (readRegister(ENCODER_ANGLE_REV_REG, (uint16_t &)rawData) != NO_ERROR);
+
+    // Delete everything before the 14 LSB's
+    rawData <<= 1;
+
+    // If bit 14 is set, the value is negative
+    // Propagate sign of integer
+    rawData >>= 1;
+
+    // Return the angle measurement
+    return rawData;
+#endif
 }
 
 
