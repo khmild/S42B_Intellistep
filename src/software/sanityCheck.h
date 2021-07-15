@@ -4,10 +4,6 @@
 // Import the config
 #include "config.h"
 
-// Checking functions
-#define IS_POWER_2(N) ((N) & ((N)-1)) // Return 0 if a number is a power of 2.
-
-
 // Check to make sure that at least a peak or RMS max current is defined
 #if !(defined(MAX_PEAK_BOARD_CURRENT) || defined(MAX_RMS_BOARD_CURRENT))
     #error "A max peak or max RMS current must be defined!"
