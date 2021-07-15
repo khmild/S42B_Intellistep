@@ -278,24 +278,36 @@ class Encoder {
         void resetSafety();
 
         // Fast functions
-        uint16_t getRawStepsNow();
-        uint16_t getRawStepsAvg();
+        uint16_t getRawIncrements();
+        uint16_t getRawIncrementsAvg();
 
         // High level encoder functions
         // Reads the raw momentary value from the angle of the encoder (unadjusted)
-        double getRawAngleNow();
+        double getRawAngle();
+
         // Reads the raw average value from the angle of the encoder (unadjusted)
         double getRawAngleAvg();
+
+        // Returns a smoothed value of angle of the encoder
+        // More expensive than getAngle(), but transitions between 0 and 360 are smoother
+        double getSmoothAngle();
+
         // Reads the momentary value for the angle of the encoder (ranges from 0-360)
-        double getAngleNow();
+        double getAngle();
+
         // Reads the average value for the angle of the encoder (ranges from 0-360)
         double getAngleAvg();
+        #ifndef ENCODER_SPEED_ESTIMATION
+        int16_t getRawSpeed();
+        #endif
         double getSpeed();
         double getAccel();
+        int16_t getRawTemp();
         double getTemp();
-        double getRawRev();
+        int16_t getRawRev();
         double getRev();
-        double getAbsoluteAngle();
+        double getAbsoluteAngleAvg();
+        float getAbsoluteAngleAvgFloat();
         void setStepOffset(double offset);
         void zero();
 
@@ -311,11 +323,19 @@ class Encoder {
         uint32_t lastAngleSampleTime;
         double lastEncoderAngle = 0;
 
+        // Last state of getRawRev()
+        int16_t lastRawRev = 0;
+
+        // Revolutions extender variable
+        // Total revolutions = (revolutions * 512) + getRawRev()
+        int32_t revolutions = 0;
+
         // Moving average instances
-        MovingAverage <float> encoderSpeedAvg;
-        MovingAverage <float> encoderAccelAvg;
-        MovingAverage <uint16_t> encoderStepsAvg;
-        MovingAverage <float> encoderTempAvg;
+        MovingAverage <float> speedAvg;
+        MovingAverage <float> accelAvg;
+        MovingAverage <uint16_t> incrementAvg;
+        MovingAverage <float> absAngleAvg;
+        MovingAverage <int16_t> rawTempAvg;
 
         // The startup angle and rev offsets
         double startupAngleOffset = 0;
