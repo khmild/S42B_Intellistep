@@ -70,12 +70,40 @@ StepperMotor::StepperMotor() {
     setState(DISABLED, true);
 }
 
-// Returns the current RPM of the motor to two decimal places
-float StepperMotor::getMotorRPM() {
 
-    // Convert getEncoderSpeed() (in deg/s) to RPM
-    return (encoder.getSpeed() * 60 / 360);
+// Returns the current RPM of the encoder
+float StepperMotor::getEncoderRPM() {
+
+    // Convert getSpeed() (in deg/s) to RPM
+    return DPS_TO_RPM(encoder.getSpeed());
 }
+
+
+// Returns the current calculated RPM
+float StepperMotor::getEstimRPM() {
+
+    // Convert getEstimSpeed() (in deg/s) to RPM
+    return DPS_TO_RPM(encoder.getEstimSpeed());
+}
+
+
+#ifdef ENABLE_STEPPING_VELOCITY
+// Compute the stepping interface velocity in deg/s
+float StepperMotor::getDegreesPS() {
+    calc:
+    while (isStepping)
+    float velocity = 1000000.0 * angleChange / (nowStepingSampleTime - prevStepingSampleTime);
+    if (isStepping)
+        goto calc;
+    return velocity;
+}
+
+
+// Compute the stepping interface RPM
+float  StepperMotor::getSteppingRPM() {
+    return DPS_TO_RPM(getDegreesPS());
+}
+#endif // ! ENABLE_STEPPING_VELOCITY
 
 
 // Returns the angular deviation of the motor from the desired angle
@@ -373,8 +401,19 @@ void StepperMotor::simpleStep() {
 // Computes the coil values for the next step position and increments the set angle
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos) {
 
+    #ifdef ENABLE_STEPPING_VELOCITY
+        isStepping = true;
+
+        // Sample times
+        prevStepingSampleTime = nowStepingSampleTime;
+        nowStepingSampleTime = micros();
+
+    #else // ! ENABLE_STEPPING_VELOCITY
+        float angleChange;
+    #endif
+
     // Main angle change (any inversions * angle of microstep)
-    float angleChange = this -> microstepAngle;
+    angleChange = this -> microstepAngle;
     int32_t stepChange = 1;
 
     // Factor in the multiplier if specified
@@ -394,8 +433,12 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
     //}
     else if (dir == CLOCKWISE) {
         // Make the angle change in the negative direction
-        angleChange *= -1;
+        angleChange = -angleChange;
     }
+
+    #ifdef ENABLE_STEPPING_VELOCITY
+        isStepping = false;
+    #endif
 
     // Fix the step change's sign
     stepChange *= getSign(angleChange);

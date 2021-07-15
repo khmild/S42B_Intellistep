@@ -297,15 +297,14 @@ class Encoder {
 
         // Reads the average value for the angle of the encoder (ranges from 0-360)
         double getAngleAvg();
-        #ifndef ENCODER_SPEED_ESTIMATION
+        double getEstimSpeed();
         int16_t getRawSpeed();
-        #endif
         double getSpeed();
         double getAccel();
         int16_t getRawTemp();
         double getTemp();
         int16_t getRawRev();
-        double getRev();
+        int32_t getRev();
         double getAbsoluteAngleAvg();
         float getAbsoluteAngleAvgFloat();
         void setStepOffset(double offset);
@@ -332,6 +331,7 @@ class Encoder {
 
         // Moving average instances
         MovingAverage <float> speedAvg;
+        MovingAverage <int16_t> rawSpeedAvg;
         MovingAverage <float> accelAvg;
         MovingAverage <uint16_t> incrementAvg;
         MovingAverage <float> absAngleAvg;
@@ -339,7 +339,7 @@ class Encoder {
 
         // The startup angle and rev offsets
         double startupAngleOffset = 0;
-        double startupRevOffset = 0;
+        int32_t startupRevOffset = 0;
         double encoderStepOffset = 0;
 
         // SPI init structure
