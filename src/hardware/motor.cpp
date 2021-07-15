@@ -20,7 +20,7 @@ StepperMotor::StepperMotor() {
     tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP;
     tim2Config.Init.Period = 0xFFFF;
     tim2Config.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
     HAL_TIM_Base_Init(&tim2Config);
 
     // Set that the step pin should be an external trigger for the timer to count
@@ -46,9 +46,10 @@ StepperMotor::StepperMotor() {
     // Enable TIM2
     __HAL_TIM_ENABLE(&tim2Config);
 
-    // No need to enable the interrupts here, the step interruptAttach will do that for us
-    //__HAL_TIM_CLEAR_FLAG(&tim2Config, TIM_FLAG_UPDATE);
-    //__HAL_TIM_ENABLE_IT(&tim2Config, TIM_IT_UPDATE);
+    // Attach the overflow interrupt (has to use HardwareTimer
+    // because HardwareTimer library holds all callbacks)
+    tim2HWTim -> setInterruptPriority(5, 0);
+    tim2HWTim -> attachInterrupt(overflowHandler);
 
     // Setup the pins as outputs
     pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
@@ -84,7 +85,7 @@ float StepperMotor::getAngleError() {
 
 // Returns the step deviation of the motor from the desired step
 int32_t StepperMotor::getStepError() {
-    return (round(encoder.getAbsoluteAngle() / (this -> microstepAngle)) - (this -> desiredStep));
+    return (round(encoder.getAbsoluteAngle() / (this -> microstepAngle)) - getHardStepCNT());
 }
 
 
@@ -101,34 +102,52 @@ float StepperMotor::getDesiredAngle() {
 
 
 // Returns the desired step of the motor
-int32_t StepperMotor::getDesiredStep() {
-    return (this -> desiredStep);
+int32_t StepperMotor::getSoftStepCNT() {
+    return (this -> softStepCNT);
+}
+
+
+// Sets the desired step of the motor
+void StepperMotor::setSoftStepCNT(int32_t newStepCNT) {
+    this -> softStepCNT = newStepCNT;
 }
 
 
 // Returns the count value of the timer-based step counter
-uint16_t StepperMotor::getHardStepCNT() {
-    return ((tim2Config.Instance -> CNT) + (stepOverflowCount * 65535));
+int32_t StepperMotor::getHardStepCNT() const {
+    return ((TIM2 -> CNT) + stepOverflowOffset);
 }
 
 
-// Interrupt routine for step overflows
-void StepperMotor::checkStepOverflow() {
+// Sets the count value of the timer-based step counter
+void StepperMotor::setHardStepCNT(int32_t newCNT) {
 
-    // Decide if there was an overflow
-    if (TIM2 -> CNT < (TIM_MAX_VALUE / 2) && previousTIM2Count > (TIM_MAX_VALUE / 2)) {
+    // Find the remainder for the counter to use
+    uint32_t newClockCNT = (newCNT % 65536);
 
-        // New value is on lower end, meaning we had an overflow
-        stepOverflowCount++;
-    }
-    else if (TIM2 -> CNT > (TIM_MAX_VALUE / 2) && previousTIM2Count < (TIM_MAX_VALUE / 2)) {
-        // New value is on the high end, we had an underflow
-        stepOverflowCount--;
-    }
+    // Set the new overflow count
+    stepOverflowOffset = (newCNT - newClockCNT);
 
-    // Update the previous count
-    previousTIM2Count = TIM2 -> CNT;
+    // Set the counter
+    __HAL_TIM_SET_COUNTER(&tim2Config, (uint16_t)newClockCNT);
 }
+
+
+// Fixes the step overflow count
+void overflowHandler() {
+
+    // Check which direction the overflow was in
+    if (TIM2 -> CNT < (TIM_MAX_VALUE / 2)) {
+
+        // Overflow
+        motor.stepOverflowOffset += 65536;
+    }
+    else {
+        // Underflow
+        motor.stepOverflowOffset -= 65536;
+    }
+}
+
 
 #ifdef ENABLE_DYNAMIC_CURRENT
 
@@ -229,6 +248,12 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (setMicrostepping != -1) {
+
+        // Scale the hardware step counter
+        setHardStepCNT(getHardStepCNT() * (setMicrostepping / this -> microstepDivisor));
+
+        // Scale the software step counter
+        setSoftStepCNT(getSoftStepCNT() * (setMicrostepping / this -> microstepDivisor));
 
         // Set the microstepping divisor
         this -> microstepDivisor = setMicrostepping;
@@ -379,7 +404,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
 
         // Angles are basically just added to desired, not really much to do here
         this -> desiredAngle += angleChange;
-        this -> desiredStep += stepChange;
+        this -> softStepCNT += stepChange;
     }
 
     // Motor's current angle must always be updated to correctly move the coils

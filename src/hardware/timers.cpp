@@ -70,9 +70,10 @@ uint32_t sec() {
 void setupMotorTimers() {
 
     // Interupts are in order of importance as follows -
+    // - 5 - hardware step counter overflow handling
     // - 6 - step pin change
-    // - 7.1 - position correction (or PID interval update)
-    // - 7.2 - scheduled steps (if ENABLE_DIRECT_STEPPING or ENABLE_PID)
+    // - 7.0 - position correction (or PID interval update)
+    // - 7.1 - scheduled steps (if ENABLE_DIRECT_STEPPING or ENABLE_PID)
 
     // Check if StallFault is enabled
     #ifdef ENABLE_STALLFAULT
@@ -83,14 +84,14 @@ void setupMotorTimers() {
         #endif
     #endif
 
-    // Attach the interupt to the step pin (subpriority is set in Platformio config file)
+    // Attach the interupt to the step pin (subpriority is set in PlatformIO config file)
     // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004
     // the optocoupler inverts the signal. Therefore, the falling edge is the correct value.
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
 
     // Setup the timer for steps
     correctionTimer -> pause();
-    correctionTimer -> setInterruptPriority(7, 1);
+    correctionTimer -> setInterruptPriority(7, 0);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
 
     // Set the update rate and the variable that stores it
@@ -106,7 +107,7 @@ void setupMotorTimers() {
     // Setup step schedule timer if it is enabled
     #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
         stepScheduleTimer -> pause();
-        stepScheduleTimer -> setInterruptPriority(7, 2);
+        stepScheduleTimer -> setInterruptPriority(7, 1);
         stepScheduleTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
         stepScheduleTimer -> refresh();
@@ -237,9 +238,6 @@ void stepMotor() {
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
-
-    // Check if there was a step overflow
-    motor.checkStepOverflow();
 
     // Step the motor
     motor.step();

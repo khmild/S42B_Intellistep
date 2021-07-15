@@ -73,13 +73,16 @@ class StepperMotor {
         float getDesiredAngle();
 
         // Returns the desired step of the motor
-        int32_t getDesiredStep();
+        int32_t getSoftStepCNT();
+
+        // Sets the desired step of the motor
+        void setSoftStepCNT(int32_t newStepCNT);
 
         // Returns the count according to the TIM2 hardware step counter
-        uint16_t getHardStepCNT();
+        int32_t getHardStepCNT() const;
 
-        // Function for checking for step overflows on TIM2
-        void checkStepOverflow();
+        // Sets the count for the TIM2 hardware step counter
+        void setHardStepCNT(int32_t newCNT);
 
         // Dynamic current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -191,6 +194,9 @@ class StepperMotor {
         // Encoder object
         Encoder encoder;
 
+        // Counter for number of overflows (needs to be public for the interrupt)
+        int32_t stepOverflowOffset = 0;
+
 
     // Things that shouldn't be accessed by the outside
     private:
@@ -202,7 +208,7 @@ class StepperMotor {
         float desiredAngle = 0;
 
         // Keeps the desired step of the motor
-        int32_t desiredStep = 0;
+        int32_t softStepCNT = 0;
 
         // Keeps the current angle of the motor
         float currentAngle = 0;
@@ -230,10 +236,10 @@ class StepperMotor {
         float fullStepAngle = 1.8;
 
         // Microstep angle (full step / microstepping divisor)
-        float microstepAngle = 1.8;
+        float microstepAngle = getFullStepAngle() / getMicrostepping();
 
         // Microstep count in a full rotation
-        int32_t microstepsPerRotation = (360.0 / getFullStepAngle());
+        int32_t microstepsPerRotation = (360.0 / getMicrostepAngle());
 
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
         MOTOR_STATE state = MOTOR_NOT_SET;
@@ -262,12 +268,11 @@ class StepperMotor {
         TIM_ClockConfigTypeDef tim2ClkConfig;
         TIM_MasterConfigTypeDef tim2MSConfig;
 
-        // Counter for number of overflows
-        int32_t stepOverflowCount = 0;
-
-        // The previous count for TIM2
-        uint16_t previousTIM2Count = 0;
+        // HardwareTimer (required to assign interrupt)
+        HardwareTimer *tim2HWTim = new HardwareTimer(TIM2);
 };
 
+// Overflow handler
+void overflowHandler();
 
 #endif
