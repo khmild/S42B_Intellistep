@@ -14,6 +14,12 @@
 
 // --------------  Settings  --------------
 
+// The maximum number of steps per rev is 200*32==6400 (for 1.8 degree per step motor)
+//                                    and 400*32==12800 (for 0.9 degree per step motor)
+// int32_t allow to store +/- 2^31==2147483648 steps and 2^31/6400==335544 rev's (for 1.8 degree per step motor)
+//                                                       2^31/12800==167772 rev's (for 0.9 degree per step motor)
+typedef int32_t increments_t;
+
 // LED light functionality
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
@@ -141,7 +147,7 @@
 // Motor settings
 // The number of microsteps to move per step pulse
 // Doesn't affect correctional movements
-#define MICROSTEP_MULTIPLIER    (uint32_t)1
+//#define MICROSTEP_MULTIPLIER    (uint32_t)1
 
 // The min/max microstepping divisors
 // Microstepping divisors are the numbers underneath the fraction of the microstepping
