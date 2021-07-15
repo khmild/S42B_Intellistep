@@ -74,7 +74,7 @@
 
 // Motor characteristics
 #define STEP_ANGLE (float)1.8 // ! Check to see for .9 deg motors as well
-#define STEP_UPDATE_FREQ 78 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
+#define STEP_UPDATE_FREQ (uint32_t)78 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
 
 // Board characteristics
 // ! Do not modify unless you know what you are doing!
@@ -131,7 +131,7 @@
 #endif
 
 // Direct step functionality (used to command motor to move over Serial/CAN)
-//#define ENABLE_DIRECT_STEPPING
+#define ENABLE_DIRECT_STEPPING
 #ifdef ENABLE_DIRECT_STEPPING
 
     // The default stepping rate (in Hz) to move in the event that no parameter is specified
