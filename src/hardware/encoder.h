@@ -278,14 +278,20 @@ class Encoder {
         void resetSafety();
 
         // Fast functions
+        // Reads the raw momentary steps value from the angle register of the encoder (unadjusted)
         uint16_t getRawIncrements();
+
+        // Returns the raw average steps value from the angle register of the encoder (unadjusted)
         uint16_t getRawIncrementsAvg();
 
+        // Returns the absolute steps of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
+        increments_t getAbsoluteIncrementsAvg();
+
         // High level encoder functions
-        // Reads the raw momentary value from the angle of the encoder (unadjusted)
+        // Reads the raw momentary value from the angle of the encoder (adjusted)
         double getRawAngle();
 
-        // Reads the raw average value from the angle of the encoder (unadjusted)
+        // Reads the raw average value from the angle of the encoder (adjusted)
         double getRawAngleAvg();
 
         // Returns a smoothed value of angle of the encoder
@@ -308,6 +314,7 @@ class Encoder {
         double getAbsoluteAngleAvg();
         float getAbsoluteAngleAvgFloat();
         void setStepOffset(double offset);
+        void setIncrementsOffset(uint16_t offset);
         void zero();
 
         // Encoder estimation
@@ -335,12 +342,14 @@ class Encoder {
         MovingAverage <float> accelAvg;
         MovingAverage <uint16_t> incrementAvg;
         MovingAverage <float> absAngleAvg;
+        MovingAverage <increments_t> absIncrementsAvg;
         MovingAverage <int16_t> rawTempAvg;
 
         // The startup angle and rev offsets
         double startupAngleOffset = 0;
-        int32_t startupRevOffset = 0;
-        double encoderStepOffset = 0;
+        uint16_t startupIncrementsOffset = 0; // Fix AVAL - Angle Value Register
+        int16_t startupRevOffset = 0;         // Fix AREV - Angle Revolution Register
+        double encoderStepOffset = 0;         // calibration
 
         // SPI init structure
         SPI_HandleTypeDef spiConfig;
