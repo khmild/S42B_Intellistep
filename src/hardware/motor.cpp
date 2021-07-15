@@ -13,6 +13,7 @@ StepperMotor::StepperMotor() {
     // Setup the input pins
     pinMode(STEP_PIN, INPUT);
     pinMode(DIRECTION_PIN, INPUT);
+    pinMode(ENABLE_PIN, INPUT);
 
     // Setup TIM2 (the base)
     tim2Config.Instance = TIM2;
