@@ -18,6 +18,7 @@
 //                                    and 400*32==12800 (for 0.9 degree per step motor)
 // int32_t allow to store +/- 2^31==2147483648 steps and 2^31/6400==335544 rev's (for 1.8 degree per step motor)
 //                                                       2^31/12800==167772 rev's (for 0.9 degree per step motor)
+// 335544 rev's / 1000RPM ~ 336 min == 5.6 hour in one direction for counter overflow
 typedef int32_t increments_t;
 
 // LED light functionality
