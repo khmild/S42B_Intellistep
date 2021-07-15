@@ -228,7 +228,7 @@ void displayMotorData() {
     #endif // ! ENCODER_SPEED_ESTIMATION
 
     // Angle error
-    snprintf(outBuffer, OB_SIZE, "Err: % 010.2f", motor.getAngleError());
+    snprintf(outBuffer, OB_SIZE, "Err: % 10.2f", motor.getAngleError());
     writeOLEDString(0, LINE_HEIGHT, outBuffer, false);
 
     // Current angle of the motor

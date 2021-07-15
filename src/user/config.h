@@ -350,7 +350,7 @@
 // --------------  Debugging  --------------
 
 //#define ENABLE_STEPPING_VELOCITY
-#define IGNORE_FLASH_VERSION
+//#define IGNORE_FLASH_VERSION
 
 // LED related debugging
 #ifdef ENABLE_LED

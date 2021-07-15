@@ -55,7 +55,6 @@ float StepperMotor::getEstimRPM() {
 float StepperMotor::getDegreesPS() {
     calc:
     while (isStepping)
-        ;
     float velocity = 1000000.0 * angleChange / (nowStepingSampleTime - prevStepingSampleTime);
     if (isStepping)
         goto calc;
