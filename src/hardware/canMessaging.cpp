@@ -95,17 +95,11 @@ void checkCANCmd() {
     // Check to see if the command buffer is full ('>' is the termanator)
     if (CANCommandString.indexOf(STRING_END_MARKER) != -1) {
 
-        // Prevent interrupts, this is important
-        disableInterrupts();
-
         // Parse the command
         parseCommand(CANCommandString.substring(0, CANCommandString.indexOf(STRING_END_MARKER)));
 
         // Empty the buffer
         CANCommandString = "";
-
-        // Re-enable the interrupts
-        enableInterrupts();
     }
 }
 

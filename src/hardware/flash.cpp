@@ -85,7 +85,7 @@ float readFlashFloat(uint32_t parameterIndex) {
 // Raw write function. Writes out 16 bits to the flash
 void writeToFlashAddress(uint32_t address, uint16_t data) {
 
-    // Disable interrupts (CANNOT BE INTERRUPTED)
+    // Disable the motor timers
     disableInterrupts();
 
     // Unlock the flash for writing
@@ -95,12 +95,12 @@ void writeToFlashAddress(uint32_t address, uint16_t data) {
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_EOP | FLASH_FLAG_WRPERR | FLASH_FLAG_PGERR);
 
     // Write out the data
-    HAL_FLASH_Program_IT(FLASH_TYPEPROGRAM_HALFWORD, address, data);
+    HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, data);
 
     // Lock the flash (we finished writing)
     HAL_FLASH_Lock();
 
-    // Re-enable interrupts
+    // Enable the motor timers
     enableInterrupts();
 }
 
@@ -159,7 +159,7 @@ void writeFlash(uint32_t parameterIndex, float data) {
 // Erases all data that is saved in the parameters page
 void eraseParameters() {
 
-    // Disable interrupts
+    // Disable the motor timers
     disableInterrupts();
 
     // Unlock the flash
@@ -183,16 +183,13 @@ void eraseParameters() {
     writeFlash(FLASH_CONTENTS_MINOR_VERSION_INDEX, MINOR_VERSION);
     writeFlash(FLASH_CONTENTS_PATCH_VERSION_INDEX, PATCH_VERSION);
 
-    // Enable interrupts
+    // Re-enable the motor timers
     enableInterrupts();
 }
 
 
 // Writes the currently saved parameters to flash memory for long term storage
 void saveParameters() {
-
-    // Disable interrupts
-    disableInterrupts();
 
     // Check to see if the module was calibrated previously
     bool calibrated = isCalibrated();
@@ -255,9 +252,6 @@ void saveParameters() {
 
     // If the dip switches were installed incorrectly
     writeFlash(INVERTED_DIPS_INDEX, getDipInverted());
-
-    // Re-enable interrupts
-    enableInterrupts();
 }
 
 
@@ -272,6 +266,9 @@ bool isCalibrated() {
 // Reads the version number from flash
 // Returns true if the version matches, false if it doesn't
 bool checkVersionMatch() {
+
+    // If the flash version should be ignored
+    #ifndef IGNORE_FLASH_VERSION
 
     // Read the major version number
     if (readFlashU16(FLASH_CONTENTS_MAJOR_VERSION_INDEX) != MAJOR_VERSION) {
@@ -294,6 +291,8 @@ bool checkVersionMatch() {
         return false;
     }
 
+    #endif // ! IGNORE_FLASH_VERSION
+
     // If we made it this far, return true
     return true;
 }
@@ -301,9 +300,6 @@ bool checkVersionMatch() {
 
 // Loads the saved parameters from flash and sets them
 String loadParameters() {
-
-    // Disable interrupts
-    disableInterrupts();
 
     // Create a storage for the output message
     String outputMessage;
@@ -317,7 +313,7 @@ String loadParameters() {
         }
 
         // Load the calibration offset
-        setEncoderStepOffset(readFlashFloat(STEP_OFFSET_INDEX));
+        motor.encoder.setStepOffset(readFlashFloat(STEP_OFFSET_INDEX));
 
         // Set the motor current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -372,9 +368,6 @@ String loadParameters() {
         outputMessage = FLASH_LOAD_UNSUCCESSFUL;
     }
 
-    // All done, we can re-enable interrupts
-    enableInterrupts();
-
     // All done, we can return the result of the process
     return outputMessage;
 }
@@ -383,9 +376,6 @@ String loadParameters() {
 // Wipes all parameters stored, returning to programming defaults
 // !!! WARNING !!! Reboots processor!
 void wipeParameters() {
-
-    // Disable interrupts (no need to re-enable, the processor is going to be rebooted)
-    disableInterrupts();
 
     // Write that the flash is invalid (can write 0 without erasing flash)
     writeFlash(VALID_FLASH_CONTENTS, false);

@@ -50,11 +50,21 @@ void setup() {
         MCO_GPIO_Init();
     #endif
 
-    // Update the system clock with the new speed
-    SystemCoreClockUpdate();
+    // Initialize the LED
+    #ifdef ENABLE_LED
+        initLED();
+    #endif
 
-    // Initialize the encoder
-    initEncoder();
+    // Zero the encoder
+    motor.encoder.zero();
+    #ifdef CHECK_ENCODER_SPEED
+        while(true) {
+            GPIO_WRITE(LED_PIN, HIGH);
+            motor.encoder.getRawAngleAvg();
+            GPIO_WRITE(LED_PIN, LOW);
+            delayMicroseconds(1);
+        }
+    #endif
 
     // Setup the motor for use
     motor.setState(DISABLED, true);
@@ -93,11 +103,6 @@ void setup() {
     #ifdef ENABLE_CAN
         // Initialize the CAN bus
         initCAN();
-    #endif
-
-    // Initialize the LED
-    #ifdef ENABLE_LED
-        initLED();
     #endif
 
     #ifdef CHECK_GPIO_OUTPUT_SWITCHING
@@ -149,7 +154,8 @@ void setup() {
             clearOLED();
             writeOLEDString(0, 0,               F("Use the"), false);
             writeOLEDString(0, LINE_HEIGHT * 1, F("select key"), false);
-            writeOLEDString(0, LINE_HEIGHT * 2, F("to calibrate"), true);
+            writeOLEDString(0, LINE_HEIGHT * 2, F("to calibrate"), false);
+            writeOLEDString(0, LINE_HEIGHT * 3, F("Requires power"), true);
         #endif
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
@@ -221,10 +227,6 @@ void setup() {
 
 // Main loop
 void loop() {
-
-    // ! TESTING ONLY
-    //Serial.println("P:" + String(motor.getStepPhase() % 32) + " S:" + String(motor.getDesiredStep() % 32));
-    //Serial.println("P:" + String(pid.compute()) + " DA:" + String(motor.getDesiredAngle()) + " AA:" + String(getAbsoluteAngle()));
 
     // Check the dip switches
     checkDips();

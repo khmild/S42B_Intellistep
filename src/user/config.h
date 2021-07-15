@@ -4,11 +4,13 @@
 // Need the Arduino library for pin conversion
 #include "Arduino.h"
 
+// Macros file (for convience functions)
+#include "macros.h"
+
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)38
-
+#define PATCH_VERSION (uint16_t)44
 
 // --------------  Settings  --------------
 
@@ -16,28 +18,26 @@
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
     //#define ENABLE_BLINK
-    //#define CHECK_STEPPING_RATE
-
-    #if defined(ENABLE_BLINK) && defined(CHECK_STEPPING_RATE)
-        #error Only one of #define is possible at a time in this section
-    #endif
 #endif
 
+// OLED (display)
 #define ENABLE_OLED
-#if !defined(ENABLE_OLED)
-    // MCO is PA_8 pin, It also used as OLED_RST_PIN
-    //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
+#ifdef ENABLE_OLED
 
-    // The PA_8 pin is used
-    //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO PA_8 output switching
+    // Button settings
+    //#define INVERTED_DIPS // Enable if your dips are inverted ("on" print is facing away from motor connector)
+    #define BUTTON_REPEAT_INTERVAL 250 // Millis
+    #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
+    #define WARNING_MICROSTEP MAX_MICROSTEP_DIVISOR // The largest microstep to warn on (the denominator of the fraction)
 
-    #if defined(CHECK_MCO_OUTPUT) && defined(CHECK_GPIO_OUTPUT_SWITCHING)
-        #error Only one of #define is possible at a time in this section
-    #endif
+    // Warning thresholds
+    #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
+    //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
 #endif
 
 // Averages (number of readings in average)
 #define RPM_AVG_READINGS     (uint16_t)10
+#define SPEED_AVG_READINGS   (uint16_t)100
 #define ACCEL_AVG_READINGS   (uint16_t)10
 #define ANGLE_AVG_READINGS   (uint16_t)15
 #define TEMP_AVG_READINGS    (uint16_t)200
@@ -74,7 +74,7 @@
 
 // Motor characteristics
 #define STEP_ANGLE (float)1.8 // ! Check to see for .9 deg motors as well
-#define STEP_UPDATE_FREQ 78 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
+#define STEP_UPDATE_FREQ (uint32_t)78 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
 
 // Board characteristics
 // ! Do not modify unless you know what you are doing!
@@ -108,8 +108,8 @@
 #endif
 
 // PID settings
-// ! At this time this feature is still under development
-//#define ENABLE_PID
+// ! At this time, this feature is still under development
+#define ENABLE_PID
 #ifdef ENABLE_PID
 
     // Default P, I, and D terms
@@ -130,10 +130,18 @@
     #define DEFAULT_PID_DISABLE_THRESHOLD 0 //1000
 #endif
 
+// Direct step functionality (used to command motor to move over Serial/CAN)
+#define ENABLE_DIRECT_STEPPING
+#ifdef ENABLE_DIRECT_STEPPING
+
+    // The default stepping rate (in Hz) to move in the event that no parameter is specified
+    #define DEFAULT_STEPPING_RATE 1000
+#endif
+
 // Motor settings
 // The number of microsteps to move per step pulse
 // Doesn't affect correctional movements
-#define MICROSTEP_MULTIPLIER    (uint32_t)2
+#define MICROSTEP_MULTIPLIER    (uint32_t)1
 
 // The min/max microstepping divisors
 // Microstepping divisors are the numbers underneath the fraction of the microstepping
@@ -141,7 +149,15 @@
 #define MIN_MICROSTEP_DIVISOR   (uint8_t)1
 #define MAX_MICROSTEP_DIVISOR   (uint8_t)32
 
-#define MOTOR_PWM_FREQ          (uint32_t)30000 // in Hz
+#define MOTOR_PWM_FREQ          (uint32_t)124000 // in Hz
+// https://deepbluembedded.com/wp-content/uploads/2020/06/STM32-PWM-Resolution-Example-STM32-Timer-PWM-Mode-Output-Compare-768x291.jpg
+// 124000 in fact 139.5kHz and 9bit resolution
+// 62000 in fact 69.8kHz and 10bit resolution
+// Tested: higher resolution causes more noise when the motor is stopped after moving.
+//
+// Note: The measured internal PWM frequency of the A4950(Pins 7, 2 and 3) is 22.5 kHz.
+// Noise is a design feature when the A4950 drives a stepper motor. :(
+
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
 
 // Stallfault
@@ -155,20 +171,6 @@
     #define STALLFAULT_PIN PA_13 //output(GPIOA_BASE_BASE, 13)
 #endif
 
-// OLED settings
-#ifdef ENABLE_OLED
-
-    // Button settings
-    //#define INVERTED_DIPS // Enable if your dips are inverted ("on" print is facing away from motor connector)
-    #define BUTTON_REPEAT_INTERVAL 250 // Millis
-    #define MENU_RETURN_LEVEL MOTOR_DATA // The level to return to after configuring a setting
-    #define WARNING_MICROSTEP MAX_MICROSTEP_DIVISOR // The largest microstep to warn on (the denominator of the fraction)
-
-    // Warning thresholds
-    #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
-    //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
-#endif
-
 // The System Clock frequency of the CPU (in MHz)
 // This can be set to 72 and 128 with SYSCLK_SRC_HSE_8 (external oscillator)
 // Can be set to 72 with SYSCLK_SRC_HSE_16 (external oscillator)
@@ -176,6 +178,9 @@
 #define SYSCLK_FREQ 128
 #define SYSCLK_SRC_HSE_8
 
+// The compare format and maximum value for PWM (lower values = higher max freq)
+#define PWM_COMPARE_FORMAT RESOLUTION_9B_COMPARE_FORMAT
+#define PWM_MAX_VALUE (POWER_2(PWM_COMPARE_FORMAT) - 1)
 
 // --------------  Pins  --------------
 /*
@@ -274,6 +279,9 @@
 #define CAN_IN_PIN   PA_11
 #define CAN_OUT_PIN  PA_12
 
+// UART pins
+#define USART1_TX PA9
+#define USART1_RX PA10
 
 // --------------  Internal defines  --------------
 // Under the hood motor setup
@@ -283,33 +291,7 @@
 
 // Use a integer version of the log of SINE_MAX
 // Used to speed up division much faster
-#define SINE_POWER (uint16_t)log2(SINE_MAX)
-
-// Bitwise memory modification - ARM bitband
-#define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
-#define MEM_ADDR(addr)  *((volatile unsigned long  *)(addr))
-#define BIT_ADDR(addr, bitnum)   MEM_ADDR(BITBAND(addr, bitnum))
-
-// Low level GPIO configuration (for quicker manipulations than digitalWrites)
-#define outputPin(GPIO_BASE, n)   BIT_ADDR((GPIO_BASE + 12), n) // ODR
-#define inputPin(GPIO_BASE, n)    BIT_ADDR((GPIO_BASE + 8), n) // IDR
-
-// Maybe an even faster digitalWrite, but only if really needed
-#define digitalWriteFaster(pn, high) \
-    if (high) { \
-        WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BSRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
-    } \
-    else { \
-        WRITE_REG(get_GPIO_Port(STM_PORT(pn))->BRR, (STM_LL_GPIO_PIN(pn) >> GPIO_PIN_MASK_POS) & 0x0000FFFFU); \
-    }
-
-#define digitalWriteFastest(pn, high) \
-    if (high) { \
-        get_GPIO_Port(STM_PORT(pn))->BSRR = STM_GPIO_PIN(pn); \
-    } \
-    else { \
-        get_GPIO_Port(STM_PORT(pn))->BRR = STM_GPIO_PIN(pn); \
-    }
+#define SINE_POWER ((uint16_t)log2(SINE_MAX))
 
 // Methods for writing to the GPIO
 // When SystemClock_Config_HSE_8M_SYSCLK_72M() is selected:
@@ -320,12 +302,6 @@
 //  1.67 MHz | GPIO_WRITE_DIGITAL_WRITE_FASTEST  | digitalWriteFastest()
 // 600.1 kHz | GPIO_WRITE_REGISTER_SET           | output()
 // 163.3 kHz | GPIO_WRITE_HAL_FUNCTION           | HAL_GPIO_WritePin()
-#define GPIO_WRITE_DIGITAL_WRITE         0
-#define GPIO_WRITE_DIGITAL_WRITE_FAST    1
-#define GPIO_WRITE_DIGITAL_WRITE_FASTER  2
-#define GPIO_WRITE_DIGITAL_WRITE_FASTEST 3
-#define GPIO_WRITE_REGISTER_SET          4
-#define GPIO_WRITE_HAL_FUNCTION          5
 
 // Setting for the GPIO write method
 #define GPIO_WRITE_METHOD GPIO_WRITE_DIGITAL_WRITE_FASTEST
@@ -371,10 +347,26 @@
 //#define GPIO_READ(pn) digital_io_read(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn))
 #define GPIO_READ(pn) LL_GPIO_IsInputPinSet(get_GPIO_Port(STM_PORT(pn)), STM_LL_GPIO_PIN(pn))
 
-#define DIRECTION(x) ((x) > 0 ? 1 : (-1))  // Note: zero 'x' is not allowed
-
 // --------------  Debugging  --------------
-//#define TEST_FLASH
+
+//#define ENABLE_STEPPING_VELOCITY
+//#define IGNORE_FLASH_VERSION
+
+// LED related debugging
+#ifdef ENABLE_LED
+    //#define CHECK_STEPPING_RATE
+    //#define CHECK_CORRECT_MOTOR_RATE
+    //#define CHECK_ENCODER_SPEED
+#endif
+
+// Clock debugging (uses OLED pin)
+#ifndef ENABLE_OLED
+    // MCO is PA_8 pin, It also used as OLED_RST_PIN
+    //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
+
+    // The PA_8 pin is used
+    //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO PA_8 output switching
+#endif
 
 // Import the sanity check (needed so all files have the defines done in the sanity check file)
 // Must be last so that it can use the defines above

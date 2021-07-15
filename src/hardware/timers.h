@@ -23,6 +23,12 @@ uint32_t sec();
 // Sets up the motor timers and interrupts
 void setupMotorTimers();
 
+// Disables all motor timers (used when the motor cannot be messed with)
+void disableMotorTimers();
+
+// Enables the motor timers (used to reset the motor after the timers have been disabled)
+void enableMotorTimers();
+
 // Pauses the timers, temporarily disabling them
 void disableInterrupts();
 
@@ -47,4 +53,24 @@ void stepMotorNoDesiredAngle();
 // Function to correct motor position if it is out of place
 void correctMotor();
 
-#endif
+// Direct stepping
+#ifdef ENABLE_DIRECT_STEPPING
+// Schedule steps for the motor to execute (rate is in Hz)
+void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir);
+#endif // ! ENABLE_DIRECT_STEPPING
+
+#if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
+// Step schedule handler (runs when the interrupt is triggered)
+void stepScheduleHandler();
+
+// Convenience function to handle enabling the step schedule timer
+void enableStepScheduleTimer();
+
+// Convenience function to handle disabling the step schedule timer
+void disableStepScheduleTimer();
+#endif // ! ENABLE_DIRECT_STEPPING || ENABLE_PID
+
+// Makes sure that all cached calls respect the current config
+void syncInstructions();
+
+#endif // ! __TIMERS_H__

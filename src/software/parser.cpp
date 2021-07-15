@@ -31,7 +31,7 @@ String parseCommand(String buffer) {
 
     // ! Check to see if the string contains another set of gcode, if so call the function recursively
 
-    // Check to see if the letter is an M (only supported gcode at this point)
+    // Check to see if the letter is an M (for mcodes)
     if (parseValue(buffer, 'M') != "-1") {
 
         // Switch statement the command number
@@ -118,9 +118,6 @@ String parseCommand(String buffer) {
             case 308:
                 // M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
 
-                // Disable interrupts (so value printing is never stopped)
-                disableInterrupts();
-
                 // Print a notice to the user that the PID tuning is starting
                 Serial.println("Notice: The manual PID tuning is now starting. To exit, send any serial data.");
 
@@ -134,11 +131,8 @@ String parseCommand(String buffer) {
 
                 // Loop forever, until a new value is sent
                 while (!(Serial.available() > 0)) {
-                    Serial.println(getAbsoluteAngle());
+                    Serial.println(motor.encoder.getAbsoluteAngleAvg());
                 }
-
-                // Re-enable interrupts
-                enableInterrupts();
 
                 // When all done, the exit is acknowledged
                 return FEEDBACK_OK;
@@ -382,11 +376,61 @@ String parseCommand(String buffer) {
                 Serial.println("Testing parseString");
                 return parseString(buffer, 'S');
             }
+
+            default: {
+                // Command isn't recognized, therefore throw an error
+                return FEEDBACK_CMD_NOT_AVAILABLE;
+            }
         }
     }
 
+    // Gcodes support
+    #ifdef ENABLE_DIRECT_STEPPING
+    // Check to see if a gcode exists
+    else if (parseValue(buffer, 'G') != "-1") {
+
+        // Switch statement the command number
+        switch (parseValue(buffer, 'G').toInt()) {
+
+            case 6: {
+                // G6 (ex G6 D0 R1000 S1000) - Direct stepping, commands the motor to move a specified number of steps in the specified direction. D is direction (0 for CCW, 1 for CW), R is rate (in Hz), and S is the count of steps to move
+                // Pull the values from the command
+                bool reverse = parseValue(buffer, 'D').equals("1");
+                int32_t rate = parseValue(buffer, 'R').toInt();
+                int64_t count = parseValue(buffer, 'S').toInt();
+
+                // Sanitize the inputs
+                if (rate <= 0) {
+                    rate = DEFAULT_STEPPING_RATE;
+                }
+                if (count <= 0) {
+                    return FEEDBACK_NO_VALUE;
+                }
+
+                // Call the steps to be scheduled
+                if (!reverse) {
+                    scheduleSteps(count, rate, COUNTER_CLOCKWISE);
+                }
+                else {
+                    scheduleSteps(count, rate, CLOCKWISE);
+                }
+
+                // All good, we can exit
+                return FEEDBACK_OK;
+            }
+
+            default: {
+                // Command isn't recognized, therefore throw an error
+                return FEEDBACK_CMD_NOT_AVAILABLE;
+            }
+        }
+
+    }
+
+    #endif
+
     // Nothing here, nothing to do
-    return F("No command specified");
+    return FEEDBACK_NO_CMD_SPECIFIED;
 }
 
 

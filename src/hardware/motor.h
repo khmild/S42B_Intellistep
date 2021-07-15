@@ -6,6 +6,7 @@
 #include "HardwareTimer.h"
 #include "encoder.h"
 #include "fastAnalogWrite.h"
+#include "stm32f1xx_hal_tim.h"
 
 // For sin() and fmod() function
 //#include "cmath"
@@ -14,6 +15,9 @@
 
 // Import the pin mapping
 #include "config.h"
+
+// Maximum value for timer counters
+#define TIM_MAX_VALUE (uint16_t)65535
 
 // Enumeration for coil states
 typedef enum {
@@ -53,8 +57,19 @@ class StepperMotor {
         // Initialize the motor
         StepperMotor();
 
-        // Returns the current RPM of the motor to two decimal places
-        float getMotorRPM();
+        // Returns the current RPM of the encoder
+        float getEncoderRPM();
+
+        // Returns the current calculated RPM
+        float getEstimRPM();
+
+        #ifdef ENABLE_STEPPING_VELOCITY
+            // Compute the stepping interface velocity in deg/s
+            float getDegreesPS();
+
+            // Compute the stepping interface RPM
+            float getSteppingRPM();
+        #endif
 
         // Returns the angular deviation of the motor from the set position
         float getAngleError();
@@ -69,7 +84,16 @@ class StepperMotor {
         float getDesiredAngle();
 
         // Returns the desired step of the motor
-        int32_t getDesiredStep();
+        int32_t getSoftStepCNT();
+
+        // Sets the desired step of the motor
+        void setSoftStepCNT(int32_t newStepCNT);
+
+        // Returns the count according to the TIM2 hardware step counter
+        int32_t getHardStepCNT() const;
+
+        // Sets the count for the TIM2 hardware step counter
+        void setHardStepCNT(int32_t newCNT);
 
         // Dynamic current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -178,6 +202,11 @@ class StepperMotor {
         // Calibrates the encoder and PID loop
         void calibrate();
 
+        // Encoder object
+        Encoder encoder;
+
+        // Counter for number of overflows (needs to be public for the interrupt)
+        int32_t stepOverflowOffset = 0;
 
 
     // Things that shouldn't be accessed by the outside
@@ -190,13 +219,22 @@ class StepperMotor {
         float desiredAngle = 0;
 
         // Keeps the desired step of the motor
-        int32_t desiredStep = 0;
+        int32_t softStepCNT = 0;
 
         // Keeps the current angle of the motor
         float currentAngle = 0;
 
         // Keeps the current steps of the motor
         int32_t currentStep = 0;
+
+        #ifdef ENABLE_STEPPING_VELOCITY
+            // variables to calculate the stepping interface velocity
+            float angleChange = 0.0;
+            uint32_t prevStepingSampleTime = 0; // micros()
+            uint32_t nowStepingSampleTime = 0; // micros()
+            // isStepping == true mean that three variables above can be changed
+            bool isStepping = false;
+        #endif
 
         // Motor characteristics
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -218,10 +256,10 @@ class StepperMotor {
         float fullStepAngle = 1.8;
 
         // Microstep angle (full step / microstepping divisor)
-        float microstepAngle = 1.8;
+        float microstepAngle = getFullStepAngle() / getMicrostepping();
 
         // Microstep count in a full rotation
-        int32_t microstepsPerRotation = (360.0 / getFullStepAngle());
+        int32_t microstepsPerRotation = (360.0 / getMicrostepAngle());
 
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
         MOTOR_STATE state = MOTOR_NOT_SET;
@@ -244,6 +282,17 @@ class StepperMotor {
         // Last coil states (used to save time by not setting the pins unless necessary)
         COIL_STATE previousCoilStateA = COIL_NOT_SET;
         COIL_STATE previousCoilStateB = COIL_NOT_SET;
+
+        // Configuration for TIM2
+        TIM_HandleTypeDef tim2Config;
+        TIM_ClockConfigTypeDef tim2ClkConfig;
+        TIM_MasterConfigTypeDef tim2MSConfig;
+
+        // HardwareTimer (required to assign interrupt)
+        HardwareTimer *tim2HWTim = new HardwareTimer(TIM2);
 };
+
+// Overflow handler
+void overflowHandler();
 
 #endif

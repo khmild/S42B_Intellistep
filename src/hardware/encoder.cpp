@@ -3,35 +3,6 @@
 // Include timers.h here so there isn't a linking circle
 #include "timers.h"
 
-// SPI init structure
-SPI_HandleTypeDef spiConfig;
-
-// Main initialization structure
-GPIO_InitTypeDef GPIO_InitStructure;
-
-// A storage for the last angle sampled
-#ifdef ENCODER_SPEED_ESTIMATION
-    double lastEncoderAngle = 0;
-    uint32_t lastAngleSampleTime = 0;
-#endif
-
-// Storage for the last overtemp time
-#ifdef ENABLE_OVERTEMP_PROTECTION
-    uint32_t lastOvertempTime = 0;
-#endif
-
-// Moving average instances
-MovingAverage <float> encoderSpeedAvg;
-MovingAverage <float> encoderAccelAvg;
-MovingAverage <float> encoderAngleAvg;
-MovingAverage <float> encoderAbsoluteAngleAvg;
-MovingAverage <float> encoderTempAvg;
-
-// The startup angle and rev offsets
-double startupAngleOffset = 0;
-double startupAngleRevOffset = 0;
-double encoderStepOffset = 0;
-
 // A map of the known registers
 uint16_t regMap[MAX_NUM_REG];              //!< Register map */
 
@@ -149,8 +120,8 @@ const BitField_t bitFields[] = {
 };
 
 
-// Function to setup the encoder
-void initEncoder() {
+// Constructor for the encoder
+Encoder::Encoder() {
 
     // Setup pin A5, A6, and A7
     GPIO_InitStructure.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
@@ -188,24 +159,28 @@ void initEncoder() {
     //writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
 
     // Setup the moving average calculations
-    encoderSpeedAvg.begin(RPM_AVG_READINGS);
-    encoderAccelAvg.begin(ACCEL_AVG_READINGS);
-    encoderAngleAvg.begin(ANGLE_AVG_READINGS);
-    encoderAbsoluteAngleAvg.begin(ANGLE_AVG_READINGS);
-    encoderTempAvg.begin(TEMP_AVG_READINGS);
+    speedAvg.begin(RPM_AVG_READINGS);
+    rawSpeedAvg.begin(SPEED_AVG_READINGS);
+    accelAvg.begin(ACCEL_AVG_READINGS);
+    incrementAvg.begin(ANGLE_AVG_READINGS);
+    absAngleAvg.begin(ANGLE_AVG_READINGS);
+    rawTempAvg.begin(TEMP_AVG_READINGS);
+
+    // Set the last raw revolution value (used to detect revolution change)
+    lastRawRev = getRawRev();
 
     // Populate the average angle reading table
     for (uint8_t index = 0; index < ANGLE_AVG_READINGS; index++) {
-        getAngle();
+        getAngleAvg();
     }
 
     // Set the offsets
-    startupAngleOffset = getAngle();
-    startupAngleRevOffset = getAbsoluteRev();
+    startupAngleOffset = getRawAngleAvg();
+    startupRevOffset = getRawRev();
 
     // Set the correct starting values for the estimation if using estimation
     #ifdef ENCODER_SPEED_ESTIMATION
-        lastEncoderAngle = getAbsoluteAngle();
+        lastEncoderAngle = getAbsoluteAngleAvg();
         lastAngleSampleTime = micros();
     #endif
 
@@ -217,9 +192,9 @@ void initEncoder() {
 
 
 // Read the value of a register
-errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data) {
+errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
-    // This cannot be interrupted
+    // Disable interrupts
     disableInterrupts();
 
     // Create an accumulator for error checking
@@ -238,7 +213,7 @@ errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data) {
     uint8_t txbuf[2] = { uint8_t(registerAddress >> 8), uint8_t(registerAddress) };
 
     // Send address we want to read, response seems to be equal to request
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx1buf, 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx1buf, 2, 10);
 
     // Set the MOSI pin to open drain
     GPIO_InitStructure.Pin = GPIO_PIN_7;
@@ -247,7 +222,7 @@ errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data) {
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx2buf, 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx2buf, 2, 10);
 
     // Combine the first rxbuf into a single, unsigned 16 bit value
     //uint16_t combinedRX1Buf = (rx1buf[0] << 8 | rx1buf[1]);
@@ -274,7 +249,7 @@ errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data) {
         data = 0;
     }
 
-    // All important work is done, we're good to re-enable interrupts
+    // All done, we can re-enable interrupts
     enableInterrupts();
 
     // Return error
@@ -283,9 +258,9 @@ errorTypes readEncoderRegister(uint16_t registerAddress, uint16_t &data) {
 
 
 // Read multiple registers
-void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength) {
+void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength) {
 
-    // This cannot be interrupted
+    // Disable interrupts
     disableInterrupts();
 
     // Pull CS low to select encoder
@@ -297,7 +272,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
     uint8_t rxbuf[dataLength * 2];
 
     // Send address we want to read, response seems to be equal to request
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
 
     // Set the MOSI pin to open drain
     GPIO_InitStructure.Pin = GPIO_PIN_7;
@@ -309,7 +284,7 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
     for (uint8_t i = 0; i < dataLength * 2; i++) {
         txbuf[i] = 0xFF;
     }
-    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, dataLength * 2, 100);
+    HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, dataLength * 2, 10);
 
     // Write the received data into the array
     for (uint8_t i = 0; i < dataLength; i++) {
@@ -323,16 +298,16 @@ void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t* data, uint
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
-    // All done, good to re-enable interrupts
+    // Enable interrupts
     enableInterrupts();
 }
 
 
 // Write a value to a register
 // ! Untested
-void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
+void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
 
-    // This cannot be interrupted
+    // Disable the motor timers
     disableInterrupts();
 
     // Pull CS low to select encoder
@@ -362,14 +337,14 @@ void writeToEncoderRegister(uint16_t registerAddress, uint16_t data) {
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
-    // All work is done, re-enable the interrupts
+    // Re-enable the motor timers
     enableInterrupts();
 }
 
 
 // Checks the encoder's response for any errors
 // Warning: this function cannot be interrupted, so make sure that it is called in a function that disables interrupts
-errorTypes checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uint16_t length) {
+errorTypes Encoder::checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uint16_t length) {
 
     // A final accumulator for there was an error
     errorTypes error;
@@ -426,7 +401,7 @@ errorTypes checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uin
 
 
 // Calculates the CRC of an array of 8 bit messages
-uint8_t calcCRC(uint8_t *data, uint8_t length) {
+uint8_t Encoder::calcCRC(uint8_t *data, uint8_t length) {
 
     // Create an accumulator for the CRC
 	uint32_t crc;
@@ -457,7 +432,10 @@ uint8_t calcCRC(uint8_t *data, uint8_t length) {
 
 // Resets the safety check of the encoder
 // Warning: this function cannot be interrupted, so make sure that it is called in a function that disables interrupts
-void resetSafety() {
+void Encoder::resetSafety() {
+
+    // Disable the motor timers
+    disableInterrupts();
 
     // Build the command
 	uint16_t command = ENCODER_READ_COMMAND + SAFE_HIGH;
@@ -475,14 +453,14 @@ void resetSafety() {
     // TX/RX twice, just reading the response (response doesn't matter)
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
+
+    // Re-enable the motor timers
+    enableInterrupts();
 }
 
 
 // Get a bit field from a register
-uint16_t getBitField(BitField_t bitField) {
-
-    // This cannot be interrupted
-    disableInterrupts();
+uint16_t Encoder::getBitField(BitField_t bitField) {
 
     // Check to make sure that the value can be read
 	if ((REG_ACCESS_R & bitField.regAccess) == REG_ACCESS_R) {
@@ -491,13 +469,10 @@ uint16_t getBitField(BitField_t bitField) {
 		}
 
         // Return the value at the address (if the read was successful)
-        if (readEncoderRegister(addrFields[bitField.posMap].regAddress, regMap[bitField.posMap]) == NO_ERROR) {
+        if (readRegister(addrFields[bitField.posMap].regAddress, regMap[bitField.posMap]) == NO_ERROR) {
             return ((regMap[bitField.posMap] & bitField.mask) >> bitField.position);
         }
     }
-
-    // All important work is done, re-enable interrupts
-    enableInterrupts();
 
     // Not able to read that address, just return a -1
     return -1;
@@ -505,108 +480,156 @@ uint16_t getBitField(BitField_t bitField) {
 
 
 // Write out a bit field to the register
-void setBitField(BitField_t bitField, uint16_t bitFNewValue) {
-
-    // This is important, it should not be interrupted
-    disableInterrupts();
+void Encoder::setBitField(BitField_t bitField, uint16_t bitFNewValue) {
 
     // Write the correct value
 	if ((REG_ACCESS_W & bitField.regAccess) == REG_ACCESS_W) {
 		regMap[bitField.posMap] = (regMap[bitField.posMap] & ~bitField.mask) | ((bitFNewValue << bitField.position) & bitField.mask);
-		writeToEncoderRegister(addrFields[bitField.posMap].regAddress, regMap[bitField.posMap]);
+		writeToRegister(addrFields[bitField.posMap].regAddress, regMap[bitField.posMap]);
 	}
-
-    // Re-enable interrupts
-    enableInterrupts();
 }
 
 
-// Reads the value for the angle of the encoder (ranges from 0-360)
-double getAngle(bool average) {
-
-    // Disable interrupts
-    disableInterrupts();
+// Reads the raw momentary value from the angle register of the encoder (unadjusted)
+uint16_t Encoder::getRawIncrements() {
 
     // Create an accumulator for the raw data
     uint16_t rawData;
 
     // Loop until a valid reading
-    while (readEncoderRegister(ENCODER_ANGLE_REG, rawData) != NO_ERROR);
+    while (readRegister(ENCODER_ANGLE_REG, rawData) != NO_ERROR);
 
     // Delete the first bit, saving the last 15
-    rawData = (rawData & (DELETE_BIT_15));
-
-    // Add the averaged value (equation from TLE5012 library)
-    double angle = ((360.0 / POW_2_15) * ((double) rawData)) - (startupAngleOffset + encoderStepOffset);
-    encoderAngleAvg.add(angle);
-
-    // All important functions are done, re-enable interrupts
-    enableInterrupts();
-
-    // Return the average if desired, otherwise just the raw angle
-    if (average) {
-        return encoderAngleAvg.get();
-    }
-    else {
-        return angle;
-    }
+    return rawData & DELETE_BIT_15;
 }
 
+
+// Reads the raw average value from the angle register of the encoder (unadjusted)
+uint16_t Encoder::getRawIncrementsAvg() {
+
+    // Read the momentary rawData
+    uint16_t rawData = getRawIncrements();
+
+    // Add the value to the filter
+    incrementAvg.add(rawData);
+
+    // Return the average
+    return incrementAvg.get();
+}
+
+
+// Reads the raw momentary value from the angle of the encoder (unadjusted ???)
+double Encoder::getRawAngle() {
+
+    // Create an accumulator for the raw data
+    uint16_t rawData = getRawIncrements();
+
+    // Calc the value (equation from TLE5012 library)
+    return ((360.0 / POW_2_15) * (double)rawData) - encoderStepOffset;
+}
+
+
+// Reads the raw average value from the angle of the encoder (unadjusted ???)
+double Encoder::getRawAngleAvg() {
+
+    // Read the raw average Steps
+    uint16_t rawData = getRawIncrementsAvg();
+
+    // Calc the value (equation from TLE5012 library)
+    return 360.0 / POW_2_15 * (double)rawData - encoderStepOffset;
+}
+
+
+// Returns a smoothed value of angle of the encoder
+// More expensive than getAngle(), but transitions between 0 and 360 are smoother
+double Encoder::getSmoothAngle() {
+
+    // Get the absolute angle, then take the mod of 360 to find the shaft rotation (without revolutions)
+    return (fmod(getAbsoluteAngleAvg(), 360.0));
+}
+
+
+// Reads the momentary value for the angle of the encoder (ranges from 0-360)
+double Encoder::getAngle() {
+    return (getRawAngle() - startupAngleOffset);
+}
+
+
+// Reads the average value for the angle of the encoder (ranges from 0-360)
+double Encoder::getAngleAvg() {
+    return (getRawAngleAvg() - startupAngleOffset);
+}
+
+
 // For average velocity calculations instead of hardware readings from the TLE5012
-#ifdef ENCODER_SPEED_ESTIMATION
-
-// Reads the speed of the encoder in deg/s
+// Returns the speed of the encoder in deg/s
 // ! Needs fixed yet, readings are off
-double getEncoderSpeed() {
-
-    // This function cannot suffer being interrupted, disable the interrupts
-    disableInterrupts();
+double Encoder::getEstimSpeed() {
 
     // Get the newest angle
-    double newAngle = getAbsoluteAngle();
+    double newAngle = getAbsoluteAngleAvg();
 
     // Sample time
     uint32_t currentTime = micros();
 
     // Compute the average velocity
-    double avgVelocity = 1000000 * (newAngle - lastEncoderAngle) / (currentTime - lastAngleSampleTime);
+    double avgVelocity = 1000000.0 * (newAngle - lastEncoderAngle) / (currentTime - lastAngleSampleTime);
 
     // Correct the last angle and sample time
     lastEncoderAngle = newAngle;
     lastAngleSampleTime = currentTime;
 
     // Add the value to the averaging list
-    encoderSpeedAvg.add(avgVelocity);
+    speedAvg.add(avgVelocity);
 
-    // All important tasks are done, re-enable the interrupts
-    enableInterrupts();
-
-    // Return the averaged velocity
-    return encoderSpeedAvg.get();
+    // Return the averaged velocity in deg/s
+    return speedAvg.get();
 }
 
-#else // ENCODER_ESTIMATION
 
-// Reads the speed of the encoder in deg/s (for later)
-double getEncoderSpeed() {
+#ifdef ENCODER_SPEED_ESTIMATION
+// Returns true if the encoder's minimum speed sample interval has been exceeded
+bool Encoder::sampleTimeExceeded() {
+    return (micros() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL);
+}
+#endif
 
-    // This function cannot be interrupted
-    disableInterrupts();
+int16_t Encoder::getRawSpeed() {
+
+    // Prepare the variables to store data in
+	int16_t rawData;
+
+    // Read the encoder
+    while (readRegister(ENCODER_SPEED_REG, (uint16_t &)rawData) != NO_ERROR);
+
+    // Delete everything before the 14 LSB's
+    rawData <<= 1;
+
+    // If bit 14 is set, the value is negative
+    // Propagate sign of integer
+    rawData >>= 1;
+
+    return rawData;
+}
+
+// Reads the speed of the encoder in deg/s
+double Encoder::getSpeed() {
 
     // Prepare the variables to store data in
 	uint16_t rawData[4];
 
     // Read the encoder, modifying the array
-    readMultipleEncoderRegisters(ENCODER_SPEED_REG, rawData, sizeof(rawData) / sizeof(uint16_t));
+    readMultipleRegisters(ENCODER_SPEED_REG, rawData, sizeof(rawData) / sizeof(uint16_t));
 
 	// Get raw speed reading
 	int16_t rawSpeed = rawData[0];
-	rawSpeed = rawSpeed & DELETE_BIT_15;
 
-	// If bit 14 is set, the value is negative
-	if (rawSpeed & CHECK_BIT_14) {
-		rawSpeed = rawSpeed - CHANGE_UINT_TO_INT_15;
-	}
+        // Delete everything before the 14 LSB's
+        rawSpeed <<= 1;
+
+        // If bit 14 is set, the value is negative
+        // Propagate sign of integer
+        rawSpeed >>= 1;
 
 	// Get FIR_MD from bits 15 and 16 of register 0x06
 	uint16_t firMD = rawData[3] >> 14;
@@ -627,31 +650,23 @@ double getEncoderSpeed() {
             firMDVal = 170.6;
             break;
         default:
-            firMDVal = 0.0;
+            firMDVal = 0.0; // ??? zero division
             break;
     }
 
     // Calculate and average angle speed in degree per second
-	encoderSpeedAvg.add(((360.0 / POW_2_15) * rawSpeed) / (2.0 * firMDVal * 0.000001));
+	rawSpeedAvg.add(rawSpeed);
 
-    // All done, re-enable the interrupts
-    enableInterrupts();
-
-    // Return the result
-    return encoderSpeedAvg.get();
+    // Return the result in deg/s
+    return (1000000.0 * 0.5 * (360.0 / POW_2_15) * rawSpeedAvg.getDouble() / firMDVal);
 }
-
-#endif // ! ENCODER_ESTIMATION
 
 
 // Calculates the angular acceleration. Done by looking at position over time^2
-double getEncoderAccel() {
-
-    // This cannot be interrupted
-    disableInterrupts();
+double Encoder::getAccel() {
 
     // Get the newest angle
-    double newAngle = getAbsoluteAngle();
+    double newAngle = getAbsoluteAngleAvg();
 
     // Sample time
     uint32_t currentTime = micros();
@@ -664,40 +679,45 @@ double getEncoderAccel() {
     lastAngleSampleTime = currentTime;
 
     // Add the value to the averaging list
-    encoderAccelAvg.add(avgAccel);
-
-    // All important work is done, time to re-enable interrupts
-    enableInterrupts();
+    accelAvg.add(avgAccel);
 
     // Return the averaged velocity
-    return encoderAccelAvg.get();
+    return accelAvg.get();
 }
 
-// Reads the temperature of the encoder
-double getEncoderTemp() {
 
-    // This function cannot be interrupted
-    disableInterrupts();
+// Reads the raw momentary temperature of the encoder
+int16_t Encoder::getRawTemp() {
 
     // Create an accumulator for the raw data
-    uint16_t rawData;
+    int16_t rawData;
 
     // Loop until a valid reading
-    while (readEncoderRegister(ENCODER_TEMP_REG, rawData) != NO_ERROR);
+    while (readRegister(ENCODER_TEMP_REG, (uint16_t &)rawData) != NO_ERROR);
 
-    // Delete everything before the first 7 bits
-    rawData = (rawData & (DELETE_7_BITS));
+    // Delete everything before the 9 LSB's
+    rawData <<= 7;
 
-    // Check if the value received is positive or negative
-    if (rawData & CHECK_BIT_9) {
-        rawData = rawData - CHANGE_UNIT_TO_INT_9;
-    }
+    // If bit 9 is set, the value is negative
+    // Propagate sign of integer
+    rawData >>= 7;
 
-    // Return the value (equation from TLE5012 library)
-    encoderTempAvg.add(((int16_t)rawData + TEMP_OFFSET) / (TEMP_DIV));
+    // Return the raw momentary value
+    return rawData;
+}
 
-    // Calculate the new temperature
-    double temp = encoderTempAvg.get();
+
+// Reads the temperature of the encoder
+double Encoder::getTemp() {
+
+    // Get the momentary temperature
+    int16_t rawTemp = getRawTemp();
+
+    // Add to MovingAverage filter
+    rawTempAvg.add(rawTemp);
+
+    // Calculate the new temperature (equation from TLE5012 library)
+    double temp = (rawTempAvg.getDouble() + TEMP_OFFSET) / TEMP_DIV;
 
     // Only compile if overtemp protection is enabled
     #ifdef ENABLE_OVERTEMP_PROTECTION
@@ -735,79 +755,79 @@ double getEncoderTemp() {
 
     #endif // ENABLE_OVERTEMP_PROTECTION
 
-    // All important work is done
-    enableInterrupts();
-
     // Return the temperature
     return temp;
 }
 
 
-// Gets the absolute revolutions of the motor
-double getAbsoluteRev() {
-
-    // This cannot be interrupted
-    disableInterrupts();
+// Gets the raw revolutions from the motor in range [-258 ... +257]
+int16_t Encoder::getRawRev() {
 
     // Create an accumulator for the raw data and converted data
-    uint16_t rawData;
-    int16_t convertedData;
+    int16_t rawData;
 
     // Loop continuously until there is no error
-    while (readEncoderRegister(ENCODER_ANGLE_REV_REG, rawData) != NO_ERROR);
+    while (readRegister(ENCODER_ANGLE_REV_REG, (uint16_t &)rawData) != NO_ERROR);
 
     // Delete the first 7 bits, they are not needed
-    rawData = (rawData & (DELETE_7_BITS));
+    // Delete everything before the 9 LSB's
+    rawData <<= 7;
 
-    // Copy the raw data over, now that it's almost converted
-    convertedData = rawData;
-
-    // Check if the value is negative, if so it needs 512 subtracted from it
-    if (convertedData & CHECK_BIT_9) {
-        convertedData -= 512;
-    }
-
-    // All important work is done
-    enableInterrupts();
+    // If bit 8 is set, the value is negative
+    // Propagate sign of integer
+    rawData >>= 7;
 
     // Return the angle measurement
-    return (double)convertedData - startupAngleRevOffset;
+    return rawData;
+}
+
+
+// Gets the revolutions of the motor
+int32_t Encoder::getRev() {
+
+    // Get the raw value
+    int16_t rawRevNow = getRawRev();
+    if ((lastRawRev > 0) && (rawRevNow < 0)) // overflow
+        revolutions++;
+    else if ((lastRawRev < 0) && (rawRevNow > 0)) // borrow
+        revolutions--;
+    lastRawRev = rawRevNow;
+    return (revolutions * 512 + rawRevNow - startupRevOffset);
 }
 
 
 // Gets the absolute angle of the motor
-double getAbsoluteAngle() {
+double Encoder::getAbsoluteAngleAvg() {
 
-    // Anything with averaging needs interrupts disabled (so it isn't interfered with)
-    disableInterrupts();
-
-    // Perform actual averaging
-    encoderAbsoluteAngleAvg.add((getAbsoluteRev() * 360) + getAngle(false));
-
-    // Re-enable interrupts
-    enableInterrupts();
+    // Add a new value to the average
+    absAngleAvg.add((float)((getRev() * 360) + getAngle()));
 
     // Return the average
-    return encoderAbsoluteAngleAvg.get();
+    return absAngleAvg.getDouble();
+}
+
+
+// Gets the absolute angle of the motor, just returns a float
+float Encoder::getAbsoluteAngleAvgFloat() {
+
+    // Add a new value to the average
+    absAngleAvg.add((float)((getRev() * 360) + getAngle()));
+
+    // Return the average
+    return absAngleAvg.get();
 }
 
 
 // Sets the encoder's step offset (used for calibration)
-void setEncoderStepOffset(double offset) {
+void Encoder::setStepOffset(double offset) {
     encoderStepOffset = offset;
 }
 
 
 // Set encoder zero point
-void zeroEncoder() {
-
-    // This function cannot be interrupted
-    disableInterrupts();
+void Encoder::zero() {
 
     // Fix offsets
-    startupAngleOffset = getAngle() + startupAngleOffset;
-    startupAngleRevOffset = getAbsoluteRev() + startupAngleRevOffset;
-
-    // All work is done, re-enable interrupts
-    enableInterrupts();
+    startupAngleOffset = getRawAngleAvg();
+    startupRevOffset = getRawRev();
 }

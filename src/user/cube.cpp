@@ -70,6 +70,9 @@ void SystemClock_Config_HSE_16M_SYSCLK_72M(void) {
   #ifdef CHECK_MCO_OUTPUT
     HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
   #endif
+
+  // Update the frequency variable
+  SystemCoreClockUpdate();
 }
 
 
@@ -111,6 +114,9 @@ void SystemClock_Config_HSE_8M_SYSCLK_72M(void) {
   #ifdef CHECK_MCO_OUTPUT
     HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSE, RCC_MCODIV_1);
   #endif
+
+  // Update the frequency variable
+  SystemCoreClockUpdate();
 }
 
 
@@ -152,6 +158,9 @@ void SystemClock_Config_HSE_8M_SYSCLK_128M(void) {
   #ifdef CHECK_MCO_OUTPUT
     HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_PLLCLK, RCC_MCODIV_1);
   #endif
+
+  // Update the frequency variable
+  SystemCoreClockUpdate();
 }
 
 
@@ -192,4 +201,7 @@ void SystemClock_Config_HSI_8M_SYSCLK_64M(void) {
   #ifdef CHECK_MCO_OUTPUT
     HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
   #endif
+
+  // Update the frequency variable
+  SystemCoreClockUpdate();
 }
