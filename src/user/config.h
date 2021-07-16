@@ -33,6 +33,8 @@ typedef float real_t;
 // Reject unstable least significant bits of the encoder
 #define REJECT_ENCODERS_LSB 2
 
+//#define ENABLE_CORRECTION_TIMER
+
 // LED light functionality
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
 #ifdef ENABLE_LED
@@ -381,7 +383,7 @@ typedef float real_t;
 
 // LED related debugging
 #ifdef ENABLE_LED
-    //#define CHECK_STEPPING_RATE
+    #define CHECK_STEPPING_RATE
     //#define CHECK_CORRECT_MOTOR_RATE
     //#define CHECK_ENCODER_SPEED
 #endif
