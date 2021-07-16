@@ -64,6 +64,24 @@
     #error SINE_MAX must be a power of 2 to fast division to SINE_MAX, i.e { y = x / SINE_MAX } is equal to  { y = x >> SINE_POWER }
 #endif
 
+#ifdef USE_POWER_2_FACTOR // from the "MovingAverage.h"
+    // Check to make sure that the MovingAverage argument is valid
+    #if IS_POWER_2(RPM_AVG_READINGS) != 0
+        #error RPM_AVG_READINGS must be a power of 2 to use in fast MovingAverage!!!
+    #endif
+    #if IS_POWER_2(SPEED_AVG_READINGS) != 0
+        #error SPEED_AVG_READINGS must be a power of 2 to use in fast MovingAverage!!!
+    #endif
+    #if IS_POWER_2(ACCEL_AVG_READINGS) != 0
+        #error ACCEL_AVG_READINGS must be a power of 2 to use in fast MovingAverage!!!
+    #endif
+    #if IS_POWER_2(ANGLE_AVG_READINGS) != 0
+        #error ANGLE_AVG_READINGS must be a power of 2 to use in fast MovingAverage!!!
+    #endif
+    #if IS_POWER_2(TEMP_AVG_READINGS) != 0
+        #error TEMP_AVG_READINGS must be a power of 2 to use in fast MovingAverage!!!
+    #endif
+#endif
 
 // Create the firmware print string
 // Firmware feature prints

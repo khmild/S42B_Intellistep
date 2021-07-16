@@ -19,9 +19,9 @@
 #define ENCODER_ACT_STATUS_REG (0x0010U)  // Activation status
 
 // Calculation constants
-#define POW_2_16                    65536.0   // 2^16
-#define POW_2_15                    32768.0   // 2^15
-#define POW_2_7                     128.0     // 2^7
+#define POW_2_16                    65536     // 2^16
+#define POW_2_15                    32768     // 2^15
+#define POW_2_7                     128       // 2^7
 #define DELETE_BIT_15               0x7FFF    // Used to delete everything except the first 15 bits
 #define CHANGE_UINT_TO_INT_15       0x8000    // Used to change unsigned 16 bit integer into signed
 #define CHECK_BIT_14                0x4000    // Used to check the 14th bit
@@ -337,13 +337,13 @@ class Encoder {
         int32_t revolutions = 0;
 
         // Moving average instances
-        MovingAverage <float> speedAvg;
-        MovingAverage <int16_t> rawSpeedAvg;
-        MovingAverage <float> accelAvg;
-        MovingAverage <uint16_t> incrementAvg;
-        MovingAverage <float> absAngleAvg;
-        MovingAverage <increments_t> absIncrementsAvg;
-        MovingAverage <int16_t> rawTempAvg;
+        MovingAverage <float, float> speedAvg;
+        MovingAverage <int16_t, int32_t> rawSpeedAvg;
+        MovingAverage <float, float> accelAvg;
+        MovingAverage <uint16_t, int32_t> incrementAvg;
+        MovingAverage <float, float> absAngleAvg;
+        MovingAverage <increments_t, increments_t> absIncrementsAvg;
+        MovingAverage <int16_t, int16_t> rawTempAvg;
 
         // The startup angle and rev offsets
         double startupAngleOffset = 0;

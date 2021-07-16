@@ -4,6 +4,8 @@
 // Need the Arduino library for pin conversion
 #include "Arduino.h"
 
+#include "MovingAverage.h"
+
 // Macros file (for convience functions)
 #include "macros.h"
 
@@ -14,12 +16,22 @@
 
 // --------------  Settings  --------------
 
+// Motor:
 // The maximum number of steps per rev is 200*32==6400 (for 1.8 degree per step motor)
 //                                    and 400*32==12800 (for 0.9 degree per step motor)
 // int32_t allow to store +/- 2^31==2147483648 steps and 2^31/6400==335544 rev's (for 1.8 degree per step motor)
 //                                                       2^31/12800==167772 rev's (for 0.9 degree per step motor)
 // 335544 rev's / 1000RPM ~ 336 min == 5.6 hour in one direction for counter overflow
+// Encoder:
+// The maximum number of steps per rev is 2^15==32768
+// int32_t allow to store +/- (2^31)/(2^15)==2^16==65536 rev's
 typedef int32_t increments_t;
+
+// A type for real numbers
+typedef float real_t;
+
+// Reject unstable least significant bits of the encoder
+#define REJECT_ENCODERS_LSB 2
 
 // LED light functionality
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
@@ -43,11 +55,19 @@ typedef int32_t increments_t;
 #endif
 
 // Averages (number of readings in average)
-#define RPM_AVG_READINGS     (uint16_t)10
-#define SPEED_AVG_READINGS   (uint16_t)100
-#define ACCEL_AVG_READINGS   (uint16_t)10
-#define ANGLE_AVG_READINGS   (uint16_t)15
-#define TEMP_AVG_READINGS    (uint16_t)200
+#ifdef USE_POWER_2_FACTOR // from the "MovingAverage.h"
+    #define RPM_AVG_READINGS       8
+    #define SPEED_AVG_READINGS   128
+    #define ACCEL_AVG_READINGS     8
+    #define ANGLE_AVG_READINGS    16
+    #define TEMP_AVG_READINGS    256
+#else
+    #define RPM_AVG_READINGS      10
+    #define SPEED_AVG_READINGS   100
+    #define ACCEL_AVG_READINGS    10
+    #define ANGLE_AVG_READINGS    15
+    #define TEMP_AVG_READINGS    200
+#endif
 
 // If encoder estimation should be used
 #define ENCODER_SPEED_ESTIMATION
