@@ -517,10 +517,10 @@ uint16_t Encoder::getRawIncrementsAvg() {
 increments_t Encoder::getAbsoluteIncrementsAvg() {
 
     // Add a new value to the average
-    absIncrementsAvg.add(getRev() * POW_2_15 + getRawIncrements() - startupIncrementsOffset);
+    absIncrementsAvg.add(getRev() * POW_2_15 + getRawIncrements());
 
     // Return the average
-    return absIncrementsAvg.get();
+    return absIncrementsAvg.get() - startupIncrementsOffset;
 }
 
 
