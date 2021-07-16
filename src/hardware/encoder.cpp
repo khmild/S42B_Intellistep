@@ -503,17 +503,22 @@ uint16_t Encoder::getRawIncrements() {
 uint16_t Encoder::getRawIncrementsAvg() {
 
     // Read the momentary rawData
-    uint16_t rawData = getRawIncrements();
-
     // Add the value to the filter
-    incrementAvg.add(rawData);
+    incrementAvg.add(getRawIncrements());
 
     // Return the average
     return incrementAvg.get();
 }
 
 
-// Returns the absolute steps of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
+// Returns the absolute momentary steps of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
+increments_t Encoder::getAbsoluteIncrements() {
+
+    return ((getRev() * POW_2_15 + getRawIncrements()) >> REJECT_ENCODERS_LSB) - startupIncrementsOffset;
+}
+
+
+// Returns the absolute average steps of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
 increments_t Encoder::getAbsoluteIncrementsAvg() {
 
     // Add a new value to the average
@@ -527,22 +532,18 @@ increments_t Encoder::getAbsoluteIncrementsAvg() {
 // Reads the raw momentary value from the angle of the encoder (adjusted)
 double Encoder::getRawAngle() {
 
-    // Create an accumulator for the raw data
-    uint16_t rawData = getRawIncrements();
-
+    // Read the momentary rawData
     // Calc the value (equation from TLE5012 library)
-    return ((360.0 / POW_2_15) * (double)rawData) - encoderStepOffset;
+    return 360.0 * (getRawIncrements() >> REJECT_ENCODERS_LSB) / (POW_2_15 >> REJECT_ENCODERS_LSB) - encoderStepOffset;
 }
 
 
 // Reads the raw average value from the angle of the encoder (adjusted)
 double Encoder::getRawAngleAvg() {
 
-    // Read the raw average Steps
-    uint16_t rawData = getRawIncrementsAvg();
-
+    // Read the raw average increments
     // Calc the value (equation from TLE5012 library)
-    return 360.0 / POW_2_15 * (double)rawData - encoderStepOffset;
+    return 360.0 * getRawIncrementsAvg() / POW_2_15 - encoderStepOffset;
 }
 
 
@@ -802,7 +803,7 @@ int32_t Encoder::getRev() {
 }
 
 
-// Gets the absolute angle of the motor
+// Gets the average absolute angle of the motor
 double Encoder::getAbsoluteAngleAvg() {
 
     // Add a new value to the average
@@ -810,6 +811,13 @@ double Encoder::getAbsoluteAngleAvg() {
 
     // Return the average
     return absAngleAvg.getDouble();
+}
+
+
+// Gets the momentary absolute angle of the motor
+double Encoder::getAbsoluteAngle() {
+
+    return (float)((getRev() * 360) + getAngle());
 }
 
 

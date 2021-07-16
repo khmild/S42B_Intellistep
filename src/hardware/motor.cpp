@@ -109,7 +109,7 @@ float  StepperMotor::getSteppingRPM() {
 
 // Returns the angular deviation of the motor from the desired angle
 float StepperMotor::getAngleError() {
-    return (encoder.getAbsoluteAngleAvg() - (this -> desiredAngle));
+    return (encoder.getAbsoluteAngle() - getDesiredAngle());
 }
 
 
@@ -127,7 +127,8 @@ int32_t StepperMotor::getStepPhase() {
 
 // Returns the desired angle of the motor
 float StepperMotor::getDesiredAngle() {
-    return (this -> desiredAngle);
+    //return (this -> desiredAngle);
+    return microstepAngle * getHardStepCNT();
 }
 
 
