@@ -10,12 +10,8 @@
 // Standard naming conventions
 #include "stdint.h"
 
-//#define USE_POWER_2_FACTOR
-#ifdef USE_POWER_2_FACTOR
-    #define FACTOR 8
-#else
-    #define FACTOR 10
-#endif
+// Import the config
+#include "config.h"
 
 // A class used to store and calculate the values to be smoothed.
 // T - type of readings (readings[i] - elements of array).
@@ -27,7 +23,7 @@
 template <typename T, typename total_T>
 class MovingAverage {
   private:
-    uint16_t readingsFactor = FACTOR; // The smoothing factor. In average mode, this is the number of readings to average.
+    uint16_t readingsFactor = DEFAULT_AVG_FACTOR; // The smoothing factor. In average mode, this is the number of readings to average.
     uint16_t readingsPosition = 0; // Current position in the array
     uint16_t readingsNum = 0; // Number of readings currently being averaged
     T *readings; // Array of readings
@@ -41,7 +37,7 @@ class MovingAverage {
   public:
     MovingAverage();
     ~MovingAverage(); // Destructor to clean up when class instance killed
-    void begin(uint16_t smoothFactor = FACTOR);
+    void begin(uint16_t smoothFactor = DEFAULT_AVG_FACTOR);
     void add(T newReading);
     T get();            // Returns the smoothed result in same to type of readings
     double getDouble(); // Returns the smoothed result as a double. Useful if the readings are of an integer type
@@ -100,7 +96,7 @@ void MovingAverage<T, total_T>::add (T newReading) {
     // Store immediate value in the array
     readings[readingsPosition] = newReading;
 
-    #ifdef USE_POWER_2_FACTOR
+    #ifdef USE_POWER_2_FACTOR_AVGING
     readingsPosition--;
     readingsPosition &= readingsFactor - 1;
     #else

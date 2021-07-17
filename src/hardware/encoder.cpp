@@ -485,7 +485,7 @@ void Encoder::setBitField(BitField_t bitField, uint16_t bitFNewValue) {
 }
 
 
-// Reads the raw momentary steps value from the angle register of the encoder (unadjusted)
+// Reads the raw momentary encoder increments value from the angle register (unadjusted)
 uint16_t Encoder::getRawIncrements() {
 
     // Create an accumulator for the raw data
@@ -499,7 +499,7 @@ uint16_t Encoder::getRawIncrements() {
 }
 
 
-// Returns the raw average steps value from the angle register of the encoder (unadjusted)
+// Returns the raw average encoder increments value from the angle register (unadjusted)
 uint16_t Encoder::getRawIncrementsAvg() {
 
     // Read the momentary rawData
@@ -511,14 +511,14 @@ uint16_t Encoder::getRawIncrementsAvg() {
 }
 
 
-// Returns the absolute momentary steps of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
+// Returns the absolute momentary encoder increments (adjusted) in the range  of +/-335544 rev's of shaft
 increments_t Encoder::getAbsoluteIncrements() {
 
     return ((getRev() * POW_2_15 + getRawIncrements()) >> REJECT_ENCODERS_LSB) - startupIncrementsOffset;
 }
 
 
-// Returns the absolute average steps of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
+// Returns the absolute average encoder increments (adjusted) in the range  of +/-335544 rev's of shaft
 increments_t Encoder::getAbsoluteIncrementsAvg() {
 
     // Add a new value to the average
@@ -849,7 +849,6 @@ void Encoder::zero() {
 
     // Populate the average angle reading table
     for (uint8_t index = 0; index < (ANGLE_AVG_READINGS * 2); index++) {
-        getAngleAvg();
         getRawIncrementsAvg();
         delay(10);
     }

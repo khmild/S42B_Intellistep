@@ -127,7 +127,6 @@ int32_t StepperMotor::getStepPhase() {
 
 // Returns the desired angle of the motor
 float StepperMotor::getDesiredAngle() {
-    //return (this -> desiredAngle);
     return microstepAngle * getHardStepCNT();
 }
 
@@ -295,6 +294,7 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
         // Fix the microsteps per rotation
         this -> microstepsPerRotation = round(360.0 / microstepAngle);
 
+        #ifdef MAINTAIN_FULL_STEP
         // Set the microstepMultiplier according to the microstepDivisor
         switch (this -> microstepDivisor) {
         case 32:
@@ -316,6 +316,7 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
             this -> microstepMultiplier = 32;
             break;
         }
+        #endif
     }
 }
 

@@ -10,7 +10,7 @@
 // - TIM3 - Used to generate PWM signal for motor
 // - TIM4 - Used to schedule steps for the motor (used by PID and direct stepping)
 
-#ifdef ENABLE_CORRECTION_TIMER
+#ifndef DISABLE_CORRECTION_TIMER
 // Create a new timer instance
 HardwareTimer *correctionTimer = new HardwareTimer(TIM1);
 
@@ -91,7 +91,7 @@ void setupMotorTimers() {
     // the optocoupler inverts the signal. Therefore, the falling edge is the correct value.
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
 
-    #ifdef ENABLE_CORRECTION_TIMER
+    #ifndef DISABLE_CORRECTION_TIMER
     // Setup the timer for steps
     correctionTimer -> pause();
     correctionTimer -> setInterruptPriority(7, 0);
@@ -127,7 +127,7 @@ void disableMotorTimers() {
     detachInterrupt(STEP_PIN);
 
     // Disable the correctional timer
-    #ifdef ENABLE_CORRECTION_TIMER
+    #ifndef DISABLE_CORRECTION_TIMER
     if (stepCorrection) {
         correctionTimer -> pause();
         syncInstructions();
@@ -148,7 +148,7 @@ void enableMotorTimers() {
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
 
     // Enable the correctional timer
-    #ifdef ENABLE_CORRECTION_TIMER
+    #ifndef DISABLE_CORRECTION_TIMER
     if (stepCorrection) {
         correctionTimer -> resume();
         syncInstructions();
@@ -190,7 +190,7 @@ void enableStepCorrection() {
 
     // Enable the timer if it isn't already, then set the variable
     if (!stepCorrection) {
-        #ifdef ENABLE_CORRECTION_TIMER
+        #ifndef DISABLE_CORRECTION_TIMER
         correctionTimer -> resume();
         #endif
         stepCorrection = true;
@@ -205,7 +205,7 @@ void disableStepCorrection() {
     // Check if the timer is disabled
     if (stepCorrection) {
 
-        #ifdef ENABLE_CORRECTION_TIMER
+        #ifndef DISABLE_CORRECTION_TIMER
         // Disable the timer
         correctionTimer -> pause();
         #endif
@@ -225,7 +225,7 @@ void disableStepCorrection() {
 // Set the speed of the step correction timer
 void updateCorrectionTimer() {
 
-    #ifdef ENABLE_CORRECTION_TIMER
+    #ifndef DISABLE_CORRECTION_TIMER
     // Check the previous value of the timer, only changing if it is different
     if (correctionUpdateFreq != (uint32_t)round(STEP_UPDATE_FREQ * (uint32_t)motor.getMicrostepping())) {
 
@@ -450,7 +450,7 @@ void correctMotor() {
 void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
 
     // Disable the correctional timer (needed to prevent both using the step timer at once)
-    #ifdef ENABLE_CORRECTION_TIMER
+    #ifndef DISABLE_CORRECTION_TIMER
     correctionTimer -> pause();
     #endif
     syncInstructions();
@@ -487,7 +487,7 @@ void stepScheduleHandler() {
 
             // Resume the correctional timer if it is enabled
             if (stepCorrection) {
-                #ifdef ENABLE_CORRECTION_TIMER
+                #ifndef DISABLE_CORRECTION_TIMER
                 correctionTimer -> resume();
                 #endif
                 syncInstructions();

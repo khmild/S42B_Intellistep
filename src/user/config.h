@@ -4,8 +4,6 @@
 // Need the Arduino library for pin conversion
 #include "Arduino.h"
 
-#include "MovingAverage.h"
-
 // Macros file (for convience functions)
 #include "macros.h"
 
@@ -15,25 +13,6 @@
 #define PATCH_VERSION (uint16_t)44
 
 // --------------  Settings  --------------
-
-// Motor:
-// The maximum number of steps per rev is 200*32==6400 (for 1.8 degree per step motor)
-//                                    and 400*32==12800 (for 0.9 degree per step motor)
-// int32_t allow to store +/- 2^31==2147483648 steps and 2^31/6400==335544 rev's (for 1.8 degree per step motor)
-//                                                       2^31/12800==167772 rev's (for 0.9 degree per step motor)
-// 335544 rev's / 1000RPM ~ 336 min == 5.6 hour in one direction for counter overflow
-// Encoder:
-// The maximum number of steps per rev is 2^15==32768
-// int32_t allow to store +/- (2^31)/(2^15)==2^16==65536 rev's
-typedef int32_t increments_t;
-
-// A type for real numbers
-typedef float real_t;
-
-// Reject unstable least significant bits of the encoder
-#define REJECT_ENCODERS_LSB 2
-
-//#define ENABLE_CORRECTION_TIMER
 
 // LED light functionality
 #define ENABLE_LED // red LED labeled as an 'error' in the schema
@@ -57,7 +36,9 @@ typedef float real_t;
 #endif
 
 // Averages (number of readings in average)
-#ifdef USE_POWER_2_FACTOR // from the "MovingAverage.h"
+// Using a power of 2 will greatly increase the averaging speed
+#define USE_POWER_2_FACTOR_AVGING
+#ifdef USE_POWER_2_FACTOR_AVGING
     #define RPM_AVG_READINGS       8
     #define SPEED_AVG_READINGS   128
     #define ACCEL_AVG_READINGS     8
@@ -105,12 +86,6 @@ typedef float real_t;
 #define STEP_ANGLE (float)1.8 // ! Check to see for .9 deg motors as well
 #define STEP_UPDATE_FREQ (uint32_t)78 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
 
-// Board characteristics
-// ! Do not modify unless you know what you are doing!
-#define BOARD_VOLTAGE              (float)3.3 // The voltage of the main processor
-#define CURRENT_SENSE_RESISTOR     (float)0.2 // Value of the board's current calculation resistor. An incorrect value here will cause current inaccuracies
-#define MAX_PEAK_BOARD_CURRENT  (uint16_t)3500 // Maximum peak current in mA that the board can manage
-
 // Dynamic current (adjusts motor current based on acceleration (and therefore torque)
 // required from the motor)
 //#define ENABLE_DYNAMIC_CURRENT
@@ -138,7 +113,7 @@ typedef float real_t;
 
 // PID settings
 // ! At this time, this feature is still under development
-//#define ENABLE_PID
+#define ENABLE_PID
 #ifdef ENABLE_PID
 
     // Default P, I, and D terms
@@ -160,7 +135,7 @@ typedef float real_t;
 #endif
 
 // Direct step functionality (used to command motor to move over Serial/CAN)
-//#define ENABLE_DIRECT_STEPPING
+#define ENABLE_DIRECT_STEPPING
 #ifdef ENABLE_DIRECT_STEPPING
 
     // The default stepping rate (in Hz) to move in the event that no parameter is specified
@@ -170,7 +145,12 @@ typedef float real_t;
 // Motor settings
 // The number of microsteps to move per step pulse
 // Doesn't affect correctional movements
-//#define MICROSTEP_MULTIPLIER    (uint32_t)1
+// This will allow the dip switches to set the stepping resolution, while
+// a step pulse will still move the motor one full step worth of rotation
+//#define MAINTAIN_FULL_STEP
+#ifndef MAINTAIN_FULL_STEP
+    #define DEFAULT_MICROSTEP_MULTIPLIER    (uint32_t)1
+#endif
 
 // The min/max microstepping divisors
 // Microstepping divisors are the numbers underneath the fraction of the microstepping
@@ -178,16 +158,8 @@ typedef float real_t;
 #define MIN_MICROSTEP_DIVISOR   (uint8_t)1
 #define MAX_MICROSTEP_DIVISOR   (uint8_t)32
 
-#define MOTOR_PWM_FREQ          (uint32_t)124000 // in Hz
-// https://deepbluembedded.com/wp-content/uploads/2020/06/STM32-PWM-Resolution-Example-STM32-Timer-PWM-Mode-Output-Compare-768x291.jpg
-// 124000 in fact 139.5kHz and 9bit resolution
-// 62000 in fact 69.8kHz and 10bit resolution
-// Tested: higher resolution causes more noise when the motor is stopped after moving.
-//
-// Note: The measured internal PWM frequency of the A4950(Pins 7, 2 and 3) is 22.5 kHz.
-// Noise is a design feature when the A4950 drives a stepper motor. :(
-
-#define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
+// The mode to set the motor to when it's disabled
+#define IDLE_MODE               COAST
 
 // Stallfault
 //#define ENABLE_STALLFAULT
@@ -200,202 +172,9 @@ typedef float real_t;
     #define STALLFAULT_PIN PA_13 //output(GPIOA_BASE_BASE, 13)
 #endif
 
-// The System Clock frequency of the CPU (in MHz)
-// This can be set to 72 and 128 with SYSCLK_SRC_HSE_8 (external oscillator)
-// Can be set to 72 with SYSCLK_SRC_HSE_16 (external oscillator)
-// Can be set to 64 with SYSCLK_SRC_HSI (internal oscillator)
-#define SYSCLK_FREQ 128
-#define SYSCLK_SRC_HSE_8
-
-// The compare format and maximum value for PWM (lower values = higher max freq)
-#define PWM_COMPARE_FORMAT RESOLUTION_9B_COMPARE_FORMAT
-#define PWM_MAX_VALUE (POWER_2(PWM_COMPARE_FORMAT) - 1)
-
-// --------------  Pins  --------------
-/*
-// * = F103C8-CB    | DIGITAL | ANALOG | USART      | TWI       | SPI        | SPECIAL   |
-//                  |---------|--------|------------|-----------|------------|-----------|
-#define PA0  A0  // | 0       | A0     |            |           |            |           |
-#define PA1  A1  // | 1       | A1     |            |           |            |           |
-#define PA2  A2  // | 2       | A2     | USART2_TX  |           |            |           |
-#define PA3  A3  // | 2       | A2     | USART2_RX  |           |            |           |
-#define PA4  A4  // | 4       | A4     |            |           | SPI1_SS    |           |
-#define PA5  A5  // | 5       | A5     |            |           | SPI1_SCK   |           |
-#define PA6  A6  // | 6       | A6     |            |           | SPI1_MISO  |           |
-#define PA7  A7  // | 7       | A7     |            |           | SPI1_MOSI  |           |
-#define PA8  8   // | 8       |        |            |           |            |           |
-#define PA9  9   // | 9       |        | USART1_TX  |           |            |           |
-#define PA10 10  // | 10      |        | USART1_RX  |           |            |           |
-#define PA11 11  // | 11      |        |            |           |            | USB_DN    | CAN_IN
-#define PA12 12  // | 12      |        |            |           |            | USB_DP    | CAN_OUT
-#define PA13 13  // | 13      |        |            |           |            | SWD_SWDIO |
-#define PA14 14  // | 14      |        |            |           |            | SWD_SWCLK |
-#define PA15 15  // | 15      |        |            |           | SPI1_SS    |           |
-//                  |---------|--------|------------|-----------|------------|-----------|
-#define PB0  A8  // | 16      | A8     |            |           |            |           |
-#define PB1  A9  // | 17      | A9     |            |           |            |           |
-#define PB2  18  // | 18      |        |            |           |            | BOOT1     |
-#define PB3  19  // | 19      |        |            |           | SPI1_SCK   |           |
-#define PB4  20  // | 20      |        |            |           | SPI1_MISO  |           |
-#define PB5  21  // | 21      |        |            |           | SPI1_MOSI  |           |
-#define PB6  22  // | 22      |        | USART1_TX  | TWI1_SCL  |            |           |
-#define PB7  23  // | 23      |        | USART1_RX  | TWI1_SDA  |            |           |
-#define PB8  24  // | 24      |        |            | TWI1_SCL  |            |           |
-#define PB9  25  // | 25      |        |            | TWI1_SDA  |            |           |
-#define PB10 26  // | 26      |        | USART3_TX* | TWI2_SCL* |            |           |
-#define PB11 27  // | 27      |        | USART3_RX* | TWI2_SDA* |            |           |
-#define PB12 28  // | 28      |        |            |           | SPI2_SS*   |           |
-#define PB13 29  // | 29      |        |            |           | SPI2_SCK*  |           |
-#define PB14 30  // | 30      |        |            |           | SPI2_MISO* |           |
-#define PB15 31  // | 31      |        |            |           | SPI2_MOSI* |           |
-//                  |---------|--------|------------|-----------|------------|-----------|
-#define PC13 32  // | 32      |        |            |           |            |           |
-#define PC14 33  // | 33      |        |            |           |            | OSC32_IN  |
-#define PC15 34  // | 34      |        |            |           |            | OSC32_OUT |
-//                  |---------|--------|------------|-----------|------------|-----------|
-#define PD0  35  // | 35      |        |            |           |            | OSC_IN    |
-#define PD1  36  // | 36      |        |            |           |            | OSC_OUT   |
-//                  |---------|--------|------------|-----------|------------|-----------|
-*/
-
-
-// OLED Mappings
-#define OLED_CS_PIN   PB_12
-#define OLED_RST_PIN  PA_8
-#define OLED_RS_PIN   PB_13
-#define OLED_SCLK_PIN PB_15	//(D0)
-#define OLED_SDIN_PIN PB_14	//(D1)
-
-// Button mappings
-#define DOWN_BUTTON_PIN         PA_3
-#define BACK_BUTTON_PIN         PB_0
-#define SELECT_BUTTON_PIN       PB_1
-
-// Dip switch mappings
-// PIN     |    Normal orientation      |  Reversed orientation
-// DIP_1   |    Microstep 1             |  Calibration mode
-// DIP_2   |    Microstep 2             |  Closed/Open loop
-// DIP_3   |    Closed/Open loop        |  Microstep 2
-// DIP_4   |    Calibration mode        |  Microstep 1
-#define DIP_1_PIN  PA_15
-#define DIP_2_PIN  PB_3
-#define DIP_3_PIN  PB_11
-#define DIP_4_PIN  PB_10
-
-// LED pin
-#define LED_PIN PC_13
-
-// Motor mappings
-#define COIL_A_POWER_OUTPUT_PIN  PB_5
-#define COIL_B_POWER_OUTPUT_PIN  PB_4
-#define COIL_A_DIR_1_PIN  PB_6
-#define COIL_A_DIR_2_PIN  PB_7
-#define COIL_B_DIR_1_PIN  PB_8
-#define COIL_B_DIR_2_PIN  PB_9
-
-// Encoder SPI interface
-#define ENCODER_CS_PIN    PA_4 // SPI1_SS
-#define ENCODER_SCK_PIN   PA_5 // SPI1_SCK
-#define ENCODER_MISO_PIN  PA_6 // SPI1_MISO
-#define ENCODER_MOSI_PIN  PA_7 // SPI1_MOSI
-
-// Stepping interface
-#define STEP_PIN       PA_0
-#define ENABLE_PIN     PA_2
-#define DIRECTION_PIN  PA_1
-
-// CAN bus pins
-#define CAN_IN_PIN   PA_11
-#define CAN_OUT_PIN  PA_12
-
-// UART pins
-#define USART1_TX PA9
-#define USART1_RX PA10
-
-// --------------  Internal defines  --------------
-// Under the hood motor setup
-#define SINE_VAL_COUNT (128)
-//#define SINE_MAX ((int16_t)(10000))
-#define SINE_MAX (16384) // 2^SINE_POWER == 2^14 == 16384
-
-// Use a integer version of the log of SINE_MAX
-// Used to speed up division much faster
-#define SINE_POWER ((uint16_t)log2(SINE_MAX))
-
-// Methods for writing to the GPIO
-// When SystemClock_Config_HSE_8M_SYSCLK_72M() is selected:
-// F         | GPIO_WRITE_METHOD                 | based on
-//  14,4 kHz | GPIO_WRITE_DIGITAL_WRITE          | digitalWrite()
-//  81.4 kHz | GPIO_WRITE_DIGITAL_WRITE_FAST     | digitalWriteFast()
-//  1.64 MHz | GPIO_WRITE_DIGITAL_WRITE_FASTER   | digitalWriteFaster()
-//  1.67 MHz | GPIO_WRITE_DIGITAL_WRITE_FASTEST  | digitalWriteFastest()
-// 600.1 kHz | GPIO_WRITE_REGISTER_SET           | output()
-// 163.3 kHz | GPIO_WRITE_HAL_FUNCTION           | HAL_GPIO_WritePin()
-
-// Setting for the GPIO write method
-#define GPIO_WRITE_METHOD GPIO_WRITE_DIGITAL_WRITE_FASTEST
-
-// Define the correct GPIO_WRITE method
-#if (GPIO_WRITE_METHOD == GPIO_WRITE_DIGITAL_WRITE)
-    #define GPIO_WRITE(pn, high) digitalWrite(pinNametoDigitalPin(pn), high)
-
-#elif (GPIO_WRITE_METHOD == GPIO_WRITE_DIGITAL_WRITE_FAST)
-    #define GPIO_WRITE(pn, high) digitalWriteFast(pn, high)
-
-#elif (GPIO_WRITE_METHOD == GPIO_WRITE_DIGITAL_WRITE_FASTER)
-    #define GPIO_WRITE(pn, high) digitalWriteFaster(pn, high)
-
-#elif (GPIO_WRITE_METHOD == GPIO_WRITE_DIGITAL_WRITE_FASTEST)
-    #define GPIO_WRITE(pn, high) digitalWriteFastest(pn, high)
-
-#elif (GPIO_WRITE_METHOD == GPIO_WRITE_REGISTER_SET)
-    // Pure bitsetting
-    #define GPIO_WRITE(pn, high) \
-        if (high) { \
-            output((uint32_t)(get_GPIO_Port(STM_PORT(pn))), STM_PIN(pn)) = 1; \
-        } \
-        else { \
-            output((uint32_t)(get_GPIO_Port(STM_PORT(pn))), STM_PIN(pn)) = 0; \
-        }
-
-#elif (GPIO_WRITE_METHOD == GPIO_WRITE_HAL_FUNCTION)
-    // covered by HAL functions
-    #define GPIO_WRITE(pn, high) \
-        if (high) { \
-            HAL_GPIO_WritePin(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn), GPIO_PIN_SET); \
-        } \
-        else { \
-            HAL_GPIO_WritePin(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn), GPIO_PIN_RESET); \
-        }
-
-#else
-    #error GPIO_WRITE_METHOD not a valid value
-#endif
-
-//#define GPIO_READ(pn) digitalReadFast(pn)
-//#define GPIO_READ(pn) digital_io_read(get_GPIO_Port(STM_PORT(pn)), STM_GPIO_PIN(pn))
-#define GPIO_READ(pn) LL_GPIO_IsInputPinSet(get_GPIO_Port(STM_PORT(pn)), STM_LL_GPIO_PIN(pn))
-
-// --------------  Debugging  --------------
-
-//#define ENABLE_STEPPING_VELOCITY
-//#define IGNORE_FLASH_VERSION
-
-// LED related debugging
-#ifdef ENABLE_LED
-    #define CHECK_STEPPING_RATE
-    //#define CHECK_CORRECT_MOTOR_RATE
-    //#define CHECK_ENCODER_SPEED
-#endif
-
-// Clock debugging (uses OLED pin)
-#ifndef ENABLE_OLED
-    // MCO is PA_8 pin, It also used as OLED_RST_PIN
-    //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
-
-    // The PA_8 pin is used
-    //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO PA_8 output switching
-#endif
+// Import the advanced config, then the pins
+#include "config_adv.h"
+#include "pins.h"
 
 // Import the sanity check (needed so all files have the defines done in the sanity check file)
 // Must be last so that it can use the defines above

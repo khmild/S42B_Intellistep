@@ -278,16 +278,16 @@ class Encoder {
         void resetSafety();
 
         // Fast functions
-        // Reads the raw momentary steps value from the angle register of the encoder (unadjusted)
+        // Reads the raw momentary encoder increments value from the angle register (unadjusted)
         uint16_t getRawIncrements();
 
-        // Returns the absolute momentary steps of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
+        // Returns the absolute momentary encoder increments (adjusted) in the range  of +/-335544 rev's of shaft
         increments_t getAbsoluteIncrements();
 
-        // Returns the raw average steps value from the angle register of the encoder (unadjusted)
+        // Returns the raw average encoder increments value from the angle register (unadjusted)
         uint16_t getRawIncrementsAvg();
 
-        // Returns the absolute steps of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
+        // Returns the absolute increments of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
         increments_t getAbsoluteIncrementsAvg();
 
         // Gets the momentary absolute angle of the motor
