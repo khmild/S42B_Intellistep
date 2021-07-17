@@ -291,6 +291,7 @@ class Encoder {
         // Returns a smoothed value of angle of the encoder
         // More expensive than getAngle(), but transitions between 0 and 360 are smoother
         double getSmoothAngle();
+        double getSmoothAngle(double currentAbsAngle);
 
         // Reads the momentary value for the angle of the encoder (ranges from 0-360)
         double getAngle();
@@ -298,9 +299,11 @@ class Encoder {
         // Reads the average value for the angle of the encoder (ranges from 0-360)
         double getAngleAvg();
         double getEstimSpeed();
+        double getEstimSpeed(double currentAbsAngle);
         int16_t getRawSpeed();
         double getSpeed();
         double getAccel();
+        double getAccel(double currentAbsAngle);
         int16_t getRawTemp();
         double getTemp();
         int16_t getRawRev();

@@ -62,6 +62,7 @@ class StepperMotor {
 
         // Returns the current calculated RPM
         float getEstimRPM();
+        float getEstimRPM(double currentAbsAngle);
 
         #ifdef ENABLE_STEPPING_VELOCITY
             // Compute the stepping interface velocity in deg/s
@@ -73,15 +74,26 @@ class StepperMotor {
 
         // Returns the angular deviation of the motor from the set position
         float getAngleError();
+        float getAngleError(double currentAbsAngle);
 
         // Returns the step deviation of the motor from the set position
         int32_t getStepError();
+        int32_t getStepError(double currentAbsAngle);
 
         // Returns the current phase setting of the motor
         int32_t getStepPhase();
 
         // Returns the desired angle of the motor
         float getDesiredAngle();
+
+        // Sets the desired angle of the motor
+        void setDesiredAngle(float newDesiredAngle);
+
+        // Returns the desired step of the motor
+        int32_t getDesiredStep();
+
+        // Sets the desired step of the motor
+        void setDesiredStep(int32_t newDesiredStep);
 
         // Returns the desired step of the motor
         int32_t getSoftStepCNT();
@@ -173,7 +185,11 @@ class StepperMotor {
         void simpleStep();
 
         // Calculates the coil values for the motor and updates the set angle.
+        #ifdef USE_HARDWARE_STEP_CNT
+        void step(STEP_DIR dir = PIN, bool useMultiplier = true);
+        #else
         void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredPos = true);
+        #endif
 
         // Sets the coils to hold the motor at the desired step number
         void driveCoils(int32_t steps);
@@ -215,11 +231,13 @@ class StepperMotor {
         // Function for getting the sign of the number (returns -1 if number is less than 0, 1 if 0 or above)
         int32_t getSign(float num);
 
-        // Keeps the desired angle of the motor
-        float desiredAngle = 0;
+        #ifndef USE_HARDWARE_STEP_CNT
+            // Keeps the desired angle of the motor
+            float desiredAngle = 0;
 
-        // Keeps the desired step of the motor
-        int32_t softStepCNT = 0;
+            // Keeps the desired step of the motor
+            int32_t softStepCNT = 0;
+        #endif
 
         // Keeps the current angle of the motor
         float currentAngle = 0;

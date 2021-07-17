@@ -49,7 +49,7 @@ class StepperPID {
         void setOutputLimits(float min, float max);
 
         // Runs the PID calculations and returns the output
-        float compute();
+        float compute(float currentAbsAngle, float newSetpoint);
 
     // Private info (usually just variables)
     private:

@@ -39,7 +39,7 @@
 #define RPM_AVG_READINGS     (uint16_t)10
 #define SPEED_AVG_READINGS   (uint16_t)100
 #define ACCEL_AVG_READINGS   (uint16_t)10
-#define ANGLE_AVG_READINGS   (uint16_t)15
+#define ANGLE_AVG_READINGS   (uint16_t)10
 #define TEMP_AVG_READINGS    (uint16_t)200
 
 // If encoder estimation should be used
@@ -170,6 +170,9 @@
     // Pulls high on a stepper misalignment after the set period or angular deviation
     #define STALLFAULT_PIN PA_13 //output(GPIOA_BASE_BASE, 13)
 #endif
+
+// If the step counter should use a hardware (more accurate) or software step counter
+#define USE_HARDWARE_STEP_CNT
 
 // The System Clock frequency of the CPU (in MHz)
 // This can be set to 72 and 128 with SYSCLK_SRC_HSE_8 (external oscillator)
@@ -350,7 +353,7 @@
 // --------------  Debugging  --------------
 
 //#define ENABLE_STEPPING_VELOCITY
-//#define IGNORE_FLASH_VERSION
+#define IGNORE_FLASH_VERSION
 
 // LED related debugging
 #ifdef ENABLE_LED

@@ -191,7 +191,7 @@ Encoder::Encoder() {
 // Read the value of a register
 errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
-    // Disable interrupts
+    // Disable interrupts (cannot be interrupted)
     disableInterrupts();
 
     // Create an accumulator for error checking
@@ -219,6 +219,8 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
+
+    // Send that we want to read the data, then read it
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx2buf, 2, 10);
 
     // Combine the first rxbuf into a single, unsigned 16 bit value
@@ -246,7 +248,7 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
         data = 0;
     }
 
-    // All done, we can re-enable interrupts
+    // Enable interrupts, we're finished
     enableInterrupts();
 
     // Return error
@@ -257,9 +259,6 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
 // Read multiple registers
 void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength) {
 
-    // Disable interrupts
-    disableInterrupts();
-
     // Pull CS low to select encoder
     GPIO_WRITE(ENCODER_CS_PIN, LOW);
 
@@ -269,7 +268,9 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
     uint8_t rxbuf[dataLength * 2];
 
     // Send address we want to read, response seems to be equal to request
+    disableInterrupts();
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
+    enableInterrupts();
 
     // Set the MOSI pin to open drain
     GPIO_InitStructure.Pin = GPIO_PIN_7;
@@ -281,7 +282,11 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
     for (uint8_t i = 0; i < dataLength * 2; i++) {
         txbuf[i] = 0xFF;
     }
+
+    // Communicate that we want to read the value
+    disableInterrupts();
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, dataLength * 2, 10);
+    enableInterrupts();
 
     // Write the received data into the array
     for (uint8_t i = 0; i < dataLength; i++) {
@@ -294,18 +299,12 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
-
-    // Enable interrupts
-    enableInterrupts();
 }
 
 
 // Write a value to a register
 // ! Untested
 void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
-
-    // Disable the motor timers
-    disableInterrupts();
 
     // Pull CS low to select encoder
     GPIO_WRITE(ENCODER_CS_PIN, LOW);
@@ -316,16 +315,22 @@ void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
     uint8_t rxbuf[2];
 
     // Send address we want to write, response seems to be equal to request
+    disableInterrupts();
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
+    enableInterrupts();
 
     // Set the MOSI pin to open drain
     GPIO_InitStructure.Pin = GPIO_PIN_7;
     GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    // Send the data to be written
+    // Set the data to be written
     txbuf[0] = uint8_t(data >> 8), txbuf[1] = uint8_t(data);
+
+    // Write the data
+    disableInterrupts();
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
+    enableInterrupts();
 
     // Set MOSI back to Push/Pull
     GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
@@ -333,9 +338,6 @@ void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
-
-    // Re-enable the motor timers
-    enableInterrupts();
 }
 
 
@@ -429,9 +431,6 @@ uint8_t Encoder::calcCRC(uint8_t *data, uint8_t length) {
 // Warning: this function cannot be interrupted, so make sure that it is called in a function that disables interrupts
 void Encoder::resetSafety() {
 
-    // Disable the motor timers
-    disableInterrupts();
-
     // Build the command
 	uint16_t command = ENCODER_READ_COMMAND + SAFE_HIGH;
 
@@ -440,16 +439,17 @@ void Encoder::resetSafety() {
 	uint8_t rxbuf[2];
 
     // Send the command on the first transmission
+    disableInterrupts();
 	HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
+    enableInterrupts();
 
     // Only need to read on the 2nd, 3rd, and 4th, so just send a blank tx message
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
 
     // TX/RX twice, just reading the response (response doesn't matter)
+    disableInterrupts();
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
-
-    // Re-enable the motor timers
     enableInterrupts();
 }
 
@@ -544,6 +544,15 @@ double Encoder::getSmoothAngle() {
 }
 
 
+// Returns a smoothed value of angle of the encoder
+// More expensive than getAngle(), but transitions between 0 and 360 are smoother
+double Encoder::getSmoothAngle(double currentAbsAngle) {
+
+    // Get the absolute angle, then take the mod of 360 to find the shaft rotation (without revolutions)
+    return (fmod(currentAbsAngle, 360.0));
+}
+
+
 // Reads the momentary value for the angle of the encoder (ranges from 0-360)
 double Encoder::getAngle() {
     return (getRawAngle() - startupAngleOffset);
@@ -572,6 +581,29 @@ double Encoder::getEstimSpeed() {
 
     // Correct the last angle and sample time
     lastEncoderAngle = newAngle;
+    lastAngleSampleTime = currentTime;
+
+    // Add the value to the averaging list
+    speedAvg.add(avgVelocity);
+
+    // Return the averaged velocity in deg/s
+    return speedAvg.get();
+}
+
+
+// For average velocity calculations instead of hardware readings from the TLE5012
+// Returns the speed of the encoder in deg/s
+// ! Needs fixed yet, readings are off
+double Encoder::getEstimSpeed(double currentAbsAngle) {
+
+    // Sample time
+    uint32_t currentTime = micros();
+
+    // Compute the average velocity
+    double avgVelocity = 1000000.0 * (currentAbsAngle - lastEncoderAngle) / (currentTime - lastAngleSampleTime);
+
+    // Correct the last angle and sample time
+    lastEncoderAngle = currentAbsAngle;
     lastAngleSampleTime = currentTime;
 
     // Add the value to the averaging list
@@ -671,6 +703,27 @@ double Encoder::getAccel() {
 
     // Correct the last angle and sample time
     lastEncoderAngle = newAngle;
+    lastAngleSampleTime = currentTime;
+
+    // Add the value to the averaging list
+    accelAvg.add(avgAccel);
+
+    // Return the averaged velocity
+    return accelAvg.get();
+}
+
+
+// Calculates the angular acceleration. Done by looking at position over time^2
+double Encoder::getAccel(double currentAbsAngle) {
+
+    // Sample time
+    uint32_t currentTime = micros();
+
+    // Compute the average velocity (extra pow at beginning is needed to convert microseconds to seconds)
+    double avgAccel = (currentAbsAngle - lastEncoderAngle) / pow(1000000 * (currentTime - lastAngleSampleTime), 2);
+
+    // Correct the last angle and sample time
+    lastEncoderAngle = currentAbsAngle;
     lastAngleSampleTime = currentTime;
 
     // Add the value to the averaging list

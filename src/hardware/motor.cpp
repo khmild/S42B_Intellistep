@@ -15,7 +15,9 @@ StepperMotor::StepperMotor() {
     pinMode(DIRECTION_PIN, INPUT);
     pinMode(ENABLE_PIN, INPUT);
 
-    // Setup TIM2 (the base)
+
+    #ifdef USE_HARDWARE_STEP_CNT
+    // Setup TIM2 (the base) (for hardware step counter)
     tim2Config.Instance = TIM2;
     tim2Config.Init.Prescaler = 0;
     tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -51,6 +53,7 @@ StepperMotor::StepperMotor() {
     // because HardwareTimer library holds all callbacks)
     tim2HWTim -> setInterruptPriority(5, 0);
     tim2HWTim -> attachInterrupt(overflowHandler);
+    #endif
 
     // Setup the pins as outputs
     pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
@@ -75,7 +78,7 @@ StepperMotor::StepperMotor() {
 float StepperMotor::getEncoderRPM() {
 
     // Convert getSpeed() (in deg/s) to RPM
-    return DPS_TO_RPM(encoder.getSpeed());
+    return DPS_TO_RPM((float)encoder.getSpeed());
 }
 
 
@@ -83,7 +86,15 @@ float StepperMotor::getEncoderRPM() {
 float StepperMotor::getEstimRPM() {
 
     // Convert getEstimSpeed() (in deg/s) to RPM
-    return DPS_TO_RPM(encoder.getEstimSpeed());
+    return DPS_TO_RPM((float)encoder.getEstimSpeed());
+}
+
+
+// Returns the current calculated RPM
+float StepperMotor::getEstimRPM(double currentAbsAngle) {
+
+    // Convert getEstimSpeed() (in deg/s) to RPM
+    return DPS_TO_RPM((float)encoder.getEstimSpeed(currentAbsAngle));
 }
 
 
@@ -108,13 +119,25 @@ float  StepperMotor::getSteppingRPM() {
 
 // Returns the angular deviation of the motor from the desired angle
 float StepperMotor::getAngleError() {
-    return (encoder.getAbsoluteAngleAvg() - (this -> desiredAngle));
+    return (encoder.getAbsoluteAngleAvg() - getDesiredAngle());
+}
+
+
+// Returns the angular deviation of the motor from the desired angle
+float StepperMotor::getAngleError(double currentAbsAngle) {
+    return (currentAbsAngle - getDesiredAngle());
 }
 
 
 // Returns the step deviation of the motor from the desired step
 int32_t StepperMotor::getStepError() {
-    return (round(encoder.getAbsoluteAngleAvg() / (this -> microstepAngle)) - getHardStepCNT());
+    return (round(encoder.getAbsoluteAngleAvg() / (this -> microstepAngle)) - getDesiredStep());
+}
+
+
+// Returns the step deviation of the motor from the desired step
+int32_t StepperMotor::getStepError(double currentAbsAngle) {
+    return (round(currentAbsAngle / (this -> microstepAngle)) - getDesiredStep());
 }
 
 
@@ -126,22 +149,45 @@ int32_t StepperMotor::getStepPhase() {
 
 // Returns the desired angle of the motor
 float StepperMotor::getDesiredAngle() {
-    return (this -> desiredAngle);
+    #ifdef USE_HARDWARE_STEP_CNT
+        return (microstepAngle * getHardStepCNT());
+    #else
+        return (microstepAngle * getSoftStepCNT());
+    #endif
+}
+
+
+// Sets the desired angle of the motor
+void StepperMotor::setDesiredAngle(float newDesiredAngle) {
+    #ifdef USE_HARDWARE_STEP_CNT
+        setHardStepCNT(round(newDesiredAngle / microstepAngle));
+    #else
+        setSoftStepCNT(round(newDesiredAngle / microstepAngle));
+    #endif
 }
 
 
 // Returns the desired step of the motor
-int32_t StepperMotor::getSoftStepCNT() {
-    return (this -> softStepCNT);
+int32_t StepperMotor::getDesiredStep() {
+    #ifdef USE_HARDWARE_STEP_CNT
+        return getHardStepCNT();
+    #else
+        return getSoftStepCNT();
+    #endif
 }
 
 
 // Sets the desired step of the motor
-void StepperMotor::setSoftStepCNT(int32_t newStepCNT) {
-    this -> softStepCNT = newStepCNT;
+void StepperMotor::setDesiredStep(int32_t newDesiredStep) {
+    #ifdef USE_HARDWARE_STEP_CNT
+        setHardStepCNT(newDesiredStep);
+    #else
+        setSoftStepCNT(newDesiredStep);
+    #endif
 }
 
 
+#ifdef USE_HARDWARE_STEP_CNT
 // Returns the count value of the timer-based step counter
 int32_t StepperMotor::getHardStepCNT() const {
     return ((TIM2 -> CNT) + stepOverflowOffset);
@@ -176,10 +222,21 @@ void overflowHandler() {
         motor.stepOverflowOffset -= 65536;
     }
 }
+#else // ! USE_HARDWARE_STEP_CNT
+// Returns the desired step of the motor
+int32_t StepperMotor::getSoftStepCNT() {
+    return (this -> softStepCNT);
+}
+
+
+// Sets the desired step of the motor
+void StepperMotor::setSoftStepCNT(int32_t newStepCNT) {
+    this -> softStepCNT = newStepCNT;
+}
+#endif // ! USE_HARDWARE_STEP_CNT
 
 
 #ifdef ENABLE_DYNAMIC_CURRENT
-
 // Gets the acceleration factor for dynamic current
 uint16_t StepperMotor::getDynamicAccelCurrent() const {
     return (this -> dynamicAccelCurrent);
@@ -278,11 +335,12 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (setMicrostepping != -1) {
 
-        // Scale the hardware step counter
-        setHardStepCNT(getHardStepCNT() * (setMicrostepping / this -> microstepDivisor));
-
-        // Scale the software step counter
-        setSoftStepCNT(getSoftStepCNT() * (setMicrostepping / this -> microstepDivisor));
+        // Scale the step counter
+        #ifdef USE_HARDWARE_STEP_CNT
+            setHardStepCNT(getHardStepCNT() * (setMicrostepping / this -> microstepDivisor));
+        #else
+            setSoftStepCNT(getSoftStepCNT() * (setMicrostepping / this -> microstepDivisor));
+        #endif
 
         // Set the microstepping divisor
         this -> microstepDivisor = setMicrostepping;
@@ -399,7 +457,11 @@ void StepperMotor::simpleStep() {
 
 
 // Computes the coil values for the next step position and increments the set angle
+#ifdef USE_HARDWARE_STEP_CNT
+void StepperMotor::step(STEP_DIR dir, bool useMultiplier) {
+#else
 void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos) {
+#endif
 
     #ifdef ENABLE_STEPPING_VELOCITY
         isStepping = true;
@@ -443,13 +505,15 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
     // Fix the step change's sign
     stepChange *= getSign(angleChange);
 
-    // Update the desired angle if specified
-    if (updateDesiredPos) {
+    #ifndef USE_HARDWARE_STEP_CNT
+        // Update the desired angle if specified
+        if (updateDesiredPos) {
 
-        // Angles are basically just added to desired, not really much to do here
-        this -> desiredAngle += angleChange;
-        this -> softStepCNT += stepChange;
-    }
+            // Angles are basically just added to desired, not really much to do here
+            this -> desiredAngle += angleChange;
+            this -> softStepCNT += stepChange;
+        }
+    #endif
 
     // Motor's current angle must always be updated to correctly move the coils
     this -> currentAngle += angleChange;
@@ -651,27 +715,45 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
             switch (newState) {
 
                 // Need to clear the disabled state and start the coils
-                case ENABLED:
+                case ENABLED: {
+
+                    // Note the current angle
+                    double encoderAngle = encoder.getAngle();
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(encoder.getRawAngleAvg());
+                    driveCoilsAngle(encoderAngle);
 
                     // The motor's current angle needs corrected
-                    currentAngle = encoder.getRawAngleAvg();
+                    currentAngle = encoderAngle;
+
+                    // Reset the motor's desired step to the current
+                    // No need to set the desired angle, that is based off of the step
+                    setDesiredStep(round(encoderAngle / (this -> microstepAngle)));
+
+                    // Set the new state
                     this -> state = ENABLED;
                     break;
-
+                }
                 // Same as enabled, just forced
-                case FORCED_ENABLED:
+                case FORCED_ENABLED: {
+
+                    // Note the current angle
+                    double encoderAngle = encoder.getAngle();
 
                     // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(encoder.getRawAngleAvg());
+                    driveCoilsAngle(encoderAngle);
 
                     // The motor's current angle needs corrected
-                    currentAngle = encoder.getRawAngleAvg();
+                    currentAngle = encoderAngle;
+
+                    // Reset the motor's desired step to the current
+                    // No need to set the desired angle, that is based off of the step
+                    setDesiredStep(round(encoderAngle / (this -> microstepAngle)));
+
+                    // Set the new state
                     this -> state = FORCED_ENABLED;
                     break;
-
+                }
                 // No other special processing needed, just disable the coils and set the state
                 default:
                     motor.setCoilA(IDLE_MODE);
@@ -688,16 +770,25 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 switch (newState) {
 
                     // Need to clear the disabled state and start the coils
-                    case ENABLED:
+                    case ENABLED: {
+
+                        // Note the current angle
+                        double encoderAngle = encoder.getAngle();
 
                         // Drive the coils the current angle of the shaft (just locks the output in place)
-                        driveCoilsAngle(encoder.getRawAngleAvg());
+                        driveCoilsAngle(encoderAngle);
 
                         // The motor's current angle needs corrected
-                        currentAngle = encoder.getRawAngleAvg();
+                        currentAngle = encoderAngle;
+
+                        // Reset the motor's desired step to the current
+                        // No need to set the desired angle, that is based off of the step
+                        setDesiredStep(round(encoderAngle / (this -> microstepAngle)));
+
+                        // Set the new state
                         this -> state = ENABLED;
                         break;
-
+                    }
                     // No other special processing needed, just disable the coils and set the state
                     default:
                         motor.setCoilA(IDLE_MODE);

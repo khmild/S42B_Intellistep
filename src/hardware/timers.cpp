@@ -278,8 +278,11 @@ void correctMotor() {
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         motor.setState(ENABLED);
 
+        // Get the current angle of the motor
+        float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat();
+
         // Get the angular deviation
-        int32_t stepDeviation = motor.getStepError();
+        int32_t stepDeviation = motor.getStepError(currentAbsAngle);
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
         if (abs(stepDeviation) > 1) {
@@ -288,8 +291,8 @@ void correctMotor() {
             #ifdef ENABLE_PID
 
                 // Run the PID calcalations
-                int32_t pidOutput = round(pid.compute());
-                uint32_t stepFreq = abs(pidOutput); //(DEFAULT_PID_STEP_MAX - abs(pidOutput));
+                int32_t pidOutput = round(pid.compute(currentAbsAngle, motor.getDesiredAngle()));
+                uint32_t stepFreq = abs(pidOutput);
 
                 // Check if the value is 0 (meaning that the timer needs disabled)
                 if (stepFreq == 0) {
@@ -478,7 +481,11 @@ void stepScheduleHandler() {
     }
     else {
         // Just step the motor in the desired direction
-        motor.step(scheduledStepDir, false, false);
+        #ifdef USE_HARDWARE_STEP_CNT
+            motor.step(scheduledStepDir, false);
+        #else
+            motor.step(scheduledStepDir, false, false);
+        #endif
     }
 }
 
