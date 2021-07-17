@@ -10,7 +10,7 @@
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)45
+#define PATCH_VERSION (uint16_t)46
 
 // --------------  Settings  --------------
 
@@ -33,6 +33,8 @@
     // Warning thresholds
     #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
     //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
+
+    #define CURRENT_MENU_INCREMENT  (uint16_t)100 // The value to step the OLED current options by
 #endif
 
 // Averages (number of readings in average)
@@ -159,6 +161,7 @@
 // Noise is a design feature when the A4950 drives a stepper motor. :(
 
 #define IDLE_MODE               COAST // The mode to set the motor to when it's disabled
+//#define DIR_PIN_REVERSED
 
 // Stallfault
 //#define ENABLE_STALLFAULT

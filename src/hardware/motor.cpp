@@ -324,18 +324,25 @@ void StepperMotor::setPeakCurrent(uint16_t peakCurrent) {
 #endif // ! ENABLE_DYNAMIC_CURRENT
 
 // Get the microstepping divisor of the motor
-uint16_t StepperMotor::getMicrostepping() const {
+uint16_t StepperMotor::getMicrostepping() {
     return (this -> microstepDivisor);
 }
 
 
 // Set the microstepping divisor of the motor
-void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
+void StepperMotor::setMicrostepping(uint16_t setMicrostepping, bool lock) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (setMicrostepping != -1) {
 
-        // Scale the step counter
+        // Check if the microstepping has been locked and the lock is not enabled
+        if (this -> microstepLocked && !lock) {
+
+            // Nothing should be changed, exit the function
+            return;
+        }
+
+        // Scale the step count
         #ifdef USE_HARDWARE_STEP_CNT
             setHardStepCNT(getHardStepCNT() * (setMicrostepping / this -> microstepDivisor));
         #else
@@ -350,6 +357,9 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
 
         // Fix the microsteps per rotation
         this -> microstepsPerRotation = round(360.0 / microstepAngle);
+
+        // Set that the microstepping should be locked for future writes
+        this -> microstepLocked = lock;
     }
 }
 
@@ -398,17 +408,26 @@ int32_t StepperMotor::getMicrostepsPerRotation() const {
 // Set if the motor direction should be reversed or not
 void StepperMotor::setReversed(bool reversed) {
 
-    if (reversed)
-        // Set if the motor should be reversed
+    // Set if the motor should be reversed
+    if (reversed) {
         this -> reversed = -1;
-    else
+    }
+    else {
         this -> reversed = 1;
+    }
 }
 
 
 // Get if the motor direction is reversed
 bool StepperMotor::getReversed() const {
-    return (this -> reversed > 0 ? 1 : 0);
+
+    // Decide if the motor is reversed or not
+    if (this -> reversed > 0) {
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 
 

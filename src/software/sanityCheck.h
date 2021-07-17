@@ -65,6 +65,10 @@
 #endif
 
 
+// Calculate the microstep interval count
+#define MICROSTEP_INTERVAL_CNT (uint16_t)(log2(MAX_MICROSTEP_DIVISOR) - log2(MIN_MICROSTEP_DIVISOR) + 1)
+
+
 // Create the firmware print string
 // Firmware feature prints
 #define VERSION_STRING            String(MAJOR_VERSION) + "." + String(MINOR_VERSION) + "." + String(PATCH_VERSION)

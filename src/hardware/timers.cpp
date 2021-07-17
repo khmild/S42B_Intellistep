@@ -102,7 +102,6 @@ void setupMotorTimers() {
     #ifndef CHECK_STEPPING_RATE
         correctionTimer -> attachInterrupt(correctMotor);
     #endif
-    correctionTimer -> refresh();
 
     // Setup step schedule timer if it is enabled
     #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
@@ -110,7 +109,6 @@ void setupMotorTimers() {
         stepScheduleTimer -> setInterruptPriority(7, 1);
         stepScheduleTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
-        stepScheduleTimer -> refresh();
         // Don't re-enable the motor, that will be done when the steps are scheduled
     #endif
 }

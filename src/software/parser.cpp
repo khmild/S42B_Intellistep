@@ -334,9 +334,9 @@ String parseCommand(String buffer) {
                 // Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (no dynamic current) or the accel, idle, and max terms (dynamic current) will be returned.
                 #ifdef ENABLE_DYNAMIC_CURRENT
                     // Read the set values
-                    uint16_t accelCurrent = parseValue(buffer, 'A').toInt();
-                    uint16_t idleCurrent = parseValue(buffer, 'I').toInt();
-                    uint16_t maxCurrent = parseValue(buffer, 'M').toInt();
+                    int16_t accelCurrent = parseValue(buffer, 'A').toInt();
+                    int16_t idleCurrent = parseValue(buffer, 'I').toInt();
+                    int16_t maxCurrent = parseValue(buffer, 'M').toInt();
 
                     // Check to make sure that at least one isn't -1 (there is at least one that is valid)
                     if (!((accelCurrent == -1) && (idleCurrent == -1) && (maxCurrent == -1))) {
@@ -353,8 +353,8 @@ String parseCommand(String buffer) {
 
                 #else
                     // Read the set values (one of them should be -1 (no value exists))
-                    uint16_t rmsCurrent = parseValue(buffer, 'R').toInt();
-                    uint16_t peakCurrent = parseValue(buffer, 'P').toInt();
+                    int16_t rmsCurrent = parseValue(buffer, 'R').toInt();
+                    int16_t peakCurrent = parseValue(buffer, 'P').toInt();
 
                     // Check if RMS current is valid
                     if (rmsCurrent != -1) {

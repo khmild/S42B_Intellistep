@@ -124,21 +124,21 @@ void readDipMicrostepping() {
         if (!GPIO_READ(DIP_4_PIN) && !GPIO_READ(DIP_3_PIN)) {
 
             // Set the microstepping to 1/32 if both dips are on
-            motor.setMicrostepping(32);
+            motor.setMicrostepping(32, false);
         }
         else if (GPIO_READ(DIP_4_PIN) && !GPIO_READ(DIP_3_PIN)) {
 
             // Set the microstepping to 1/16 if the left dip is off and the right is on
-            motor.setMicrostepping(16);
+            motor.setMicrostepping(16, false);
         }
         else if (!GPIO_READ(DIP_4_PIN) && GPIO_READ(DIP_3_PIN)) {
 
             // Set the microstepping to 1/8 if the right dip is off and the left on
-            motor.setMicrostepping(8);
+            motor.setMicrostepping(8, false);
         }
         else {
             // Both are off, just revert to using full stepping
-            motor.setMicrostepping(1);
+            motor.setMicrostepping(1, false);
         }
     }
     else {
@@ -146,21 +146,21 @@ void readDipMicrostepping() {
         if (!GPIO_READ(DIP_1_PIN) && !GPIO_READ(DIP_2_PIN)) {
 
             // Set the microstepping to 1/32 if both dips are on
-            motor.setMicrostepping(32);
+            motor.setMicrostepping(32, false);
         }
         else if (GPIO_READ(DIP_1_PIN) && !GPIO_READ(DIP_2_PIN)) {
 
             // Set the microstepping to 1/16 if the left dip is off and the right is on
-            motor.setMicrostepping(16);
+            motor.setMicrostepping(16, false);
         }
         else if (!GPIO_READ(DIP_1_PIN) && GPIO_READ(DIP_2_PIN)) {
 
             // Set the microstepping to 1/8 if the right dip is off and the left on
-            motor.setMicrostepping(8);
+            motor.setMicrostepping(8, false);
         }
         else {
             // Both are off, just revert to using full stepping
-            motor.setMicrostepping(1);
+            motor.setMicrostepping(1, false);
         }
     }
 

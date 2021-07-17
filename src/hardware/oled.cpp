@@ -19,7 +19,7 @@ SUBMENU submenu = CALIBRATION;
 SUBMENU lastSubmenu = CALIBRATION;
 
 // The current value of the cursor
-uint8_t currentCursorIndex = 0;
+uint16_t currentCursorIndex = 0;
 
 // The current menu depth
 MENU_DEPTH menuDepth = MOTOR_DATA;
@@ -250,7 +250,7 @@ void displayWarning(String firstLine, String secondLine, String thirdLine, bool 
     writeOLEDString(0, 0,               firstLine,  false);
     writeOLEDString(0, LINE_HEIGHT,     secondLine, false);
     writeOLEDString(0, LINE_HEIGHT * 2, thirdLine,  false);
-    writeOLEDString(0, LINE_HEIGHT * 3, F("Select to exit"), updateScreen);
+    writeOLEDString(0, LINE_HEIGHT * 3, F("Back to exit"), updateScreen);
 
     // Save the last menu used (for returning later), then move to the new index
     lastMenuDepth = menuDepth;
@@ -293,8 +293,8 @@ void selectMenuItem() {
                 break;
 
             case MICROSTEP:
-                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
-                currentCursorIndex = log2(motor.getMicrostepping()) - log2(MIN_MICROSTEP_DIVISOR);
+                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value
+                currentCursorIndex = log2(motor.getMicrostepping());
 
                 // Enter the menu
                 menuDepth = SUBMENUS;
@@ -355,7 +355,7 @@ void selectMenuItem() {
             case CURRENT: {
                 // Motor mAs. Need to get the cursor value, then convert that to current value
                 // Get the set value
-                uint8_t rmsCurrentSetting = 100 * currentCursorIndex;
+                uint16_t rmsCurrentSetting = CURRENT_MENU_INCREMENT * currentCursorIndex;
 
                 // Check to see if the warning needs flagged
                 if (rmsCurrentSetting % (uint16_t)MAX_RMS_BOARD_CURRENT >= (uint16_t)WARNING_RMS_CURRENT) {
@@ -383,7 +383,7 @@ void selectMenuItem() {
             case MICROSTEP: {
                 // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
                 // Get the set value
-                uint8_t microstepSetting = pow(2, currentCursorIndex);
+                uint8_t microstepSetting = pow(2, (currentCursorIndex % MICROSTEP_INTERVAL_CNT));
 
                 // Check to see if the warning needs flagged
                 if (microstepSetting >= WARNING_MICROSTEP) {
@@ -392,7 +392,7 @@ void selectMenuItem() {
                     menuDepth = WARNING;
 
                     // Actually draw the warning
-                    displayWarning(F("Large stepping"), F("set. Are you"), F("sure?"), true);
+                    displayWarning(F("Large divisor"), F("set. Are you"), F("sure?"), true);
                 }
                 else {
                     // Set the value
@@ -480,7 +480,7 @@ void selectMenuItem() {
             case MICROSTEP:
 
                 // Set the value
-                motor.setMicrostepping(pow(2, currentCursorIndex));
+                motor.setMicrostepping(pow(2, (currentCursorIndex % MICROSTEP_INTERVAL_CNT)));
 
             default:
                 // Nothing to do here, just move on

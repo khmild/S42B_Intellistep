@@ -45,7 +45,7 @@ G/M Code Table
 - M500 (ex M500) - Saves the currently loaded parameters into flash
 - M501 (ex M501) - Loads all saved parameters from flash
 - M502 (ex M502) - Wipes all parameters from flash, then reboots the system
-- M907 (ex M907 R750, M907 I500) - Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (no dynamic current) or the accel, idle, and max terms (dynamic current) will be returned.
+- M907 (ex M907 R750, M907 I500) - Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (not dynamic current) or the accel, idle, and max terms (dynamic current) will be returned.
 
 ## Credits
 

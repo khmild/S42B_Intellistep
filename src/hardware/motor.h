@@ -145,10 +145,10 @@ class StepperMotor {
 
 
         // Gets the microstepping mode of the motor
-        uint16_t getMicrostepping() const;
+        uint16_t getMicrostepping();
 
         // Sets the microstepping mode of the motor
-        void setMicrostepping(uint16_t setMicrostepping);
+        void setMicrostepping(uint16_t setMicrostepping, bool lock = true);
 
         // Sets the angle of a full step of the motor
         void setFullStepAngle(float newStepAngle);
@@ -270,6 +270,10 @@ class StepperMotor {
         // Microstepping divisor
         uint16_t microstepDivisor = 1;
 
+        // Microstep lock (makes sure that dips can't set a value
+        // once the divisor is set by another source)
+        bool microstepLocked = false;
+
         // Angle of a full step
         float fullStepAngle = 1.8;
 
@@ -285,7 +289,11 @@ class StepperMotor {
         // reversed is a multiplier for steps and angles
         // 1 - If the motor direction is normal
         // -1 - If the motor direction is inverted
+        #ifdef DIR_PIN_REVERSED
+        int8_t reversed = -1;
+        #else
         int8_t reversed = 1;
+        #endif
 
         // If the motor enable is inverted
         bool enableInverted = false;
