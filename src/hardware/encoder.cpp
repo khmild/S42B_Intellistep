@@ -3,11 +3,8 @@
 // Include timers.h here so there isn't a linking circle
 #include "timers.h"
 
-// A map of the known registers
-uint16_t regMap[MAX_NUM_REG];              //!< Register map */
-
 // Massive bit field table
-const BitField_t bitFields[] = {
+const std::array<BitField_t, 88> bitFields[] = {
 	{REG_ACCESS_RU,  REG_STAT,    0x2,    1,  0x00,  0},       //!< 00 bits 0:0 SRST status watch dog
 	{REG_ACCESS_R,   REG_STAT,    0x2,    1,  0x00,  0},       //!< 01 bits 1:1 SWD status watch dog
 	{REG_ACCESS_R,   REG_STAT,    0x4,    2,  0x00,  0},       //!< 02 bits 2:2 SVR status voltage regulator
@@ -353,25 +350,24 @@ errorTypes Encoder::checkSafety(uint16_t safety, uint16_t command, uint16_t* rea
 	if (!((safety) & ENCODER_SYSTEM_ERROR_MASK)) {
 		error = SYSTEM_ERROR;
 		resetSafety();
-	}
 
-    // Check for interface errors
-    else if (!((safety) & ENCODER_INTERFACE_ERROR_MASK)) {
-		error = INTERFACE_ACCESS_ERROR;
-	}
+	} else if (!((safety) & ENCODER_INTERFACE_ERROR_MASK)) {
 
-    // Check for invalid angles
-    else if (!((safety) & ENCODER_INV_ANGLE_ERROR_MASK)) {
+        // Check for interface errors
+        error = INTERFACE_ACCESS_ERROR;
+
+	} else if (!((safety) & ENCODER_INV_ANGLE_ERROR_MASK)) {
+
+        // Check for invalid angles
     	error = INVALID_ANGLE_ERROR;
         resetSafety();
-	}
 
-    // If there have been no errors so far, then check the CRC
-    else {
+	} else {
+        // If there have been no errors so far, then check the CRC
 
         // Check the length of the message, then create the buffer needed to hold it
 		uint16_t lengthOfTemp = length * 2 + 2;
-		uint8_t temp[lengthOfTemp];
+		uint8_t temp[lengthOfTemp] = {0, 0};
 
         // Read out command to the first two bytes of the message
 		temp[0] = (uint8_t)(command >> 8);
@@ -389,8 +385,7 @@ errorTypes Encoder::checkSafety(uint16_t safety, uint16_t command, uint16_t* rea
 		if (crc != crcReceivedFinal) {
 			error = CRC_ERROR;
             resetSafety();
-		}
-        else {
+		} else {
 			error = NO_ERROR;
 		}
 	}

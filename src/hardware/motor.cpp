@@ -1,8 +1,8 @@
 #include "motor.h"
 
 // These imports must be here to prevent linking circles
-#include "oled.h"
 #include "flash.h"
+#include "oled.h"
 
 // Optimize for speed
 #pragma GCC optimize ("-Ofast")

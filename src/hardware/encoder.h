@@ -1,5 +1,5 @@
-#ifndef __TLE5012_H
-#define __TLE5012_H
+#ifndef TLE5012_H
+#define TLE5012_H
 
 // Libraries
 #include "Arduino.h"
@@ -352,6 +352,9 @@ class Encoder {
         #ifdef ENABLE_OVERTEMP_PROTECTION
             uint32_t lastOvertempTime = 0;
         #endif
+
+        // A map of the known registers
+        uint16_t regMap[MAX_NUM_REG];              //!< Register map */
 };
 
 #endif

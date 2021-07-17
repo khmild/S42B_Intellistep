@@ -2,9 +2,9 @@
 #include "config.h"
 
 // Imports
+#include "Arduino.h"
 #include "buttons.h"
 #include "config.h"
-#include "Arduino.h"
 #include "oled.h"
 
 // Variable definitions

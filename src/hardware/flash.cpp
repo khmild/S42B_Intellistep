@@ -38,7 +38,7 @@ uint32_t readFlashU32(uint32_t parameterIndex) {
     intData[1] = readFlashAddress(DATA_START_ADDR + (parameterIndex * 4) + 2);
 
     // Create a variable to store the data in
-    uint32_t data;
+    uint32_t data = 0;
 
     // Copy the 4 bytes of the data over (all of it)
     memcpy(&data, &intData, 4);
