@@ -349,14 +349,20 @@ void correctMotor() {
 
                         // Motor is at a position larger than the desired one
                         // Use the current angle to find the current step, then subtract 1
-                        motor.step(CLOCKWISE, false, false);
-                        //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) - (motor.getMicrostepping())));
+                        #ifdef USE_HARDWARE_STEP_CNT
+                            motor.step(CLOCKWISE, false);
+                        #else
+                            motor.step(CLOCKWISE, false, false);
+                        #endif
                     }
                     else {
                         // Motor is at a position smaller than the desired one
                         // Use the current angle to find the current step, then add 1
-                        motor.step(COUNTER_CLOCKWISE, false, false);
-                        //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) + (motor.getMicrostepping())));
+                        #ifdef USE_HARDWARE_STEP_CNT
+                            motor.step(COUNTER_CLOCKWISE, false);
+                        #else
+                            motor.step(COUNTER_CLOCKWISE, false, false);
+                        #endif
                     }
                 }
             #endif // ! ENABLE_PID
