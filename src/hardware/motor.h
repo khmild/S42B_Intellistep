@@ -273,12 +273,10 @@ class StepperMotor {
         bool enableInverted = false;
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
-        #ifdef MAINTAIN_FULL_STEP
-            uint32_t microstepMultiplier = 32;
-        #else
-            uint32_t microstepMultiplier = DEFAULT_MICROSTEP_MULTIPLIER;
-        #endif
+        uint32_t microstepMultiplier = DEFAULT_MICROSTEP_MULTIPLIER;
 
+        // Index points multiplier
+        uint32_t indexPointsMultiplier = 32;
 
         // Analog info structures for PWM current pins
         analogInfo PWMCurrentPinInfoA;

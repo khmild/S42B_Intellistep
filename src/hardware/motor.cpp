@@ -294,29 +294,27 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
         // Fix the microsteps per rotation
         this -> microstepsPerRotation = round(360.0 / microstepAngle);
 
-        #ifdef MAINTAIN_FULL_STEP
-        // Set the microstepMultiplier according to the microstepDivisor
+        // Set the indexPointsMultiplier according to the microstepDivisor
         switch (this -> microstepDivisor) {
         case 32:
-            this -> microstepMultiplier = 1;
+            this -> indexPointsMultiplier = 1;
             break;
         case 16:
-            this -> microstepMultiplier = 2;
+            this -> indexPointsMultiplier = 2;
             break;
         case 8:
-            this -> microstepMultiplier = 4;
+            this -> indexPointsMultiplier = 4;
             break;
         case 4:
-            this -> microstepMultiplier = 8;
+            this -> indexPointsMultiplier = 8;
             break;
         case 2:
-            this -> microstepMultiplier = 16;
+            this -> indexPointsMultiplier = 16;
             break;
         default:
-            this -> microstepMultiplier = 32;
+            this -> indexPointsMultiplier = 32;
             break;
         }
-        #endif
     }
 }
 
@@ -444,7 +442,6 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
     // Factor in the multiplier if specified
     if (useMultiplier) {
         angleChange *= (this -> microstepMultiplier);
-        stepChange = (this -> microstepMultiplier);
     }
 
     // Invert the change based on the direction
@@ -488,7 +485,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
 void StepperMotor::driveCoils(int32_t steps) {
 
     // Correct the steps so that they're within the valid range
-    steps *= (4 * (this -> microstepDivisor));
+    steps *= this -> indexPointsMultiplier;
 
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
