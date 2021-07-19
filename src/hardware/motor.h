@@ -276,6 +276,7 @@ class StepperMotor {
         uint32_t microstepMultiplier = DEFAULT_MICROSTEP_MULTIPLIER;
 
         // Index points multiplier
+        // Indicates how many points will be skipped in the sine wave during one input step on the STEP pin
         uint32_t indexPointsMultiplier = 32;
 
         // Analog info structures for PWM current pins
