@@ -48,4 +48,8 @@ const int16_t sineTable[SINE_VAL_COUNT] = {
  |   ^   ^   ^   ^   ^   ^   ^   ^    ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^  1/8            32                    4
  | ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^  ^ 1/16            64                    2
  |^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 1/32           128==SINE_VAL_COUNT    1
+
+In 1/32 microstep mode,  every sine wave index point is used. (0, 1, 2, ..., 127, 128==0, ...)
+In full step mode, only 4 index points of  sine wave are used. (0, 1/2 pi, pi, 3/2pi, 2pi, ...) == (0, 32, 64, 96, 128==0, ...)
+The rest of the modes are in between them.
 */
