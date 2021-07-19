@@ -488,7 +488,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
 void StepperMotor::driveCoils(int32_t steps) {
 
     // Correct the steps so that they're within the valid range
-    //steps %= (4 * (this -> microstepDivisor));
+    steps *= (4 * (this -> microstepDivisor));
 
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
