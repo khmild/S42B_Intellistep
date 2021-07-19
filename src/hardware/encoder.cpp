@@ -866,6 +866,19 @@ float Encoder::getAbsoluteAngleAvgFloat() {
 }
 
 
+// Clears the old absolute angle readings out
+void Encoder::clearAbsoluteAngleAvg() {
+
+    // Read the encoder's absolute angle the number of readings the average stores
+    for (uint8_t readings = 0; readings < ANGLE_AVG_READINGS; readings++) {
+
+        // Get the angle, then wait for 10ms to allow encoder to update
+        getAbsoluteAngleAvg();
+        delay(10);
+    }
+}
+
+
 // Sets the encoder's step offset (used for calibration)
 void Encoder::setStepOffset(double offset) {
     encoderStepOffset = offset;

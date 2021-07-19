@@ -736,18 +736,8 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 // Need to clear the disabled state and start the coils
                 case ENABLED: {
 
-                    // Note the current angle
-                    double encoderAngle = encoder.getAngle();
-
-                    // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(encoderAngle);
-
-                    // The motor's current angle needs corrected
-                    currentAngle = encoderAngle;
-
-                    // Reset the motor's desired step to the current
-                    // No need to set the desired angle, that is based off of the step
-                    setDesiredStep(round(encoderAngle / (this -> microstepAngle)));
+                    // Enable the motor
+                    enable();
 
                     // Set the new state
                     this -> state = ENABLED;
@@ -756,18 +746,8 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 // Same as enabled, just forced
                 case FORCED_ENABLED: {
 
-                    // Note the current angle
-                    double encoderAngle = encoder.getAngle();
-
-                    // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(encoderAngle);
-
-                    // The motor's current angle needs corrected
-                    currentAngle = encoderAngle;
-
-                    // Reset the motor's desired step to the current
-                    // No need to set the desired angle, that is based off of the step
-                    setDesiredStep(round(encoderAngle / (this -> microstepAngle)));
+                    // Enable the motor
+                    enable();
 
                     // Set the new state
                     this -> state = FORCED_ENABLED;
@@ -791,18 +771,8 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     // Need to clear the disabled state and start the coils
                     case ENABLED: {
 
-                        // Note the current angle
-                        double encoderAngle = encoder.getAngle();
-
-                        // Drive the coils the current angle of the shaft (just locks the output in place)
-                        driveCoilsAngle(encoderAngle);
-
-                        // The motor's current angle needs corrected
-                        currentAngle = encoderAngle;
-
-                        // Reset the motor's desired step to the current
-                        // No need to set the desired angle, that is based off of the step
-                        setDesiredStep(round(encoderAngle / (this -> microstepAngle)));
+                        // Enable the motor
+                        enable();
 
                         // Set the new state
                         this -> state = ENABLED;
@@ -818,6 +788,27 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
             }
         }
     }
+}
+
+
+// Private function for enabling the motor
+void StepperMotor::enable() {
+
+    // Clear the old absolute angle averages from the encoder
+    encoder.clearAbsoluteAngleAvg();
+
+    // Note the current angle
+    float encoderAngle = encoder.getAbsoluteAngleAvgFloat();
+
+    // Drive the coils the current angle of the shaft (just locks the output in place)
+    driveCoilsAngle(encoderAngle);
+
+    // The motor's current angle needs corrected
+    currentAngle = encoderAngle;
+
+    // Reset the motor's desired step to the current
+    // No need to set the desired angle, that is based off of the step
+    // ! setDesiredAngle(encoderAngle);
 }
 
 
@@ -855,7 +846,7 @@ void StepperMotor::calibrate() {
 
     // Force the encoder to be read a couple of times, wiping the previous position out of the average
     // (this reading needs to be as precise as possible)
-    for (uint8_t readings = 0; readings < (ANGLE_AVG_READINGS * 2); readings++) {
+    for (uint8_t readings = 0; readings < ANGLE_AVG_READINGS; readings++) {
 
         // Get the angle, then wait for 10ms to allow encoder to update
         encoder.getRawAngleAvg();

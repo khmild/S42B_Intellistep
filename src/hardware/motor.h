@@ -231,6 +231,9 @@ class StepperMotor {
         // Function for getting the sign of the number (returns -1 if number is less than 0, 1 if 0 or above)
         int32_t getSign(float num);
 
+        // Function that enables the motor
+        void enable();
+
         #ifndef USE_HARDWARE_STEP_CNT
             // Keeps the desired angle of the motor
             float desiredAngle = 0;
