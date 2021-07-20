@@ -33,6 +33,8 @@
     // Warning thresholds
     #define WARNING_RMS_CURRENT 1000 // The RMS current at which to display a warning confirmation (mA)
     //#define WARNING_PEAK_CURRENT 1000 // The peak current at which to display a warning confirmation (mA)
+
+    #define CURRENT_MENU_INCREMENT  (uint16_t)100 // The value to step the OLED current options by
 #endif
 
 // Averages (number of readings in average)
@@ -147,10 +149,7 @@
 // Doesn't affect correctional movements
 // This will allow the dip switches to set the stepping resolution, while
 // a step pulse will still move the motor one full step worth of rotation
-//#define MAINTAIN_FULL_STEP
-#ifndef MAINTAIN_FULL_STEP
-    #define DEFAULT_MICROSTEP_MULTIPLIER    (uint32_t)1
-#endif
+#define DEFAULT_MICROSTEP_MULTIPLIER    (uint32_t)1
 
 // The min/max microstepping divisors
 // Microstepping divisors are the numbers underneath the fraction of the microstepping
