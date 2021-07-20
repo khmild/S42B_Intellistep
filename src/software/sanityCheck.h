@@ -65,6 +65,10 @@
 #endif
 
 
+// Calculate the microstep interval count
+#define MICROSTEP_INTERVAL_CNT (uint16_t)(log2(MAX_MICROSTEP_DIVISOR) - log2(MIN_MICROSTEP_DIVISOR) + 1)
+
+
 // If we're using the faster averaging using a power of 2
 #ifdef USE_POWER_2_FACTOR_AVGING
 
