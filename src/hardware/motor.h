@@ -277,7 +277,9 @@ class StepperMotor {
 
         // Index points multiplier
         // Indicates how many points will be skipped in the sine wave during one input step on the STEP pin
+        #ifdef MAINTAIN_FULL_STEP
         uint32_t indexPointsMultiplier = 32;
+        #endif
 
         // Analog info structures for PWM current pins
         analogInfo PWMCurrentPinInfoA;

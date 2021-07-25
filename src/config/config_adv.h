@@ -120,7 +120,7 @@ typedef float real_t;
 
 // LED related debugging
 #ifdef ENABLE_LED
-    #define CHECK_STEPPING_RATE
+    //#define CHECK_STEPPING_RATE
     //#define CHECK_CORRECT_MOTOR_RATE
     //#define CHECK_ENCODER_SPEED
 #endif

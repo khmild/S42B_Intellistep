@@ -127,7 +127,7 @@ int32_t StepperMotor::getStepPhase() {
 
 // Returns the desired angle of the motor
 float StepperMotor::getDesiredAngle() {
-    return microstepAngle * getHardStepCNT();
+    return (microstepAngle * getHardStepCNT());
 }
 
 
@@ -295,6 +295,7 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
         this -> microstepsPerRotation = round(360.0 / microstepAngle);
 
         // Set the indexPointsMultiplier according to the microstepDivisor
+        #ifdef MAINTAIN_FULL_STEPPING
         switch (this -> microstepDivisor) {
         case 32:
             this -> indexPointsMultiplier = 1;
@@ -315,6 +316,7 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
             this -> indexPointsMultiplier = 32;
             break;
         }
+        #endif
     }
 }
 
@@ -485,7 +487,9 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
 void StepperMotor::driveCoils(int32_t steps) {
 
     // Correct the steps so that they're within the valid range
-    steps *= this -> indexPointsMultiplier;
+    #ifdef MAINTAIN_FULL_STEPPING
+    steps *= (this -> indexPointsMultiplier);
+    #endif
 
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);

@@ -817,7 +817,7 @@ double Encoder::getAbsoluteAngleAvg() {
 // Gets the momentary absolute angle of the motor
 double Encoder::getAbsoluteAngle() {
 
-    return (float)((getRev() * 360) + getAngle());
+    return (double)((getRev() * 360) + getAngle());
 }
 
 
@@ -849,6 +849,9 @@ void Encoder::zero() {
 
     // Populate the average angle reading table
     for (uint8_t index = 0; index < (ANGLE_AVG_READINGS * 2); index++) {
+
+        // Continuously loop, filling the avg (no need to call getAngleAvg(),
+        // as it uses getRawIncrementsAvg() to get its value)
         getRawIncrementsAvg();
         delay(10);
     }
