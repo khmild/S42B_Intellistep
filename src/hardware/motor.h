@@ -235,15 +235,9 @@ class StepperMotor {
         void enable();
 
         #ifndef USE_HARDWARE_STEP_CNT
-            // Keeps the desired angle of the motor
-            float desiredAngle = 0;
-
             // Keeps the desired step of the motor
             int32_t softStepCNT = 0;
         #endif
-
-        // Keeps the current angle of the motor
-        float currentAngle = 0;
 
         // Keeps the current steps of the motor
         int32_t currentStep = 0;

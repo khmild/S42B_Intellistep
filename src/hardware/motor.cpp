@@ -513,34 +513,39 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
         // Sample times
         prevStepingSampleTime = nowStepingSampleTime;
         nowStepingSampleTime = micros();
-
-    #else // ! ENABLE_STEPPING_VELOCITY
-        float angleChange;
     #endif
 
-    // Main angle change (any inversions * angle of microstep)
-    angleChange = this -> microstepAngle;
-    int32_t stepChange = 1;
+    // Declare a variable to calculate the step change with
+    int32_t stepChange;
 
     // Factor in the multiplier if specified
-    if (useMultiplier) {
-        angleChange *= (this -> microstepMultiplier);
+    if (!useMultiplier) {
+
+        // Only move one step per pulse when multiplier is disabled
+        stepChange = 1;
     }
+    else {
+        // Move the number of steps specified by the microstep multiplier
+        stepChange = (this -> microstepMultiplier);
+    }
+
+    // Adjust the moved steps by the index points multiplier
+    #ifdef MAINTAIN_FULL_STEPPING
+        stepChange *= (this -> indexPointsMultiplier);
+    #endif
 
     // Invert the change based on the direction
     if (dir == PIN) {
 
-        // Use the DIR_PIN state
-        int8_t dirNow = DIRECTION(GPIO_READ(DIRECTION_PIN)) * (this -> reversed);
-        angleChange *= dirNow;
-        stepChange *= dirNow;
+        // Use the DIR_PIN state to decide direction
+        stepChange *= (DIRECTION(GPIO_READ(DIRECTION_PIN)) * (this -> reversed));
     }
     //else if (dir == COUNTER_CLOCKWISE) {
         // Nothing to do here, the value is already positive
     //}
     else if (dir == CLOCKWISE) {
-        // Make the angle change in the negative direction
-        angleChange = -angleChange;
+
+        // Make the step change in the negative direction
         stepChange = -stepChange;
     }
 
@@ -553,14 +558,12 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
     if (updateDesiredPos) {
 
         // Angles are basically just added to desired, not really much to do here
-        this -> desiredAngle += angleChange;
         this -> softStepCNT += stepChange;
     }
     #endif
 
-    // Motor's current angle must always be updated to correctly move the coils
-    this -> currentAngle += angleChange;
-    this -> currentStep += stepChange; // Only moving one step in the specified direction
+    // Only moving one step in the specified direction
+    this -> currentStep += stepChange;
 
     // Drive the coils to their destination
     this -> driveCoils(this -> currentStep);
@@ -569,11 +572,6 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
 
 // Sets the coils of the motor based on the step count
 void StepperMotor::driveCoils(int32_t steps) {
-
-    // Correct the steps so that they're within the valid range
-    #ifdef MAINTAIN_FULL_STEPPING
-    steps *= (this -> indexPointsMultiplier);
-    #endif
 
     // Calculate the sine and cosine of the angle
     uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
@@ -829,12 +827,12 @@ void StepperMotor::enable() {
     // Drive the coils the current angle of the shaft (just locks the output in place)
     driveCoilsAngle(encoderAngle);
 
-    // The motor's current angle needs corrected
-    currentAngle = encoderAngle;
+    // The motor's current step needs corrected
+    currentStep = encoderAngle / microstepAngle;
 
     // Reset the motor's desired step to the current
     // No need to set the desired angle, that is based off of the step
-    // ! setDesiredAngle(encoderAngle);
+    setDesiredStep(currentStep);
 }
 
 
