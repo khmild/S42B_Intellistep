@@ -343,11 +343,20 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping, bool lock) {
             return;
         }
 
+        // Calculate the step scaling
+        float stepScalingFactor = (setMicrostepping / this -> microstepDivisor);
+
         // Scale the step count
         #ifdef USE_HARDWARE_STEP_CNT
-            setHardStepCNT(getHardStepCNT() * (setMicrostepping / this -> microstepDivisor));
+            setHardStepCNT(getHardStepCNT() * stepScalingFactor);
         #else
-            setSoftStepCNT(getSoftStepCNT() * (setMicrostepping / this -> microstepDivisor));
+            setSoftStepCNT(getSoftStepCNT() * stepScalingFactor);
+        #endif
+
+        // Scale the microstep multiplier so that the full stepping level is maintained
+        // This needs to be done before the new divisor is set
+        #ifdef MAINTAIN_FULL_STEPPING
+            this -> microstepMultiplier *= stepScalingFactor;
         #endif
 
         // Set the microstepping divisor
@@ -361,30 +370,6 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping, bool lock) {
 
         // Set that the microstepping should be locked for future writes
         this -> microstepLocked = lock;
-
-        // Set the indexPointsMultiplier according to the microstepDivisor
-        #ifdef MAINTAIN_FULL_STEPPING
-        switch (this -> microstepDivisor) {
-        case 32:
-            this -> indexPointsMultiplier = 1;
-            break;
-        case 16:
-            this -> indexPointsMultiplier = 2;
-            break;
-        case 8:
-            this -> indexPointsMultiplier = 4;
-            break;
-        case 4:
-            this -> indexPointsMultiplier = 8;
-            break;
-        case 2:
-            this -> indexPointsMultiplier = 16;
-            break;
-        default:
-            this -> indexPointsMultiplier = 32;
-            break;
-        }
-        #endif
     }
 }
 
@@ -528,11 +513,6 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
         // Move the number of steps specified by the microstep multiplier
         stepChange = (this -> microstepMultiplier);
     }
-
-    // Adjust the moved steps by the index points multiplier
-    #ifdef MAINTAIN_FULL_STEPPING
-        stepChange *= (this -> indexPointsMultiplier);
-    #endif
 
     // Invert the change based on the direction
     if (dir == PIN) {
