@@ -767,8 +767,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
         }
         else {
             // Only change the state if the current state is either enabled or disabled (or not set)
-            // Only change the state if the current state is not OVERTEMP in fact
-            if ((this -> state) == ENABLED || (this -> state) == DISABLED || (this -> state) == MOTOR_NOT_SET || (this -> state) == FORCED_ENABLED || (this -> state) == FORCED_DISABLED) {
+            if ((this -> state) == ENABLED || (this -> state) == DISABLED || (this -> state) == MOTOR_NOT_SET || (this -> state) == FORCED_ENABLED) {
 
                 // Decide when needs to happen based on the new state
                 switch (newState) {
