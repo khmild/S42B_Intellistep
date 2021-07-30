@@ -547,6 +547,9 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
 
     // Drive the coils to their destination
     this -> driveCoils(this -> currentStep);
+
+    __enable_irq();
+    Serial.println("microstepAngle:" +String(microstepAngle) + " fullStepAngle:" + String(fullStepAngle) + " microstepDivisor:" + String(microstepDivisor) + " microstepMultiplier:" + String(microstepMultiplier));
 }
 
 
