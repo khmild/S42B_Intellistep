@@ -51,7 +51,6 @@ typedef float real_t;
 // --------------  Internal defines  --------------
 // Under the hood motor setup
 #define SINE_VAL_COUNT (128)
-//#define SINE_MAX ((int16_t)(10000))
 #define SINE_MAX (16384) // 2^SINE_POWER == 2^14 == 16384
 
 // Use a integer version of the log of SINE_MAX

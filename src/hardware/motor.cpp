@@ -325,13 +325,13 @@ void StepperMotor::setPeakCurrent(uint16_t peakCurrent) {
 #endif // ! ENABLE_DYNAMIC_CURRENT
 
 // Get the microstepping divisor of the motor
-uint16_t StepperMotor::getMicrostepping() {
+uint8_t StepperMotor::getMicrostepping() {
     return (this -> microstepDivisor);
 }
 
 
 // Set the microstepping divisor of the motor
-void StepperMotor::setMicrostepping(uint16_t setMicrostepping, bool lock) {
+void StepperMotor::setMicrostepping(uint8_t setMicrostepping, bool lock) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (setMicrostepping != -1) {
@@ -367,6 +367,9 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping, bool lock) {
 
         // Fix the microsteps per rotation
         this -> microstepsPerRotation = round(360.0 / microstepAngle);
+
+        // Fix the step to sine array factor
+        this -> stepToSineArrayFactor = MAX_MICROSTEP_DIVISOR / setMicrostepping;
 
         // Set that the microstepping should be locked for future writes
         this -> microstepLocked = lock;
@@ -549,15 +552,17 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
     this -> driveCoils(this -> currentStep);
 
     __enable_irq();
-    Serial.println("microstepAngle:" +String(microstepAngle) + " fullStepAngle:" + String(fullStepAngle) + " microstepDivisor:" + String(microstepDivisor) + " microstepMultiplier:" + String(microstepMultiplier));
+    Serial.println("microstepAngle:" + String(microstepAngle) + " fullStepAngle:" + String(fullStepAngle) + " microstepDivisor:" + String(microstepDivisor) + " microstepMultiplier:" + String(microstepMultiplier));
 }
 
 
 // Sets the coils of the motor based on the step count
 void StepperMotor::driveCoils(int32_t steps) {
 
-    // Calculate the sine and cosine of the angle
-    uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
+    // Correct the steps to the 32nd microstep range, then
+    // calculate the sine and cosine of the angle
+    // (sine values are based on 32nd microstepping range)
+    uint16_t arrayIndex = (((int64_t)steps) * (this -> stepToSineArrayFactor)) & (SINE_VAL_COUNT - 1);
 
     // Calculate the coil settings
     int16_t coilAPercent = fastSin(arrayIndex);

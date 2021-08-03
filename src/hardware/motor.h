@@ -145,10 +145,10 @@ class StepperMotor {
 
 
         // Gets the microstepping mode of the motor
-        uint16_t getMicrostepping();
+        uint8_t getMicrostepping();
 
         // Sets the microstepping mode of the motor
-        void setMicrostepping(uint16_t setMicrostepping, bool lock = true);
+        void setMicrostepping(uint8_t setMicrostepping, bool lock = true);
 
         // Sets the angle of a full step of the motor
         void setFullStepAngle(float newStepAngle);
@@ -265,7 +265,7 @@ class StepperMotor {
         #endif
 
         // Microstepping divisor
-        uint16_t microstepDivisor = 1;
+        uint8_t microstepDivisor = 1;
 
         // Microstep lock (makes sure that dips can't set a value
         // once the divisor is set by another source)
@@ -279,6 +279,9 @@ class StepperMotor {
 
         // Microstep count in a full rotation
         int32_t microstepsPerRotation = (360.0 / getMicrostepAngle());
+
+        // Step to sine array conversion
+        uint8_t stepToSineArrayFactor = MAX_MICROSTEP_DIVISOR / getMicrostepping();
 
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
         MOTOR_STATE state = MOTOR_NOT_SET;
