@@ -44,12 +44,12 @@ String parseCommand(String buffer) {
 
             case 18:
                 // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
-                motor.setState(FORCED_DISABLED);
+                motor.setState(FORCED_DISABLED, true);
                 return FEEDBACK_OK;
 
             case 84:
                 // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
-                motor.setState(FORCED_DISABLED);
+                motor.setState(FORCED_DISABLED, true);
                 return FEEDBACK_OK;
 
             case 93: {

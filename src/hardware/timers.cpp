@@ -288,7 +288,10 @@ void correctMotor() {
     else {
 
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
-        motor.setState(ENABLED);
+        // Motor should not be enabled every cycle if the PID manages disabling the motor
+        #if (!(DEFAULT_PID_DISABLE_THRESHOLD > 0))
+            motor.setState(ENABLED);
+        #endif
 
         // Get the current angle of the motor
         float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat();
