@@ -21,6 +21,9 @@ typedef float real_t;
 // Reject unstable least significant bits of the encoder
 #define REJECT_ENCODERS_LSB 2
 
+// If the steps should be counted using a hardware counter
+#define USE_HARDWARE_STEP_CNT
+
 // Board characteristics
 // ! Do not modify unless you know what you are doing!
 #define BOARD_VOLTAGE              (float)3.3 // The voltage of the main processor
