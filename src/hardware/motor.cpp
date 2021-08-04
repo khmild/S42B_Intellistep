@@ -517,6 +517,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
         stepChange = (this -> microstepMultiplier);
     }
 
+    /*
     // Invert the change based on the direction
     if (dir == PIN) {
 
@@ -531,6 +532,7 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
         // Make the step change in the negative direction
         stepChange = -stepChange;
     }
+    */
 
     #ifdef ENABLE_STEPPING_VELOCITY
         isStepping = false;
@@ -545,8 +547,9 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
     }
     #endif
 
+    // Invert the change based on the direction
     // Only moving one step in the specified direction
-    this -> currentStep += stepChange;
+    this -> currentStep += stepChange * dir * (this -> reversed);
 
     // Drive the coils to their destination
     this -> driveCoils(this -> currentStep);

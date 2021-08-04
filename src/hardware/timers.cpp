@@ -50,7 +50,7 @@ static uint8_t interruptBlockCount = 0;
     HardwareTimer *stepScheduleTimer = new HardwareTimer(TIM4);
 
     // Direction of movement for direct steps
-    STEP_DIR scheduledStepDir = COUNTER_CLOCKWISE;
+    STEP_DIR scheduledStepDir = 1;
 
     // Remaining step count
     int64_t remainingScheduledSteps = 0;
@@ -252,7 +252,7 @@ void stepMotor() {
     #endif
 
     // Step the motor
-    motor.step();
+    motor.step(DIRECTION(GPIO_READ(DIRECTION_PIN)));
 
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, LOW);
@@ -315,10 +315,10 @@ void correctMotor() {
                 else {
                     // Set the direction
                     if (pidOutput > 0) {
-                        scheduledStepDir = COUNTER_CLOCKWISE;
+                        scheduledStepDir = 1;
                     }
                     else {
-                        scheduledStepDir = CLOCKWISE;
+                        scheduledStepDir = -1;
                     }
 
                     // Set that we don't want to decrement the counter
@@ -362,18 +362,18 @@ void correctMotor() {
                         // Motor is at a position larger than the desired one
                         // Use the current angle to find the current step, then subtract 1
                         #ifdef USE_HARDWARE_STEP_CNT
-                            motor.step(CLOCKWISE, false);
+                            motor.step(-1, false);
                         #else
-                            motor.step(CLOCKWISE, false, false);
+                            motor.step(-1, false, false);
                         #endif
                     }
                     else {
                         // Motor is at a position smaller than the desired one
                         // Use the current angle to find the current step, then add 1
                         #ifdef USE_HARDWARE_STEP_CNT
-                            motor.step(COUNTER_CLOCKWISE, false);
+                            motor.step(1, false);
                         #else
-                            motor.step(COUNTER_CLOCKWISE, false, false);
+                            motor.step(1, false, false);
                         #endif
                     }
                 }
