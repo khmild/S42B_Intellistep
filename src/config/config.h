@@ -115,7 +115,7 @@
 
 // PID settings
 // ! At this time, this feature is still under development
-#define ENABLE_PID
+//#define ENABLE_PID
 #ifdef ENABLE_PID
 
     // Default P, I, and D terms
@@ -137,7 +137,7 @@
 #endif
 
 // Direct step functionality (used to command motor to move over Serial/CAN)
-#define ENABLE_DIRECT_STEPPING
+//#define ENABLE_DIRECT_STEPPING
 #ifdef ENABLE_DIRECT_STEPPING
 
     // The default stepping rate (in Hz) to move in the event that no parameter is specified
@@ -154,8 +154,8 @@
 // The min/max microstepping divisors
 // Microstepping divisors are the numbers underneath the fraction of the microstepping
 // For example, 1/16th microstepping would have a divisor of 16
-#define MIN_MICROSTEP_DIVISOR   (uint8_t)1
-#define MAX_MICROSTEP_DIVISOR   (uint8_t)32
+#define MIN_MICROSTEP_DIVISOR   1
+#define MAX_MICROSTEP_DIVISOR   32
 
 // The mode to set the motor to when it's disabled
 #define IDLE_MODE               COAST
