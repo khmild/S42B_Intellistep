@@ -292,7 +292,7 @@ class StepperMotor {
         // reversed is a multiplier for steps and angles
         // 1 - If the motor direction is normal
         // -1 - If the motor direction is inverted
-        int reversed = 1;
+        STEP_DIR reversed = 1;
 
         // If the motor enable is inverted
         bool enableInverted = false;
