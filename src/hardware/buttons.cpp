@@ -175,25 +175,12 @@ void checkDips() {
   // Read the microstepping
   readDipMicrostepping();
 
-  // Adjust based on if inverted
-  if (dipInverted) {
-
-    // Check open/closed loop
-    if (!GPIO_READ(DIP_2_PIN)) {
-      enableStepCorrection();
-    }
-    else {
-      disableStepCorrection();
-    }
+  // Check open/closed loop
+  if (!GPIO_READ(dipInverted ? DIP_2_PIN : DIP_3_PIN)) {
+    enableStepCorrection();
   }
   else {
-    // Check open/closed loop
-    if (!GPIO_READ(DIP_3_PIN)) {
-      enableStepCorrection();
-    }
-    else {
-      disableStepCorrection();
-    }
+    disableStepCorrection();
   }
 }
 
