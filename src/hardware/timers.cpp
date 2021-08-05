@@ -315,10 +315,10 @@ void correctMotor() {
                 else {
                     // Set the direction
                     if (pidOutput > 0) {
-                        scheduledStepDir = 1;
+                        scheduledStepDir = POSITIVE;
                     }
                     else {
-                        scheduledStepDir = -1;
+                        scheduledStepDir = NEGATIVE;
                     }
 
                     // Set that we don't want to decrement the counter
