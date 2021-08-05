@@ -28,12 +28,11 @@ typedef enum {
     COAST
 } COIL_STATE;
 
-// Enumeration for stepping direction
-typedef enum {
-    PIN,
-    COUNTER_CLOCKWISE,
-    CLOCKWISE
-} STEP_DIR;
+ // Enumeration for stepping direction
+ typedef enum {
+     NEGATIVE = -1,
+     POSITIVE = 1
+ } STEP_DIR;
 
 // Enumeration for the enable state of the motor
 typedef enum {
@@ -186,9 +185,9 @@ class StepperMotor {
 
         // Calculates the coil values for the motor and updates the set angle.
         #ifdef USE_HARDWARE_STEP_CNT
-        void step(STEP_DIR dir = PIN, bool useMultiplier = true);
+        void step(STEP_DIR dir, bool useMultiplier = true);
         #else
-        void step(STEP_DIR dir = PIN, bool useMultiplier = true, bool updateDesiredPos = true);
+        void step(STEP_DIR dir, bool useMultiplier = true, bool updateDesiredPos = true);
         #endif
 
         // Sets the coils to hold the motor at the desired step number
@@ -289,11 +288,7 @@ class StepperMotor {
         // reversed is a multiplier for steps and angles
         // 1 - If the motor direction is normal
         // -1 - If the motor direction is inverted
-        #ifdef DIR_PIN_REVERSED
-        int8_t reversed = -1;
-        #else
-        int8_t reversed = 1;
-        #endif
+        STEP_DIR reversed = POSITIVE;
 
         // If the motor enable is inverted
         bool enableInverted = false;

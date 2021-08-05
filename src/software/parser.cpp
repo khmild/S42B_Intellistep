@@ -409,10 +409,10 @@ String parseCommand(String buffer) {
 
                 // Call the steps to be scheduled
                 if (!reverse) {
-                    scheduleSteps(count, rate, COUNTER_CLOCKWISE);
+                    scheduleSteps(count, rate, POSITIVE);
                 }
                 else {
-                    scheduleSteps(count, rate, CLOCKWISE);
+                    scheduleSteps(count, rate, NEGATIVE);
                 }
 
                 // All good, we can exit
