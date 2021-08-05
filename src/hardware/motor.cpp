@@ -423,10 +423,10 @@ void StepperMotor::setReversed(bool reversed) {
 
     // Set if the motor should be reversed
     if (reversed) {
-        this -> reversed = -1;
+        this -> reversed = NEGATIVE;
     }
     else {
-        this -> reversed = 1;
+        this -> reversed = POSITIVE;
     }
 }
 

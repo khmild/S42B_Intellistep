@@ -28,15 +28,11 @@ typedef enum {
     COAST
 } COIL_STATE;
 
-// Enumeration for stepping direction
-/*
-typedef enum {
-    PIN,
-    COUNTER_CLOCKWISE,
-    CLOCKWISE
-} STEP_DIR;
-*/
-typedef int STEP_DIR; // only -1-negative and 1-positive are possible values
+ // Enumeration for stepping direction
+ typedef enum {
+     NEGATIVE = -1,
+     POSITIVE = 1
+ } STEP_DIR;
 
 // Enumeration for the enable state of the motor
 typedef enum {
@@ -292,7 +288,7 @@ class StepperMotor {
         // reversed is a multiplier for steps and angles
         // 1 - If the motor direction is normal
         // -1 - If the motor direction is inverted
-        STEP_DIR reversed = 1;
+        STEP_DIR reversed = POSITIVE;
 
         // If the motor enable is inverted
         bool enableInverted = false;

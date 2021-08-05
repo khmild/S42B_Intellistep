@@ -50,7 +50,7 @@ static uint8_t interruptBlockCount = 0;
     HardwareTimer *stepScheduleTimer = new HardwareTimer(TIM4);
 
     // Direction of movement for direct steps
-    STEP_DIR scheduledStepDir = 1;
+    STEP_DIR scheduledStepDir = POSITIVE;
 
     // Remaining step count
     int64_t remainingScheduledSteps = 0;
@@ -252,7 +252,7 @@ void stepMotor() {
     #endif
 
     // Step the motor
-    motor.step(DIRECTION(GPIO_READ(DIRECTION_PIN)));
+    motor.step((STEP_DIR)DIRECTION(GPIO_READ(DIRECTION_PIN)));
 
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, LOW);
@@ -362,18 +362,18 @@ void correctMotor() {
                         // Motor is at a position larger than the desired one
                         // Use the current angle to find the current step, then subtract 1
                         #ifdef USE_HARDWARE_STEP_CNT
-                            motor.step(-1, false);
+                            motor.step(NEGATIVE, false);
                         #else
-                            motor.step(-1, false, false);
+                            motor.step(NEGATIVE, false, false);
                         #endif
                     }
                     else {
                         // Motor is at a position smaller than the desired one
                         // Use the current angle to find the current step, then add 1
                         #ifdef USE_HARDWARE_STEP_CNT
-                            motor.step(1, false);
+                            motor.step(POSITIVE, false);
                         #else
-                            motor.step(1, false, false);
+                            motor.step(POSITIVE, false, false);
                         #endif
                     }
                 }
