@@ -28,7 +28,7 @@ typedef enum {
     COAST
 } COIL_STATE;
 
-#if 0
+#if 1
     // 89.9kHz
     // Enumeration for stepping direction
     typedef enum {
