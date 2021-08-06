@@ -220,7 +220,8 @@ class StepperMotor {
         // Encoder object
         Encoder encoder;
 
-        // Counter for number of overflows (needs to be public for the interrupt)
+        // Counter for number of overflows of TIM2 -> CNT (needs to be public for the interrupt)
+        // TIM2 -> CNT is unsigned, stepOverflowOffset is unsigned, but ((TIM2 -> CNT) + stepOverflowOffset) is treated as signed value
         uint32_t stepOverflowOffset = 0;
 
 
