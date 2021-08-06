@@ -28,11 +28,19 @@ typedef enum {
     COAST
 } COIL_STATE;
 
- // Enumeration for stepping direction
- typedef enum {
-     NEGATIVE = -1,
-     POSITIVE = 1
- } STEP_DIR;
+#if 1
+    // 89.9kHz
+    // Enumeration for stepping direction
+    typedef enum {
+        NEGATIVE = -1,
+        POSITIVE = 1
+    } STEP_DIR;
+#else
+    // 91.17kHz
+    #define         NEGATIVE (-1)
+    #define         POSITIVE 1
+    typedef int32_t STEP_DIR;
+#endif
 
 // Enumeration for the enable state of the motor
 typedef enum {
@@ -281,7 +289,7 @@ class StepperMotor {
         int32_t microstepsPerRotation = (360.0 / getMicrostepAngle());
 
         // Step to sine array conversion
-        uint8_t stepToSineArrayFactor = MAX_MICROSTEP_DIVISOR / getMicrostepping();
+        int32_t stepToSineArrayFactor = MAX_MICROSTEP_DIVISOR / getMicrostepping();
 
         // If the motor is enabled or not (saves time so that the enable and disable pins are only set once)
         MOTOR_STATE state = MOTOR_NOT_SET;
