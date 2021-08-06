@@ -199,7 +199,7 @@ int32_t StepperMotor::getHardStepCNT() const {
 void StepperMotor::setHardStepCNT(int32_t newCNT) {
 
     // Find the remainder for the counter to use
-    uint32_t newClockCNT = (newCNT % 65536);
+    uint32_t newClockCNT = (newCNT % TIM_PERIOD);
 
     // Set the new overflow count
     stepOverflowOffset = (newCNT - newClockCNT);
@@ -213,14 +213,14 @@ void StepperMotor::setHardStepCNT(int32_t newCNT) {
 void overflowHandler() {
 
     // Check which direction the overflow was in
-    if (TIM2 -> CNT < (TIM_MAX_VALUE / 2)) {
+    if ((TIM2 -> CNT) < (TIM_PERIOD / 2)) {
 
         // Overflow
-        motor.stepOverflowOffset += 65536;
+        motor.stepOverflowOffset += TIM_PERIOD;
     }
     else {
         // Underflow
-        motor.stepOverflowOffset -= 65536;
+        motor.stepOverflowOffset -= TIM_PERIOD;
     }
 }
 #else // ! USE_HARDWARE_STEP_CNT

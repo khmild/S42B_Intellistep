@@ -16,8 +16,8 @@
 // Import the pin mapping
 #include "config.h"
 
-// Maximum value for timer counters
-#define TIM_MAX_VALUE (uint16_t)65535
+// Period of timer counters is 0x10000
+#define TIM_PERIOD ((uint32_t)65536)
 
 // Enumeration for coil states
 typedef enum {
@@ -220,8 +220,9 @@ class StepperMotor {
         // Encoder object
         Encoder encoder;
 
-        // Counter for number of overflows (needs to be public for the interrupt)
-        int32_t stepOverflowOffset = 0;
+        // Counter for number of overflows of TIM2 -> CNT (needs to be public for the interrupt)
+        // TIM2 -> CNT is unsigned, stepOverflowOffset is unsigned, but ((TIM2 -> CNT) + stepOverflowOffset) is treated as signed value
+        uint32_t stepOverflowOffset = 0;
 
 
     // Things that shouldn't be accessed by the outside
