@@ -31,7 +31,6 @@ typedef enum {
 #if 1
     // 89.9kHz
     // 92.12kHz
-    // 93.0kHz
     // Enumeration for stepping direction
     typedef enum {
         NEGATIVE = -1,
@@ -40,7 +39,6 @@ typedef enum {
 #else
     // 91.17kHz
     // 92.24kHz
-    // 92.3kHz
     #define         NEGATIVE (-1)
     #define         POSITIVE 1
     typedef int32_t STEP_DIR;
@@ -236,6 +234,9 @@ class StepperMotor {
         // TIM2 -> CNT is unsigned, stepOverflowOffset is unsigned, but ((TIM2 -> CNT) + stepOverflowOffset) is treated as signed value
         uint32_t stepOverflowOffset = 0;
 
+        // Microstep multiplier (used to move a custom number of microsteps per step pulse)
+        uint32_t microstepMultiplier = DEFAULT_MICROSTEP_MULTIPLIER;
+
     // Things that shouldn't be accessed by the outside
     private:
 
@@ -301,9 +302,6 @@ class StepperMotor {
         // 1 - If the motor direction is normal
         // -1 - If the motor direction is inverted
         STEP_DIR reversed = POSITIVE;
-
-        // Microstep multiplier (used to move a custom number of microsteps per step pulse)
-        uint32_t microstepMultiplier = DEFAULT_MICROSTEP_MULTIPLIER;
 
         // If the motor enable is inverted
         bool enableInverted = false;
