@@ -252,7 +252,7 @@ void stepMotor() {
     #endif
 
     // Step the motor
-    motor.step((STEP_DIR)DIRECTION(GPIO_READ(DIRECTION_PIN)), motor.microstepMultiplier);
+    motor.step((STEP_DIR)DIRECTION(GPIO_READ(DIRECTION_PIN)), motor.getMicrostepMultiplier());
 
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, LOW);
@@ -484,7 +484,7 @@ void stepScheduleHandler() {
     if (decrementRemainingSteps) {
 
         // Increment the motor in the correct direction
-        motor.step(scheduledStepDir,  motor.microstepMultiplier);
+        motor.step(scheduledStepDir,  motor.getMicrostepMultiplier());
 
         // Increment the counter down (we completed a step)
         remainingScheduledSteps--;
