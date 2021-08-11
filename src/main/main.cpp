@@ -65,12 +65,10 @@ void setup() {
         }
     #endif
 
-    // Setup the motor for use (should be disabled at startup)
+    // Setup the motor for use (should be enabled at startup)
     motor.setState(ENABLED, true);
-    //motor.setMicrostepping(16);
-    //motor.setDesiredAngle(100);
 
-    // Zero the encoder
+    // Zero the encoder after motor is enabled
     motor.encoder.zero();
 
     // Only run if the OLED is enabled
