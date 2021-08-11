@@ -65,13 +65,6 @@ void setup() {
         }
     #endif
 
-    // Setup the motor for use (should be enabled at startup)
-    motor.setState(ENABLED, true);
-
-    // Zero the encoder after motor is enabled
-    delay(500);
-    motor.encoder.zero();
-
     // Only run if the OLED is enabled
     #ifdef ENABLE_OLED
 
@@ -178,11 +171,13 @@ void setup() {
                 if (getMenuDepth() > 0) {
 
                     // Calibrate the motor (board reboots afterward)
+                    // Reboot the chip
                     motor.calibrate();
                 }
 
             #else
                 // Just jump to calibrating the motor (board reboots afterward)
+                // Reboot the chip
                 motor.calibrate();
             #endif
         }
@@ -225,6 +220,23 @@ void setup() {
         // Setup the motor timers and interrupts
         setupMotorTimers();
     }
+
+    // Zero the encoder
+    motor.encoder.zero();
+
+     // Setup the motor for use (should be disabled at startup)
+    motor.setState(DISABLED, true);
+
+    // Setup the motor for use (should be enabled at startup)
+    // The jump when power is on
+    motor.setState(ENABLED, true);
+
+    // Delay for move to power on position
+    // Needs the motor timers
+    delay(1000);
+
+    // Zero the encoder after motor is enabled
+    motor.encoder.zero();
 }
 
 
