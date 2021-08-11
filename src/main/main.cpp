@@ -69,6 +69,7 @@ void setup() {
     motor.setState(ENABLED, true);
 
     // Zero the encoder after motor is enabled
+    delay(500);
     motor.encoder.zero();
 
     // Only run if the OLED is enabled
