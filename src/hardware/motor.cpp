@@ -120,25 +120,25 @@ float  StepperMotor::getSteppingRPM() {
 
 // Returns the angular deviation of the motor from the desired angle
 float StepperMotor::getAngleError() {
-    return (encoder.getAbsoluteAngleAvg() - getDesiredAngle());
+    return (getDesiredAngle() - encoder.getAbsoluteAngleAvg());
 }
 
 
 // Returns the angular deviation of the motor from the desired angle
 float StepperMotor::getAngleError(double currentAbsAngle) {
-    return (currentAbsAngle - getDesiredAngle());
+    return (getDesiredAngle() - currentAbsAngle);
 }
 
 
 // Returns the step deviation of the motor from the desired step
 int32_t StepperMotor::getStepError() {
-    return (round(encoder.getAbsoluteAngleAvg() / (this -> microstepAngle)) - getDesiredStep());
+    return (getDesiredStep() - round(encoder.getAbsoluteAngleAvg() / (this -> microstepAngle)));
 }
 
 
 // Returns the step deviation of the motor from the desired step
 int32_t StepperMotor::getStepError(double currentAbsAngle) {
-    return (round(currentAbsAngle / (this -> microstepAngle)) - getDesiredStep());
+    return (getDesiredStep() - round(currentAbsAngle / (this -> microstepAngle)));
 }
 
 

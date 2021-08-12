@@ -362,21 +362,21 @@ void correctMotor() {
                 if (/*motor.getStepPhase() != */ true) {
                     if (stepDeviation > 0) {
 
-                        // Motor is at a position larger than the desired one
-                        // Use the current angle to find the current step, then subtract 1
-                        #ifdef USE_HARDWARE_STEP_CNT
-                            motor.step(NEGATIVE, 1);
-                        #else
-                            motor.step(NEGATIVE, 1, false);
-                        #endif
-                    }
-                    else {
                         // Motor is at a position smaller than the desired one
                         // Use the current angle to find the current step, then add 1
                         #ifdef USE_HARDWARE_STEP_CNT
                             motor.step(POSITIVE, 1);
                         #else
                             motor.step(POSITIVE, 1, false);
+                        #endif
+                    }
+                    else {
+                        // Motor is at a position larger than the desired one
+                        // Use the current angle to find the current step, then subtract 1
+                        #ifdef USE_HARDWARE_STEP_CNT
+                            motor.step(NEGATIVE, 1);
+                        #else
+                            motor.step(NEGATIVE, 1, false);
                         #endif
                     }
                 }
