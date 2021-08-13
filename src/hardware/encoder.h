@@ -1,5 +1,5 @@
-#ifndef __TLE5012_H
-#define __TLE5012_H
+#ifndef TLE5012_H
+#define TLE5012_H
 
 // Libraries
 #include "Arduino.h"
@@ -19,9 +19,9 @@
 #define ENCODER_ACT_STATUS_REG (0x0010U)  // Activation status
 
 // Calculation constants
-#define POW_2_16                    65536.0   // 2^16
-#define POW_2_15                    32768.0   // 2^15
-#define POW_2_7                     128.0     // 2^7
+#define POW_2_16                    65536     // 2^16
+#define POW_2_15                    32768     // 2^15
+#define POW_2_7                     128       // 2^7
 #define DELETE_BIT_15               0x7FFF    // Used to delete everything except the first 15 bits
 #define CHANGE_UINT_TO_INT_15       0x8000    // Used to change unsigned 16 bit integer into signed
 #define CHECK_BIT_14                0x4000    // Used to check the 14th bit
@@ -32,6 +32,30 @@
 #define CHANGE_UNIT_TO_INT_9        0x0200    // Used to change an unsigned 9 bit integer into signed
 #define CHECK_BIT_9                 0x0100    // Used to check the 9th bit
 
+// Safety types (for error checking)
+#define SAFE_LOW   0x0000  // Error checking off
+#define SAFE_HIGH  0x0001  // Error checking on
+
+// Bitmasks for several error codes
+#define ENCODER_SYSTEM_ERROR_MASK           0x4000    //!< \brief System error masks for safety words
+#define ENCODER_INTERFACE_ERROR_MASK        0x2000    //!< \brief Interface error masks for safety words
+#define ENCODER_INV_ANGLE_ERROR_MASK        0x1000    //!< \brief Angle error masks for safety words
+
+// CRC calculation values
+#define CRC_POLYNOMIAL  0x1D
+#define CRC_SEED        0xFF
+
+/**
+ * @brief Error types from safety word
+ */
+enum errorTypes {
+	NO_ERROR               = 0x00,  //!< \brief NO_ERROR = Safety word was OK
+	SYSTEM_ERROR           = 0x01,  //!< \brief SYSTEM_ERROR = over/under voltage, VDD negative, GND off, ROM defect
+	INTERFACE_ACCESS_ERROR = 0x02,  //!< \brief INTERFACE_ACCESS_ERROR = wrong address or wrong lock
+	INVALID_ANGLE_ERROR    = 0x03,  //!< \brief INVALID_ANGLE_ERROR = NO_GMR_A = 1 or NO_GMR_XY = 1
+	ANGLE_SPEED_ERROR      = 0x04,  //!< \brief ANGLE_SPEED_ERROR = combined error, angular speed calculation wrong
+	CRC_ERROR              = 0xFF   //!< \brief CRC_ERROR = Cyclic Redundancy Check (CRC), which includes the STAT and RESP bits wrong
+};
 
 // Main address fields
 enum Addr_t {
@@ -231,23 +255,126 @@ enum BitFieldReg_t
     REG_T25O_RESERVED1,
 };
 
-// Variables
-extern uint32_t lastAngleSampleTime;
+// Encoder class
+class Encoder {
 
-// Functions
-void initEncoder();
-uint16_t readEncoderRegister(uint16_t registerAddress);
-void writeToEncoderRegister(uint16_t registerAddress, uint16_t data);
-void readMultipleEncoderRegisters(uint16_t registerAddress, uint16_t data[]);
-uint16_t getBitField(BitField_t bitField);
-void setBitField(BitField_t bitfield, uint16_t bitFNewValue);
-uint16_t readEncoderState();
-double getAngle(bool average = true);
-double getEncoderSpeed();
-double getEncoderTemp();
-double getAbsoluteRev();
-double getAbsoluteAngle();
-void setEncoderOffset(uint16_t offset);
+    public:
+        // Functions
+        // Constructor
+        Encoder();
+
+        // Low level reading functions
+        errorTypes readRegister(uint16_t registerAddress, uint16_t &data);
+        void readMultipleRegisters(uint16_t registerAddress, uint16_t* data, uint16_t dataLength);
+        uint16_t getBitField(BitField_t bitField);
+
+        // Low level writing functions
+        void writeToRegister(uint16_t registerAddress, uint16_t data);
+        void setBitField(BitField_t bitfield, uint16_t bitFNewValue);
+
+        // Error checking
+        errorTypes checkSafety(uint16_t safety, uint16_t command, uint16_t* readreg, uint16_t length);
+        uint8_t calcCRC(uint8_t *data, uint8_t length);
+        void resetSafety();
+
+        // Fast functions
+        // Reads the raw momentary encoder increments value from the angle register (unadjusted)
+        uint16_t getRawIncrements();
+
+        // Returns the absolute momentary encoder increments (adjusted) in the range  of +/-335544 rev's of shaft
+        increments_t getAbsoluteIncrements();
+
+        // Returns the raw average encoder increments value from the angle register (unadjusted)
+        uint16_t getRawIncrementsAvg();
+
+        // Returns the absolute increments of the encoder (adjusted) in the range  of +/-335544 rev's of shaft
+        increments_t getAbsoluteIncrementsAvg();
+
+        // Gets the momentary absolute angle of the motor
+        double getAbsoluteAngle();
+
+        // High level encoder functions
+        // Reads the raw momentary value from the angle of the encoder (adjusted)
+        double getRawAngle();
+
+        // Reads the raw average value from the angle of the encoder (adjusted)
+        double getRawAngleAvg();
+
+        // Returns a smoothed value of angle of the encoder
+        // More expensive than getAngle(), but transitions between 0 and 360 are smoother
+        double getSmoothAngle();
+        double getSmoothAngle(double currentAbsAngle);
+
+        // Reads the momentary value for the angle of the encoder (ranges from 0-360)
+        double getAngle();
+
+        // Reads the average value for the angle of the encoder (ranges from 0-360)
+        double getAngleAvg();
+        double getEstimSpeed();
+        double getEstimSpeed(double currentAbsAngle);
+        int16_t getRawSpeed();
+        double getSpeed();
+        double getAccel();
+        double getAccel(double currentAbsAngle);
+        int16_t getRawTemp();
+        double getTemp();
+        int16_t getRawRev();
+        int32_t getRev();
+        double getAbsoluteAngleAvg();
+        float getAbsoluteAngleAvgFloat();
+        void clearAbsoluteAngleAvg();
+        void setStepOffset(double offset);
+        void setIncrementsOffset(uint16_t offset);
+        void zero();
+
+        // Encoder estimation
+        #ifdef ENCODER_SPEED_ESTIMATION
+
+            // Checks if the minimum sample time for the speed has been exceeded
+            bool sampleTimeExceeded();
+        #endif
+
+    private:
+        // Variables
+        uint32_t lastAngleSampleTime;
+        double lastEncoderAngle = 0;
+
+        // Last state of getRawRev()
+        int16_t lastRawRev = 0;
+
+        // Revolutions extender variable
+        // Total revolutions = (revolutions * 512) + getRawRev()
+        int32_t revolutions = 0;
+
+        // Moving average instances
+        MovingAverage <float, float> speedAvg;
+        MovingAverage <int16_t, int32_t> rawSpeedAvg;
+        MovingAverage <float, float> accelAvg;
+        MovingAverage <uint16_t, int32_t> incrementAvg;
+        MovingAverage <float, float> absAngleAvg;
+        MovingAverage <increments_t, increments_t> absIncrementsAvg;
+        MovingAverage <int16_t, int16_t> rawTempAvg;
+
+        // The startup angle and rev offsets
+        double startupAngleOffset = 0;
+        uint16_t startupIncrementsOffset = 0; // Fix AVAL - Angle Value Register
+        int16_t startupRevOffset = 0;         // Fix AREV - Angle Revolution Register
+        double encoderStepOffset = 0;         // calibration
+
+        // SPI init structure
+        SPI_HandleTypeDef spiConfig;
+
+        // Main initialization structure
+        GPIO_InitTypeDef GPIO_InitStructure;
+
+        // Storage for the last overtemp time
+        #ifdef ENABLE_OVERTEMP_PROTECTION
+            uint32_t lastOvertempTime = 0;
+        #endif
+
+        // A map of the known registers
+        uint16_t regMap[MAX_NUM_REG];              //!< Register map */
+};
 
 #endif
 

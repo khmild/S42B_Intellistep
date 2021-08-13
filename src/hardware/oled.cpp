@@ -2,12 +2,11 @@
 #include "config.h"
 
 // Only build if needed
-#ifdef USE_OLED
+#ifdef ENABLE_OLED
 
 // Import libraries
 #include "oled.h"
 #include "cstring"
-#include "math.h"
 
 // Screen data is stored in an array. Each set of 8 pixels is written one by one
 // Each set of 8 is stored as an integer. The panel is written to horizontally, then vertically
@@ -20,7 +19,7 @@ SUBMENU submenu = CALIBRATION;
 SUBMENU lastSubmenu = CALIBRATION;
 
 // The current value of the cursor
-uint8_t currentCursorIndex = 0;
+uint16_t currentCursorIndex = 0;
 
 // The current menu depth
 MENU_DEPTH menuDepth = MOTOR_DATA;
@@ -28,9 +27,9 @@ MENU_DEPTH lastMenuDepth = MOTOR_DATA;
 
 // Displays the bootscreen
 void showBootscreen() {
-    writeOLEDString(0, 0,  F("Intellistep"), false);
-    writeOLEDString(0, 32, F("Version: "), false);
-    writeOLEDString(0, 48, F(VERSION), true);
+    writeOLEDString(0, 0,               F("Intellistep"), false);
+    writeOLEDString(0, LINE_HEIGHT * 2, F("Version: "), false);
+    writeOLEDString(0, LINE_HEIGHT * 3, VERSION_STRING, true);
 }
 
 
@@ -49,11 +48,11 @@ void updateDisplay() {
             // Values must first be determined using the mod function in order to prevent overflow errors
             // Then the strings are converted into character arrays by giving the address of the first character in the string
             clearOLED();
-            writeOLEDString(0, 0, "->", false);
-            writeOLEDString(25, 0,  &submenuItems[(submenu)     % submenuCount][0], false);
-            writeOLEDString(25, 16, &submenuItems[(submenu + 1) % submenuCount][0], false);
-            writeOLEDString(25, 32, &submenuItems[(submenu + 2) % submenuCount][0], false);
-            writeOLEDString(25, 48, &submenuItems[(submenu + 3) % submenuCount][0], true);
+            writeOLEDString(0,  0, "->", false);
+            writeOLEDString(25, 0,               &submenuItems[(submenu)     % submenuCount][0], false);
+            writeOLEDString(25, LINE_HEIGHT * 1, &submenuItems[(submenu + 1) % submenuCount][0], false);
+            writeOLEDString(25, LINE_HEIGHT * 2, &submenuItems[(submenu + 2) % submenuCount][0], false);
+            writeOLEDString(25, LINE_HEIGHT * 3, &submenuItems[(submenu + 3) % submenuCount][0], true);
             break;
 
         case SUBMENUS:
@@ -62,9 +61,9 @@ void updateDisplay() {
                 case CALIBRATION:
                     // In the first menu, the calibration one. No need to do anything here, besides maybe displaying an progress bar or PID values (later?)
                     clearOLED();
-                    writeOLEDString(0, 0, "Are you sure?", false);
-                    writeOLEDString(0, 16, "Press select", false);
-                    writeOLEDString(0, 32, "to confirm", true);
+                    writeOLEDString(0, 0,               F("Are you sure?"), false);
+                    writeOLEDString(0, LINE_HEIGHT * 1, F("Press select"), false);
+                    writeOLEDString(0, LINE_HEIGHT * 2, F("to confirm"), true);
                     break;
 
                 case CURRENT:
@@ -72,24 +71,24 @@ void updateDisplay() {
                     clearOLED();
 
                     // Constrain the current setting within 0 and the maximum current
-                    if (currentCursorIndex > (uint16_t)MAX_RMS_CURRENT / 100) {
+                    if (currentCursorIndex > (uint16_t)MAX_RMS_BOARD_CURRENT / 100) {
 
                         // Loop back to the start of the list
                         currentCursorIndex = 0;
                     }
 
                     // Write the pointer
-                    writeOLEDString(0, 0, "->", false);
+                    writeOLEDString(0, 0, F("->"), false);
 
                     // Write each of the strings
                     for (uint8_t stringIndex = 0; stringIndex <= 3; stringIndex++) {
 
                         // Check to make sure that the current isn't out of range of the max current
-                        if ((currentCursorIndex + stringIndex) * 100 <= (uint16_t)MAX_RMS_CURRENT) {
+                        if ((currentCursorIndex + stringIndex) * 100 <= (uint16_t)MAX_RMS_BOARD_CURRENT) {
 
                             // Value is in range, display the current on that line
                             snprintf(outBuffer, OB_SIZE, "%dmA", (int)((currentCursorIndex + stringIndex) * 100));
-                            writeOLEDString(25, stringIndex * 16, outBuffer, false);
+                            writeOLEDString(25, stringIndex * LINE_HEIGHT, outBuffer, false);
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
@@ -103,7 +102,7 @@ void updateDisplay() {
                 case MICROSTEP:
                     // In the microstep menu, this is also dynamically generated. Get the current stepping of the motor, then display all of the values around it
                     clearOLED();
-                    writeOLEDString(0, 0, "->", false);
+                    writeOLEDString(0, 0, F("->"), false);
 
                     // Loop the currentCursor index back if it's out of range
                     if (currentCursorIndex > log2(MAX_MICROSTEP_DIVISOR)) {
@@ -123,7 +122,7 @@ void updateDisplay() {
 
                             // Value is in range, display the current on that line
                             snprintf(outBuffer, OB_SIZE, "1/%dth", (int)pow(2, currentCursorIndex + stringIndex));
-                            writeOLEDString(25, stringIndex * 16, outBuffer, false);
+                            writeOLEDString(25, stringIndex * LINE_HEIGHT, outBuffer, false);
                         }
                         // else {
                             // Value is out of range, display a blank line for this line
@@ -140,17 +139,17 @@ void updateDisplay() {
                     clearOLED();
 
                     // Title
-                    writeOLEDString(0, 0, "Enable logic:", false);
+                    writeOLEDString(0, 0, F("Enable logic:"), false);
 
                     // Write the string to the screen
                     if (currentCursorIndex % 2 == 0) {
 
                         // The index is even, the logic is inverted
-                        writeOLEDString(0, 24, "Inverted", true);
+                        writeOLEDString(0, (3 * LINE_HEIGHT / 2), F("Inverted"), true);
                     }
                     else {
                         // Index is odd, the logic is normal
-                        writeOLEDString(0, 24, "Normal", true);
+                        writeOLEDString(0, (3 * LINE_HEIGHT / 2), F("Normal"), true);
                     }
                     break;
 
@@ -159,18 +158,33 @@ void updateDisplay() {
                     clearOLED();
 
                     // Title
-                    writeOLEDString(0, 0, "Dir logic:", false);
+                    writeOLEDString(0, 0, F("Dir logic:"), false);
 
                     // Write the string to the screen
                     if (currentCursorIndex % 2 == 0) {
 
                         // The index is even, the logic is inverted
-                        writeOLEDString(0, 24, "Inverted", true);
+                        writeOLEDString(0, (3 * LINE_HEIGHT / 2), F("Inverted"), true);
                     }
                     else {
                         // Index is odd, the logic is normal
-                        writeOLEDString(0, 24, "Normal", true);
+                        writeOLEDString(0, (3 * LINE_HEIGHT / 2), F("Normal"), true);
                     }
+                    break;
+
+                case SAVED_DATA:
+                    // Clear the screen of old content
+                    clearOLED();
+
+                    // Write cursor to line index based on cursor mod
+                    writeOLEDString(0, (currentCursorIndex % 3) * LINE_HEIGHT, F("->"), false);
+
+                    // Write out the options
+                    writeOLEDString(25, 0,               F("Save"), false);
+                    writeOLEDString(25, LINE_HEIGHT,     F("Load"), false);
+                    writeOLEDString(25, LINE_HEIGHT * 2, F("Wipe"), true);
+
+                    // All done, break
                     break;
             } // Submenu switch
             break;
@@ -196,44 +210,47 @@ void displayMotorData() {
         clearOLED();
     }
 
+    // Get the current absolute angle
+    double currentAbsAngle = motor.encoder.getAbsoluteAngle();
+
     // RPM of the motor (RPM is capped at 2 decimal places)
     #ifdef ENCODER_SPEED_ESTIMATION
 
     // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
-    if (micros() - lastAngleSampleTime > SPD_EST_MIN_INTERVAL) {
-        snprintf(outBuffer, OB_SIZE, "RPM: % 06.2f", motor.getMotorRPM());
-        writeOLEDString(0, 0, outBuffer, false);
+    if (motor.encoder.sampleTimeExceeded()) {
+        snprintf(outBuffer, OB_SIZE, "RPM:% 11.3f", motor.getEstimRPM(currentAbsAngle));
     }
 
     #else // ! ENCODER_SPEED_ESTIMATION
 
     // No need to check, just sample it
-    snprintf(outBuffer, OB_SIZE, "RPM:   % 05.2f", motor.getMotorRPM());
-    writeOLEDString(0, 0, outBuffer, false);
+    snprintf(outBuffer, OB_SIZE, "RPM:%11.3f", motor.getEncoderRPM());
 
     #endif // ! ENCODER_SPEED_ESTIMATION
 
+    writeOLEDString(0, 0, outBuffer, false);
+
     // Angle error
-    snprintf(outBuffer, OB_SIZE, "Err: % 08.2f", motor.getAngleError());
-    writeOLEDString(0, 16, outBuffer, false);
+    snprintf(outBuffer, OB_SIZE, "Err:% 11.2f", motor.getAngleError(currentAbsAngle));
+    writeOLEDString(0, LINE_HEIGHT, outBuffer, false);
 
     // Current angle of the motor
-    snprintf(outBuffer, OB_SIZE, "Deg: % 08.2f", getAbsoluteAngle());
-    writeOLEDString(0, 32, outBuffer, false);
+    snprintf(outBuffer, OB_SIZE, "Deg:% 11.2f", currentAbsAngle);
+    writeOLEDString(0, LINE_HEIGHT * 2, outBuffer, false);
 
-    // Maybe a 4th line later?
-    snprintf(outBuffer, OB_SIZE, "Temp: %.1f C", getEncoderTemp());
-    writeOLEDString(0, 48, outBuffer, true);
+    // Temp of the encoder (close to the motor temp)
+    snprintf(outBuffer, OB_SIZE, "Temp:%8.1f C", motor.encoder.getTemp());
+    writeOLEDString(0, LINE_HEIGHT * 3, outBuffer, true);
 }
 
 
 // Display an error message
 void displayWarning(String firstLine, String secondLine, String thirdLine, bool updateScreen) {
     clearOLED();
-    writeOLEDString(0, 0,  firstLine,  false);
-    writeOLEDString(0, 16, secondLine, false);
-    writeOLEDString(0, 32, thirdLine,  false);
-    writeOLEDString(0, 48, F("Select to exit"), updateScreen);
+    writeOLEDString(0, 0,               firstLine,  false);
+    writeOLEDString(0, LINE_HEIGHT,     secondLine, false);
+    writeOLEDString(0, LINE_HEIGHT * 2, thirdLine,  false);
+    writeOLEDString(0, LINE_HEIGHT * 3, F("Back to exit"), updateScreen);
 
     // Save the last menu used (for returning later), then move to the new index
     lastMenuDepth = menuDepth;
@@ -263,21 +280,21 @@ void selectMenuItem() {
                 // Nothing to see here, just moving into the calibration
                 motor.calibrate();
 
-                // Exit the menu
-                menuDepth = MENU_RETURN_LEVEL;
-                break;
+                // Board is restarted, so no need to do anything here
 
             case CURRENT:
                 // Motor mAs. Need to get the current motor mAs, then convert that to a cursor value
-                currentCursorIndex = constrain(round(motor.getRMSCurrent() / 100), 0, (uint16_t)MAX_RMS_CURRENT);
+                #ifndef ENABLE_DYNAMIC_CURRENT
+                    currentCursorIndex = constrain(round(motor.getRMSCurrent() / 100), 0, (uint16_t)MAX_RMS_BOARD_CURRENT);
+                #endif
 
                 // Enter the menu
                 menuDepth = SUBMENUS;
                 break;
 
             case MICROSTEP:
-                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
-                currentCursorIndex = log2(motor.getMicrostepping()) - log2(MIN_MICROSTEP_DIVISOR);
+                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value
+                currentCursorIndex = log2(motor.getMicrostepping());
 
                 // Enter the menu
                 menuDepth = SUBMENUS;
@@ -310,6 +327,14 @@ void selectMenuItem() {
                 // Enter the menu
                 menuDepth = SUBMENUS;
                 break;
+
+            case SAVED_DATA:
+                // Just set the cursor to zero, no saving of last position
+                currentCursorIndex = 0;
+
+                // Enter the menu
+                menuDepth = SUBMENUS;
+                break;
         }
 
         // Update the display with the new information
@@ -330,10 +355,10 @@ void selectMenuItem() {
             case CURRENT: {
                 // Motor mAs. Need to get the cursor value, then convert that to current value
                 // Get the set value
-                uint8_t rmsCurrentSetting = 100 * currentCursorIndex;
+                uint16_t rmsCurrentSetting = CURRENT_MENU_INCREMENT * currentCursorIndex;
 
                 // Check to see if the warning needs flagged
-                if (rmsCurrentSetting % (uint16_t)MAX_RMS_CURRENT >= (uint16_t)WARNING_RMS_CURRENT) {
+                if (rmsCurrentSetting % (uint16_t)MAX_RMS_BOARD_CURRENT >= (uint16_t)WARNING_RMS_CURRENT) {
 
                     // Set the display to output the warning
                     menuDepth = WARNING;
@@ -343,12 +368,14 @@ void selectMenuItem() {
                 }
                 else {
                     // Set the value
-                    motor.setRMSCurrent(rmsCurrentSetting % (uint16_t)MAX_RMS_CURRENT);
-                    
+                    #ifndef ENABLE_DYNAMIC_CURRENT
+                        motor.setRMSCurrent(rmsCurrentSetting % (uint16_t)MAX_RMS_BOARD_CURRENT);
+                    #endif
+
                     // Exit the menu
                     menuDepth = MENU_RETURN_LEVEL;
                 }
-           
+
                 // We're done here, time to head out
                 break;
             }
@@ -356,7 +383,7 @@ void selectMenuItem() {
             case MICROSTEP: {
                 // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
                 // Get the set value
-                uint8_t microstepSetting = pow(2, currentCursorIndex);
+                uint8_t microstepSetting = pow(2, (currentCursorIndex % MICROSTEP_INTERVAL_CNT));
 
                 // Check to see if the warning needs flagged
                 if (microstepSetting >= WARNING_MICROSTEP) {
@@ -365,16 +392,16 @@ void selectMenuItem() {
                     menuDepth = WARNING;
 
                     // Actually draw the warning
-                    displayWarning(F("Large stepping"), F("set. Are you"), F("sure?"), true);
+                    displayWarning(F("Large divisor"), F("set. Are you"), F("sure?"), true);
                 }
                 else {
                     // Set the value
                     motor.setMicrostepping(microstepSetting);
-                    
+
                     // Exit the menu
                     menuDepth = MENU_RETURN_LEVEL;
                 }
-                
+
                 // We're done here, time to head out
                 break;
             }
@@ -410,9 +437,28 @@ void selectMenuItem() {
                 // Exit the menu
                 menuDepth = MENU_RETURN_LEVEL;
                 break;
+
+            case SAVED_DATA:
+                // Determine which routine to run based on the division of the cursor
+                uint8_t cursorMod = currentCursorIndex % 3;
+                if (cursorMod == 0) {
+                    // First index, the save parameters, then return
+                    saveParameters();
+                    menuDepth = MENU_RETURN_LEVEL;
+                }
+                else if (cursorMod == 1) {
+                    // Second index, load the parameters
+                    loadParameters();
+                    menuDepth = MENU_RETURN_LEVEL;
+                }
+                else {
+                    // We must be on the third index, wipe the parameters
+                    wipeParameters();
+                    // No need to return here, the processor reboots
+                }
         }
 
-        // Update the display with the new menu  
+        // Update the display with the new menu
         updateDisplay();
     }
 
@@ -426,13 +472,15 @@ void selectMenuItem() {
             case CURRENT:
 
                 // Calculate the setting from the cursor index
-                motor.setRMSCurrent((100 * currentCursorIndex) % (uint16_t)MAX_RMS_CURRENT);
+                #ifndef ENABLE_DYNAMIC_CURRENT
+                    motor.setRMSCurrent((100 * currentCursorIndex) % (uint16_t)MAX_RMS_BOARD_CURRENT);
+                #endif
 
             // Need to set the microstep
             case MICROSTEP:
 
                 // Set the value
-                motor.setMicrostepping(pow(2, currentCursorIndex));
+                motor.setMicrostepping(pow(2, (currentCursorIndex % MICROSTEP_INTERVAL_CNT)));
 
             default:
                 // Nothing to do here, just move on
@@ -499,6 +547,7 @@ const char* submenuItems[] = {
     "Microstep",
     "En Logic",
     "Dir. Logic",
+    "Saved config",
     ""
 };
 
@@ -510,21 +559,25 @@ void initOLED() {
 
     // Set all of the menu values back to their defaults (for if the screen needs to be reinitialized)
     submenu = CALIBRATION;
+    currentCursorIndex = 0;
 
-	RCC->APB2ENR |= 1<<3;
-	RCC->APB2ENR |= 1<<2;
+    // Enable the A and B GPIO clocks
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    GPIOA->CRH &= 0XFFFffFF0;
-    GPIOA->CRH |= 0X00000003;
-    GPIOA->ODR |= 1<<8;
+    // Clear the state of pin A8 (pin states are 15, 14, 13, 12, 11, 10, 9, and 8 in groups of 4)
+    GPIOA -> CRH &= 0b11111111111111111111111111110000;
 
-  	GPIOB->CRH &= 0X0000FFFF;
-  	GPIOB->CRH |= 0X33330000;
-	GPIOB->ODR |= 0xF<<12;
+    // Set that pin A8 should be a general purpose output
+    GPIOA -> CRH |= 0b0011;
 
-	OLED_RST_PIN = 0;
-	delay(100);
-	OLED_RST_PIN = 1;
+    // Clear the settings of pins B12-15
+  	GPIOB -> CRH &= 0b1111111111111111;
+
+    // Write that pins B12-15 should be general purpose outputs
+  	GPIOB -> CRH |= 0b00110011001100110000000000000000;
+
+	GPIO_WRITE(OLED_RST_PIN, HIGH);
 	writeOLEDByte(0xAE, COMMAND);//
 	writeOLEDByte(0xD5, COMMAND);//
 	writeOLEDByte(80,   COMMAND);  //[3:0],;[7:4],
@@ -562,36 +615,36 @@ void initOLED() {
 void writeOLEDByte(uint8_t data, OLED_MODE mode) {
 
     // Write the current mode and enable the screen's communcation
-	OLED_RS_PIN = (uint8_t)mode;
-	OLED_CS_PIN = 0;
+	GPIO_WRITE(OLED_RS_PIN, (uint8_t)mode);
+	GPIO_WRITE(OLED_CS_PIN, LOW);
 
     // Write each bit of the byte
 	for(uint8_t i = 0; i < 8; i++) {
 
         // Prevent the screen from reading the data in
-		OLED_SCLK_PIN = 0;
+        GPIO_WRITE(OLED_SCLK_PIN, LOW);
 
         // If the bit is 1 (true)
 		if(data & 0x80) {
 
             // Write true
-            OLED_SDIN_PIN = 1;
+            GPIO_WRITE(OLED_SDIN_PIN, HIGH);
         }
 		else {
             // Write false
-            OLED_SDIN_PIN = 0;
+            GPIO_WRITE(OLED_SDIN_PIN, LOW);
         }
 
         // Signal that the data needs to be sampled again
-		OLED_SCLK_PIN = 1;
+		GPIO_WRITE(OLED_SCLK_PIN, HIGH);
 
         // Shift all of the bits so the next will be read
 		data <<= 1;
 	}
 
     // Disable the screen's communication
-	OLED_CS_PIN = 1;
-	OLED_RS_PIN = 1;
+    GPIO_WRITE(OLED_CS_PIN, HIGH);
+    GPIO_WRITE(OLED_RS_PIN, HIGH);
 }
 
 
@@ -688,7 +741,7 @@ void fillOLED(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, OLED_COLOR color, 
 
 // Writes a characer to the display
 void writeOLEDChar(uint8_t x, uint8_t y, uint8_t chr, uint8_t fontSize, OLED_COLOR color, bool updateScreen) {
-	
+
     // Create the variables to be used
     uint8_t pixelData;
 	uint8_t y0 = y;
@@ -737,7 +790,7 @@ void writeOLEDChar(uint8_t x, uint8_t y, uint8_t chr, uint8_t fontSize, OLED_COL
     if (updateScreen) {
         writeOLEDBuffer();
     }
-	
+
 }
 
 
@@ -777,14 +830,30 @@ void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fo
 
 
 // Function to write a string to the screen
-void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen) {
+void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen, bool allowOverflow) {
 
     // Check if we haven't reached the end of the string
     while(*p != '\0') {
 
-        // Make sure that the x and y don't exceed the maximum indexes
-        if(x > MAX_CHAR_POSX || y > MAX_CHAR_POSY){
+        // Make sure that y doesn't exceed the maximum indexes
+        if (y > MAX_CHAR_POSY) {
             break;
+        }
+        // Check the location of the next character in the x direction
+        else if (x + (16 / 2) > MAX_CHAR_POSX) {
+
+            // Check if the display should allow overflow
+            if (allowOverflow) {
+
+                // We're over the edge of the screen
+                // Move the cursor back and down a line
+                x = 0;
+                y += LINE_HEIGHT;
+            }
+            else {
+                // Overflow is not allowed, exit the function
+                break;
+            }
         }
 
         // Display the character on the screen
@@ -805,8 +874,17 @@ void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen) {
 
 
 // Convience function for writing a specific string to the OLED panel
-void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen) {
-    writeOLEDString(x, y, string.c_str(), updateScreen);
+void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen, bool allowOverflow) {
+    writeOLEDString(x, y, string.c_str(), updateScreen, allowOverflow);
 }
 
-#endif // ! USE_OLED
+
+// Converts an integer to a binary string, useful for debugging. From https://forum.arduino.cc/t/convert-from-int-to-bin-to-string/45836/6
+char * int2bin(unsigned int x) {
+  static char buffer[17];
+  for (int i=0; i<16; i++) buffer[15-i] = '0' + ((x & (1 << i)) > 0);
+  buffer[16] ='\0';
+  return buffer;
+}
+
+#endif // ! ENABLE_OLED

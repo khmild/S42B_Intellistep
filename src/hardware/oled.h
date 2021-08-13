@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "stm32f1xx_ll_gpio.h"
 #include "oledfont.h"
+#include "flash.h"
 
 // Enumerations for the different menu values
 typedef enum {
@@ -22,7 +23,8 @@ typedef enum {
     CURRENT,
     MICROSTEP,
     ENABLE_LOGIC,
-    DIR_LOGIC
+    DIR_LOGIC,
+    SAVED_DATA
 } SUBMENU;
 
 // Variables
@@ -43,6 +45,7 @@ void exitCurrentMenu();
 MENU_DEPTH getMenuDepth();
 String padNumber(float number, uint8_t leadingZeroCount, uint8_t followingZeroCount);
 float roundToPlace(float number, uint8_t place);
+char * int2bin(unsigned int x);
 
 // BTT Display definitions
 typedef enum {
@@ -58,6 +61,7 @@ typedef enum {
 #define MAX_CHAR_POSX 122
 #define MAX_CHAR_POSY 58
 #define OB_SIZE 32
+#define LINE_HEIGHT 16
 
 // Low level OLED commands
 void initOLED();
@@ -69,6 +73,6 @@ void setOLEDPixel(uint8_t x, uint8_t y, OLED_COLOR color);
 void fillOLED(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, OLED_COLOR color, bool updateScreen = true);
 void writeOLEDChar(uint8_t x, uint8_t y, uint8_t chr, uint8_t fontSize, OLED_COLOR color, bool updateScreen = true);
 void writeOLEDNum(uint8_t x, uint8_t y, uint32_t number, uint8_t len, uint8_t fontSize, bool updateScreen = true);
-void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen = true);
-void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen = true);
+void writeOLEDString(uint8_t x, uint8_t y, const char *p, bool updateScreen = true, bool allowOverflow = false);
+void writeOLEDString(uint8_t x, uint8_t y, String string, bool updateScreen = true, bool allowOverflow = false);
 void clearOLED();

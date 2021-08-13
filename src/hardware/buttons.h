@@ -3,15 +3,15 @@
 
 #include "main.h"
 
-// Variable definitions
-// Boolean for storing if the dip switches were installed the wrong way
-extern bool dipInverted;
+// Need the timer library
+#include "timers.h"
 
 // Function definitions
 void initButtons();
-void checkButtons(bool updateScreen);
+void checkButtons(bool updateScreen, bool onlyAllowSelect = false);
 bool checkButtonState(PinName buttonPin);
 void readDipMicrostepping();
+void checkDips();
 void setDipInverted(bool inverted);
 bool getDipInverted();
 

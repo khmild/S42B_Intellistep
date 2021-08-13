@@ -8,44 +8,61 @@ I am currently working on redoing a lot of the functions found in the firmware. 
 
 ***Note: For the time being, all serial and CAN messages should start with "<" and end with ">". The serial baud rate is 115200.***
 
+***Note: If you're having large oscillations in step correction, then try increasing the microstepping using the dip switches while increasing the microstep multiplier***
+
 New Features:
 
 - Redone stepping for higher torque and quieter operation
 - Redone serial commands (based on gcode)
 - Temperature readout on the display
-- CAN subnetwork for driver configuration
+- Motor and driver overtemp current reduction
 
 Future Features:
 
-- Motor and driver overtemperature current reduction
+- CAN subnetwork for driver configuration
 - Dynamic current control based on speed and acceleration
 - Manual tuning utility for manual PID tuning
 - Much better stepper calibration
 - New menu items for setting PID parameters
 
-GCode Table
+G/M Code Table
 
+- G6 (ex G6 D0 R1000 S1000) - Direct stepping, commands the motor to move a specified number of steps in the specified direction. D is direction (0 for CCW, 1 for CW), R is rate (in Hz), and S is the count of steps to move. Requires `ENABLE_DIRECT_STEPPING`
 - M17 (ex M17) - Enables the motor (overrides enable pin)
 - M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
-- M93 (ex M93 V1.8) - Sets the angle of a full step. This value should be 1.8° or 0.9°
+- M93 (ex M93 V1.8 or M93) - Sets the angle of a full step. This value should be 1.8° or 0.9°. If no value is provided, then the current value will be returned.
 - M115 (ex M115) - Prints out firmware information, consisting of the version and any enabled features.
-- M306 (ex M306 P1 I1 D1) - Sets the PID values for the motor
-- M307 (ex M307) - Runs an autotune sequence for the PID loop
-- M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
-- M350 (ex M350 V16) - Sets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32
-- M352 (ex M320 S1) - Sets the direction pin inversion for the motor (0 is standard, 1 is inverted)
-- M353 (ex M353 S1) - Sets the enable pin inversion for the motor (0 is standard, 1 is inverted)
-- M354 (ex M354 S1) - Sets if the motor dip switches were installed incorrectly (reversed) (0 is standard, 1 is inverted)
-- M355 (ex M355 V1.34) - Sets the microstep multiplier for the board. Allows to use multiple motors connected to the same mainboard pin.
-- M356 (ex M356 V1 or M356 VX2) - Sets the CAN ID of the board. Can be set using the axis character or actual ID.
+- M116 (ex M116 S1 M"A message") - Simple forward command that will forward a message across the CAN bus. Can be used for pinging or allowing a Serial to connect to the CAN network. Requires `ENABLE_CAN`
+- M306 (ex M306 P1 I1 D1 W10 or M306) - Sets or gets the PID values for the motor. W term is the maximum value of the I windup. If no values are provided, then the current values will be returned. Requires `ENABLE_PID`
+- M307 (ex M307) - Runs an autotune sequence for the PID loop. Requires `ENABLE_PID`
+- M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles. Requires `ENABLE_PID`
+- M350 (ex M350 V16 or M350) - Sets or gets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32. If no value is provided, then the current microstepping divisor will be returned.
+- M352 (ex M352 S1 or M352) - Sets or gets the direction pin inversion for the motor (0 is standard, 1 is inverted). If no value is provided, then the current value will be returned.
+- M353 (ex M353 S1 or M353) - Sets or gets the enable pin inversion for the motor (0 is standard, 1 is inverted). If no value is provided, then the current value will be returned.
+- M354 (ex M354 S1 or M354) - Sets or gets if the motor dip switches were installed incorrectly (reversed) (0 is standard, 1 is inverted). If no value is provided, then the current value will be returned.
+- M355 (ex M355 V1.34 or M355) - Sets or gets the microstep multiplier for the board. Allows to use multiple motors connected to the same mainboard pin, yet have different rates. If no value is provided, then the current value will be returned. Requires `ENABLE_CAN`
+- M356 (ex M356 V1 or M356 VX2 or M356) - Sets or gets the CAN ID of the board. Can be set using the axis character or actual ID. If no value is provided, then the current value will be returned. Requires `ENABLE_CAN`
 - M500 (ex M500) - Saves the currently loaded parameters into flash
-- M907 (ex M907 R3000 or M907 P3000) - Sets the RMS or Peak current in mA
+- M501 (ex M501) - Loads all saved parameters from flash
+- M502 (ex M502) - Wipes all parameters from flash, then reboots the system
+- M907 (ex M907 R750, M907 I500) - Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (not dynamic current) or the accel, idle, and max terms (dynamic current) will be returned.
+
+Using dip switches
+| Dip switch mappings
+| PIN     |    Normal orientation      |  Reversed orientation |
+|---------|----------------------------|-----------------------|
+| DIP_1   |    Microstep 1             |  Calibration mode     |
+| DIP_2   |    Microstep 2             |  Closed/Open loop     |
+| DIP_3   |    Closed/Open loop        |  Microstep 2          |
+| DIP_4   |    Calibration mode        |  Microstep 1          |
 
 ## Credits
 
 - [BTT](https://github.com/bigtreetech) - [Original code](https://github.com/bigtreetech/BIGTREETECH-Stepper-Motor-Driver)
 - [CAP1Sup](https://github.com/CAP1Sup) - Main rewrite of code
+- [IhorNehrutsa](https://github.com/IhorNehrutsa) - Large performance gains, general code work
 - [TazerReloaded](https://github.com/TazerReloaded) - Encoder protocol and communication, much faster snprintf string printing
+- [jlmxyz](https://github.com/jlmxyz) - Board schematics (in KiCad folder)
 - [Misfittech](https://github.com/Misfittech) - The [Smart Stepper project](https://github.com/Misfittech/nano_stepper). This was a large help when writing the correct stepping code.
 - [Matt Fryer](https://github.com/MattFryer) - [Smoothed](https://github.com/MattFryer/Smoothed) library. This was a huge help when smoothing out the OLED values to make them more readable and accurate
 - [Marlin](https://github.com/MarlinFirmware/Marlin) - Autobuilding templates
