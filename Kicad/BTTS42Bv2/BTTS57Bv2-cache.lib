@@ -19,11 +19,11 @@ X ~ 6 200 350 100 L 50 50 1 1 U
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_+3.3V-power
+# BTTS57Bv2-rescue_+3.3V-power
 #
-DEF BTTS42Bv2-rescue_+3.3V-power #PWR 0 0 Y Y 1 F P
+DEF BTTS57Bv2-rescue_+3.3V-power #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -150 50 H I C CNN
-F1 "BTTS42Bv2-rescue_+3.3V-power" 0 140 50 H V C CNN
+F1 "BTTS57Bv2-rescue_+3.3V-power" 0 140 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -34,11 +34,11 @@ X +3V3 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_+5V-power
+# BTTS57Bv2-rescue_+5V-power
 #
-DEF BTTS42Bv2-rescue_+5V-power #PWR 0 0 Y Y 1 F P
+DEF BTTS57Bv2-rescue_+5V-power #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -150 50 H I C CNN
-F1 "BTTS42Bv2-rescue_+5V-power" 0 140 50 H V C CNN
+F1 "BTTS57Bv2-rescue_+5V-power" 0 140 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -49,11 +49,11 @@ X +5V 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_A4950E-Driver_Motor
+# BTTS57Bv2-rescue_A4950E-Driver_Motor
 #
-DEF BTTS42Bv2-rescue_A4950E-Driver_Motor U 0 40 Y Y 1 F N
+DEF BTTS57Bv2-rescue_A4950E-Driver_Motor U 0 40 Y Y 1 F N
 F0 "U" -300 350 50 H V L CNN
-F1 "BTTS42Bv2-rescue_A4950E-Driver_Motor" 200 350 50 H V L CNN
+F1 "BTTS57Bv2-rescue_A4950E-Driver_Motor" 200 350 50 H V L CNN
 F2 "Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm" 0 -550 50 H I C CNN
 F3 "" -300 350 50 H I C CNN
 $FPLIST
@@ -73,11 +73,11 @@ X PAD 9 100 -400 100 U 50 50 1 1 W
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_C-Device
+# BTTS57Bv2-rescue_C-Device
 #
-DEF BTTS42Bv2-rescue_C-Device C 0 10 N Y 1 F N
+DEF BTTS57Bv2-rescue_C-Device C 0 10 N Y 1 F N
 F0 "C" 25 100 50 H V L CNN
-F1 "BTTS42Bv2-rescue_C-Device" 25 -100 50 H V L CNN
+F1 "BTTS57Bv2-rescue_C-Device" 25 -100 50 H V L CNN
 F2 "" 38 -150 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -91,11 +91,11 @@ X ~ 2 0 -150 110 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_CP-Device
+# BTTS57Bv2-rescue_CP-Device
 #
-DEF BTTS42Bv2-rescue_CP-Device C 0 10 N Y 1 F N
+DEF BTTS57Bv2-rescue_CP-Device C 0 10 N Y 1 F N
 F0 "C" 25 100 50 H V L CNN
-F1 "BTTS42Bv2-rescue_CP-Device" 25 -100 50 H V L CNN
+F1 "BTTS57Bv2-rescue_CP-Device" 25 -100 50 H V L CNN
 F2 "" 38 -150 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -111,11 +111,11 @@ X ~ 2 0 -150 110 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_Conn_01x02-Connector_Generic
+# BTTS57Bv2-rescue_Conn_01x02-Connector_Generic
 #
-DEF BTTS42Bv2-rescue_Conn_01x02-Connector_Generic J 0 40 Y N 1 F N
+DEF BTTS57Bv2-rescue_Conn_01x02-Connector_Generic J 0 40 Y N 1 F N
 F0 "J" 0 100 50 H V C CNN
-F1 "BTTS42Bv2-rescue_Conn_01x02-Connector_Generic" 0 -200 50 H V C CNN
+F1 "BTTS57Bv2-rescue_Conn_01x02-Connector_Generic" 0 -200 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -130,11 +130,11 @@ X Pin_2 2 -200 -100 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_Conn_01x04-Connector_Generic
+# BTTS57Bv2-rescue_Conn_01x04-Connector_Generic
 #
-DEF BTTS42Bv2-rescue_Conn_01x04-Connector_Generic J 0 40 Y N 1 F N
+DEF BTTS57Bv2-rescue_Conn_01x04-Connector_Generic J 0 40 Y N 1 F N
 F0 "J" 0 200 50 H V C CNN
-F1 "BTTS42Bv2-rescue_Conn_01x04-Connector_Generic" 0 -300 50 H V C CNN
+F1 "BTTS57Bv2-rescue_Conn_01x04-Connector_Generic" 0 -300 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -153,11 +153,11 @@ X Pin_4 4 -200 -200 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_Conn_01x06-Connector_Generic
+# BTTS57Bv2-rescue_Conn_01x06-Connector_Generic
 #
-DEF BTTS42Bv2-rescue_Conn_01x06-Connector_Generic J 0 40 Y N 1 F N
+DEF BTTS57Bv2-rescue_Conn_01x06-Connector_Generic J 0 40 Y N 1 F N
 F0 "J" 0 300 50 H V C CNN
-F1 "BTTS42Bv2-rescue_Conn_01x06-Connector_Generic" 0 -400 50 H V C CNN
+F1 "BTTS57Bv2-rescue_Conn_01x06-Connector_Generic" 0 -400 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -180,11 +180,11 @@ X Pin_6 6 -200 -300 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_Conn_01x07-Connector_Generic
+# BTTS57Bv2-rescue_Conn_01x07-Connector_Generic
 #
-DEF BTTS42Bv2-rescue_Conn_01x07-Connector_Generic J 0 40 Y N 1 F N
+DEF BTTS57Bv2-rescue_Conn_01x07-Connector_Generic J 0 40 Y N 1 F N
 F0 "J" 0 400 50 H V C CNN
-F1 "BTTS42Bv2-rescue_Conn_01x07-Connector_Generic" 0 -400 50 H V C CNN
+F1 "BTTS57Bv2-rescue_Conn_01x07-Connector_Generic" 0 -400 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -209,11 +209,11 @@ X Pin_7 7 -200 -300 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_Conn_01x08-Connector_Generic
+# BTTS57Bv2-rescue_Conn_01x08-Connector_Generic
 #
-DEF BTTS42Bv2-rescue_Conn_01x08-Connector_Generic J 0 40 Y N 1 F N
+DEF BTTS57Bv2-rescue_Conn_01x08-Connector_Generic J 0 40 Y N 1 F N
 F0 "J" 0 400 50 H V C CNN
-F1 "BTTS42Bv2-rescue_Conn_01x08-Connector_Generic" 0 -500 50 H V C CNN
+F1 "BTTS57Bv2-rescue_Conn_01x08-Connector_Generic" 0 -500 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -240,11 +240,11 @@ X Pin_8 8 -200 -400 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_Crystal-Device
+# BTTS57Bv2-rescue_Crystal-Device
 #
-DEF BTTS42Bv2-rescue_Crystal-Device Y 0 40 N N 1 F N
+DEF BTTS57Bv2-rescue_Crystal-Device Y 0 40 N N 1 F N
 F0 "Y" 0 150 50 H V C CNN
-F1 "BTTS42Bv2-rescue_Crystal-Device" 0 -150 50 H V C CNN
+F1 "BTTS57Bv2-rescue_Crystal-Device" 0 -150 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -261,11 +261,11 @@ X 2 2 150 0 50 L 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_D-Device
+# BTTS57Bv2-rescue_D-Device
 #
-DEF BTTS42Bv2-rescue_D-Device D 0 40 N N 1 F N
+DEF BTTS57Bv2-rescue_D-Device D 0 40 N N 1 F N
 F0 "D" 0 100 50 H V C CNN
-F1 "BTTS42Bv2-rescue_D-Device" 0 -100 50 H V C CNN
+F1 "BTTS57Bv2-rescue_D-Device" 0 -100 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -283,11 +283,11 @@ X A 2 150 0 100 L 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_GND-power
+# BTTS57Bv2-rescue_GND-power
 #
-DEF BTTS42Bv2-rescue_GND-power #PWR 0 0 Y Y 1 F P
+DEF BTTS57Bv2-rescue_GND-power #PWR 0 0 Y Y 1 F P
 F0 "#PWR" 0 -250 50 H I C CNN
-F1 "BTTS42Bv2-rescue_GND-power" 0 -150 50 H V C CNN
+F1 "BTTS57Bv2-rescue_GND-power" 0 -150 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -296,11 +296,11 @@ X GND 1 0 0 0 D 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_INDUCTOR-pspice
+# BTTS57Bv2-rescue_INDUCTOR-pspice
 #
-DEF BTTS42Bv2-rescue_INDUCTOR-pspice L 0 0 N Y 1 F N
+DEF BTTS57Bv2-rescue_INDUCTOR-pspice L 0 0 N Y 1 F N
 F0 "L" 0 100 50 H V C CNN
-F1 "BTTS42Bv2-rescue_INDUCTOR-pspice" 0 -50 50 H V C CNN
+F1 "BTTS57Bv2-rescue_INDUCTOR-pspice" 0 -50 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 DRAW
@@ -313,11 +313,11 @@ X 2 2 250 0 50 L 30 30 1 1 I
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_LD1117S33CTR-dk_PMIC-Voltage-Regulators-Linear
+# BTTS57Bv2-rescue_LD1117S33CTR-dk_PMIC-Voltage-Regulators-Linear
 #
-DEF BTTS42Bv2-rescue_LD1117S33CTR-dk_PMIC-Voltage-Regulators-Linear U 0 20 Y Y 1 F N
+DEF BTTS57Bv2-rescue_LD1117S33CTR-dk_PMIC-Voltage-Regulators-Linear U 0 20 Y Y 1 F N
 F0 "U" 50 150 60 H V C CNN
-F1 "BTTS42Bv2-rescue_LD1117S33CTR-dk_PMIC-Voltage-Regulators-Linear" 50 250 60 H V C CNN
+F1 "BTTS57Bv2-rescue_LD1117S33CTR-dk_PMIC-Voltage-Regulators-Linear" 50 250 60 H V C CNN
 F2 "digikey-footprints:SOT-223" 200 200 60 H I L CNN
 F3 "http://www.st.com/content/ccc/resource/technical/document/datasheet/99/3b/7d/91/91/51/4b/be/CD00000544.pdf/files/CD00000544.pdf/jcr:content/translations/en.CD00000544.pdf" 200 300 60 H I L CNN
 F4 "497-1241-1-ND" 200 400 60 H I L CNN "Digi-Key_PN"
@@ -338,11 +338,11 @@ X VOUT 4 400 -100 100 L 50 50 1 1 w
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_LED-Device
+# BTTS57Bv2-rescue_LED-Device
 #
-DEF BTTS42Bv2-rescue_LED-Device D 0 40 N N 1 F N
+DEF BTTS57Bv2-rescue_LED-Device D 0 40 N N 1 F N
 F0 "D" 0 100 50 H V C CNN
-F1 "BTTS42Bv2-rescue_LED-Device" 0 -100 50 H V C CNN
+F1 "BTTS57Bv2-rescue_LED-Device" 0 -100 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -361,11 +361,11 @@ X A 2 150 0 100 L 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_PCA82C251-Interface_CAN_LIN
+# BTTS57Bv2-rescue_PCA82C251-Interface_CAN_LIN
 #
-DEF BTTS42Bv2-rescue_PCA82C251-Interface_CAN_LIN U 0 0 Y Y 1 F N
+DEF BTTS57Bv2-rescue_PCA82C251-Interface_CAN_LIN U 0 0 Y Y 1 F N
 F0 "U" -200 550 50 H V L CNN
-F1 "BTTS42Bv2-rescue_PCA82C251-Interface_CAN_LIN" -200 450 50 H V L CNN
+F1 "BTTS57Bv2-rescue_PCA82C251-Interface_CAN_LIN" -200 450 50 H V L CNN
 F2 "Package_SO:SO-8_3.9x4.9mm_P1.27mm" 0 -50 50 H I C CNN
 F3 "" 0 -50 50 H I C CNN
 $FPLIST
@@ -398,11 +398,11 @@ X Rsl 8 -400 -100 200 R 50 50 1 1 I
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_R-Device
+# BTTS57Bv2-rescue_R-Device
 #
-DEF BTTS42Bv2-rescue_R-Device R 0 0 N Y 1 F N
+DEF BTTS57Bv2-rescue_R-Device R 0 0 N Y 1 F N
 F0 "R" 80 0 50 V V C CNN
-F1 "BTTS42Bv2-rescue_R-Device" 0 0 50 V V C CNN
+F1 "BTTS57Bv2-rescue_R-Device" 0 0 50 V V C CNN
 F2 "" -70 0 50 V I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -415,11 +415,11 @@ X ~ 2 0 -150 50 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_STM32F103CBTx-MCU_ST_STM32F1
+# BTTS57Bv2-rescue_STM32F103CBTx-MCU_ST_STM32F1
 #
-DEF BTTS42Bv2-rescue_STM32F103CBTx-MCU_ST_STM32F1 U 0 20 Y Y 1 F N
+DEF BTTS57Bv2-rescue_STM32F103CBTx-MCU_ST_STM32F1 U 0 20 Y Y 1 F N
 F0 "U" -600 1450 50 H V L CNN
-F1 "BTTS42Bv2-rescue_STM32F103CBTx-MCU_ST_STM32F1" 300 1450 50 H V L CNN
+F1 "BTTS57Bv2-rescue_STM32F103CBTx-MCU_ST_STM32F1" 300 1450 50 H V L CNN
 F2 "Package_QFP:LQFP-48_7x7mm_P0.5mm" -600 -1400 50 H I R CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -478,11 +478,11 @@ X VDDA 9 200 1500 100 D 50 50 1 1 W
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_SW_DIP_x04-Switch
+# BTTS57Bv2-rescue_SW_DIP_x04-Switch
 #
-DEF BTTS42Bv2-rescue_SW_DIP_x04-Switch SW 0 0 Y N 1 F N
+DEF BTTS57Bv2-rescue_SW_DIP_x04-Switch SW 0 0 Y N 1 F N
 F0 "SW" 0 350 50 H V C CNN
-F1 "BTTS42Bv2-rescue_SW_DIP_x04-Switch" 0 -250 50 H V C CNN
+F1 "BTTS57Bv2-rescue_SW_DIP_x04-Switch" 0 -250 50 H V C CNN
 F2 "" 0 0 50 H I C CNN
 F3 "" 0 0 50 H I C CNN
 $FPLIST
@@ -513,11 +513,11 @@ X ~ 8 300 200 200 L 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# BTTS42Bv2-rescue_SW_Push-Switch
+# BTTS57Bv2-rescue_SW_Push-Switch
 #
-DEF BTTS42Bv2-rescue_SW_Push-Switch SW 0 40 N N 1 F N
+DEF BTTS57Bv2-rescue_SW_Push-Switch SW 0 40 N N 1 F N
 F0 "SW" 50 100 50 H V L CNN
-F1 "BTTS42Bv2-rescue_SW_Push-Switch" 0 -60 50 H V C CNN
+F1 "BTTS57Bv2-rescue_SW_Push-Switch" 0 -60 50 H V C CNN
 F2 "" 0 200 50 H I C CNN
 F3 "" 0 200 50 H I C CNN
 DRAW
