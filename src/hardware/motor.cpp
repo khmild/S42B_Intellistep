@@ -538,6 +538,8 @@ void StepperMotor::step(STEP_DIR dir, int32_t stepChange, bool updateDesiredPos)
         isStepping = false;
     #endif
 
+    stepChange *= dir * (this -> reversed);
+
     #ifndef USE_HARDWARE_STEP_CNT
     // Update the desired angle if specified
     if (updateDesiredPos) {
@@ -549,7 +551,7 @@ void StepperMotor::step(STEP_DIR dir, int32_t stepChange, bool updateDesiredPos)
 
     // Invert the change based on the direction
     // Only moving one step in the specified direction
-    this -> currentStep += stepChange * dir * (this -> reversed);
+    this -> currentStep += stepChange;
 
     // Drive the coils to their destination
     this -> driveCoils(this -> currentStep);
