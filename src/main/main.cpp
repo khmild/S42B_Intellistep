@@ -22,7 +22,7 @@ void setup() {
     SystemInit();
 
     // Set priority groupping explicitly to 3.1(PRIO.SUBPRIO)
-    // Possible value for PRIO fom 0 to 7 and for SUBPRIO fom 0 to 1 in setInterruptPriority()
+    // Possible value for PRIO from 0 to 7 and for SUBPRIO from 0 to 1 in setInterruptPriority()
     NVIC_SetPriorityGrouping(3);
 
     // Configure the system clock
