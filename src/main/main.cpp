@@ -21,6 +21,10 @@ void setup() {
     // Set processor up
     SystemInit();
 
+    // Set priority groupping explicitly to 3.1(PRIO.SUBPRIO)
+    // Possible value for PRIO fom 0 to 7 and for SUBPRIO fom 0 to 1 in setInterruptPriority()
+    NVIC_SetPriorityGrouping(3);
+
     // Configure the system clock
     #if defined(SYSCLK_SRC_HSE_16)
         #if SYSCLK_FREQ == 72
