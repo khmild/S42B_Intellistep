@@ -5,6 +5,11 @@
 **/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+Kicad/**/*-bak
+Kicad/**/*-cache*
+Kicad/**/*.dcm
+Kicad/**/_autosave*
+Kicad/**/*.bck
 STM32CubeMX/STM32F103CBTx_LQFP48/Core*
 STM32CubeMX/STM32F103CBTx_LQFP48/Drivers*
 STM32CubeMX/STM32F103CBTx_LQFP48/EWARM*

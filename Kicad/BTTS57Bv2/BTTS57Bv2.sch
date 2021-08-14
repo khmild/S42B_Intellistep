@@ -14,7 +14,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L BTTS42Bv2-rescue:STM32F103CBTx-MCU_ST_STM32F1 U7
+L BTTS57Bv2-rescue:STM32F103CBTx-MCU_ST_STM32F1 U7
 U 1 1 60A1AF70
 P 8000 3200
 F 0 "U7" H 8200 3950 50  0000 C CNN
@@ -22,7 +22,7 @@ F 1 "STM32F103CBTx" H 8050 4100 50  0000 C CNN
 F 2 "Package_QFP:LQFP-48_7x7mm_P0.5mm" H 7400 1800 50  0001 R CNN
 F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/CD00161566.pdf" H 8000 3200 50  0001 C CNN
 	1    8000 3200
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 8600 4200 2    50   Output ~ 0
 CAN_TX
@@ -42,11 +42,11 @@ Text GLabel 7300 4100 0    50   Input ~ 0
 MICROSTEP2_SW
 Text GLabel 7300 4000 0    50   Input ~ 0
 MICROSTEP1_SW
-Text GLabel 10750 2250 2    50   Input ~ 0
+Text GLabel 10750 2450 2    50   Input ~ 0
 STP_IN
 Text GLabel 10750 2600 2    50   Input ~ 0
 DIR_IN
-Text GLabel 10300 3200 2    50   Input ~ 0
+Text GLabel 10300 3400 2    50   Input ~ 0
 EN_IN
 Text GLabel 7300 4200 0    50   Output ~ 0
 OLED_CS
@@ -59,7 +59,7 @@ OLED_D1
 Text GLabel 8600 3800 2    50   Output ~ 0
 OLED_RST
 $Comp
-L BTTS42Bv2-rescue:PCA82C251-Interface_CAN_LIN U9
+L BTTS57Bv2-rescue:PCA82C251-Interface_CAN_LIN U9
 U 1 1 60A2B9D5
 P 4550 7100
 F 0 "U9" H 4550 7667 50  0000 C CNN
@@ -67,110 +67,110 @@ F 1 "PCA82C251" H 4550 7576 50  0000 C CNN
 F 2 "Package_SO:SO-8_3.9x4.9mm_P1.27mm" H 4550 7050 50  0001 C CNN
 F 3 "http://www.nxp.com/documents/data_sheet/PCA82C251.pdf" H 4550 7050 50  0001 C CNN
 	1    4550 7100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 3200 7250 0    50   Input ~ 0
 CAN_TX
 $Comp
-L BTTS42Bv2-rescue:C-Device C18
+L BTTS57Bv2-rescue:C-Device C18
 U 1 1 60A2E459
 P 3900 6800
 F 0 "C18" H 3700 6900 50  0000 L CNN
 F 1 "C" H 3750 6800 50  0000 L CNN
-F 2 "" H 3938 6650 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 3938 6650 50  0001 C CNN
 F 3 "~" H 3900 6800 50  0001 C CNN
 	1    3900 6800
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R93
+L BTTS57Bv2-rescue:R-Device R93
 U 1 1 60A36F2C
 P 4000 7400
 F 0 "R93" V 4100 7400 50  0000 C CNN
 F 1 "1kR" V 4000 7400 50  0000 C CNN
-F 2 "" V 3930 7400 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 3930 7400 50  0001 C CNN
 F 3 "~" H 4000 7400 50  0001 C CNN
 	1    4000 7400
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 Text GLabel 3850 7400 0    50   Output ~ 0
 CAN_RX
 $Comp
-L BTTS42Bv2-rescue:R-Device R20
+L BTTS57Bv2-rescue:R-Device R20
 U 1 1 60A3D6FA
 P 6000 1750
 F 0 "R20" V 6100 1750 50  0000 C CNN
 F 1 "1kR" V 6000 1750 50  0000 C CNN
-F 2 "" V 5930 1750 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 5930 1750 50  0001 C CNN
 F 3 "~" H 6000 1750 50  0001 C CNN
 	1    6000 1750
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C19
+L BTTS57Bv2-rescue:C-Device C19
 U 1 1 60A3DDDE
 P 6000 2050
 F 0 "C19" H 6050 2150 50  0000 L CNN
 F 1 "C" H 5850 2050 50  0000 L CNN
-F 2 "" H 6038 1900 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 6038 1900 50  0001 C CNN
 F 3 "~" H 6000 2050 50  0001 C CNN
 	1    6000 2050
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	8600 4100 9150 4100
 $Comp
-L BTTS42Bv2-rescue:SW_Push-Switch RES-K1
+L BTTS57Bv2-rescue:SW_Push-Switch RES-K1
 U 1 1 60A46F54
 P 5700 1900
 F 0 "RES-K1" H 5700 2185 50  0000 C CNN
 F 1 "SW_Push" H 5700 2094 50  0000 C CNN
-F 2 "" H 5700 2100 50  0001 C CNN
+F 2 "Button_Switch_SMD:SW_Push_1P1T-SH_NO_CK_KMR2xxG" H 5700 2100 50  0001 C CNN
 F 3 "~" H 5700 2100 50  0001 C CNN
 	1    5700 1900
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:SW_Push-Switch Next-K2
+L BTTS57Bv2-rescue:SW_Push-Switch Next-K2
 U 1 1 60A48C17
 P 9150 3600
 F 0 "Next-K2" V 9104 3748 50  0000 L CNN
 F 1 "SW_Push" V 9195 3748 50  0000 L CNN
-F 2 "" H 9150 3800 50  0001 C CNN
+F 2 "Button_Switch_SMD:SW_Push_1P1T-SH_NO_CK_KMR2xxG" H 9150 3800 50  0001 C CNN
 F 3 "~" H 9150 3800 50  0001 C CNN
 	1    9150 3600
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:SW_Push-Switch Mode-K3
+L BTTS57Bv2-rescue:SW_Push-Switch Mode-K3
 U 1 1 60A5376F
 P 6500 3000
 F 0 "Mode-K3" H 6500 3285 50  0000 C CNN
 F 1 "SW_Push" H 6500 3194 50  0000 C CNN
-F 2 "" H 6500 3200 50  0001 C CNN
+F 2 "Button_Switch_SMD:SW_Push_1P1T-SH_NO_CK_KMR2xxG" H 6500 3200 50  0001 C CNN
 F 3 "~" H 6500 3200 50  0001 C CNN
 	1    6500 3000
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	6700 3000 7300 3000
 $Comp
-L BTTS42Bv2-rescue:SW_Push-Switch Valid-K4
+L BTTS57Bv2-rescue:SW_Push-Switch Valid-K4
 U 1 1 60A55440
 P 5750 3100
 F 0 "Valid-K4" H 5750 3385 50  0000 C CNN
 F 1 "SW_Push" H 5750 3294 50  0000 C CNN
-F 2 "" H 5750 3300 50  0001 C CNN
+F 2 "Button_Switch_SMD:SW_Push_1P1T-SH_NO_CK_KMR2xxG" H 5750 3300 50  0001 C CNN
 F 3 "~" H 5750 3300 50  0001 C CNN
 	1    5750 3100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 8600 3900 2    50   Output ~ 0
 TX1
 Text GLabel 8600 4000 2    50   Input ~ 0
 RX1
 $Comp
-L BTTS42Bv2-rescue:SW_DIP_x04-Switch S1
+L BTTS57Bv2-rescue:SW_DIP_x04-Switch S1
 U 1 1 60A6B868
 P 4800 5950
 F 0 "S1" H 4800 6417 50  0000 C CNN
@@ -178,7 +178,7 @@ F 1 "SW_DIP_x04" H 4800 6326 50  0000 C CNN
 F 2 "Button_Switch_SMD:SW_DIP_SPSTx04_Slide_KingTek_DSHP04TS_W7.62mm_P1.27mm" H 4800 5950 50  0001 C CNN
 F 3 "~" H 4800 5950 50  0001 C CNN
 	1    4800 5950
-	-1   0    0    -1
+	-1   0    0    -1  
 $EndComp
 Text GLabel 7900 4800 3    50   Input ~ 0
 VSS
@@ -208,26 +208,26 @@ motordriverU4#2
 Text GLabel 7300 3600 0    50   Input ~ 0
 motordriverU4#3
 $Comp
-L BTTS42Bv2-rescue:R-Device R5
+L BTTS57Bv2-rescue:R-Device R5
 U 1 1 60AA734D
 P 9500 3050
 F 0 "R5" V 9600 3050 50  0000 C CNN
 F 1 "?R" V 9500 3050 50  0000 C CNN
-F 2 "" V 9430 3050 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 9430 3050 50  0001 C CNN
 F 3 "~" H 9500 3050 50  0001 C CNN
 	1    9500 3050
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R12
+L BTTS57Bv2-rescue:R-Device R12
 U 1 1 60AC6CB6
-P 10150 3200
-F 0 "R12" V 10250 3200 50  0000 C CNN
-F 1 "?R" V 10150 3200 50  0000 C CNN
-F 2 "" V 10080 3200 50  0001 C CNN
-F 3 "~" H 10150 3200 50  0001 C CNN
-	1    10150 3200
-	0    -1   -1   0
+P 10150 3400
+F 0 "R12" V 10250 3400 50  0000 C CNN
+F 1 "?R" V 10150 3400 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" V 10080 3400 50  0001 C CNN
+F 3 "~" H 10150 3400 50  0001 C CNN
+	1    10150 3400
+	0    -1   -1   0   
 $EndComp
 Connection ~ 9500 3200
 Wire Wire Line
@@ -267,48 +267,48 @@ Wire Wire Line
 	8200 1650 8200 1700
 Connection ~ 8100 1650
 $Comp
-L BTTS42Bv2-rescue:R-Device R9
+L BTTS57Bv2-rescue:R-Device R9
 U 1 1 60ACF7F8
 P 10600 2600
 F 0 "R9" V 10700 2600 50  0000 C CNN
 F 1 "?R" V 10600 2600 50  0000 C CNN
-F 2 "" V 10530 2600 50  0001 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" V 10530 2600 50  0001 C CNN
 F 3 "~" H 10600 2600 50  0001 C CNN
 	1    10600 2600
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R3
+L BTTS57Bv2-rescue:R-Device R3
 U 1 1 60AD1627
-P 10600 2250
-F 0 "R3" V 10700 2250 50  0000 C CNN
-F 1 "?R" V 10600 2250 50  0000 C CNN
-F 2 "" V 10530 2250 50  0001 C CNN
-F 3 "~" H 10600 2250 50  0001 C CNN
-	1    10600 2250
-	0    -1   -1   0
+P 10600 2450
+F 0 "R3" V 10700 2450 50  0000 C CNN
+F 1 "?R" V 10600 2500 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" V 10530 2450 50  0001 C CNN
+F 3 "~" H 10600 2450 50  0001 C CNN
+	1    10600 2450
+	0    -1   -1   0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R8
+L BTTS57Bv2-rescue:R-Device R8
 U 1 1 60AEAB54
 P 9600 2200
 F 0 "R8" V 9700 2200 50  0000 C CNN
 F 1 "?R" V 9600 2200 50  0000 C CNN
-F 2 "" V 9530 2200 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 9530 2200 50  0001 C CNN
 F 3 "~" H 9600 2200 50  0001 C CNN
 	1    9600 2200
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R15
+L BTTS57Bv2-rescue:R-Device R15
 U 1 1 60AEB061
 P 9350 2200
 F 0 "R15" V 9450 2200 50  0000 C CNN
 F 1 "?R" V 9350 2200 50  0000 C CNN
-F 2 "" V 9280 2200 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 9280 2200 50  0001 C CNN
 F 3 "~" H 9350 2200 50  0001 C CNN
 	1    9350 2200
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 Text GLabel 9350 2050 1    50   Input ~ 0
 VDD
@@ -316,51 +316,49 @@ Text GLabel 9600 2050 1    50   Input ~ 0
 VDD
 Text GLabel 9900 2250 0    50   Input ~ 0
 VSS
-Text GLabel 9900 2800 0    50   Input ~ 0
-VSS
 $Comp
-L BTTS42Bv2-rescue:LED-Device D4
+L BTTS57Bv2-rescue:LED-Device D4
 U 1 1 60AF1192
 P 6850 2600
 F 0 "D4" V 6889 2482 50  0000 R CNN
 F 1 "LED" V 6798 2482 50  0000 R CNN
-F 2 "" H 6850 2600 50  0001 C CNN
+F 2 "LED_SMD:LED_0603_1608Metric" H 6850 2600 50  0001 C CNN
 F 3 "~" H 6850 2600 50  0001 C CNN
 	1    6850 2600
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R17
+L BTTS57Bv2-rescue:R-Device R17
 U 1 1 60AF1C31
 P 7150 2600
 F 0 "R17" V 7250 2600 50  0000 C CNN
 F 1 "?R" V 7150 2600 50  0000 C CNN
-F 2 "" V 7080 2600 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 7080 2600 50  0001 C CNN
 F 3 "~" H 7150 2600 50  0001 C CNN
 	1    7150 2600
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R6
+L BTTS57Bv2-rescue:R-Device R6
 U 1 1 60AF26DA
 P 6400 6900
 F 0 "R6" V 6500 6900 50  0000 C CNN
 F 1 "?R" V 6400 6900 50  0000 C CNN
-F 2 "" V 6330 6900 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 6330 6900 50  0001 C CNN
 F 3 "~" H 6400 6900 50  0001 C CNN
 	1    6400 6900
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:LED-Device D1
+L BTTS57Bv2-rescue:LED-Device D1
 U 1 1 60AF2A38
 P 6400 7200
 F 0 "D1" V 6439 7082 50  0000 R CNN
 F 1 "LED" V 6348 7082 50  0000 R CNN
-F 2 "" H 6400 7200 50  0001 C CNN
+F 2 "LED_SMD:LED_0603_1608Metric" H 6400 7200 50  0001 C CNN
 F 3 "~" H 6400 7200 50  0001 C CNN
 	1    6400 7200
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Text GLabel 6400 6750 1    50   Input ~ 0
 VDD
@@ -373,7 +371,7 @@ error
 Text GLabel 6700 2600 0    50   Input ~ 0
 VSS
 $Comp
-L BTTS42Bv2-rescue:Conn_01x06-Connector_Generic P1
+L BTTS57Bv2-rescue:Conn_01x06-Connector_Generic P1
 U 1 1 60AFD8E6
 P 7700 6000
 F 0 "P1" H 7780 5992 50  0000 L CNN
@@ -381,7 +379,7 @@ F 1 "Conn_01x06" H 7780 5901 50  0000 L CNN
 F 2 "Connector_JST:JST_XH_B6B-XH-A_1x06_P2.50mm_Vertical" H 7700 6000 50  0001 C CNN
 F 3 "~" H 7700 6000 50  0001 C CNN
 	1    7700 6000
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 7500 5800 0    50   Input ~ 0
 DIR_IN
@@ -394,7 +392,7 @@ VSS
 Text GLabel 7500 6300 0    50   Input ~ 0
 VMOT
 $Comp
-L BTTS42Bv2-rescue:Conn_01x02-Connector_Generic P5
+L BTTS57Bv2-rescue:Conn_01x02-Connector_Generic P5
 U 1 1 60B01C4C
 P 5400 7100
 F 0 "P5" H 5500 7050 50  0000 C CNN
@@ -402,20 +400,20 @@ F 1 "Conn_01x02" H 5500 7200 50  0000 C CNN
 F 2 "Connector_JST:JST_XH_B2B-XH-AM_1x02_P2.50mm_Vertical" H 5400 7100 50  0001 C CNN
 F 3 "~" H 5400 7100 50  0001 C CNN
 	1    5400 7100
-	1    0    0    1
+	1    0    0    1   
 $EndComp
 Text GLabel 4100 6600 1    50   Input ~ 0
 5V
 $Comp
-L BTTS42Bv2-rescue:R-Device R19
+L BTTS57Bv2-rescue:R-Device R19
 U 1 1 60B10824
 P 5100 7050
 F 0 "R19" H 5100 7300 50  0000 C CNN
 F 1 "?R" V 5100 7050 50  0000 C CNN
-F 2 "" V 5030 7050 50  0001 C CNN
+F 2 "Resistor_SMD:R_1206_3216Metric" V 5030 7050 50  0001 C CNN
 F 3 "~" H 5100 7050 50  0001 C CNN
 	1    5100 7050
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 Wire Wire Line
 	4950 7000 5000 7000
@@ -440,18 +438,18 @@ Wire Wire Line
 Text GLabel 3500 5800 2    50   Input ~ 0
 VMOT
 $Comp
-L BTTS42Bv2-rescue:D-Device D2
+L BTTS57Bv2-rescue:D-Device D2
 U 1 1 60B37332
 P 3350 5800
 F 0 "D2" H 3350 5583 50  0000 C CNN
 F 1 "D" H 3350 5674 50  0000 C CNN
-F 2 "" H 3350 5800 50  0001 C CNN
+F 2 "Diode_SMD:D_2512_6332Metric" H 3350 5800 50  0001 C CNN
 F 3 "~" H 3350 5800 50  0001 C CNN
 	1    3350 5800
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:A4950E-Driver_Motor U4
+L BTTS57Bv2-rescue:A4950E-Driver_Motor U4
 U 1 1 60A51695
 P 2150 1250
 F 0 "U4" H 2400 1600 50  0000 C CNN
@@ -459,10 +457,10 @@ F 1 "A4950E" H 1900 1600 50  0000 C CNN
 F 2 "Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm" H 2150 700 50  0001 C CNN
 F 3 "http://www.allegromicro.com/~/media/Files/Datasheets/A4950-Datasheet.ashx" H 1850 1600 50  0001 C CNN
 	1    2150 1250
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:A4950E-Driver_Motor U2
+L BTTS57Bv2-rescue:A4950E-Driver_Motor U2
 U 1 1 60A5330C
 P 2150 2400
 F 0 "U2" H 2400 2750 50  0000 C CNN
@@ -470,7 +468,7 @@ F 1 "A4950E" H 1900 2750 50  0000 C CNN
 F 2 "Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.3mm" H 2150 1850 50  0001 C CNN
 F 3 "http://www.allegromicro.com/~/media/Files/Datasheets/A4950-Datasheet.ashx" H 1850 2750 50  0001 C CNN
 	1    2150 2400
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 1750 1050 0    50   Input ~ 0
 motordriverU4#3
@@ -481,15 +479,15 @@ motordriverU2#3
 Text GLabel 1750 2300 0    50   Input ~ 0
 motordriverU2#2
 $Comp
-L BTTS42Bv2-rescue:Conn_01x04-Connector_Generic P2
+L BTTS57Bv2-rescue:Conn_01x04-Connector_Generic P2
 U 1 1 60A54CC1
 P 3150 1800
 F 0 "P2" H 3230 1792 50  0000 L CNN
 F 1 "Conn_01x04" H 3230 1701 50  0000 L CNN
-F 2 "" H 3150 1800 50  0001 C CNN
+F 2 "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical" H 3150 1800 50  0001 C CNN
 F 3 "~" H 3150 1800 50  0001 C CNN
 	1    3150 1800
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	2550 2300 2950 2300
@@ -518,26 +516,26 @@ VSS
 Text GLabel 2150 1650 3    50   Input ~ 0
 VSS
 $Comp
-L BTTS42Bv2-rescue:R-Device R2
+L BTTS57Bv2-rescue:R-Device R2
 U 1 1 60A5D4F4
 P 2550 1400
 F 0 "R2" V 2650 1400 50  0000 C CNN
-F 1 "?R" V 2550 1400 50  0000 C CNN
-F 2 "" V 2480 1400 50  0001 C CNN
+F 1 "0.1R" V 2550 1400 50  0000 C CNN
+F 2 "Resistor_SMD:R_2512_6332Metric" V 2480 1400 50  0001 C CNN
 F 3 "~" H 2550 1400 50  0001 C CNN
 	1    2550 1400
-	1    0    0    1
+	1    0    0    1   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R1
+L BTTS57Bv2-rescue:R-Device R1
 U 1 1 60A5DED0
 P 2550 2550
 F 0 "R1" V 2650 2550 50  0000 C CNN
-F 1 "?R" V 2550 2550 50  0000 C CNN
-F 2 "" V 2480 2550 50  0001 C CNN
+F 1 "0.1R" V 2550 2550 50  0000 C CNN
+F 2 "Resistor_SMD:R_2512_6332Metric" V 2480 2550 50  0001 C CNN
 F 3 "~" H 2550 2550 50  0001 C CNN
 	1    2550 2550
-	1    0    0    1
+	1    0    0    1   
 $EndComp
 Text GLabel 2550 2700 3    50   Input ~ 0
 VSS
@@ -550,32 +548,32 @@ VSS
 Text GLabel 3050 1250 3    50   Input ~ 0
 VSS
 $Comp
-L BTTS42Bv2-rescue:CP-Device C1
+L BTTS57Bv2-rescue:CP-Device C1
 U 1 1 60A60F81
 P 3050 1100
 F 0 "C1" H 3168 1146 50  0000 L CNN
 F 1 "100 35V VT" H 3168 1055 50  0000 L CNN
-F 2 "" H 3088 950 50  0001 C CNN
+F 2 "Capacitor_SMD:CP_Elec_6.3x7.7" H 3088 950 50  0001 C CNN
 F 3 "~" H 3050 1100 50  0001 C CNN
 	1    3050 1100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	2150 2000 950  2000
 Wire Wire Line
-	950  2000 950  850
+	950  2000 950  850 
 Wire Wire Line
-	3050 850  3050 950
+	3050 850  3050 950 
 $Comp
-L BTTS42Bv2-rescue:CP-Device C10
+L BTTS57Bv2-rescue:CP-Device C10
 U 1 1 60AC0984
 P 4100 1100
 F 0 "C10" H 4218 1146 50  0000 L CNN
 F 1 "100 35V VT" H 4218 1055 50  0000 L CNN
-F 2 "" H 4138 950 50  0001 C CNN
+F 2 "Capacitor_SMD:CP_Elec_6.3x7.7" H 4138 950 50  0001 C CNN
 F 3 "~" H 4100 1100 50  0001 C CNN
 	1    4100 1100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L el-0631:EL-0631 U3
@@ -583,10 +581,10 @@ U 1 1 60A729DF
 P 10350 3050
 F 0 "U3" H 10525 4075 50  0000 C CNN
 F 1 "EL-0631" H 10525 3984 50  0000 C CNN
-F 2 "" H 9990 2730 50  0001 C CNN
+F 2 "Package_SO:SOP-8_3.9x4.9mm_P1.27mm" H 9990 2730 50  0001 C CNN
 F 3 "" H 9990 2730 50  0001 C CNN
 	1    10350 3050
-	-1   0    0    -1
+	-1   0    0    -1  
 $EndComp
 Wire Wire Line
 	9350 2350 9350 2450
@@ -596,23 +594,23 @@ U 1 1 60AC06ED
 P 9850 3550
 F 0 "U6" H 9900 4125 50  0000 C CNN
 F 1 "EL357NC" H 9900 4034 50  0000 C CNN
-F 2 "" H 9850 3550 50  0001 C CNN
+F 2 "Package_SO:SOP-4_3.8x4.1mm_P2.54mm" H 9850 3550 50  0001 C CNN
 F 3 "" H 9850 3550 50  0001 C CNN
 	1    9850 3550
-	-1   0    0    -1
+	-1   0    0    -1  
 $EndComp
 Wire Wire Line
 	9600 2350 9600 2600
 $Comp
-L BTTS42Bv2-rescue:C-Device C3
+L BTTS57Bv2-rescue:C-Device C3
 U 1 1 60AD4FCE
 P 3800 1100
 F 0 "C3" H 3850 1200 50  0000 L CNN
 F 1 "C" H 3650 1100 50  0000 L CNN
-F 2 "" H 3838 950 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 3838 950 50  0001 C CNN
 F 3 "~" H 3800 1100 50  0001 C CNN
 	1    3800 1100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 8600 4500 2    50   Input ~ 0
 CALIB_SWITCH
@@ -652,10 +650,10 @@ U 1 1 60B101B5
 P 1850 7550
 F 0 "U5" H 1800 8565 50  0000 C CNN
 F 1 "TLE5012B" H 1800 8474 50  0000 C CNN
-F 2 "" H 1850 7550 50  0001 C CNN
+F 2 "Package_SO:Infineon_PG-DSO-8-27_3.9x4.9mm_EP2.65x3mm" H 1850 7550 50  0001 C CNN
 F 3 "" H 1850 7550 50  0001 C CNN
 	1    1850 7550
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	8600 3700 8650 3700
@@ -664,15 +662,15 @@ Wire Wire Line
 Wire Wire Line
 	8650 3600 8600 3600
 $Comp
-L BTTS42Bv2-rescue:R-Device R18
+L BTTS57Bv2-rescue:R-Device R18
 U 1 1 60B16BF8
 P 1300 7400
 F 0 "R18" V 1400 7400 50  0000 C CNN
 F 1 "?R" V 1300 7400 50  0000 C CNN
-F 2 "" V 1230 7400 50  0001 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" V 1230 7400 50  0001 C CNN
 F 3 "~" H 1300 7400 50  0001 C CNN
 	1    1300 7400
-	0    -1   1    0
+	0    -1   1    0   
 $EndComp
 Text GLabel 1150 7400 0    50   Input ~ 0
 TLE_D
@@ -689,7 +687,7 @@ TLE_CSQ
 Text GLabel 2150 7000 2    50   Input ~ 0
 VSS
 $Comp
-L BTTS42Bv2-rescue:+3.3V-power #PWR0101
+L BTTS57Bv2-rescue:+3.3V-power #PWR0101
 U 1 1 60B1BC1C
 P 2150 7200
 F 0 "#PWR0101" H 2150 7050 50  0001 C CNN
@@ -697,21 +695,21 @@ F 1 "+3.3V" H 2165 7373 50  0000 C CNN
 F 2 "" H 2150 7200 50  0001 C CNN
 F 3 "" H 2150 7200 50  0001 C CNN
 	1    2150 7200
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 NoConn ~ 1450 6800
 NoConn ~ 2150 6800
 NoConn ~ 2150 7400
 $Comp
-L BTTS42Bv2-rescue:R-Device R7
+L BTTS57Bv2-rescue:R-Device R7
 U 1 1 60B3F70A
 P 6450 3400
 F 0 "R7" V 6550 3400 50  0000 C CNN
 F 1 "?R" V 6450 3400 50  0000 C CNN
-F 2 "" V 6380 3400 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 6380 3400 50  0001 C CNN
 F 3 "~" H 6450 3400 50  0001 C CNN
 	1    6450 3400
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	6600 3400 7300 3400
@@ -720,15 +718,15 @@ motordriverU2#PWM
 Wire Wire Line
 	1700 2500 1750 2500
 $Comp
-L BTTS42Bv2-rescue:R-Device R10
+L BTTS57Bv2-rescue:R-Device R10
 U 1 1 60B4DF59
 P 6450 3500
 F 0 "R10" V 6550 3500 50  0000 C CNN
 F 1 "?R" V 6450 3500 50  0000 C CNN
-F 2 "" V 6380 3500 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 6380 3500 50  0001 C CNN
 F 3 "~" H 6450 3500 50  0001 C CNN
 	1    6450 3500
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 Wire Wire Line
 	6600 3500 7300 3500
@@ -737,53 +735,53 @@ motordriverU4#PWM
 Text GLabel 1750 1350 0    50   Input ~ 0
 motordriverU4#PWM
 $Comp
-L BTTS42Bv2-rescue:D-Device D3
+L BTTS57Bv2-rescue:D-Device D3
 U 1 1 60B6C2FE
 P 4250 850
 F 0 "D3" H 4250 1067 50  0000 C CNN
 F 1 "D" H 4250 976 50  0000 C CNN
-F 2 "" H 4250 850 50  0001 C CNN
+F 2 "Diode_SMD:D_2512_6332Metric" H 4250 850 50  0001 C CNN
 F 3 "~" H 4250 850 50  0001 C CNN
-	1    4250 850
-	1    0    0    -1
+	1    4250 850 
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C8
+L BTTS57Bv2-rescue:C-Device C8
 U 1 1 60B6D06A
 P 6000 3650
 F 0 "C8" H 6050 3750 50  0000 L CNN
 F 1 "C" H 5850 3650 50  0000 L CNN
-F 2 "" H 6038 3500 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 6038 3500 50  0001 C CNN
 F 3 "~" H 6000 3650 50  0001 C CNN
 	1    6000 3650
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C11
+L BTTS57Bv2-rescue:C-Device C11
 U 1 1 60B6E52C
 P 4850 3550
 F 0 "C11" H 4900 3650 50  0000 L CNN
 F 1 "C" H 4700 3550 50  0000 L CNN
-F 2 "" H 4888 3400 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 4888 3400 50  0001 C CNN
 F 3 "~" H 4850 3550 50  0001 C CNN
 	1    4850 3550
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:Conn_01x08-Connector_Generic P4
+L BTTS57Bv2-rescue:Conn_01x08-Connector_Generic P4
 U 1 1 60B6FA19
 P 9050 5900
 F 0 "P4" H 9130 5892 50  0000 L CNN
 F 1 "Conn_01x08" H 9130 5801 50  0000 L CNN
-F 2 "" H 9050 5900 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical" H 9050 5900 50  0001 C CNN
 F 3 "~" H 9050 5900 50  0001 C CNN
 	1    9050 5900
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 8850 5600 0    50   Output ~ 0
 SWCLK
 $Comp
-L BTTS42Bv2-rescue:+3.3V-power #PWR0102
+L BTTS57Bv2-rescue:+3.3V-power #PWR0102
 U 1 1 60B71C5C
 P 8550 5700
 F 0 "#PWR0102" H 8550 5550 50  0001 C CNN
@@ -791,7 +789,7 @@ F 1 "+3.3V" H 8565 5873 50  0000 C CNN
 F 2 "" H 8550 5700 50  0001 C CNN
 F 3 "" H 8550 5700 50  0001 C CNN
 	1    8550 5700
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	8550 5700 8850 5700
@@ -800,7 +798,7 @@ SWDIO
 Text GLabel 8850 5900 0    50   Input ~ 0
 VSS
 $Comp
-L BTTS42Bv2-rescue:+3.3V-power #PWR0103
+L BTTS57Bv2-rescue:+3.3V-power #PWR0103
 U 1 1 60B7949B
 P 8550 6000
 F 0 "#PWR0103" H 8550 5850 50  0001 C CNN
@@ -808,7 +806,7 @@ F 1 "+3.3V" H 8565 6173 50  0000 C CNN
 F 2 "" H 8550 6000 50  0001 C CNN
 F 3 "" H 8550 6000 50  0001 C CNN
 	1    8550 6000
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	8550 6000 8850 6000
@@ -819,62 +817,62 @@ TX1
 Text GLabel 8850 6300 0    50   Input ~ 0
 VSS
 $Comp
-L BTTS42Bv2-rescue:Conn_01x07-Connector_Generic p7
+L BTTS57Bv2-rescue:Conn_01x07-Connector_Generic p7
 U 1 1 60B7EABD
 P 10550 5850
 F 0 "p7" H 10468 5325 50  0000 C CNN
 F 1 "Conn_01x08" H 10468 5416 50  0000 C CNN
-F 2 "" H 10550 5850 50  0001 C CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical" H 10550 5850 50  0001 C CNN
 F 3 "~" H 10550 5850 50  0001 C CNN
 	1    10550 5850
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C2
+L BTTS57Bv2-rescue:C-Device C2
 U 1 1 60B827B8
 P 8750 1500
 F 0 "C2" H 8800 1600 50  0000 L CNN
 F 1 "C" H 8600 1500 50  0000 L CNN
-F 2 "" H 8788 1350 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 8788 1350 50  0001 C CNN
 F 3 "~" H 8750 1500 50  0001 C CNN
 	1    8750 1500
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C15
+L BTTS57Bv2-rescue:C-Device C15
 U 1 1 60B85066
 P 6850 2100
 F 0 "C15" H 6900 2200 50  0000 L CNN
 F 1 "C" H 6700 2100 50  0000 L CNN
-F 2 "" H 6888 1950 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 6888 1950 50  0001 C CNN
 F 3 "~" H 6850 2100 50  0001 C CNN
 	1    6850 2100
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R22
+L BTTS57Bv2-rescue:R-Device R22
 U 1 1 60B85EFC
 P 7150 2100
 F 0 "R22" V 7250 2100 50  0000 C CNN
 F 1 "?R" V 7200 2100 50  0000 C CNN
-F 2 "" V 7080 2100 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 7080 2100 50  0001 C CNN
 F 3 "~" H 7150 2100 50  0001 C CNN
 	1    7150 2100
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C20
+L BTTS57Bv2-rescue:C-Device C20
 U 1 1 60B8BD17
 P 4700 2150
 F 0 "C20" H 4750 2250 50  0000 L CNN
 F 1 "C" H 4550 2150 50  0000 L CNN
-F 2 "" H 4738 2000 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 4738 2000 50  0001 C CNN
 F 3 "~" H 4700 2150 50  0001 C CNN
 	1    4700 2150
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:Crystal-Device Y1
+L BTTS57Bv2-rescue:Crystal-Device Y1
 U 1 1 60B8D3A3
 P 5000 2350
 F 0 "Y1" H 5000 2618 50  0000 C CNN
@@ -882,87 +880,87 @@ F 1 "Crystal" H 5000 2527 50  0000 C CNN
 F 2 "" H 5000 2350 50  0001 C CNN
 F 3 "~" H 5000 2350 50  0001 C CNN
 	1    5000 2350
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C21
+L BTTS57Bv2-rescue:C-Device C21
 U 1 1 60B8E345
 P 4700 2600
 F 0 "C21" H 4750 2700 50  0000 L CNN
 F 1 "C" H 4550 2600 50  0000 L CNN
-F 2 "" H 4738 2450 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 4738 2450 50  0001 C CNN
 F 3 "~" H 4700 2600 50  0001 C CNN
 	1    4700 2600
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R21
+L BTTS57Bv2-rescue:R-Device R21
 U 1 1 60B8F2A1
 P 5400 2350
 F 0 "R21" V 5500 2350 50  0000 C CNN
 F 1 "?R" V 5400 2300 50  0000 C CNN
-F 2 "" V 5330 2350 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 5330 2350 50  0001 C CNN
 F 3 "~" H 5400 2350 50  0001 C CNN
 	1    5400 2350
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C13
+L BTTS57Bv2-rescue:C-Device C13
 U 1 1 60B9062C
 P 9100 1500
 F 0 "C13" H 9150 1600 50  0000 L CNN
 F 1 "C" H 8950 1500 50  0000 L CNN
-F 2 "" H 9138 1350 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 9138 1350 50  0001 C CNN
 F 3 "~" H 9100 1500 50  0001 C CNN
 	1    9100 1500
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C4
+L BTTS57Bv2-rescue:C-Device C4
 U 1 1 60B913D6
 P 9400 1500
 F 0 "C4" H 9450 1600 50  0000 L CNN
 F 1 "C" H 9250 1500 50  0000 L CNN
-F 2 "" H 9438 1350 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 9438 1350 50  0001 C CNN
 F 3 "~" H 9400 1500 50  0001 C CNN
 	1    9400 1500
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C16
+L BTTS57Bv2-rescue:C-Device C16
 U 1 1 60B92B5B
 P 9800 1500
 F 0 "C16" H 9850 1600 50  0000 L CNN
 F 1 "C" H 9650 1500 50  0000 L CNN
-F 2 "" H 9838 1350 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 9838 1350 50  0001 C CNN
 F 3 "~" H 9800 1500 50  0001 C CNN
 	1    9800 1500
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R23
+L BTTS57Bv2-rescue:R-Device R23
 U 1 1 60B9A8C2
 P 3600 6900
 F 0 "R23" V 3700 6900 50  0000 C CNN
 F 1 "?R" V 3600 6950 50  0000 C CNN
-F 2 "" V 3530 6900 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 3530 6900 50  0001 C CNN
 F 3 "~" H 3600 6900 50  0001 C CNN
 	1    3600 6900
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R14
+L BTTS57Bv2-rescue:R-Device R14
 U 1 1 60B9BF48
 P 3150 7100
 F 0 "R14" V 3250 7100 50  0000 C CNN
 F 1 "?R" V 3150 7150 50  0000 C CNN
-F 2 "" V 3080 7100 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 3080 7100 50  0001 C CNN
 F 3 "~" H 3150 7100 50  0001 C CNN
 	1    3150 7100
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:LD1117S33CTR-dk_PMIC-Voltage-Regulators-Linear U8
+L BTTS57Bv2-rescue:LD1117S33CTR-dk_PMIC-Voltage-Regulators-Linear U8
 U 1 1 60BA0B17
 P 1500 4100
 F 0 "U8" H 1550 4387 60  0000 C CNN
@@ -979,10 +977,10 @@ F 10 "IC REG LINEAR 3.3V 800MA SOT223" H 1700 5100 60  0001 L CNN "Description"
 F 11 "STMicroelectronics" H 1700 5200 60  0001 L CNN "Manufacturer"
 F 12 "Active" H 1700 5300 60  0001 L CNN "Status"
 	1    1500 4100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:+3.3V-power #PWR0104
+L BTTS57Bv2-rescue:+3.3V-power #PWR0104
 U 1 1 60BA1C23
 P 2150 4100
 F 0 "#PWR0104" H 2150 3950 50  0001 C CNN
@@ -990,7 +988,7 @@ F 1 "+3.3V" H 2165 4273 50  0000 C CNN
 F 2 "" H 2150 4100 50  0001 C CNN
 F 3 "" H 2150 4100 50  0001 C CNN
 	1    2150 4100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	2150 4150 2150 4100
@@ -1007,7 +1005,7 @@ Wire Wire Line
 Text GLabel 1500 4400 3    50   Input ~ 0
 VSS
 $Comp
-L BTTS42Bv2-rescue:+5V-power #PWR0105
+L BTTS57Bv2-rescue:+5V-power #PWR0105
 U 1 1 60BA879A
 P 950 4100
 F 0 "#PWR0105" H 950 3950 50  0001 C CNN
@@ -1015,141 +1013,142 @@ F 1 "+5V" H 965 4273 50  0000 C CNN
 F 2 "" H 950 4100 50  0001 C CNN
 F 3 "" H 950 4100 50  0001 C CNN
 	1    950  4100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	950  4100 1200 4100
 $Comp
-L BTTS42Bv2-rescue:C-Device C17
+L BTTS57Bv2-rescue:C-Device C17
 U 1 1 60BABE2E
 P 2050 5750
 F 0 "C17" H 1750 5750 50  0000 L CNN
 F 1 "C" H 1900 5750 50  0000 L CNN
-F 2 "" H 2088 5600 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 2088 5600 50  0001 C CNN
 F 3 "~" H 2050 5750 50  0001 C CNN
 	1    2050 5750
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C7
+L BTTS57Bv2-rescue:C-Device C7
 U 1 1 60BACF1C
 P 2300 5750
-F 0 "C7" H 2350 5600 50  0000 L CNN
+F 0 "C7" H 2450 5750 50  0000 L CNN
 F 1 "C" H 2400 5500 50  0000 L CNN
-F 2 "" H 2338 5600 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 2338 5600 50  0001 C CNN
 F 3 "~" H 2300 5750 50  0001 C CNN
 	1    2300 5750
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R13
+L BTTS57Bv2-rescue:R-Device R13
 U 1 1 60BAE041
 P 2050 5450
 F 0 "R13" V 2150 5450 50  0000 C CNN
 F 1 "?R" V 2050 5500 50  0000 C CNN
-F 2 "" V 1980 5450 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 1980 5450 50  0001 C CNN
 F 3 "~" H 2050 5450 50  0001 C CNN
 	1    2050 5450
-	-1   0    0    1
+	-1   0    0    1   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R16
+L BTTS57Bv2-rescue:R-Device R16
 U 1 1 60BAF25C
 P 2300 5450
 F 0 "R16" V 2400 5450 50  0000 C CNN
 F 1 "?R" V 2300 5500 50  0000 C CNN
-F 2 "" V 2230 5450 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 2230 5450 50  0001 C CNN
 F 3 "~" H 2300 5450 50  0001 C CNN
 	1    2300 5450
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:R-Device R11
+L BTTS57Bv2-rescue:R-Device R11
 U 1 1 60BB030A
 P 3050 5650
 F 0 "R11" V 3150 5650 50  0000 C CNN
 F 1 "?R" V 3050 5700 50  0000 C CNN
-F 2 "" V 2980 5650 50  0001 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric" V 2980 5650 50  0001 C CNN
 F 3 "~" H 3050 5650 50  0001 C CNN
 	1    3050 5650
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C9
+L BTTS57Bv2-rescue:C-Device C9
 U 1 1 60BB1436
 P 2750 5600
 F 0 "C9" V 2700 5700 50  0000 L CNN
 F 1 "C" H 2600 5600 50  0000 L CNN
-F 2 "" H 2788 5450 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 2788 5450 50  0001 C CNN
 F 3 "~" H 2750 5600 50  0001 C CNN
 	1    2750 5600
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C12
+L BTTS57Bv2-rescue:C-Device C12
 U 1 1 60BB4B03
 P 2750 5850
 F 0 "C12" V 2800 5950 50  0000 L CNN
 F 1 "C" H 2900 5850 50  0000 L CNN
-F 2 "" H 2788 5700 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 2788 5700 50  0001 C CNN
 F 3 "~" H 2750 5850 50  0001 C CNN
 	1    2750 5850
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C5
+L BTTS57Bv2-rescue:C-Device C5
 U 1 1 60BB5C6A
 P 2000 5100
 F 0 "C5" V 1900 5200 50  0000 L CNN
 F 1 "C" H 1850 5100 50  0000 L CNN
-F 2 "" H 2038 4950 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 2038 4950 50  0001 C CNN
 F 3 "~" H 2000 5100 50  0001 C CNN
 	1    2000 5100
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C6
+L BTTS57Bv2-rescue:C-Device C6
 U 1 1 60BB6F36
 P 1650 5250
 F 0 "C6" H 1700 5350 50  0000 L CNN
 F 1 "C" H 1500 5250 50  0000 L CNN
-F 2 "" H 1688 5100 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 1688 5100 50  0001 C CNN
 F 3 "~" H 1650 5250 50  0001 C CNN
 	1    1650 5250
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:C-Device C14
+L BTTS57Bv2-rescue:C-Device C14
 U 1 1 60BB80E9
 P 1300 5250
 F 0 "C14" H 1350 5350 50  0000 L CNN
 F 1 "C" H 1150 5250 50  0000 L CNN
-F 2 "" H 1338 5100 50  0001 C CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 1338 5100 50  0001 C CNN
 F 3 "~" H 1300 5250 50  0001 C CNN
 	1    1300 5250
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:D-Device D5
+L BTTS57Bv2-rescue:D-Device D5
 U 1 1 60C2DD94
 P 850 5700
 F 0 "D5" H 850 5483 50  0000 C CNN
 F 1 "D" H 850 5574 50  0000 C CNN
-F 2 "" H 850 5700 50  0001 C CNN
+F 2 "Diode_SMD:D_2512_6332Metric" H 850 5700 50  0001 C CNN
 F 3 "~" H 850 5700 50  0001 C CNN
 	1    850  5700
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 $Comp
-L BTTS42Bv2-rescue:INDUCTOR-pspice L1
+L BTTS57Bv2-rescue:INDUCTOR-pspice L1
 U 1 1 60C30667
 P 850 5300
 F 0 "L1" H 850 5515 50  0000 C CNN
-F 1 "INDUCTOR" H 850 5424 50  0000 C CNN
-F 2 "" H 850 5300 50  0001 C CNN
+F 1 "22uH" H 850 5424 50  0000 C CNN
+F 2 "Inductor_SMD:L_Wuerth_MAPI-4030" H 850 5300 50  0001 C CNN
 F 3 "~" H 850 5300 50  0001 C CNN
+F 4 "yes" H 850 5300 50  0001 C CNN "uncertain"
 	1    850  5300
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 $Comp
 L BNOR11:BNOR11 U1
@@ -1160,30 +1159,30 @@ F 1 "BNOR11" H 2500 5934 50  0000 C CNN
 F 2 "" H 2450 5450 50  0001 C CNN
 F 3 "" H 2450 5450 50  0001 C CNN
 	1    2450 5450
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
-Text GLabel 10350 6150 0    50   Input ~ 0
+Text GLabel 10350 5550 0    50   Input ~ 0
 VSS
 $Comp
-L BTTS42Bv2-rescue:+3.3V-power #PWR0106
+L BTTS57Bv2-rescue:+3.3V-power #PWR0106
 U 1 1 60C4A103
-P 10000 6050
-F 0 "#PWR0106" H 10000 5900 50  0001 C CNN
-F 1 "+3.3V" H 10000 6250 50  0000 C CNN
-F 2 "" H 10000 6050 50  0001 C CNN
-F 3 "" H 10000 6050 50  0001 C CNN
-	1    10000 6050
-	0    -1   -1   0
+P 9950 5650
+F 0 "#PWR0106" H 9950 5500 50  0001 C CNN
+F 1 "+3.3V" H 9950 5850 50  0000 C CNN
+F 2 "" H 9950 5650 50  0001 C CNN
+F 3 "" H 9950 5650 50  0001 C CNN
+	1    9950 5650
+	0    -1   -1   0   
 $EndComp
-Text GLabel 10350 5950 0    50   Input ~ 0
-OLED_DC
+Text GLabel 10350 5750 0    50   Input ~ 0
+OLED_D0
 Text GLabel 10350 5850 0    50   Input ~ 0
 OLED_D1
-Text GLabel 10350 5750 0    50   Input ~ 0
+Text GLabel 10350 5950 0    50   Input ~ 0
 OLED_RST
-Text GLabel 10350 5650 0    50   Input ~ 0
+Text GLabel 10350 6050 0    50   Input ~ 0
 OLED_DC
-Text GLabel 10350 5550 0    50   Input ~ 0
+Text GLabel 10350 6150 0    50   Input ~ 0
 OLED_CS
 Wire Wire Line
 	2150 5100 2350 5100
@@ -1199,7 +1198,7 @@ Wire Wire Line
 Connection ~ 1850 5100
 Connection ~ 2050 5600
 $Comp
-L BTTS42Bv2-rescue:+5V-power #PWR0107
+L BTTS57Bv2-rescue:+5V-power #PWR0107
 U 1 1 60C0154D
 P 1650 5100
 F 0 "#PWR0107" H 1650 4950 50  0001 C CNN
@@ -1207,7 +1206,7 @@ F 1 "+5V" H 1665 5273 50  0000 C CNN
 F 2 "" H 1650 5100 50  0001 C CNN
 F 3 "" H 1650 5100 50  0001 C CNN
 	1    1650 5100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 2050 5900 3    50   Input ~ 0
 VSS
@@ -1226,15 +1225,15 @@ Connection ~ 2300 5300
 Wire Wire Line
 	2300 5300 2350 5300
 $Comp
-L BTTS42Bv2-rescue:+3.3V-power #PWR0108
+L BTTS57Bv2-rescue:+3.3V-power #PWR0108
 U 1 1 60C37881
-P 2300 5900
-F 0 "#PWR0108" H 2300 5750 50  0001 C CNN
-F 1 "+3.3V" H 2315 6073 50  0000 C CNN
-F 2 "" H 2300 5900 50  0001 C CNN
-F 3 "" H 2300 5900 50  0001 C CNN
-	1    2300 5900
-	-1   0    0    1
+P 2300 6050
+F 0 "#PWR0108" H 2300 5900 50  0001 C CNN
+F 1 "+3.3V" H 2315 6223 50  0000 C CNN
+F 2 "" H 2300 6050 50  0001 C CNN
+F 3 "" H 2300 6050 50  0001 C CNN
+	1    2300 6050
+	-1   0    0    1   
 $EndComp
 Wire Wire Line
 	850  5850 1300 5850
@@ -1329,22 +1328,22 @@ Wire Wire Line
 Text GLabel 5550 3100 0    50   Input ~ 0
 VSS
 Wire Wire Line
-	950  850  2150 850
+	950  850  2150 850 
 Wire Wire Line
-	2150 850  3050 850
-Connection ~ 2150 850
+	2150 850  3050 850 
+Connection ~ 2150 850 
 Wire Wire Line
-	3050 850  3800 850
+	3050 850  3800 850 
 Wire Wire Line
-	3800 850  3800 950
-Connection ~ 3050 850
+	3800 850  3800 950 
+Connection ~ 3050 850 
 Wire Wire Line
 	3050 1250 3800 1250
 Wire Wire Line
 	3800 1250 4100 1250
 Connection ~ 3800 1250
 $Comp
-L BTTS42Bv2-rescue:+3.3V-power #PWR0109
+L BTTS57Bv2-rescue:+3.3V-power #PWR0109
 U 1 1 60F08C2A
 P 6700 2100
 F 0 "#PWR0109" H 6700 1950 50  0001 C CNN
@@ -1352,14 +1351,14 @@ F 1 "+3.3V" H 6700 2300 50  0000 C CNN
 F 2 "" H 6700 2100 50  0001 C CNN
 F 3 "" H 6700 2100 50  0001 C CNN
 	1    6700 2100
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Connection ~ 6000 1900
 Wire Wire Line
 	6000 1550 6000 1600
 Wire Wire Line
-	3800 850  4100 850
-Connection ~ 3800 850
+	3800 850  4100 850 
+Connection ~ 3800 850 
 Wire Wire Line
 	6000 1900 7300 1900
 Text GLabel 5500 1900 0    50   Input ~ 0
@@ -1376,9 +1375,9 @@ Wire Wire Line
 	8600 3300 9150 3300
 Text GLabel 4400 850  2    50   Input ~ 0
 VMOT
-Connection ~ 4100 850
+Connection ~ 4100 850 
 Wire Wire Line
-	4100 850  4100 950
+	4100 850  4100 950 
 Text Notes 750  6600 0    50   ~ 0
 Mag Sensor
 Wire Notes Line
@@ -1409,8 +1408,6 @@ Wire Notes Line
 	5950 5400 5950 6300
 Wire Notes Line
 	5950 6300 4100 6300
-Wire Wire Line
-	10000 6050 10350 6050
 Text Notes 7750 5600 0    50   ~ 0
 connectors
 Wire Wire Line
@@ -1420,7 +1417,7 @@ Wire Wire Line
 	9800 1650 9400 1650
 Connection ~ 9400 1650
 $Comp
-L BTTS42Bv2-rescue:+3.3V-power #PWR0110
+L BTTS57Bv2-rescue:+3.3V-power #PWR0110
 U 1 1 610CAB92
 P 3000 7100
 F 0 "#PWR0110" H 3000 6950 50  0001 C CNN
@@ -1428,7 +1425,7 @@ F 1 "+3.3V" H 3015 7273 50  0000 C CNN
 F 2 "" H 3000 7100 50  0001 C CNN
 F 3 "" H 3000 7100 50  0001 C CNN
 	1    3000 7100
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 3500 6700 0    50   Input ~ 0
 CAN_EN
@@ -1452,9 +1449,9 @@ Wire Notes Line
 Wire Notes Line
 	3950 1400 4850 1400
 Wire Notes Line
-	4850 1400 4850 600
+	4850 1400 4850 600 
 Wire Notes Line
-	4850 600  750  600
+	4850 600  750  600 
 Wire Notes Line
 	750  600  750  3100
 Text GLabel 4150 7200 0    50   Input ~ 0
@@ -1534,7 +1531,7 @@ Wire Wire Line
 Wire Wire Line
 	5550 2300 7300 2300
 $Comp
-L BTTS42Bv2-rescue:GND-power #PWR0111
+L BTTS57Bv2-rescue:GND-power #PWR0111
 U 1 1 60CE8AC4
 P 3300 4200
 F 0 "#PWR0111" H 3300 3950 50  0001 C CNN
@@ -1542,7 +1539,7 @@ F 1 "GND" H 3305 4027 50  0000 C CNN
 F 2 "" H 3300 4200 50  0001 C CNN
 F 3 "" H 3300 4200 50  0001 C CNN
 	1    3300 4200
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 3250 4150 0    50   Input ~ 0
 VSS
@@ -1555,12 +1552,8 @@ Wire Wire Line
 Wire Wire Line
 	9150 2450 9350 2450
 Wire Wire Line
-	8600 3000 9150 3000
-Wire Wire Line
 	9350 2450 9900 2450
 Connection ~ 9350 2450
-Wire Wire Line
-	8600 3100 9300 3100
 Wire Wire Line
 	9300 3100 9300 2600
 Wire Wire Line
@@ -1568,4 +1561,126 @@ Wire Wire Line
 Wire Wire Line
 	9600 2600 9900 2600
 Connection ~ 9600 2600
+$Comp
+L Mechanical:MountingHole_Pad H1
+U 1 1 60C9CCC5
+P 5300 650
+F 0 "H1" V 5254 800 50  0000 L CNN
+F 1 "MountingHole_Pad" V 5345 800 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.7mm_M2.5_ISO14580_Pad_TopBottom" H 5300 650 50  0001 C CNN
+F 3 "~" H 5300 650 50  0001 C CNN
+	1    5300 650 
+	0    1    1    0   
+$EndComp
+Text GLabel 5200 650  0    50   Input ~ 0
+VSS
+$Comp
+L Mechanical:MountingHole_Pad H2
+U 1 1 60CCD61A
+P 5300 850
+F 0 "H2" V 5254 1000 50  0000 L CNN
+F 1 "MountingHole_Pad" V 5345 1000 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.7mm_M2.5_ISO14580_Pad_TopBottom" H 5300 850 50  0001 C CNN
+F 3 "~" H 5300 850 50  0001 C CNN
+	1    5300 850 
+	0    1    1    0   
+$EndComp
+Text GLabel 5200 850  0    50   Input ~ 0
+VSS
+$Comp
+L Mechanical:MountingHole_Pad H3
+U 1 1 60CCDD03
+P 5300 1050
+F 0 "H3" V 5254 1200 50  0000 L CNN
+F 1 "MountingHole_Pad" V 5345 1200 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.7mm_M2.5_ISO14580_Pad_TopBottom" H 5300 1050 50  0001 C CNN
+F 3 "~" H 5300 1050 50  0001 C CNN
+	1    5300 1050
+	0    1    1    0   
+$EndComp
+Text GLabel 5200 1050 0    50   Input ~ 0
+VSS
+$Comp
+L Mechanical:MountingHole_Pad H4
+U 1 1 60CCE39A
+P 5300 1250
+F 0 "H4" V 5254 1400 50  0000 L CNN
+F 1 "MountingHole_Pad" V 5345 1400 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.7mm_M2.5_ISO14580_Pad_TopBottom" H 5300 1250 50  0001 C CNN
+F 3 "~" H 5300 1250 50  0001 C CNN
+	1    5300 1250
+	0    1    1    0   
+$EndComp
+Text GLabel 5200 1250 0    50   Input ~ 0
+VSS
+$Comp
+L Mechanical:MountingHole_Pad H5
+U 1 1 60CCE89C
+P 6500 650
+F 0 "H5" V 6454 800 50  0000 L CNN
+F 1 "MountingHole_Pad" V 6545 800 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.7mm_M2.5_ISO14580_Pad_TopBottom" H 6500 650 50  0001 C CNN
+F 3 "~" H 6500 650 50  0001 C CNN
+	1    6500 650 
+	0    1    1    0   
+$EndComp
+Text GLabel 6400 650  0    50   Input ~ 0
+VSS
+$Comp
+L Mechanical:MountingHole_Pad H6
+U 1 1 60CD2301
+P 6500 850
+F 0 "H6" V 6454 1000 50  0000 L CNN
+F 1 "MountingHole_Pad" V 6545 1000 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.7mm_M2.5_ISO14580_Pad_TopBottom" H 6500 850 50  0001 C CNN
+F 3 "~" H 6500 850 50  0001 C CNN
+	1    6500 850 
+	0    1    1    0   
+$EndComp
+Text GLabel 6400 850  0    50   Input ~ 0
+VSS
+$Comp
+L Mechanical:MountingHole_Pad H7
+U 1 1 60CD2891
+P 6500 1050
+F 0 "H7" V 6454 1200 50  0000 L CNN
+F 1 "MountingHole_Pad" V 6545 1200 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.7mm_M2.5_ISO14580_Pad_TopBottom" H 6500 1050 50  0001 C CNN
+F 3 "~" H 6500 1050 50  0001 C CNN
+	1    6500 1050
+	0    1    1    0   
+$EndComp
+Text GLabel 6400 1050 0    50   Input ~ 0
+VSS
+$Comp
+L Mechanical:MountingHole_Pad H8
+U 1 1 60CD2E56
+P 6500 1250
+F 0 "H8" V 6454 1400 50  0000 L CNN
+F 1 "MountingHole_Pad" V 6545 1400 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.7mm_M2.5_ISO14580_Pad_TopBottom" H 6500 1250 50  0001 C CNN
+F 3 "~" H 6500 1250 50  0001 C CNN
+	1    6500 1250
+	0    1    1    0   
+$EndComp
+Text GLabel 6400 1250 0    50   Input ~ 0
+VSS
+Text GLabel 2300 5900 2    50   Input ~ 0
+VDD
+Wire Wire Line
+	2300 5900 2300 6050
+Text GLabel 9900 2800 0    50   Input ~ 0
+VDD
+Text GLabel 7500 6200 0    50   Input ~ 0
+com
+Text GLabel 10000 3200 2    50   Input ~ 0
+com
+Text GLabel 10450 2250 2    50   Input ~ 0
+com
+Text GLabel 10450 2800 2    50   Input ~ 0
+com
+Wire Wire Line
+	8600 3000 9150 3000
+Wire Wire Line
+	8600 3100 9300 3100
 $EndSCHEMATC
