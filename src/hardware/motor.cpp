@@ -27,7 +27,7 @@ StepperMotor::StepperMotor() {
     HAL_TIM_Base_Init(&tim2Config);
 
     // Set that the step pin should be an external trigger for the timer to count
-    tim2ClkConfig.ClockFilter = 7;
+    tim2ClkConfig.ClockFilter = 0;
     tim2ClkConfig.ClockPolarity = TIM_CLOCKPOLARITY_INVERTED;
     tim2ClkConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
     tim2ClkConfig.ClockSource = TIM_CLOCKSOURCE_ETRMODE2;
