@@ -893,6 +893,12 @@ void Encoder::clearAbsoluteAngleAvg() {
 }
 
 
+// Gets the encoder's step offset (used for calibration)
+double Encoder::getStepOffset() {
+    return encoderStepOffset;
+}
+
+
 // Sets the encoder's step offset (used for calibration)
 void Encoder::setStepOffset(double offset) {
     encoderStepOffset = offset;

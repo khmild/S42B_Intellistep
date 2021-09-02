@@ -204,6 +204,9 @@ void saveParameters() {
     // Save the previous state
     writeFlash(CALIBRATED_INDEX, calibrated);
 
+    // Save the step offset
+    writeFlash(STEP_OFFSET_INDEX, motor.encoder.getStepOffset());
+
     // Get the motor current
     #ifdef ENABLE_DYNAMIC_CURRENT
         writeFlash(DYNAMIC_ACCEL_CURRENT_INDEX, motor.getDynamicAccelCurrent());

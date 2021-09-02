@@ -323,6 +323,7 @@ class Encoder {
         double getAbsoluteAngleAvg();
         float getAbsoluteAngleAvgFloat();
         void clearAbsoluteAngleAvg();
+        double getStepOffset();
         void setStepOffset(double offset);
         void setIncrementsOffset(uint16_t offset);
         void zero();
