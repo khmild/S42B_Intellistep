@@ -33,9 +33,9 @@ G/M Code Table
 - M93 (ex M93 V1.8 or M93) - Sets the angle of a full step. This value should be 1.8° or 0.9°. If no value is provided, then the current value will be returned.
 - M115 (ex M115) - Prints out firmware information, consisting of the version and any enabled features.
 - M116 (ex M116 S1 M"A message") - Simple forward command that will forward a message across the CAN bus. Can be used for pinging or allowing a Serial to connect to the CAN network. Requires `ENABLE_CAN`
-- M306 (ex M306 P1 I1 D1 W10 or M306) - Sets or gets the PID values for the motor. W term is the maximum value of the I windup. If no values are provided, then the current values will be returned. Requires `ENABLE_PID`
-- M307 (ex M307) - Runs an autotune sequence for the PID loop. Requires `ENABLE_PID`
-- M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles. Requires `ENABLE_PID`
+- M154 (ex M154 S8) - Runs the manual PID tuning interface. Serial is filled with encoder angles. S parameter specifies update interval in seconds. Requires `ENABLE_PID`
+- M301 (ex M301 P1 I1 D1 W10 or M301) - Sets or gets the PID values for the motor. W term is the maximum value of the I windup. If no values are provided, then the current values will be returned. Requires `ENABLE_PID`
+- M303 (ex M303) - Runs an autotune sequence for the PID loop. Requires `ENABLE_PID`
 - M350 (ex M350 V16 or M350) - Sets or gets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32. If no value is provided, then the current microstepping divisor will be returned.
 - M352 (ex M352 S1 or M352) - Sets or gets the direction pin inversion for the motor (0 is standard, 1 is inverted). If no value is provided, then the current value will be returned.
 - M353 (ex M353 S1 or M353) - Sets or gets the enable pin inversion for the motor (0 is standard, 1 is inverted). If no value is provided, then the current value will be returned.

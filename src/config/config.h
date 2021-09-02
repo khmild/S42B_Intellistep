@@ -10,7 +10,7 @@
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)45
+#define PATCH_VERSION (uint16_t)46
 
 // --------------  Settings  --------------
 
