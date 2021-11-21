@@ -118,7 +118,9 @@ typedef float real_t;
 
 //#define ENABLE_STEPPING_VELOCITY
 //#define IGNORE_FLASH_VERSION
-#define DISABLE_CORRECTION_TIMER
+#ifndef STEP_CORRECTION
+    #define DISABLE_CORRECTION_TIMER
+#endif
 
 // LED related debugging
 #ifdef ENABLE_LED
@@ -128,7 +130,9 @@ typedef float real_t;
 #endif
 
 // Clock debugging (uses OLED pin)
-#ifndef ENABLE_OLED
+#ifdef ENABLE_OLED
+    #define SHOW_STEP_CNT_INSTEAD_OF_RPM
+#else
     // MCO is PA_8 pin, It also used as OLED_RST_PIN
     //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
 

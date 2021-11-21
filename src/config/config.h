@@ -71,6 +71,9 @@
 #define STRING_END_MARKER '>'
 
 // CAN settings
+// ! WARNING: For the time being, CAN must be enabled
+// ! Disabling it will result in the encoder not working
+// ! YOU HAVE BEEN WARNED!
 #define ENABLE_CAN
 #ifdef ENABLE_CAN
     // The CAN ID of this board
@@ -113,27 +116,33 @@
     #endif
 #endif
 
-// PID settings
-// ! At this time, this feature is still under development
-#define ENABLE_PID
-#ifdef ENABLE_PID
+// If the motor should try to correct after it thinks that steps have been missed
+//#define STEP_CORRECTION
+#ifdef STEP_CORRECTION
 
-    // Default P, I, and D terms
-    #define DEFAULT_P  1000
-    #define DEFAULT_I  2
-    #define DEFAULT_D  0
+    // Uses advanced PID control instead of correcting based on error direction
+    // ! At this time, this feature is still under development
+    //#define ENABLE_PID
+    #ifdef ENABLE_PID
+        // PID settings
 
-    // I windup protection
-    #define DEFAULT_MAX_I 10
+        // Default P, I, and D terms
+        #define DEFAULT_P  1000
+        #define DEFAULT_I  2
+        #define DEFAULT_D  0
 
-    // Minimum sample time (in ms)
-    //#define PID_MIN_SAMPLE_TIME 10
+        // I windup protection
+        #define DEFAULT_MAX_I 10
 
-    // Default min and max for step timing (per second)
-    #define DEFAULT_PID_STEP_MAX 50000
+        // Minimum sample time (in ms)
+        //#define PID_MIN_SAMPLE_TIME 10
 
-    // PID output that the motor should disable at (set to 0 to never disable motor)
-    #define DEFAULT_PID_DISABLE_THRESHOLD 0 //1000
+        // Default min and max for step timing (per second)
+        #define DEFAULT_PID_STEP_MAX 50000
+
+        // PID output that the motor should disable at (set to 0 to never disable motor)
+        #define DEFAULT_PID_DISABLE_THRESHOLD 0 //1000
+    #endif
 #endif
 
 // Direct step functionality (used to command motor to move over Serial/CAN)

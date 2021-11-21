@@ -11,43 +11,43 @@
 StepperMotor::StepperMotor() {
 
     // Setup the input pins
-    pinMode(STEP_PIN, INPUT);
-    pinMode(DIRECTION_PIN, INPUT);
-    pinMode(ENABLE_PIN, INPUT);
-
+    pinMode(STEP_PIN, INPUT_PULLDOWN);
+    pinMode(DIRECTION_PIN, INPUT_PULLDOWN);
+    pinMode(ENABLE_PIN, INPUT_PULLDOWN);
 
     #ifdef USE_HARDWARE_STEP_CNT
     // Setup TIM2 (the base) (for hardware step counter)
     tim2Config.Instance = TIM2;
-    tim2Config.Init.Prescaler = 0;
+    tim2Config.Init.Prescaler = 1; // ! MUST BE EVEN, using formula (prescalar + 1) = actual prescalar
     tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP;
     tim2Config.Init.Period = 0xFFFF;
     tim2Config.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-    HAL_TIM_Base_Init(&tim2Config);
+    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE; // ! Check out for later
 
-    // Set that the step pin should be an external trigger for the timer to count
-    tim2ClkConfig.ClockFilter = 0;
-    tim2ClkConfig.ClockPolarity = TIM_CLOCKPOLARITY_INVERTED;
-    tim2ClkConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
-    tim2ClkConfig.ClockSource = TIM_CLOCKSOURCE_ETRMODE2;
-    HAL_TIM_ConfigClockSource(&tim2Config, &tim2ClkConfig);
+    // Set that we want to use the timer as an encoder counter, using TI1 (the step pin) as the clock pin
+    // Encoders operate identical to how the step/dir interface works
+    tim2EncConfig.EncoderMode = TIM_ENCODERMODE_TI1;
 
-    // Configure the master/slave mode of the timer
-    tim2MSConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-    tim2MSConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-    HAL_TIMEx_MasterConfigSynchronization(&tim2Config, &tim2MSConfig);
+    // Input Capture 1 (step pin)
+    tim2EncConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+    tim2EncConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
+    tim2EncConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+    tim2EncConfig.IC1Filter = 10; // Must be between 0x0 and 0xF (0-15)
 
-    // Set that the direction pin should be used as a direction control
-    // Clear the encoder mode bit, then set it
-    tim2Config.Instance -> SMCR &= ~TIM_SMCR_SMS;
-    tim2Config.Instance -> SMCR |= TIM_ENCODERMODE_TI1;
+    // Input Capture 2 (direction pin)
+    tim2EncConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+    tim2EncConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
+    tim2EncConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+    tim2EncConfig.IC2Filter = 7; // Must be between 0x0 and 0xF (0-15)
+
+    // Initialize the encoder with the created configs
+    HAL_TIM_Encoder_Init(&tim2Config, &tim2EncConfig);
+
+    // Start the encoder
+    HAL_TIM_Encoder_Start(&tim2Config, TIM_CHANNEL_1);
 
     // Reset TIM2's counter
     __HAL_TIM_SET_COUNTER(&tim2Config, 0);
-
-    // Enable TIM2
-    __HAL_TIM_ENABLE(&tim2Config);
 
     // Attach the overflow interrupt (has to use HardwareTimer
     // because HardwareTimer library holds all callbacks)

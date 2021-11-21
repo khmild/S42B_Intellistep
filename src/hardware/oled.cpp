@@ -213,33 +213,44 @@ void displayMotorData() {
     // Get the current absolute angle
     double currentAbsAngle = motor.encoder.getAbsoluteAngle();
 
-    // RPM of the motor (RPM is capped at 2 decimal places)
-    #ifdef ENCODER_SPEED_ESTIMATION
+    // Check if we should be displaying step count instead of RPM
+    #ifdef SHOW_STEP_CNT_INSTEAD_OF_RPM
+        // Set the output string
+        snprintf(outBuffer, OB_SIZE, "STEP:%10.0f", (double)motor.getDesiredStep());
 
-    // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
-    if (motor.encoder.sampleTimeExceeded()) {
-        snprintf(outBuffer, OB_SIZE, "RPM:% 11.3f", motor.getEstimRPM(currentAbsAngle));
-    }
+        // Write out the output string
+        writeOLEDString(0, 0, outBuffer, false);
+    #else
 
-    #else // ! ENCODER_SPEED_ESTIMATION
+        // RPM of the motor (RPM is capped at 2 decimal places)
+        #ifdef ENCODER_SPEED_ESTIMATION
 
-    // No need to check, just sample it
-    snprintf(outBuffer, OB_SIZE, "RPM:%11.3f", motor.getEncoderRPM());
+        // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
+        if (motor.encoder.sampleTimeExceeded()) {
+            snprintf(outBuffer, OB_SIZE, "RPM:% 11.3f", motor.getEstimRPM(currentAbsAngle));
+        }
 
-    #endif // ! ENCODER_SPEED_ESTIMATION
+        #else // ! ENCODER_SPEED_ESTIMATION
 
-    writeOLEDString(0, 0, outBuffer, false);
+        // No need to check, just sample it
+        snprintf(outBuffer, OB_SIZE, "RPM:%11.3f", motor.getEncoderRPM());
+
+        #endif // ! ENCODER_SPEED_ESTIMATION
+
+        // Write out the output string to the display
+        writeOLEDString(0, 0, outBuffer, false);
+    #endif
 
     // Angle error
-    snprintf(outBuffer, OB_SIZE, "Err:% 11.2f", motor.getAngleError(currentAbsAngle));
+    snprintf(outBuffer, OB_SIZE, "ERR:% 11.2f", motor.getAngleError(currentAbsAngle));
     writeOLEDString(0, LINE_HEIGHT, outBuffer, false);
 
     // Current angle of the motor
-    snprintf(outBuffer, OB_SIZE, "Deg:% 11.2f", currentAbsAngle);
+    snprintf(outBuffer, OB_SIZE, "DEG:% 11.2f", currentAbsAngle);
     writeOLEDString(0, LINE_HEIGHT * 2, outBuffer, false);
 
     // Temp of the encoder (close to the motor temp)
-    snprintf(outBuffer, OB_SIZE, "Temp:%8.1f C", motor.encoder.getTemp());
+    snprintf(outBuffer, OB_SIZE, "TEMP:%8.1f C", motor.encoder.getTemp());
     writeOLEDString(0, LINE_HEIGHT * 3, outBuffer, true);
 }
 

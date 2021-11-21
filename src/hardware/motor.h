@@ -232,7 +232,7 @@ class StepperMotor {
 
         // Counter for number of overflows of TIM2 -> CNT (needs to be public for the interrupt)
         // TIM2 -> CNT is unsigned, stepOverflowOffset is unsigned, but ((TIM2 -> CNT) + stepOverflowOffset) is treated as signed value
-        uint32_t stepOverflowOffset = 0;
+        int32_t stepOverflowOffset = 0;
 
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
         uint32_t microstepMultiplier = DEFAULT_MICROSTEP_MULTIPLIER;
@@ -316,8 +316,7 @@ class StepperMotor {
 
         // Configuration for TIM2
         TIM_HandleTypeDef tim2Config;
-        TIM_ClockConfigTypeDef tim2ClkConfig;
-        TIM_MasterConfigTypeDef tim2MSConfig;
+        TIM_Encoder_InitTypeDef tim2EncConfig;
 
         // HardwareTimer (required to assign interrupt)
         HardwareTimer *tim2HWTim = new HardwareTimer(TIM2);

@@ -153,7 +153,7 @@ Encoder::Encoder() {
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
 
     // Reset the encoder's firmware
-    //writeToEncoderRegister(ENCODER_ACT_STATUS_REG, 0x401);
+    //writeToRegister(ENCODER_ACT_STATUS_REG, 0x401);
 
     // Setup the moving average calculations
     speedAvg.begin(RPM_AVG_READINGS);

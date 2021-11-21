@@ -45,7 +45,8 @@
         "sstream": "cpp",
         "stdexcept": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "config_adv.h": "cpp"
     },
     "cSpell.words": [
         "CANID",
