@@ -13,7 +13,7 @@ StepperMotor::StepperMotor() {
     // Setup the input pins
     pinMode(STEP_PIN, INPUT_PULLDOWN);
     pinMode(DIRECTION_PIN, INPUT_PULLDOWN);
-    pinMode(ENABLE_PIN, INPUT_PULLDOWN);
+    pinMode(ENABLE_PIN, INPUT);
 
     #ifdef USE_HARDWARE_STEP_CNT
     // Setup TIM2 (the base) (for hardware step counter)
