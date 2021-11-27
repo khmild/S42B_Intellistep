@@ -16,7 +16,7 @@ StepperMotor::StepperMotor() {
     pinMode(ENABLE_PIN, INPUT);
 
     #ifdef USE_HARDWARE_STEP_CNT
-    // Setup TIM2 (the base) (for hardware step counter)
+    // Setup base config for TIM2 (for hardware step counter)
     tim2Config.Instance = TIM2;
     tim2Config.Init.Prescaler = 1; // ! MUST BE EVEN, using formula (prescalar + 1) = actual prescalar
     tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP;
