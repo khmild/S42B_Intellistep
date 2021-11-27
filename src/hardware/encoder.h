@@ -366,7 +366,7 @@ class Encoder {
         SPI_HandleTypeDef spiConfig;
 
         // Main initialization structure
-        GPIO_InitTypeDef GPIO_InitStructure;
+        GPIO_InitTypeDef GPIOInitStruct;
 
         // Storage for the last overtemp time
         #ifdef ENABLE_OVERTEMP_PROTECTION

@@ -44,7 +44,7 @@ StepperMotor::StepperMotor() {
     HAL_TIM_Encoder_Init(&tim2Config, &tim2EncConfig);
 
     // Start the encoder
-    HAL_TIM_Encoder_Start(&tim2Config, TIM_CHANNEL_1);
+    HAL_TIM_Encoder_Start(&tim2Config, TIM_CHANNEL_ALL);
 
     // Reset TIM2's counter
     __HAL_TIM_SET_COUNTER(&tim2Config, 0);

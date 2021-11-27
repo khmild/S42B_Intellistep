@@ -121,10 +121,14 @@ const std::array<BitField_t, 88> bitFields[] = {
 Encoder::Encoder() {
 
     // Setup pin A5, A6, and A7
-    GPIO_InitStructure.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIOInitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+    GPIOInitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIOInitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
+
+    // Setup the gpioInitStruct for later (hack for reading from encoder,
+    // BTT decided that they would do it incorrectly)
+    GPIOInitStruct.Pin = GPIO_PIN_7;
 
     // Enable the clock for the SPI bus
     __HAL_RCC_SPI1_CLK_ENABLE();
@@ -208,9 +212,8 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx1buf, 2, 10);
 
     // Set the MOSI pin to open drain
-    GPIO_InitStructure.Pin = GPIO_PIN_7;
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIOInitStruct.Mode = GPIO_MODE_AF_OD;
+    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
@@ -226,8 +229,8 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     //error = checkSafety(combinedRX1Buf, registerAddress, &combinedRX2Buf, 1);
 
     // Set MOSI back to Push/Pull
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIOInitStruct.Mode = GPIO_MODE_AF_PP;
+    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
@@ -268,9 +271,8 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
     enableInterrupts();
 
     // Set the MOSI pin to open drain
-    GPIO_InitStructure.Pin = GPIO_PIN_7;
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIOInitStruct.Mode = GPIO_MODE_AF_OD;
+    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     // Array length is doubled as we're using 8 bit values instead of 16
@@ -289,8 +291,8 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
     }
 
     // Set MOSI back to Push/Pull
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIOInitStruct.Mode = GPIO_MODE_AF_PP;
+    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
@@ -315,9 +317,8 @@ void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
     enableInterrupts();
 
     // Set the MOSI pin to open drain
-    GPIO_InitStructure.Pin = GPIO_PIN_7;
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIOInitStruct.Mode = GPIO_MODE_AF_OD;
+    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
 
     // Set the data to be written
     txbuf[0] = uint8_t(data >> 8), txbuf[1] = uint8_t(data);
@@ -328,8 +329,8 @@ void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
     enableInterrupts();
 
     // Set MOSI back to Push/Pull
-    GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIOInitStruct.Mode = GPIO_MODE_AF_PP;
+    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
