@@ -149,7 +149,9 @@ Encoder::Encoder() {
 
     // Initialize the SPI bus with the parameters we set
     if (HAL_SPI_Init(&spiConfig) != HAL_OK) {
-        Serial.println(F("SPI not initialized!"));
+        #ifdef ENABLE_SERIAL
+            Serial.println(F("SPI not initialized!"));
+        #endif
     }
 
     // Set the chip select pin high, disabling the encoder's communication
@@ -186,6 +188,33 @@ Encoder::Encoder() {
     #endif
 }
 
+/**
+  * @brief  Sets the mode for GPIO7. This is done quite often so this function is written to improve speed. NOTE: This can only be used with GPIO_MODE_AF_PP and GPIO_MODE_AF_OD
+  * @param  GPIO_Init: pointer to a GPIO_InitTypeDef structure that contains
+  *         the configuration information for the specified GPIO peripheral.
+  * @retval None
+  */
+void Encoder::setGPIO7Mode(uint32_t mode) {
+
+    // Setup variables (most are determined by compiler)
+    GPIO_TypeDef *GPIOx = GPIOA;
+    constexpr uint32_t position = 0x07u; // GPIO7 (requires 7 bit shifts)
+    __IO uint32_t *configregister = &GPIOx->CRL; /* Store the address of CRL or CRH register based on pin number */
+    constexpr uint32_t registeroffset = (position << 2u);       /* offset used during computation of CNF and MODE bits placement inside CRL or CRH register */
+    uint32_t config = 0x00u;
+
+    // Set the pin config (only in the variable yet)
+    if (mode == GPIO_MODE_AF_PP) {
+        config = GPIO_SPEED_FREQ_HIGH + GPIO_CR_CNF_AF_OUTPUT_PP;
+    }
+    else if (mode == GPIO_MODE_AF_OD) {
+        config = GPIO_SPEED_FREQ_HIGH + GPIO_CR_CNF_AF_OUTPUT_OD;
+    }
+
+    /* Apply the new configuration of the pin to the register */
+    MODIFY_REG((*configregister), ((GPIO_CRL_MODE0 | GPIO_CRL_CNF0) << registeroffset), (config << registeroffset));
+}
+
 
 // Read the value of a register
 errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
@@ -212,8 +241,7 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rx1buf, 2, 10);
 
     // Set the MOSI pin to open drain
-    GPIOInitStruct.Mode = GPIO_MODE_AF_OD;
-    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
+    setGPIO7Mode(GPIO_MODE_AF_OD);
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     txbuf[0] = 0xFF, txbuf[1] = 0xFF;
@@ -229,8 +257,7 @@ errorTypes Encoder::readRegister(uint16_t registerAddress, uint16_t &data) {
     //error = checkSafety(combinedRX1Buf, registerAddress, &combinedRX2Buf, 1);
 
     // Set MOSI back to Push/Pull
-    GPIOInitStruct.Mode = GPIO_MODE_AF_PP;
-    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
+    setGPIO7Mode(GPIO_MODE_AF_PP);
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
@@ -270,9 +297,8 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
     HAL_SPI_TransmitReceive(&spiConfig, txbuf, rxbuf, 2, 10);
     enableInterrupts();
 
-    // Set the MOSI pin to open drain
-    GPIOInitStruct.Mode = GPIO_MODE_AF_OD;
-    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
+    // Set the MOSI pin (GPIO 7) to open drain
+    setGPIO7Mode(GPIO_MODE_AF_OD);
 
     // Send 0xFFFF (like BTT code), this returns the wanted value
     // Array length is doubled as we're using 8 bit values instead of 16
@@ -290,9 +316,8 @@ void Encoder::readMultipleRegisters(uint16_t registerAddress, uint16_t* data, ui
         data[i] = rxbuf[i * 2] << 8 | rxbuf[i * 2 + 1];
     }
 
-    // Set MOSI back to Push/Pull
-    GPIOInitStruct.Mode = GPIO_MODE_AF_PP;
-    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
+    // Set MOSI (GPIO 7) back to Push/Pull
+    setGPIO7Mode(GPIO_MODE_AF_PP);
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
@@ -317,8 +342,7 @@ void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
     enableInterrupts();
 
     // Set the MOSI pin to open drain
-    GPIOInitStruct.Mode = GPIO_MODE_AF_OD;
-    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
+    setGPIO7Mode(GPIO_MODE_AF_OD);
 
     // Set the data to be written
     txbuf[0] = uint8_t(data >> 8), txbuf[1] = uint8_t(data);
@@ -329,8 +353,7 @@ void Encoder::writeToRegister(uint16_t registerAddress, uint16_t data) {
     enableInterrupts();
 
     // Set MOSI back to Push/Pull
-    GPIOInitStruct.Mode = GPIO_MODE_AF_PP;
-    HAL_GPIO_Init(GPIOA, &GPIOInitStruct);
+    setGPIO7Mode(GPIO_MODE_AF_PP);
 
     // Deselect encoder
     GPIO_WRITE(ENCODER_CS_PIN, HIGH);
@@ -372,8 +395,8 @@ errorTypes Encoder::checkSafety(uint16_t safety, uint16_t command, uint16_t* rea
 		temp[1] = (uint8_t)(command);
 
 		for (uint16_t index = 0; index < length; index++) {
-			temp[2 + 2 * index] =     (uint8_t)(readreg[index] >> 8); // Reads the first byte of the 16 bit message
-			temp[2 + 2 * index + 1] = (uint8_t)(readreg[index]);      // Reads the second byte
+			temp[2 + (2 * index)] =     (uint8_t)(readreg[index] >> 8); // Reads the first byte of the 16 bit message
+			temp[2 + (2 * index) + 1] = (uint8_t)(readreg[index]);      // Reads the second byte
 		}
 
 		uint8_t crcReceivedFinal = (uint8_t)(safety); // Checks the second byte of the safety
@@ -865,7 +888,6 @@ double Encoder::getAbsoluteAngleAvg() {
 
 // Gets the momentary absolute angle of the motor
 double Encoder::getAbsoluteAngle() {
-
     return (double)((getRev() * 360) + getAngle());
 }
 

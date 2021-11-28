@@ -45,6 +45,10 @@
 #define CRC_POLYNOMIAL  0x1D
 #define CRC_SEED        0xFF
 
+// GPIO configurations (used by GPIO7 for encoder SPI hack)
+#define  GPIO_CR_CNF_AF_OUTPUT_PP   0x00000008u /*!< 10: Alternate function output Push-pull  */
+#define  GPIO_CR_CNF_AF_OUTPUT_OD   0x0000000Cu /*!< 11: Alternate function output Open-drain  */
+
 /**
  * @brief Error types from safety word
  */
@@ -262,6 +266,9 @@ class Encoder {
         // Functions
         // Constructor
         Encoder();
+
+        // Optimized pin setting operation (for encoder GPIO pin 7 hack)
+        void setGPIO7Mode(uint32_t mode);
 
         // Low level reading functions
         errorTypes readRegister(uint16_t registerAddress, uint16_t &data);
