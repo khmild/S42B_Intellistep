@@ -260,6 +260,7 @@ void stepMotor() {
 }
 
 
+#ifdef STEP_CORRECTION
 // Need to declare a function to power the motor coils for the step interrupt
 void correctMotor() {
     #ifdef CHECK_CORRECT_MOTOR_RATE
@@ -452,6 +453,7 @@ void correctMotor() {
         GPIO_WRITE(LED_PIN, LOW);
     #endif
 }
+#endif // ! STEP_CORRECTION
 
 
 // Direct stepping

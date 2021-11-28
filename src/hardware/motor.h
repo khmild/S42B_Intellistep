@@ -227,6 +227,11 @@ class StepperMotor {
         // Calibrates the encoder and PID loop
         void calibrate();
 
+        #ifndef STEP_CORRECTION
+        // Checks the enable pin and sets the state based on the result
+        void checkEnablePin();
+        #endif
+
         // Encoder object
         Encoder encoder;
 

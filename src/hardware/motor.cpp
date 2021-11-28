@@ -40,6 +40,9 @@ StepperMotor::StepperMotor() {
     tim2EncConfig.IC2Prescaler = TIM_ICPSC_DIV1;
     tim2EncConfig.IC2Filter = 7; // Must be between 0x0 and 0xF (0-15)
 
+    // First reset the timer's configuration
+    HAL_TIM_Encoder_DeInit(&tim2Config);
+
     // Initialize the encoder with the created configs
     HAL_TIM_Encoder_Init(&tim2Config, &tim2EncConfig);
 
@@ -811,7 +814,7 @@ void StepperMotor::enable() {
     driveCoilsAngle(encoderAngle);
 
     // The motor's current step needs corrected
-    currentStep = encoderAngle / microstepAngle;
+    currentStep = round(encoderAngle / microstepAngle);
 
     // Reset the motor's desired step to the current
     // No need to set the desired angle, that is based off of the step
@@ -886,6 +889,20 @@ void StepperMotor::calibrate() {
     // Reboot the chip
     NVIC_SystemReset();
 }
+
+#ifndef STEP_CORRECTION
+// Checks the enable pin of the motor and sets the state based on the result
+void StepperMotor::checkEnablePin() {
+    // Check to see the state of the enable pin
+    // There's no need to check if the motor is force enabled, the setState
+    // command will ignore the disable if the motor's been force enabled
+    if (GPIO_READ(ENABLE_PIN) != getEnableInversion()) {
+
+        // The enable pin is off, the motor should be disabled
+        setState(DISABLED);
+    }
+}
+#endif
 
 // Returns -1 if the number is less than 0, 1 otherwise
 int32_t StepperMotor::getSign(float num) {

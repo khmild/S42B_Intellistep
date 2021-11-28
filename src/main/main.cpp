@@ -12,10 +12,14 @@
 // Create a new motor instance
 StepperMotor motor = StepperMotor();
 
+// Create a variable for storing the starting time
+// Used for timing display updates to be smooth regardless of processsing time
+uint32_t startTime = 0;
+
 // Run the setup
 void setup() {
 
-    // Reset of all peripherals, Initializes the Flash interface and the Systick.
+    // Resets of all peripherals, initializes the Flash interface and the Systick timer.
     HAL_Init();
 
     // Set processor up
@@ -96,9 +100,6 @@ void setup() {
     #ifdef ENABLE_LED
         initLED();
     #endif
-
-    // Zero the encoder
-    motor.encoder.zero();
 
     // Only run if the OLED is enabled
     #ifdef ENABLE_OLED
@@ -211,17 +212,13 @@ void setup() {
                 writeOLEDString(0, LINE_HEIGHT * 3, F("unsuccessfully"), true);
             }
 
-            // Let the user read the message
-            delay(1000);
-
-            // Clear the display
-            clearOLED();
-
-            // Write out the first data to the screen (makes sure that the first write isn't interrupted)
-            displayMotorData();
+            // Note the starting time for the calibration message
+            startTime = getCurrentMillis();
         #else
             // Nothing special, just try to load the flash data
             loadParameters();
+
+            // We don't need to do anything with the startTime because the 0 it was initialized to will be way out of range for a delay
         #endif
 
         // Setup the motor timers and interrupts
@@ -230,19 +227,34 @@ void setup() {
 
     // Setup the motor for use (should be enabled at startup)
     // The jump when power is on
-    motor.setState(ENABLED, true);
+    //motor.setState(ENABLED, true);
 
     // Delay for move to power on position
     // Needs the motor timers
-    delay(1000);
+    delay(MOTOR_SETTLE_TIME);
 
     // Zero the encoder after motor is enabled
     motor.encoder.zero();
+
+    // Only need to display info if OLED is enabled
+    #ifdef ENABLE_OLED
+    // Let the user read the message
+    delay(CALIBRATION_DISPLAY_TIME - (startTime - getCurrentMillis()));
+
+    // Clear the display
+    clearOLED();
+
+    // Write out the first data to the screen (makes sure that the first write isn't interrupted)
+    displayMotorData();
+    #endif
 }
 
 
 // Main loop
 void loop() {
+
+    // Note the loop start time
+    uint32_t startTime = getCurrentMillis();
 
     // Check the dip switches
     checkDips();
@@ -262,12 +274,21 @@ void loop() {
         }
     #endif
 
+    // If correction is disabled, then the enable pin is never checked
+    // That is done here
+    #ifndef STEP_CORRECTION
+        motor.checkEnablePin();
+    #endif
+
     // We need a little delay to allow the motor time to process if it needs it
     #ifdef ENABLE_BLINK
         // ! Only for testing
         blink();
     #else
-        delay(50);
+        // We should delay the time remaining in the loop
+        // We can take the set time for a loop and subtract the already taken time from it
+        // This helps to stabilize the IO updates
+        delay(MIN_IO_LOOP_TIME - (getCurrentMillis() - startTime)); // ! Maybe remove? This could make the updates much faster
     #endif
 }
 

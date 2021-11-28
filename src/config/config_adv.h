@@ -24,6 +24,15 @@ typedef float real_t;
 // If the steps should be counted using a hardware counter
 #define USE_HARDWARE_STEP_CNT
 
+// The time (in ms) that an IO loop should take
+// An IO loop updates dip switches, checks serial, and updates the OLED display
+#define MIN_IO_LOOP_TIME (uint32_t)50
+
+// The time (in ms) to let the motor settle for before reading it
+// This is typically used when enabling the motor for the first time and waiting for it to steady
+// before reseting the encoder to zero
+#define MOTOR_SETTLE_TIME (uint32_t)500
+
 // Board characteristics
 // ! Do not modify unless you know what you are doing!
 #define BOARD_VOLTAGE              (float)3.3 // The voltage of the main processor
@@ -131,7 +140,13 @@ typedef float real_t;
 
 // Clock debugging (uses OLED pin)
 #ifdef ENABLE_OLED
+    // Displays the step counter instead of the RPM on the first line
+    // Likely more useful than the current RPM
     #define SHOW_STEP_CNT_INSTEAD_OF_RPM
+
+    // The time (in ms) to display the calibration screen for
+    // Keep in mind that this should be larger than the MOTOR_SETTLE_TIME in order to be respected
+    #define CALIBRATION_DISPLAY_TIME (uint32_t)1000
 #else
     // MCO is PA_8 pin, It also used as OLED_RST_PIN
     //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
