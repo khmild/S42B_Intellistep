@@ -11,18 +11,98 @@
 StepperMotor::StepperMotor() {
 
     // Setup the input pins
+    #ifndef USE_LEGACY_STEP_CNT_SETUP
     pinMode(STEP_PIN, INPUT_PULLDOWN);
     pinMode(DIRECTION_PIN, INPUT_PULLDOWN);
+    #endif
     pinMode(ENABLE_PIN, INPUT);
 
     #ifdef USE_HARDWARE_STEP_CNT
+
+    /*
+    BTT's code for TIM2 initialization (according to their Github)
+    TIM_DeInit(TIM2); <------------------------------------------------------------------------------- Clear the old config out
+
+	GPIO_InitTypeDef GPIO_InitStructure;
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+
+ 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE); <------------------------------------------- Enabled by the pinMode calls
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); <-------------------------------------------- Enabled by the HAL_TIM_Encoder_Init() call
+
+	GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_0;  //PA0
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA, &GPIO_InitStructure); <---------------------------------------------------------- Done by the pinMode call, although INPUT_PULLDOWN seems better than their use of just INPUT
+
+
+	TIM_TimeBaseStructure.TIM_Period = arr; //
+	TIM_TimeBaseStructure.TIM_Prescaler =psc;
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1; //
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure); <-------------------------------------------------- They configure the timer exactly the same, except they use a prescalar of 0, which seems to break
+                                                                                                        the counting with this project. All of this base setup is done by the HAL_TIM_Encoder_Init() call
+
+    TIM_ARRPreloadConfig(TIM2,DISABLE); <-------------------------------------------------------------- They disable the autoreload preload (basically makes the overflow resets faster by setting them up early)
+                                                                                                        Based on my testing, this doesn't seem to have any impact. Theoretically enabled is better, but I digress
+    TIM2->SMCR |= 1<<14; <----------------------------------------------------------------------------- This enables the external clock (meaning incrementing the timer on an incoming pulse).
+                                                                                                        This can be removed because the external clock's config is erased anyway with the TIM_ETRClockMode2Config() call
+//    TIM2->SMCR &= ~(1<<15);                     //
+//    TIM2->SMCR &= ~(3<<12);                     //
+//    TIM2->SMCR &= ~(0xF<<8);
+
+    TIM_ETRClockMode2Config(TIM2, TIM_ExtTRGPSC_OFF, TIM_ExtTRGPolarity_NonInverted, 7); <------------- They then set the external clock bit again.
+    TIM_SelectOutputTrigger(TIM2, TIM_TRGOSource_Reset);
+    TIM_SelectMasterSlaveMode(TIM2,TIM_MasterSlaveMode_Disable);
+
+    TIM_SetCounter(TIM2 , 0); <------------------------------------------------------------------------- Done by the __HAL_TIM_SET_COUNTER() call
+    TIM_Cmd(TIM2,ENABLE ); <---------------------------------------------------------------------------- Enables the timer, done by the HAL_TIM_Encoder_Start() call
+    */
+
+
     // Setup base config for TIM2 (for hardware step counter)
     tim2Config.Instance = TIM2;
     tim2Config.Init.Prescaler = 1; // ! MUST BE EVEN, using formula (prescalar + 1) = actual prescalar
-    tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP;
-    tim2Config.Init.Period = 0xFFFF;
-    tim2Config.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE; // ! Check out for later
+    tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP; // Default to counting up, this really doesn't matter as PA_1 is going to control the direction
+    tim2Config.Init.Period = (TIM_PERIOD - 1); // This is the largest period possible, reduces the messy overflows
+    tim2Config.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1; // We can just count one for one, no need to divide incoming pulses
+    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE; // This should be enabled, it helps to make smoother overflow transitions
+
+
+    #ifdef USE_LEGACY_STEP_CNT_SETUP
+    // Clear the old config
+    HAL_TIM_Base_DeInit(&tim2Config);
+
+    // Enable the GPIOA and TIM2 clock
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_TIM2_CLK_ENABLE();
+
+    // Setup the step input pins (step and direction)
+    GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitStructure.Pin  = GPIO_PIN_0 | GPIO_PIN_1;  //PA0
+	GPIO_InitStructure.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStructure.Pull = GPIO_PULLDOWN;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+    // Setup the base config of the timer
+	HAL_TIM_Base_Init(&tim2Config);
+
+    // Set to use an external clock source
+    TIM_ClockConfigTypeDef clkConfig;
+    clkConfig.ClockSource = TIM_CLOCKSOURCE_ETRMODE2;
+    clkConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
+    clkConfig.ClockPolarity = TIM_CLOCKPOLARITY_NONINVERTED;
+    clkConfig.ClockFilter = 7;
+    HAL_TIM_ConfigClockSource(&tim2Config, &clkConfig);
+
+    // Set that master/slave mode should be disabled
+    TIM_MasterConfigTypeDef sMasterConfig;
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    HAL_TIMEx_MasterConfigSynchronization(&tim2Config, &sMasterConfig);
+
+    // Reset the counter, the enable it
+    __HAL_TIM_SET_COUNTER(&tim2Config, 0);
+    __HAL_TIM_ENABLE(&tim2Config);
+    #else
 
     // Set that we want to use the timer as an encoder counter, using TI1 (the step pin) as the clock pin
     // Encoders operate identical to how the step/dir interface works
@@ -51,12 +131,13 @@ StepperMotor::StepperMotor() {
 
     // Reset TIM2's counter
     __HAL_TIM_SET_COUNTER(&tim2Config, 0);
+    #endif // ! USE_LEGACY_STEP_CNT_SETUP
 
     // Attach the overflow interrupt (has to use HardwareTimer
     // because HardwareTimer library holds all callbacks)
     tim2HWTim -> setInterruptPriority(5, 0);
     tim2HWTim -> attachInterrupt(overflowHandler);
-    #endif
+    #endif // ! USE_HARDWARE_STEP_CNT
 
     // Setup the pins as outputs
     pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);

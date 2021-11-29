@@ -23,6 +23,9 @@ typedef float real_t;
 
 // If the steps should be counted using a hardware counter
 #define USE_HARDWARE_STEP_CNT
+#ifdef USE_HARDWARE_STEP_CNT
+    #define USE_LEGACY_STEP_CNT_SETUP
+#endif
 
 // The time (in ms) that an IO loop should take
 // An IO loop updates dip switches, checks serial, and updates the OLED display

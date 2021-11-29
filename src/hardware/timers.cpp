@@ -87,7 +87,7 @@ void setupMotorTimers() {
     #endif
 
     // Attach the interupt to the step pin (subpriority is set in PlatformIO config file)
-    // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004
+    // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004,
     // the optocoupler inverts the signal. Therefore, the falling edge is the correct value.
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
 
@@ -246,6 +246,17 @@ void updateCorrectionTimer() {
 
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
+
+    // Hack from BTT, instead of using hardware to decide count, it can be done by software
+    // This is really dumb, but otherwise the counter loses a pulse occasionally
+    #ifdef USE_LEGACY_STEP_CNT_SETUP
+    if (GPIO_READ(DIRECTION_PIN) == motor.getReversed()) {
+        LL_TIM_SetCounterMode(TIM2, TIM_COUNTERMODE_DOWN);
+    }
+    else {
+        LL_TIM_SetCounterMode(TIM2, TIM_COUNTERMODE_UP);
+    }
+    #endif
 
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, HIGH);
