@@ -142,52 +142,69 @@ void setup() {
     // Check if the board is calibrated. Need to force calibration if the board isn't calibrated
     if (!isCalibrated()) {
 
-        // Only display to screen if the screen is enabled
-        #ifdef ENABLE_OLED
+        // Note the start time
+        uint32_t startTime = getCurrentMillis();
 
-            // Display that the motor is not calibrated
-            clearOLED();
-            writeOLEDString(0, 0,               F("NOT"), false);
-            writeOLEDString(0, LINE_HEIGHT * 1, F("Calibrated!"), false);
-            writeOLEDString(0, LINE_HEIGHT * 2, F("Please"), false);
-            writeOLEDString(0, LINE_HEIGHT * 3, F("calibrate"), true);
-            delay(3000);
-
-            // Display that the select key can be clicked to run calibration
-            clearOLED();
-            writeOLEDString(0, 0,               F("Use the"), false);
-            writeOLEDString(0, LINE_HEIGHT * 1, F("select key"), false);
-            writeOLEDString(0, LINE_HEIGHT * 2, F("to calibrate"), false);
-            writeOLEDString(0, LINE_HEIGHT * 3, F("Requires power"), true);
-        #endif
+        // The currently displayed screen. It doesn't make sense to write the same screen over and over
+        // Screen 0 is the first message, screen 1 the second. We init the screen index to 1 so the first
+        // cycle through the logic will write the message to the screen.
+        uint8_t screenIndex = 1;
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
         while(true) {
 
+            // Only display to screen if the screen is enabled
             #ifdef ENABLE_OLED
-                // Check to see if any of the buttons are pressed
-                checkButtons(false, true);
-            #endif
+
+            // Calculate the elapsed time (should make the if comparisions faster and more consistent)
+            uint32_t elapsedTime = (getCurrentMillis() - startTime);
+
+            // Decide which screen to display (first check if the timer needs reset)
+            if (elapsedTime > (2 * CALIBRATION_DISPLAY_TIME)) {
+
+                // We exceeded the period of the screen switches, update the starting time for the cycle
+                startTime = getCurrentMillis();
+            }
+            else if ((elapsedTime < CALIBRATION_DISPLAY_TIME) && screenIndex == 1) {
+                // Display that the motor is not calibrated
+                clearOLED();
+                writeOLEDString(0, 0,               F("NOT"), false);
+                writeOLEDString(0, LINE_HEIGHT * 1, F("Calibrated!"), false);
+                writeOLEDString(0, LINE_HEIGHT * 2, F("Please"), false);
+                writeOLEDString(0, LINE_HEIGHT * 3, F("calibrate"), true);
+                screenIndex = 0;
+            }
+            // We know that we should be on the second screen, so we only need to check the screenIndex
+            else if ((elapsedTime > CALIBRATION_DISPLAY_TIME) && screenIndex == 0) {
+                // Display that the select key can be clicked to run calibration
+                clearOLED();
+                writeOLEDString(0, 0,               F("Use the"), false);
+                writeOLEDString(0, LINE_HEIGHT * 1, F("select key"), false);
+                writeOLEDString(0, LINE_HEIGHT * 2, F("to calibrate"), false);
+                writeOLEDString(0, LINE_HEIGHT * 3, F("Requires power"), true);
+                screenIndex = 1;
+            }
+
+            // Check to see if any of the buttons are pressed
+            checkButtons(false, true);
+
+            // Check to see if the menu button has been clicked
+            if (getMenuDepth() > 0) {
+
+                // Calibrate the motor (board reboots afterward)
+                // Reboot the chip
+                motor.calibrate();
+            }
+
+            #else // ! ENABLE_OLED
+
+            // Just jump to calibrating the motor (board reboots afterward)
+            // Reboot the chip
+            motor.calibrate();
+            #endif // ! ENABLE_OLED
 
             // ! Only for testing
             //blink();
-
-            // Only if the OLED is needed
-            #ifdef ENABLE_OLED
-
-                // Check to see if the menu button has been clicked
-                if (getMenuDepth() > 0) {
-
-                    // Calibrate the motor (board reboots afterward)
-                    // Reboot the chip
-                    motor.calibrate();
-                }
-
-            #else
-                // Just jump to calibrating the motor (board reboots afterward)
-                // Reboot the chip
-                motor.calibrate();
-            #endif
         }
     }
     else {
@@ -239,7 +256,7 @@ void setup() {
     // Only need to display info if OLED is enabled
     #ifdef ENABLE_OLED
     // Let the user read the message
-    delay(CALIBRATION_DISPLAY_TIME - (startTime - getCurrentMillis()));
+    delay(POWERUP_DISPLAY_TIME - (startTime - getCurrentMillis()));
 
     // Clear the display
     clearOLED();

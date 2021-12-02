@@ -147,9 +147,12 @@ typedef float real_t;
     // Likely more useful than the current RPM
     #define SHOW_STEP_CNT_INSTEAD_OF_RPM
 
-    // The time (in ms) to display the calibration screen for
+    // The time (in ms) to display the power up screen (shows if the board is calibrated) for
     // Keep in mind that this should be larger than the MOTOR_SETTLE_TIME in order to be respected
-    #define CALIBRATION_DISPLAY_TIME (uint32_t)1000
+    #define POWERUP_DISPLAY_TIME (uint32_t)1000
+
+    // The time (in ms) to display the calibration messages screen for before scrolling
+    #define CALIBRATION_DISPLAY_TIME (uint32_t)3000
 #else
     // MCO is PA_8 pin, It also used as OLED_RST_PIN
     //#define CHECK_MCO_OUTPUT // Use an oscilloscope to measure frequency of HSI, HSE, SYSCLK or PLLCLK/2
