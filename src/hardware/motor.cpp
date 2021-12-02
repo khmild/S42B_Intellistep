@@ -60,7 +60,7 @@ StepperMotor::StepperMotor() {
 
     // Setup base config for TIM2 (for hardware step counter)
     tim2Config.Instance = TIM2;
-    tim2Config.Init.Prescaler = 1; // ! MUST BE EVEN, using formula (prescalar + 1) = actual prescalar
+    tim2Config.Init.Prescaler = 1; // ! MUST BE EVEN when not using LEGACY_STEP_CNT_SETUP, using formula (prescalar + 1) = actual prescalar
     tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP; // Default to counting up, this really doesn't matter as PA_1 is going to control the direction
     tim2Config.Init.Period = (TIM_PERIOD - 1); // This is the largest period possible, reduces the messy overflows
     tim2Config.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1; // We can just count one for one, no need to divide incoming pulses
