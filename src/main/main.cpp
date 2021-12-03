@@ -219,14 +219,14 @@ void setup() {
             writeOLEDString(0, LINE_HEIGHT * 1, F("OK!"), false);
 
             // Write base string for flash loading
-            writeOLEDString(0, LINE_HEIGHT * 2, F("Flash loaded"), false);
+            writeOLEDString(0, LINE_HEIGHT * 2, F("Flash load"), false);
 
             // Attempt to load the parameters from flash
             if (loadParameters() == FLASH_LOAD_SUCCESSFUL) {
-                writeOLEDString(0, LINE_HEIGHT * 3, F("successfully"), true);
+                writeOLEDString(0, LINE_HEIGHT * 3, F("successful"), true);
             }
             else {
-                writeOLEDString(0, LINE_HEIGHT * 3, F("unsuccessfully"), true);
+                writeOLEDString(0, LINE_HEIGHT * 3, F("failed"), true);
             }
 
             // Note the starting time for the calibration message
