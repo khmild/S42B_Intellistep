@@ -278,8 +278,9 @@ void correctMotor() {
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
 
+    #ifndef EN_PIN_INTERRUPT
     // Check to see the state of the enable pin
-    if ((GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {
+    if (GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) {
 
         // The enable pin is off, the motor should be disabled
         motor.setState(DISABLED);
@@ -298,6 +299,10 @@ void correctMotor() {
         #endif
     }
     else {
+    #else // ! EN_PIN_INTERRUPT
+    if (motor.getState() == ENABLED || motor.getState() == FORCED_ENABLED) {
+    #endif
+
 
         // Enable the motor if it's not already (just energizes the coils to hold it in position)
         // Motor should not be enabled every cycle if the PID manages disabling the motor

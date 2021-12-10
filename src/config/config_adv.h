@@ -161,4 +161,7 @@ typedef float real_t;
     //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO PA_8 output switching
 #endif
 
+// If the motor's enable state should be handled by an interupt on the enable pin
+#define EN_PIN_INTERRUPT
+
 #endif // ! __CONFIG_ADV_H

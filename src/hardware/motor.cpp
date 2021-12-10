@@ -15,7 +15,13 @@ StepperMotor::StepperMotor() {
     pinMode(STEP_PIN, INPUT_PULLDOWN);
     pinMode(DIRECTION_PIN, INPUT_PULLDOWN);
     #endif
+
     pinMode(ENABLE_PIN, INPUT);
+    #ifdef EN_PIN_INTERRUPT
+    attachInterrupt(ENABLE_PIN, enablePinISR, CHANGE);
+    #else
+
+    #endif
 
     #ifdef USE_HARDWARE_STEP_CNT
 
@@ -157,6 +163,22 @@ StepperMotor::StepperMotor() {
     setState(DISABLED, true);
 }
 
+
+// Only if using enable pin in interrupt mode
+#ifdef EN_PIN_INTERRUPT
+void enablePinISR() {
+    // Motor should be disabled
+    if (GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) {
+
+        // Disable motor
+        motor.setState(DISABLED);
+    }
+    else {
+        // New motor state should be enabled
+        motor.setState(ENABLED);
+    }
+}
+#endif
 
 // Returns the current RPM of the encoder
 float StepperMotor::getEncoderRPM() {
@@ -846,6 +868,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 }
                 // No other special processing needed, just disable the coils and set the state
                 default:
+                    disableStepCorrection();
                     motor.setCoilA(IDLE_MODE);
                     motor.setCoilB(IDLE_MODE);
                     this -> state = newState;
@@ -871,6 +894,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                     }
                     // No other special processing needed, just disable the coils and set the state
                     default:
+                        disableStepCorrection();
                         motor.setCoilA(IDLE_MODE);
                         motor.setCoilB(IDLE_MODE);
                         this -> state = newState;
@@ -900,6 +924,9 @@ void StepperMotor::enable() {
     // Reset the motor's desired step to the current
     // No need to set the desired angle, that is based off of the step
     setDesiredStep(currentStep);
+
+    // Enable the step correction
+    enableStepCorrection();
 }
 
 
