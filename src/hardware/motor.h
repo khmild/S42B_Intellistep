@@ -327,6 +327,11 @@ class StepperMotor {
         HardwareTimer *tim2HWTim = new HardwareTimer(TIM2);
 };
 
+// Function for handling enable pin changes (when using interrupts)
+#ifdef EN_PIN_INTERRUPT
+void enablePinISR();
+#endif
+
 // Overflow handler
 void overflowHandler();
 
