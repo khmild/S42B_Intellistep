@@ -142,6 +142,8 @@ void setup() {
     // Check if the board is calibrated. Need to force calibration if the board isn't calibrated
     if (!isCalibrated()) {
 
+        // Only needed for OLED changes
+        #ifdef ENABLE_OLED
         // Note the start time
         uint32_t startTime = getCurrentMillis();
 
@@ -149,6 +151,7 @@ void setup() {
         // Screen 0 is the first message, screen 1 the second. We init the screen index to 1 so the first
         // cycle through the logic will write the message to the screen.
         uint8_t screenIndex = 1;
+        #endif // ! ENABLE_OLED
 
         // Continuously check to see if the select key is clicked (depth index would increase when clicked)
         while(true) {
