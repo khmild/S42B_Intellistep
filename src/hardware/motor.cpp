@@ -16,7 +16,7 @@ StepperMotor::StepperMotor() {
     pinMode(DIRECTION_PIN, INPUT_PULLDOWN);
     #endif
 
-    pinMode(ENABLE_PIN, INPUT_PULLDOWN);
+    pinMode(ENABLE_PIN, INPUT_PULLUP);
 
     #ifdef USE_HARDWARE_STEP_CNT
 
