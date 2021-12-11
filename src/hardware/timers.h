@@ -45,6 +45,9 @@ void disableStepCorrection();
 // Updates the step correction frequency (called when microstepping is changed)
 void updateCorrectionTimer();
 
+// Function for handling enable pin changes (when using interrupts)
+void enablePinISR();
+
 // Function that steps the motor
 void stepMotor();
 

@@ -56,6 +56,12 @@ Using dip switches
 | DIP_3   |    Closed/Open loop        |  Microstep 2          |
 | DIP_4   |    Calibration mode        |  Microstep 1          |
 
+## Authors
+
+<a href="https://github.com/CAP1Sup/Intellistep/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=CAP1Sup/Intellistep" />
+</a>
+
 ## Credits
 
 - [BTT](https://github.com/bigtreetech) - [Original code](https://github.com/bigtreetech/BIGTREETECH-Stepper-Motor-Driver)

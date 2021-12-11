@@ -16,12 +16,7 @@ StepperMotor::StepperMotor() {
     pinMode(DIRECTION_PIN, INPUT_PULLDOWN);
     #endif
 
-    pinMode(ENABLE_PIN, INPUT);
-    #ifdef EN_PIN_INTERRUPT
-    attachInterrupt(ENABLE_PIN, enablePinISR, CHANGE);
-    #else
-
-    #endif
+    pinMode(ENABLE_PIN, INPUT_PULLDOWN);
 
     #ifdef USE_HARDWARE_STEP_CNT
 
@@ -141,7 +136,7 @@ StepperMotor::StepperMotor() {
 
     // Attach the overflow interrupt (has to use HardwareTimer
     // because HardwareTimer library holds all callbacks)
-    tim2HWTim -> setInterruptPriority(5, 0);
+    tim2HWTim -> setInterruptPriority(TIM2_OVERFLOW_PREMPT_PRIOR, TIM2_OVERFLOW_SUB_PRIOR);
     tim2HWTim -> attachInterrupt(overflowHandler);
     #endif // ! USE_HARDWARE_STEP_CNT
 
@@ -163,22 +158,6 @@ StepperMotor::StepperMotor() {
     setState(DISABLED, true);
 }
 
-
-// Only if using enable pin in interrupt mode
-#ifdef EN_PIN_INTERRUPT
-void enablePinISR() {
-    // Motor should be disabled
-    if (GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) {
-
-        // Disable motor
-        motor.setState(DISABLED);
-    }
-    else {
-        // New motor state should be enabled
-        motor.setState(ENABLED);
-    }
-}
-#endif
 
 // Returns the current RPM of the encoder
 float StepperMotor::getEncoderRPM() {
@@ -909,6 +888,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
 // Private function for enabling the motor
 void StepperMotor::enable() {
 
+    #ifdef STEP_CORRECTION
     // Clear the old absolute angle averages from the encoder
     encoder.clearAbsoluteAngleAvg();
 
@@ -927,6 +907,7 @@ void StepperMotor::enable() {
 
     // Enable the step correction
     enableStepCorrection();
+    #endif
 }
 
 
@@ -997,20 +978,6 @@ void StepperMotor::calibrate() {
     // Reboot the chip
     NVIC_SystemReset();
 }
-
-#ifndef STEP_CORRECTION
-// Checks the enable pin of the motor and sets the state based on the result
-void StepperMotor::checkEnablePin() {
-    // Check to see the state of the enable pin
-    // There's no need to check if the motor is force enabled, the setState
-    // command will ignore the disable if the motor's been force enabled
-    if (GPIO_READ(ENABLE_PIN) != getEnableInversion()) {
-
-        // The enable pin is off, the motor should be disabled
-        setState(DISABLED);
-    }
-}
-#endif
 
 // Returns -1 if the number is less than 0, 1 otherwise
 int32_t StepperMotor::getSign(float num) {

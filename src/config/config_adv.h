@@ -161,7 +161,24 @@ typedef float real_t;
     //#define CHECK_GPIO_OUTPUT_SWITCHING // Use an oscilloscope to measure frequency of the GPIO PA_8 output switching
 #endif
 
-// If the motor's enable state should be handled by an interupt on the enable pin
-#define EN_PIN_INTERRUPT
+// Interrupt priority definitions
+// Interupts are in order of importance as follows -
+// - 5 - hardware step counter overflow handling
+// - 6.0 - enable pin change
+// - 6.1 - step pin change
+// - 7.0 - position correction (or PID interval update)
+// - 7.1 - scheduled steps (if ENABLE_DIRECT_STEPPING or ENABLE_PID)
+#define TIM2_OVERFLOW_PREMPT_PRIOR 5
+#define TIM2_OVERFLOW_SUB_PRIOR 0
+
+#define EN_PIN_PREMPT_PRIOR 6
+#define EN_PIN_SUB_PRIOR 0
+#define STEP_PIN_PREMPT_PRIOR 6
+#define STEP_PIN_SUB_PRIOR 1
+
+#define POS_CORRECTION_PREMPT_PRIOR 7
+#define POS_CORRECTION_SUB_PRIOR 0
+#define SCHED_STEPS_PREMPT_PRIOR 7
+#define SCHED_STEPS_SUB_PRIOR 1
 
 #endif // ! __CONFIG_ADV_H

@@ -294,12 +294,6 @@ void loop() {
         }
     #endif
 
-    // If correction is disabled, then the enable pin is never checked
-    // That is done here
-    #ifndef STEP_CORRECTION
-        motor.checkEnablePin();
-    #endif
-
     // We need a little delay to allow the motor time to process if it needs it
     #ifdef ENABLE_BLINK
         // ! Only for testing

@@ -73,7 +73,8 @@ void setupMotorTimers() {
 
     // Interupts are in order of importance as follows -
     // - 5 - hardware step counter overflow handling
-    // - 6 - step pin change
+    // - 6.0 - enable pin change
+    // - 6.1 - step pin change
     // - 7.0 - position correction (or PID interval update)
     // - 7.1 - scheduled steps (if ENABLE_DIRECT_STEPPING or ENABLE_PID)
 
@@ -86,15 +87,20 @@ void setupMotorTimers() {
         #endif
     #endif
 
-    // Attach the interupt to the step pin (subpriority is set in PlatformIO config file)
+    // Attach the interupt to the enable pin
+    attachInterrupt(ENABLE_PIN, enablePinISR, CHANGE); // input is pull-upped to VDD
+    HAL_NVIC_SetPriority(EXTI2_IRQn, EN_PIN_PREMPT_PRIOR, EN_PIN_SUB_PRIOR); // Fix priority
+
+    // Attach the interupt to the step pin
     // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004,
     // the optocoupler inverts the signal. Therefore, the falling edge is the correct value.
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
+    HAL_NVIC_SetPriority(EXTI0_IRQn, STEP_PIN_PREMPT_PRIOR, STEP_PIN_SUB_PRIOR); // Fix priority
 
     #ifndef DISABLE_CORRECTION_TIMER
     // Setup the timer for steps
     correctionTimer -> pause();
-    correctionTimer -> setInterruptPriority(7, 0);
+    correctionTimer -> setInterruptPriority(POS_CORRECTION_PREMPT_PRIOR, POS_CORRECTION_SUB_PRIOR);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
 
     // Set the update rate and the variable that stores it
@@ -110,7 +116,7 @@ void setupMotorTimers() {
     // Setup step schedule timer if it is enabled
     #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
         stepScheduleTimer -> pause();
-        stepScheduleTimer -> setInterruptPriority(7, 1);
+        stepScheduleTimer -> setInterruptPriority(SCHED_STEPS_PREMPT_PRIOR, SCHED_STEPS_SUB_PRIOR);
         stepScheduleTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
         // Don't re-enable the motor, that will be done when the steps are scheduled
@@ -144,6 +150,7 @@ void enableMotorTimers() {
 
     // Attach the step interrupt
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
+    HAL_NVIC_SetPriority(EXTI0_IRQn, STEP_PIN_PREMPT_PRIOR, STEP_PIN_SUB_PRIOR); // Fix priority
 
     // Enable the correctional timer
     #ifndef DISABLE_CORRECTION_TIMER
@@ -244,6 +251,21 @@ void updateCorrectionTimer() {
 }
 
 
+// Process a change in the enable pin
+void enablePinISR() {
+    // Motor should be disabled
+    if (GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) {
+
+        // Disable motor
+        motor.setState(DISABLED);
+    }
+    else {
+        // New motor state should be enabled
+        motor.setState(ENABLED);
+    }
+}
+
+
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
 
@@ -278,30 +300,8 @@ void correctMotor() {
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
 
-    #ifndef EN_PIN_INTERRUPT
-    // Check to see the state of the enable pin
-    if (GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) {
-
-        // The enable pin is off, the motor should be disabled
-        motor.setState(DISABLED);
-
-        // Only include if StallFault is enabled
-        #ifdef ENABLE_STALLFAULT
-
-            // Shut off the StallGuard pin just in case
-            // (No need to check if the pin is valid, the pin will never be set up if it isn't valid)
-            #ifdef STALLFAULT_PIN
-                GPIO_WRITE(STALLFAULT_PIN, LOW);
-            #endif
-
-            // Fix the LED pin
-            GPIO_WRITE(LED_PIN, LOW);
-        #endif
-    }
-    else {
-    #else // ! EN_PIN_INTERRUPT
+    // Make sure that the motor isn't disabled
     if (motor.getState() == ENABLED || motor.getState() == FORCED_ENABLED) {
-    #endif
 
 
         // Enable the motor if it's not already (just energizes the coils to hold it in position)

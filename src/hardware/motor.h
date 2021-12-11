@@ -227,11 +227,6 @@ class StepperMotor {
         // Calibrates the encoder and PID loop
         void calibrate();
 
-        #ifndef STEP_CORRECTION
-        // Checks the enable pin and sets the state based on the result
-        void checkEnablePin();
-        #endif
-
         // Encoder object
         Encoder encoder;
 
@@ -326,11 +321,6 @@ class StepperMotor {
         // HardwareTimer (required to assign interrupt)
         HardwareTimer *tim2HWTim = new HardwareTimer(TIM2);
 };
-
-// Function for handling enable pin changes (when using interrupts)
-#ifdef EN_PIN_INTERRUPT
-void enablePinISR();
-#endif
 
 // Overflow handler
 void overflowHandler();
