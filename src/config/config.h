@@ -10,7 +10,7 @@
 // Version of the firmware (displayed on OLED) (follows semantic versioning)
 #define MAJOR_VERSION (uint16_t)0
 #define MINOR_VERSION (uint16_t)0
-#define PATCH_VERSION (uint16_t)49
+#define PATCH_VERSION (uint16_t)50
 
 // --------------  Settings  --------------
 
@@ -117,6 +117,7 @@
 #endif
 
 // If the motor should try to correct after it thinks that steps have been missed
+// ! THIS IS UNLIKELY TO WORK, AND WILL PROBABLY JUST MESS EVERYTHING UP, DON"T ENABLE IT
 //#define STEP_CORRECTION
 #ifdef STEP_CORRECTION
 
@@ -146,7 +147,7 @@
 #endif
 
 // Direct step functionality (used to command motor to move over Serial/CAN)
-#define ENABLE_DIRECT_STEPPING
+//#define ENABLE_DIRECT_STEPPING
 #ifdef ENABLE_DIRECT_STEPPING
 
     // The default stepping rate (in Hz) to move in the event that no parameter is specified

@@ -105,16 +105,21 @@ class StepperMotor {
         void setDesiredStep(int32_t newDesiredStep);
 
         // Returns the desired step of the motor
-        int32_t getSoftStepCNT();
+        int32_t getHandledStepCNT();
 
         // Sets the desired step of the motor
-        void setSoftStepCNT(int32_t newStepCNT);
+        void setHandledStepCNT(int32_t newStepCNT);
 
         // Returns the count according to the TIM2 hardware step counter
-        int32_t getHardStepCNT() const;
+        int32_t getActualStepCNT() const;
 
         // Sets the count for the TIM2 hardware step counter
-        void setHardStepCNT(int32_t newCNT);
+        void setActualStepCNT(int32_t newCNT);
+
+        // Gets the deviation between the actual and handled step counts
+        // Note that this will be positive if the handled is behind the actual,
+        // and vice versa
+        int32_t getUnhandledStepCNT();
 
         // Dynamic current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -194,11 +199,7 @@ class StepperMotor {
         void simpleStep();
 
         // Calculates the coil values for the motor and updates the set angle.
-        #ifdef USE_HARDWARE_STEP_CNT
         void step(STEP_DIR dir, int32_t stepChange);
-        #else
-        void step(STEP_DIR dir, int32_t stepChange, bool updateDesiredPos = true);
-        #endif
 
         // Sets the coils to hold the motor at the desired step number
         void driveCoils(int32_t steps);
@@ -246,10 +247,8 @@ class StepperMotor {
         // Function that enables the motor
         void enable();
 
-        #ifndef USE_HARDWARE_STEP_CNT
-            // Keeps the desired step of the motor
-            int32_t softStepCNT = 0;
-        #endif
+        // Keeps the number of handled steps of the motor
+        int32_t handledStepCNT = 0;
 
         // Keeps the current steps of the motor
         int32_t currentStep = 0;

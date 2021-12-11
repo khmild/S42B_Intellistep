@@ -172,7 +172,7 @@
 
     // The microstepping value is too high for the sine array
     #error MAX_MICROSTEP_DIVISOR is set too high, the sine array does not contain enough \
-    values. Please reduce the maximum amount or add new values to the sine array
+    values. Please reduce the maximum amount or add new values to the sine array.
 #endif
 
 

@@ -218,10 +218,7 @@ void displayMotorData() {
         // Set the output string
         snprintf(outBuffer, OB_SIZE, "STEP:%10.0f", (double)motor.getDesiredStep());
 
-        // Write out the output string
-        writeOLEDString(0, 0, outBuffer, false);
     #else
-
         // RPM of the motor (RPM is capped at 2 decimal places)
         #ifdef ENCODER_SPEED_ESTIMATION
 
@@ -236,13 +233,19 @@ void displayMotorData() {
         snprintf(outBuffer, OB_SIZE, "RPM:%11.3f", motor.getEncoderRPM());
 
         #endif // ! ENCODER_SPEED_ESTIMATION
+    #endif // ! SHOW_STEP_CNT_INSTEAD_OF_RPM
+    // Write out the output string to the display
+    writeOLEDString(0, 0, outBuffer, false);
 
-        // Write out the output string to the display
-        writeOLEDString(0, 0, outBuffer, false);
-    #endif
+    // Check if we should be displaying unhandled step count instead of angle error
+    #ifdef SHOW_UNHANDLED_STEP_CNT_INSTEAD_OF_ANGLE_ERR
 
-    // Angle error
-    snprintf(outBuffer, OB_SIZE, "ERR:% 11.2f", motor.getAngleError(currentAbsAngle));
+        // Show unhandled step count
+        snprintf(outBuffer, OB_SIZE, "ERR:% 11.0f", (double)motor.getUnhandledStepCNT());
+    #else
+        // Show angle error
+        snprintf(outBuffer, OB_SIZE, "ERR:% 11.2f", motor.getAngleError(currentAbsAngle));
+    #endif // ! SHOW_UNHANDLED_STEP_CNT_INSTEAD_OF_ANGLE_ERR
     writeOLEDString(0, LINE_HEIGHT, outBuffer, false);
 
     // Current angle of the motor

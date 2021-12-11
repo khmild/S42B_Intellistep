@@ -21,11 +21,8 @@ typedef float real_t;
 // Reject unstable least significant bits of the encoder
 #define REJECT_ENCODERS_LSB 2
 
-// If the steps should be counted using a hardware counter
-#define USE_HARDWARE_STEP_CNT
-#ifdef USE_HARDWARE_STEP_CNT
-    //#define USE_LEGACY_STEP_CNT_SETUP
-#endif
+// If the steps should be counted using the legacy (from BTT) counting setup
+//#define USE_LEGACY_STEP_CNT_SETUP
 
 // The time (in ms) that an IO loop should take
 // An IO loop updates dip switches, checks serial, and updates the OLED display
@@ -131,7 +128,7 @@ typedef float real_t;
 //#define ENABLE_STEPPING_VELOCITY
 //#define IGNORE_FLASH_VERSION
 #ifndef STEP_CORRECTION
-    #define DISABLE_CORRECTION_TIMER
+    //#define DISABLE_CORRECTION_TIMER
 #endif
 
 // LED related debugging
@@ -146,6 +143,10 @@ typedef float real_t;
     // Displays the step counter instead of the RPM on the first line
     // Likely more useful than the current RPM
     #define SHOW_STEP_CNT_INSTEAD_OF_RPM
+
+    // Displays the unhandled step count instead of the angle error on the first line
+    // Likely more useful than the angle error in some cases
+    #define SHOW_UNHANDLED_STEP_CNT_INSTEAD_OF_ANGLE_ERR
 
     // The time (in ms) to display the power up screen (shows if the board is calibrated) for
     // Keep in mind that this should be larger than the MOTOR_SETTLE_TIME in order to be respected

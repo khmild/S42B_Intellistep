@@ -293,7 +293,7 @@ void stepMotor() {
 }
 
 
-#ifdef STEP_CORRECTION
+
 // Need to declare a function to power the motor coils for the step interrupt
 void correctMotor() {
     #ifdef CHECK_CORRECT_MOTOR_RATE
@@ -303,21 +303,22 @@ void correctMotor() {
     // Make sure that the motor isn't disabled
     if (motor.getState() == ENABLED || motor.getState() == FORCED_ENABLED) {
 
-
-        // Enable the motor if it's not already (just energizes the coils to hold it in position)
-        // Motor should not be enabled every cycle if the PID manages disabling the motor
-        #if (!(DEFAULT_PID_DISABLE_THRESHOLD > 0))
-            motor.setState(ENABLED);
-        #endif
-
+        // "Smart" step correction using encoder counts
+        #ifdef STEP_CORRECTION
         // Get the current angle of the motor
         float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat();
 
         // Get the angular deviation
         int32_t stepDeviation = motor.getStepError(currentAbsAngle);
+        #else
+        // Basic step correction using number of currently handled steps
+        // ! NOT PROTECTED FROM SKIPPING!
+        int32_t stepDeviation = motor.getUnhandledStepCNT();
+
+        #endif // ! STEP_CORRECTION
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (abs(stepDeviation) > 1) {
+        if (stepDeviation != 0) {
 
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
@@ -374,28 +375,19 @@ void correctMotor() {
                 }
 
             #else // ! ENABLE_PID
-                // Just "dumb" correction based on direction
-                // Set the stepper to move in the correct direction
-                if (/*motor.getStepPhase() != */ true) {
-                    if (stepDeviation > 0) {
+                // Just "dumb" correction based on error direction
+                // Set the stepper to move to reduce / eliminate the error
+                if (stepDeviation > 0) {
 
-                        // Motor is at a position smaller than the desired one
-                        // Use the current angle to find the current step, then add 1
-                        #ifdef USE_HARDWARE_STEP_CNT
-                            motor.step(POSITIVE, 1);
-                        #else
-                            motor.step(POSITIVE, 1, false);
-                        #endif
-                    }
-                    else {
-                        // Motor is at a position larger than the desired one
-                        // Use the current angle to find the current step, then subtract 1
-                        #ifdef USE_HARDWARE_STEP_CNT
-                            motor.step(NEGATIVE, 1);
-                        #else
-                            motor.step(NEGATIVE, 1, false);
-                        #endif
-                    }
+                    // Motor is at a position smaller than the desired one
+                    // Use the current angle to find the current step, then add 1
+                    motor.step(POSITIVE, 1);
+
+                }
+                else {
+                    // Motor is at a position larger than the desired one
+                    // Use the current angle to find the current step, then subtract 1
+                    motor.step(NEGATIVE, 1);
                 }
             #endif // ! ENABLE_PID
 
@@ -465,11 +457,12 @@ void correctMotor() {
         }
 
     }
+
     #ifdef CHECK_CORRECT_MOTOR_RATE
         GPIO_WRITE(LED_PIN, LOW);
     #endif
 }
-#endif // ! STEP_CORRECTION
+
 
 
 // Direct stepping
@@ -502,7 +495,7 @@ void stepScheduleHandler() {
     if (decrementRemainingSteps) {
 
         // Increment the motor in the correct direction
-        motor.step(scheduledStepDir,  motor.microstepMultiplier);
+        motor.step(scheduledStepDir, motor.microstepMultiplier);
 
         // Increment the counter down (we completed a step)
         remainingScheduledSteps--;
@@ -524,11 +517,7 @@ void stepScheduleHandler() {
     }
     else {
         // Just step the motor in the desired direction
-        #ifdef USE_HARDWARE_STEP_CNT
-            motor.step(scheduledStepDir, 1);
-        #else
-            motor.step(scheduledStepDir, 1, false);
-        #endif
+        motor.step(scheduledStepDir, 1);
     }
 }
 

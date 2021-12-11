@@ -18,8 +18,6 @@ StepperMotor::StepperMotor() {
 
     pinMode(ENABLE_PIN, INPUT_PULLUP);
 
-    #ifdef USE_HARDWARE_STEP_CNT
-
     /*
     BTT's code for TIM2 initialization (according to their Github)
     TIM_DeInit(TIM2); <------------------------------------------------------------------------------- Clear the old config out
@@ -138,7 +136,6 @@ StepperMotor::StepperMotor() {
     // because HardwareTimer library holds all callbacks)
     tim2HWTim -> setInterruptPriority(TIM2_OVERFLOW_PREMPT_PRIOR, TIM2_OVERFLOW_SUB_PRIOR);
     tim2HWTim -> attachInterrupt(overflowHandler);
-    #endif // ! USE_HARDWARE_STEP_CNT
 
     // Setup the pins as outputs
     pinMode(COIL_A_POWER_OUTPUT_PIN, OUTPUT);
@@ -235,53 +232,36 @@ int32_t StepperMotor::getStepPhase() {
 
 // Returns the desired angle of the motor
 float StepperMotor::getDesiredAngle() {
-    #ifdef USE_HARDWARE_STEP_CNT
-        return (microstepAngle * getHardStepCNT());
-    #else
-        return (microstepAngle * getSoftStepCNT());
-    #endif
+    return (microstepAngle * getActualStepCNT());
 }
 
 
 // Sets the desired angle of the motor
 void StepperMotor::setDesiredAngle(float newDesiredAngle) {
-    #ifdef USE_HARDWARE_STEP_CNT
-        setHardStepCNT(round(newDesiredAngle / microstepAngle));
-    #else
-        setSoftStepCNT(round(newDesiredAngle / microstepAngle));
-    #endif
+    setActualStepCNT(round(newDesiredAngle / microstepAngle));
 }
 
 
 // Returns the desired step of the motor
 int32_t StepperMotor::getDesiredStep() {
-    #ifdef USE_HARDWARE_STEP_CNT
-        return getHardStepCNT();
-    #else
-        return getSoftStepCNT();
-    #endif
+    return getActualStepCNT();
 }
 
 
 // Sets the desired step of the motor
 void StepperMotor::setDesiredStep(int32_t newDesiredStep) {
-    #ifdef USE_HARDWARE_STEP_CNT
-        setHardStepCNT(newDesiredStep);
-    #else
-        setSoftStepCNT(newDesiredStep);
-    #endif
+    setActualStepCNT(newDesiredStep);
 }
 
 
-#ifdef USE_HARDWARE_STEP_CNT
 // Returns the count value of the timer-based step counter
-int32_t StepperMotor::getHardStepCNT() const {
+int32_t StepperMotor::getActualStepCNT() const {
     return ((TIM2 -> CNT) + stepOverflowOffset);
 }
 
 
 // Sets the count value of the timer-based step counter
-void StepperMotor::setHardStepCNT(int32_t newCNT) {
+void StepperMotor::setActualStepCNT(int32_t newCNT) {
 
     // Find the remainder for the counter to use
     uint32_t newClockCNT = (newCNT % TIM_PERIOD);
@@ -308,18 +288,25 @@ void overflowHandler() {
         motor.stepOverflowOffset -= TIM_PERIOD;
     }
 }
-#else // ! USE_HARDWARE_STEP_CNT
-// Returns the desired step of the motor
-int32_t StepperMotor::getSoftStepCNT() {
-    return (this -> softStepCNT);
+
+
+// Returns the number of handled steps of the motor
+int32_t StepperMotor::getHandledStepCNT() {
+    return (this -> handledStepCNT);
 }
 
 
-// Sets the desired step of the motor
-void StepperMotor::setSoftStepCNT(int32_t newStepCNT) {
-    this -> softStepCNT = newStepCNT;
+// Sets the number of handled steps of the motor
+void StepperMotor::setHandledStepCNT(int32_t newStepCNT) {
+    this -> handledStepCNT = newStepCNT;
 }
-#endif // ! USE_HARDWARE_STEP_CNT
+
+
+// Gets the number of unhandled steps (with sign indicating direction)
+// Positive numbers mean more positive steps needed, and vice versa
+int32_t StepperMotor::getUnhandledStepCNT() {
+    return (getActualStepCNT() - getHandledStepCNT());
+}
 
 
 #ifdef ENABLE_DYNAMIC_CURRENT
@@ -431,12 +418,9 @@ void StepperMotor::setMicrostepping(uint8_t setMicrostepping, bool lock) {
         // Calculate the step scaling
         float stepScalingFactor = (setMicrostepping / this -> microstepDivisor);
 
-        // Scale the step count
-        #ifdef USE_HARDWARE_STEP_CNT
-            setHardStepCNT(getHardStepCNT() * stepScalingFactor);
-        #else
-            setSoftStepCNT(getSoftStepCNT() * stepScalingFactor);
-        #endif
+        // Scale the step counts (both real and handled)
+        setActualStepCNT(getActualStepCNT() * stepScalingFactor);
+        setHandledStepCNT(getHandledStepCNT() * stepScalingFactor);
 
         // Scale the microstep multiplier so that the full stepping level is maintained
         // This needs to be done before the new divisor is set
@@ -563,6 +547,7 @@ float StepperMotor::getMicrostepMultiplier() const {
 }
 
 
+// Simple stepping function, only for testing
 void StepperMotor::simpleStep() {
 
     // Only moving one step in the specified direction
@@ -574,11 +559,7 @@ void StepperMotor::simpleStep() {
 
 
 // Computes the coil values for the next step position and increments the set angle
-#ifdef USE_HARDWARE_STEP_CNT
 void StepperMotor::step(STEP_DIR dir, int32_t stepChange) {
-#else
-void StepperMotor::step(STEP_DIR dir, int32_t stepChange, bool updateDesiredPos) {
-#endif
 
     #ifdef ENABLE_STEPPING_VELOCITY
         isStepping = true;
@@ -587,52 +568,16 @@ void StepperMotor::step(STEP_DIR dir, int32_t stepChange, bool updateDesiredPos)
         prevStepingSampleTime = nowStepingSampleTime;
         nowStepingSampleTime = micros();
     #endif
-    /*
-    // Declare a variable to calculate the step change with
-    int32_t stepChange;
-
-    // Factor in the multiplier if specified
-    if (!useMultiplier) {
-
-        // Only move one step per pulse when multiplier is disabled
-        stepChange = 1;
-    }
-    else {
-        // Move the number of steps specified by the microstep multiplier
-        stepChange = (this -> microstepMultiplier);
-    }
-    */
-    /*
-    // Invert the change based on the direction
-    if (dir == PIN) {
-
-        // Use the DIR_PIN state to decide direction
-        stepChange *= (DIRECTION(GPIO_READ(DIRECTION_PIN)) * (this -> reversed));
-    }
-    //else if (dir == COUNTER_CLOCKWISE) {
-        // Nothing to do here, the value is already positive
-    //}
-    else if (dir == CLOCKWISE) {
-
-        // Make the step change in the negative direction
-        stepChange = -stepChange;
-    }
-    */
 
     #ifdef ENABLE_STEPPING_VELOCITY
         isStepping = false;
     #endif
 
+    // Factor direction and motor reversal into step change
     stepChange *= dir * (this -> reversed);
 
-    #ifndef USE_HARDWARE_STEP_CNT
-    // Update the desired angle if specified
-    if (updateDesiredPos) {
-
-        // Angles are basically just added to desired, not really much to do here
-        this -> softStepCNT += stepChange;
-    }
-    #endif
+    // Angles are basically just added to handled count, not really much to do here
+    this -> handledStepCNT += stepChange;
 
     // Invert the change based on the direction
     // Only moving one step in the specified direction
@@ -704,14 +649,6 @@ void StepperMotor::driveCoils(int32_t steps) {
 
 // Sets the coils of the motor based on the angle (angle should be in degrees)
 void StepperMotor::driveCoilsAngle(float degAngle) {
-
-    // Should be a faster way of constraining the degAngle back into 0-360
-    if (degAngle < 0) {
-        degAngle += round(abs(degAngle) / 360) * 360;
-    }
-    else if ( degAngle > 360) {
-        degAngle -= round(degAngle / 360) * 360;
-    }
 
     // Constrain the set angle to between 0 and 360
     while (degAngle < 0 || degAngle > 360) {
@@ -893,7 +830,7 @@ void StepperMotor::enable() {
     encoder.clearAbsoluteAngleAvg();
 
     // Note the current angle
-    float encoderAngle = encoder.getAbsoluteAngleAvgFloat();
+    float encoderAngle = encoder.getAbsoluteAngle();
 
     // Drive the coils the current angle of the shaft (just locks the output in place)
     driveCoilsAngle(encoderAngle);
@@ -905,9 +842,13 @@ void StepperMotor::enable() {
     // No need to set the desired angle, that is based off of the step
     setDesiredStep(currentStep);
 
-    // Enable the step correction
-    enableStepCorrection();
     #endif
+
+    // Energize the coils of the motor
+    motor.driveCoils(currentStep);
+
+    // Enable the step correction timer
+    enableStepCorrection();
 }
 
 

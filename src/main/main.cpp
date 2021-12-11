@@ -245,13 +245,16 @@ void setup() {
         setupMotorTimers();
     }
 
-    // Setup the motor for use (should be enabled at startup)
-    // The jump when power is on
-    //motor.setState(ENABLED, true);
+    // Check the state of the enable pin at startup
+    // IRQ only checks changes, so we need to make
+    // sure that we have the inital state
+    enablePinISR();
 
     // Delay for move to power on position
-    // Needs the motor timers
-    delay(MOTOR_SETTLE_TIME);
+    // Only use the delay if the motor needs to  if needed
+    if (motor.getState() == ENABLED) {
+        delay(MOTOR_SETTLE_TIME);
+    }
 
     // Zero the encoder after motor is enabled
     motor.encoder.zero();
