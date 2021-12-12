@@ -321,7 +321,13 @@ class StepperMotor {
         HardwareTimer *tim2HWTim = new HardwareTimer(TIM2);
 };
 
+// ISR functions
 // Overflow handler
 void overflowHandler();
+
+#ifdef USE_MKS_STEP_CNT_SETUP
+// Direction change handler
+void dirChangeISR();
+#endif
 
 #endif

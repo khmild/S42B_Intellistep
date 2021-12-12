@@ -245,6 +245,14 @@ void setup() {
         setupMotorTimers();
     }
 
+
+    // Check the state of the direction pin at startup
+    // IRQ only checks changes, so it needs to be checked
+    // during startup
+    #ifdef USE_MKS_STEP_CNT_SETUP
+    dirChangeISR();
+    #endif
+
     // Check the state of the enable pin at startup
     // IRQ only checks changes, so we need to make
     // sure that we have the inital state

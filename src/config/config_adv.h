@@ -21,8 +21,10 @@ typedef float real_t;
 // Reject unstable least significant bits of the encoder
 #define REJECT_ENCODERS_LSB 2
 
-// If the steps should be counted using the legacy (from BTT) counting setup
+// Specify the configuration for the step counting
+// ! ONLY ONE CAN BE USED AT A TIME!
 //#define USE_LEGACY_STEP_CNT_SETUP
+//#define USE_MKS_STEP_CNT_SETUP
 
 // The time (in ms) that an IO loop should take
 // An IO loop updates dip switches, checks serial, and updates the OLED display
@@ -174,8 +176,10 @@ typedef float real_t;
 
 #define EN_PIN_PREMPT_PRIOR 6
 #define EN_PIN_SUB_PRIOR 0
+#define DIR_PIN_PREMPT_PRIOR 6
+#define DIR_PIN_SUB_PRIOR 1
 #define STEP_PIN_PREMPT_PRIOR 6
-#define STEP_PIN_SUB_PRIOR 1
+#define STEP_PIN_SUB_PRIOR 2
 
 #define POS_CORRECTION_PREMPT_PRIOR 7
 #define POS_CORRECTION_SUB_PRIOR 0

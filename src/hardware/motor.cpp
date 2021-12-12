@@ -11,11 +11,12 @@
 StepperMotor::StepperMotor() {
 
     // Setup the input pins
-    #ifndef USE_LEGACY_STEP_CNT_SETUP
+    #ifndef USE_MKS_STEP_CNT_SETUP
     pinMode(STEP_PIN, INPUT_PULLDOWN);
     pinMode(DIRECTION_PIN, INPUT_PULLDOWN);
     #endif
 
+    // Setup enable pin for later assignment as interrupt
     pinMode(ENABLE_PIN, INPUT_PULLUP);
 
     /*
@@ -101,7 +102,44 @@ StepperMotor::StepperMotor() {
     // Reset the counter, the enable it
     __HAL_TIM_SET_COUNTER(&tim2Config, 0);
     __HAL_TIM_ENABLE(&tim2Config);
-    #else
+
+
+    #elif defined(USE_MKS_STEP_CNT_SETUP)
+
+    // Enable the clock for GPIOA and timer 2
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_TIM2_CLK_ENABLE();
+
+    // Setup the step inputs
+    // Clear the pin 0 and 1's config
+    GPIOA->CRL &= 0b11111111111111111111111100000000;
+
+    // Set pin 0 and 1 to input mode
+	GPIOA->CRL |= 0b10001000;
+
+    // Set pin 0 and 1 to pullup
+	GPIOA->ODR |= 0b111;
+
+    // Setup the direction pin interrupt to trigger on polarity change
+    attachInterrupt(DIRECTION_PIN, dirChangeISR, CHANGE);
+    HAL_NVIC_SetPriority(EXTI1_IRQn, DIR_PIN_PREMPT_PRIOR, DIR_PIN_SUB_PRIOR);
+
+    // Write the config to the timer registers
+    HAL_TIM_Base_Init(&tim2Config);
+
+    // Configure the step pin as an external clock source
+    TIM_ClockConfigTypeDef clkConfig;
+    clkConfig.ClockSource = TIM_CLOCKSOURCE_TI1;
+    clkConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
+    clkConfig.ClockPolarity = TIM_CLOCKPOLARITY_FALLING;
+    clkConfig.ClockFilter = 5;
+    HAL_TIM_ConfigClockSource(&tim2Config, &clkConfig);
+
+    // Reset the counter, the enable it
+    __HAL_TIM_SET_COUNTER(&tim2Config, 0);
+    __HAL_TIM_ENABLE(&tim2Config);
+
+    #else // ! Hardware stepping using encoder interface
 
     // Set that we want to use the timer as an encoder counter, using TI1 (the step pin) as the clock pin
     // Encoders operate identical to how the step/dir interface works
@@ -154,6 +192,24 @@ StepperMotor::StepperMotor() {
     // Disable the motor
     setState(DISABLED, true);
 }
+
+
+#ifdef USE_MKS_STEP_CNT_SETUP
+void dirChangeISR() {
+    // Read the direction pin, comparing it to if the motor is reversed
+    // The flash has to be read because this function cannot access the motor object
+    if (GPIO_READ(DIRECTION_PIN) != readFlashBool(MOTOR_REVERSED_INDEX)) {
+
+        // There's no HAL function to set counter direction, so we can
+        // manually set it to count up by setting bit position 4 to 0
+        TIM2->CR1 &= 0b1111111111101111;
+    }
+    else {
+        // Likewise, we can set bit position 4 to 1 to have the timer count down
+        TIM2->CR1 |= 0b10000;
+    }
+}
+#endif
 
 
 // Returns the current RPM of the encoder

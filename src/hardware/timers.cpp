@@ -74,7 +74,8 @@ void setupMotorTimers() {
     // Interupts are in order of importance as follows -
     // - 5 - hardware step counter overflow handling
     // - 6.0 - enable pin change
-    // - 6.1 - step pin change
+    // - 6.1 - direction pin change
+    // - 6.2 - step pin change
     // - 7.0 - position correction (or PID interval update)
     // - 7.1 - scheduled steps (if ENABLE_DIRECT_STEPPING or ENABLE_PID)
 
