@@ -178,3 +178,10 @@
 
 // Calculate the microstep interval count
 #define MICROSTEP_INTERVAL_CNT (uint16_t)(log2(MAX_MICROSTEP_DIVISOR) - log2(MIN_MICROSTEP_DIVISOR) + 1)
+
+// Throw errors if any of the encoder options are enabled while the encoder is disabled
+#if(defined(DISABLE_ENCODER) && (defined(STEP_CORRECTION) || defined(ENABLE_PID) || defined(ENABLE_DYNAMIC_CURRENT)))
+
+    // TODO: Make this say the option conflicting
+    #error "The encoder can't be disabled while any of the encoder features are enabled!"
+#endif

@@ -265,7 +265,9 @@ void setup() {
     }
 
     // Zero the encoder after motor is enabled
+    #ifndef DISABLE_ENCODER
     motor.encoder.zero();
+    #endif
 
     // Only need to display info if OLED is enabled
     #ifdef ENABLE_OLED

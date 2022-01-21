@@ -205,7 +205,9 @@ void saveParameters() {
     writeFlash(CALIBRATED_INDEX, calibrated);
 
     // Save the step offset
+    #ifndef DISABLE_ENCODER
     writeFlash(STEP_OFFSET_INDEX, (float)motor.encoder.getStepOffset());
+    #endif
 
     // Get the motor current
     #ifdef ENABLE_DYNAMIC_CURRENT
@@ -316,7 +318,9 @@ String loadParameters() {
         }
 
         // Load the calibration offset
+        #ifndef DISABLE_ENCODER
         motor.encoder.setStepOffset(readFlashFloat(STEP_OFFSET_INDEX));
+        #endif
 
         // Set the motor current
         #ifdef ENABLE_DYNAMIC_CURRENT

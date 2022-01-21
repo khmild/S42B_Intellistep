@@ -211,7 +211,7 @@ void dirChangeISR() {
 }
 #endif
 
-
+#ifndef DISABLE_ENCODER
 // Returns the current RPM of the encoder
 float StepperMotor::getEncoderRPM() {
 
@@ -278,7 +278,7 @@ int32_t StepperMotor::getStepError() {
 int32_t StepperMotor::getStepError(double currentAbsAngle) {
     return (getDesiredStep() - round(currentAbsAngle / (this -> microstepAngle)));
 }
-
+#endif
 
 // Returns the current step of the motor phases (only 1 rotation worth)
 int32_t StepperMotor::getStepPhase() {
@@ -940,6 +940,7 @@ void StepperMotor::calibrate() {
     // Delay three seconds, giving the motor time to settle
     delay(3000);
 
+    #ifndef DISABLE_ENCODER
     // Force the encoder to be read a couple of times, wiping the previous position out of the average
     // (this reading needs to be as precise as possible)
     for (uint8_t readings = 0; readings < ANGLE_AVG_READINGS; readings++) {
@@ -959,6 +960,7 @@ void StepperMotor::calibrate() {
     while (stepOffset > (this -> fullStepAngle)) {
         stepOffset -= (this -> fullStepAngle);
     }
+    #endif
 
     // Calibrate PID loop
 
@@ -967,7 +969,11 @@ void StepperMotor::calibrate() {
     eraseParameters();
 
     // Write the step offset into the flash
+    #ifndef DISABLE_ENCODER
     writeFlash(STEP_OFFSET_INDEX, stepOffset);
+    #else
+    writeFlash(STEP_OFFSET_INDEX, (float)0);
+    #endif
 
     // Write that the module is configured
     writeFlash(CALIBRATED_INDEX, true);

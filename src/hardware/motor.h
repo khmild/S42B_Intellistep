@@ -66,6 +66,7 @@ class StepperMotor {
         // Initialize the motor
         StepperMotor();
 
+        #ifndef DISABLE_ENCODER
         // Returns the current RPM of the encoder
         float getEncoderRPM();
 
@@ -88,6 +89,7 @@ class StepperMotor {
         // Returns the step deviation of the motor from the set position
         int32_t getStepError();
         int32_t getStepError(double currentAbsAngle);
+        #endif
 
         // Returns the current phase setting of the motor
         int32_t getStepPhase();
@@ -222,14 +224,13 @@ class StepperMotor {
         // Get the current state of the motor
         MOTOR_STATE getState() const;
 
-        // Computes the next speed of the motor
-        float compute(float feedback);
-
         // Calibrates the encoder and PID loop
         void calibrate();
 
         // Encoder object
+        #ifndef DISABLE_ENCODER
         Encoder encoder;
+        #endif
 
         // Counter for number of overflows of TIM2 -> CNT (needs to be public for the interrupt)
         // TIM2 -> CNT is unsigned, stepOverflowOffset is unsigned, but ((TIM2 -> CNT) + stepOverflowOffset) is treated as signed value
