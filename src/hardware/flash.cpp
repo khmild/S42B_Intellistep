@@ -306,9 +306,6 @@ bool checkVersionMatch() {
 // Loads the saved parameters from flash and sets them
 String loadParameters() {
 
-    // Create a storage for the output message
-    String outputMessage;
-
     // Check to see if the data is valid
     if (readFlashBool(VALID_FLASH_CONTENTS)) {
 
@@ -368,15 +365,12 @@ String loadParameters() {
         setDipInverted(readFlashBool(INVERTED_DIPS_INDEX));
 
         // If we made it this far, we can set the message to "ok" and move on
-        outputMessage = FLASH_LOAD_SUCCESSFUL;
+        return FLASH_LOAD_SUCCESSFUL;
     }
     else {
         // The data is invalid, so return a message saying that the load was unsuccessful
-        outputMessage = FLASH_LOAD_UNSUCCESSFUL;
+        return FLASH_LOAD_UNSUCCESSFUL;
     }
-
-    // All done, we can return the result of the process
-    return outputMessage;
 }
 
 
