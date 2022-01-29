@@ -16,13 +16,13 @@ New Features:
 - Redone serial commands (based on gcode)
 - Temperature readout on the display
 - Motor and driver overtemp current reduction
+- Much faster stepper calibration
 
 Future Features:
 
 - CAN subnetwork for driver configuration
 - Dynamic current control based on speed and acceleration
 - Manual tuning utility for manual PID tuning
-- Much better stepper calibration
 - New menu items for setting PID parameters
 
 G/M Code Table
