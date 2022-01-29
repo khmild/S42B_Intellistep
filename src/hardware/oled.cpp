@@ -19,7 +19,7 @@ SUBMENU submenu = CALIBRATION;
 SUBMENU lastSubmenu = CALIBRATION;
 
 // The current value of the cursor
-uint8_t currentCursorIndex = 0;
+uint16_t currentCursorIndex = 0;
 
 // The current menu depth
 MENU_DEPTH menuDepth = MOTOR_DATA;
@@ -210,33 +210,56 @@ void displayMotorData() {
         clearOLED();
     }
 
-    // RPM of the motor (RPM is capped at 2 decimal places)
-    #ifdef ENCODER_SPEED_ESTIMATION
+    // Get the current absolute angle
+    #ifndef DISABLE_ENCODER
+    double currentAbsAngle = motor.encoder.getAbsoluteAngle();
+    #else
+    double currentAbsAngle = 0;
+    #endif
 
-    // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
-    if (motor.encoder.sampleTimeExceeded()) {
-        snprintf(outBuffer, OB_SIZE, "RPM:% 11.3f", motor.getEstimRPM());
-        writeOLEDString(0, 0, outBuffer, false);
-    }
+    // Check if we should be displaying step count instead of RPM
+    #ifdef SHOW_STEP_CNT_INSTEAD_OF_RPM
+        // Set the output string
+        snprintf(outBuffer, OB_SIZE, "STEP:%10.0f", (double)motor.getDesiredStep());
 
-    #else // ! ENCODER_SPEED_ESTIMATION
+    #else
+        // RPM of the motor (RPM is capped at 2 decimal places)
+        #ifdef ENCODER_SPEED_ESTIMATION
 
-    // No need to check, just sample it
-    snprintf(outBuffer, OB_SIZE, "RPM:%11.3f", motor.getEncoderRPM());
+        // Check if the motor RPM can be updated. The update rate of the speed must be limited while using encoder speed estimation
+        if (motor.encoder.sampleTimeExceeded()) {
+            snprintf(outBuffer, OB_SIZE, "RPM:% 11.3f", motor.getEstimRPM(currentAbsAngle));
+        }
+
+        #else // ! ENCODER_SPEED_ESTIMATION
+
+        // No need to check, just sample it
+        snprintf(outBuffer, OB_SIZE, "RPM:%11.3f", motor.getEncoderRPM());
+
+        #endif // ! ENCODER_SPEED_ESTIMATION
+    #endif // ! SHOW_STEP_CNT_INSTEAD_OF_RPM
+    // Write out the output string to the display
     writeOLEDString(0, 0, outBuffer, false);
 
-    #endif // ! ENCODER_SPEED_ESTIMATION
+    // Check if we should be displaying unhandled step count instead of angle error
+    #ifdef SHOW_UNHANDLED_STEP_CNT_INSTEAD_OF_ANGLE_ERR
 
-    // Angle error
-    snprintf(outBuffer, OB_SIZE, "Err: % 10.2f", motor.getAngleError());
+        // Show unhandled step count
+        snprintf(outBuffer, OB_SIZE, "ERR:% 11.0f", (double)motor.getUnhandledStepCNT());
+    #else
+        // Show angle error
+        snprintf(outBuffer, OB_SIZE, "ERR:% 11.2f", motor.getAngleError(currentAbsAngle));
+    #endif // ! SHOW_UNHANDLED_STEP_CNT_INSTEAD_OF_ANGLE_ERR
     writeOLEDString(0, LINE_HEIGHT, outBuffer, false);
 
     // Current angle of the motor
-    snprintf(outBuffer, OB_SIZE, "Deg: % 010.2f", motor.encoder.getAbsoluteAngleAvg());
+    snprintf(outBuffer, OB_SIZE, "DEG:% 11.2f", currentAbsAngle);
     writeOLEDString(0, LINE_HEIGHT * 2, outBuffer, false);
 
     // Temp of the encoder (close to the motor temp)
-    snprintf(outBuffer, OB_SIZE, "Temp:%8.1f C", motor.encoder.getTemp());
+    #ifndef DISABLE_ENCODER
+    snprintf(outBuffer, OB_SIZE, "TEMP:%8.1f C", motor.encoder.getTemp());
+    #endif
     writeOLEDString(0, LINE_HEIGHT * 3, outBuffer, true);
 }
 
@@ -247,7 +270,7 @@ void displayWarning(String firstLine, String secondLine, String thirdLine, bool 
     writeOLEDString(0, 0,               firstLine,  false);
     writeOLEDString(0, LINE_HEIGHT,     secondLine, false);
     writeOLEDString(0, LINE_HEIGHT * 2, thirdLine,  false);
-    writeOLEDString(0, LINE_HEIGHT * 3, F("Select to exit"), updateScreen);
+    writeOLEDString(0, LINE_HEIGHT * 3, F("Back to exit"), updateScreen);
 
     // Save the last menu used (for returning later), then move to the new index
     lastMenuDepth = menuDepth;
@@ -290,8 +313,8 @@ void selectMenuItem() {
                 break;
 
             case MICROSTEP:
-                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
-                currentCursorIndex = log2(motor.getMicrostepping()) - log2(MIN_MICROSTEP_DIVISOR);
+                // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value
+                currentCursorIndex = log2(motor.getMicrostepping());
 
                 // Enter the menu
                 menuDepth = SUBMENUS;
@@ -352,7 +375,7 @@ void selectMenuItem() {
             case CURRENT: {
                 // Motor mAs. Need to get the cursor value, then convert that to current value
                 // Get the set value
-                uint8_t rmsCurrentSetting = 100 * currentCursorIndex;
+                uint16_t rmsCurrentSetting = CURRENT_MENU_INCREMENT * currentCursorIndex;
 
                 // Check to see if the warning needs flagged
                 if (rmsCurrentSetting % (uint16_t)MAX_RMS_BOARD_CURRENT >= (uint16_t)WARNING_RMS_CURRENT) {
@@ -380,7 +403,7 @@ void selectMenuItem() {
             case MICROSTEP: {
                 // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value. Needs to be -2 because the lowest index, 1/4 microstepping, would be at index 0
                 // Get the set value
-                uint8_t microstepSetting = pow(2, currentCursorIndex);
+                uint8_t microstepSetting = pow(2, (currentCursorIndex % MICROSTEP_INTERVAL_CNT));
 
                 // Check to see if the warning needs flagged
                 if (microstepSetting >= WARNING_MICROSTEP) {
@@ -389,7 +412,7 @@ void selectMenuItem() {
                     menuDepth = WARNING;
 
                     // Actually draw the warning
-                    displayWarning(F("Large stepping"), F("set. Are you"), F("sure?"), true);
+                    displayWarning(F("Large divisor"), F("set. Are you"), F("sure?"), true);
                 }
                 else {
                     // Set the value
@@ -477,7 +500,7 @@ void selectMenuItem() {
             case MICROSTEP:
 
                 // Set the value
-                motor.setMicrostepping(pow(2, currentCursorIndex));
+                motor.setMicrostepping(pow(2, (currentCursorIndex % MICROSTEP_INTERVAL_CNT)));
 
             default:
                 // Nothing to do here, just move on

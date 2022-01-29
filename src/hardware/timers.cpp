@@ -10,11 +10,13 @@
 // - TIM3 - Used to generate PWM signal for motor
 // - TIM4 - Used to schedule steps for the motor (used by PID and direct stepping)
 
+#ifndef DISABLE_CORRECTION_TIMER
 // Create a new timer instance
 HardwareTimer *correctionTimer = new HardwareTimer(TIM1);
 
 // The frequency at which to update the correction timer
 uint32_t correctionUpdateFreq = round(STEP_UPDATE_FREQ * motor.getMicrostepping());
+#endif
 
 // If step correction is enabled (helps to prevent enabling the timer when it is already enabled)
 bool stepCorrection = false;
@@ -48,7 +50,7 @@ static uint8_t interruptBlockCount = 0;
     HardwareTimer *stepScheduleTimer = new HardwareTimer(TIM4);
 
     // Direction of movement for direct steps
-    STEP_DIR scheduledStepDir = COUNTER_CLOCKWISE;
+    STEP_DIR scheduledStepDir = POSITIVE;
 
     // Remaining step count
     int64_t remainingScheduledSteps = 0;
@@ -71,7 +73,9 @@ void setupMotorTimers() {
 
     // Interupts are in order of importance as follows -
     // - 5 - hardware step counter overflow handling
-    // - 6 - step pin change
+    // - 6.0 - enable pin change
+    // - 6.1 - direction pin change
+    // - 6.2 - step pin change
     // - 7.0 - position correction (or PID interval update)
     // - 7.1 - scheduled steps (if ENABLE_DIRECT_STEPPING or ENABLE_PID)
 
@@ -84,14 +88,20 @@ void setupMotorTimers() {
         #endif
     #endif
 
-    // Attach the interupt to the step pin (subpriority is set in PlatformIO config file)
-    // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004
+    // Attach the interupt to the enable pin
+    attachInterrupt(ENABLE_PIN, enablePinISR, CHANGE); // input is pull-upped to VDD
+    HAL_NVIC_SetPriority(EXTI2_IRQn, EN_PIN_PREMPT_PRIOR, EN_PIN_SUB_PRIOR); // Fix priority
+
+    // Attach the interupt to the step pin
+    // A normal step pin triggers on the rising edge. However, as explained here: https://github.com/CAP1Sup/Intellistep/pull/50#discussion_r663051004,
     // the optocoupler inverts the signal. Therefore, the falling edge is the correct value.
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
+    HAL_NVIC_SetPriority(EXTI0_IRQn, STEP_PIN_PREMPT_PRIOR, STEP_PIN_SUB_PRIOR); // Fix priority
 
+    #ifndef DISABLE_CORRECTION_TIMER
     // Setup the timer for steps
     correctionTimer -> pause();
-    correctionTimer -> setInterruptPriority(7, 0);
+    correctionTimer -> setInterruptPriority(POS_CORRECTION_PREMPT_PRIOR, POS_CORRECTION_SUB_PRIOR);
     correctionTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
 
     // Set the update rate and the variable that stores it
@@ -102,15 +112,14 @@ void setupMotorTimers() {
     #ifndef CHECK_STEPPING_RATE
         correctionTimer -> attachInterrupt(correctMotor);
     #endif
-    correctionTimer -> refresh();
+    #endif // ! DISABLE_CORRECTION_TIMER
 
     // Setup step schedule timer if it is enabled
     #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
         stepScheduleTimer -> pause();
-        stepScheduleTimer -> setInterruptPriority(7, 1);
+        stepScheduleTimer -> setInterruptPriority(SCHED_STEPS_PREMPT_PRIOR, SCHED_STEPS_SUB_PRIOR);
         stepScheduleTimer -> setMode(1, TIMER_OUTPUT_COMPARE); // Disables the output, since we only need the timed interrupt
         stepScheduleTimer -> attachInterrupt(stepScheduleHandler);
-        stepScheduleTimer -> refresh();
         // Don't re-enable the motor, that will be done when the steps are scheduled
     #endif
 }
@@ -123,10 +132,12 @@ void disableMotorTimers() {
     detachInterrupt(STEP_PIN);
 
     // Disable the correctional timer
+    #ifndef DISABLE_CORRECTION_TIMER
     if (stepCorrection) {
         correctionTimer -> pause();
         syncInstructions();
     }
+    #endif
 
     // Disable the stepping timer if it is enabled
     #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
@@ -140,12 +151,15 @@ void enableMotorTimers() {
 
     // Attach the step interrupt
     attachInterrupt(STEP_PIN, stepMotor, FALLING); // input is pull-upped to VDD
+    HAL_NVIC_SetPriority(EXTI0_IRQn, STEP_PIN_PREMPT_PRIOR, STEP_PIN_SUB_PRIOR); // Fix priority
 
     // Enable the correctional timer
+    #ifndef DISABLE_CORRECTION_TIMER
     if (stepCorrection) {
         correctionTimer -> resume();
         syncInstructions();
     }
+    #endif
 }
 
 
@@ -182,7 +196,9 @@ void enableStepCorrection() {
 
     // Enable the timer if it isn't already, then set the variable
     if (!stepCorrection) {
+        #ifndef DISABLE_CORRECTION_TIMER
         correctionTimer -> resume();
+        #endif
         stepCorrection = true;
         syncInstructions();
     }
@@ -195,8 +211,10 @@ void disableStepCorrection() {
     // Check if the timer is disabled
     if (stepCorrection) {
 
+        #ifndef DISABLE_CORRECTION_TIMER
         // Disable the timer
         correctionTimer -> pause();
+        #endif
 
         // Set that there will be no more step correction
         stepCorrection = false;
@@ -213,6 +231,7 @@ void disableStepCorrection() {
 // Set the speed of the step correction timer
 void updateCorrectionTimer() {
 
+    #ifndef DISABLE_CORRECTION_TIMER
     // Check the previous value of the timer, only changing if it is different
     if (correctionUpdateFreq != (uint32_t)round(STEP_UPDATE_FREQ * (uint32_t)motor.getMicrostepping())) {
 
@@ -229,23 +248,51 @@ void updateCorrectionTimer() {
         // Sync the instruction barrier
         syncInstructions();
     }
+    #endif
+}
+
+
+// Process a change in the enable pin
+void enablePinISR() {
+    // Motor should be disabled
+    if (GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) {
+
+        // Disable motor
+        motor.setState(DISABLED);
+    }
+    else {
+        // New motor state should be enabled
+        motor.setState(ENABLED);
+    }
 }
 
 
 // Just a simple stepping function. Interrupt functions can't be instance methods
 void stepMotor() {
 
+    // Hack from BTT, instead of using hardware to decide count, it can be done by software
+    // This is really dumb, but otherwise the counter loses a pulse occasionally
+    #ifdef USE_LEGACY_STEP_CNT_SETUP
+    if (GPIO_READ(DIRECTION_PIN) == motor.getReversed()) {
+        LL_TIM_SetCounterMode(TIM2, TIM_COUNTERMODE_DOWN);
+    }
+    else {
+        LL_TIM_SetCounterMode(TIM2, TIM_COUNTERMODE_UP);
+    }
+    #endif
+
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
 
     // Step the motor
-    motor.step();
+    motor.step((STEP_DIR)DIRECTION(GPIO_READ(DIRECTION_PIN)), motor.microstepMultiplier);
 
     #ifdef CHECK_STEPPING_RATE
         GPIO_WRITE(LED_PIN, LOW);
     #endif
 }
+
 
 
 // Need to declare a function to power the motor coils for the step interrupt
@@ -254,42 +301,32 @@ void correctMotor() {
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
 
-    // Check to see the state of the enable pin
-    if ((GPIO_READ(ENABLE_PIN) != motor.getEnableInversion()) && (motor.getState() != FORCED_ENABLED)) {
+    // Make sure that the motor isn't disabled
+    if (motor.getState() == ENABLED || motor.getState() == FORCED_ENABLED) {
 
-        // The enable pin is off, the motor should be disabled
-        motor.setState(DISABLED);
-
-        // Only include if StallFault is enabled
-        #ifdef ENABLE_STALLFAULT
-
-            // Shut off the StallGuard pin just in case
-            // (No need to check if the pin is valid, the pin will never be set up if it isn't valid)
-            #ifdef STALLFAULT_PIN
-                GPIO_WRITE(STALLFAULT_PIN, LOW);
-            #endif
-
-            // Fix the LED pin
-            GPIO_WRITE(LED_PIN, LOW);
-        #endif
-    }
-    else {
-
-        // Enable the motor if it's not already (just energizes the coils to hold it in position)
-        motor.setState(ENABLED);
+        // "Smart" step correction using encoder counts
+        #ifdef STEP_CORRECTION
+        // Get the current angle of the motor
+        float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat();
 
         // Get the angular deviation
-        int32_t stepDeviation = motor.getStepError();
+        int32_t stepDeviation = motor.getStepError(currentAbsAngle);
+        #else
+        // Basic step correction using number of currently handled steps
+        // ! NOT PROTECTED FROM SKIPPING!
+        int32_t stepDeviation = motor.getUnhandledStepCNT();
+
+        #endif // ! STEP_CORRECTION
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (abs(stepDeviation) > 1) {
+        if (stepDeviation != 0) {
 
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
 
                 // Run the PID calcalations
-                int32_t pidOutput = round(pid.compute());
-                uint32_t stepFreq = abs(pidOutput); //(DEFAULT_PID_STEP_MAX - abs(pidOutput));
+                int32_t pidOutput = round(pid.compute(currentAbsAngle, motor.getDesiredAngle()));
+                uint32_t stepFreq = abs(pidOutput);
 
                 // Check if the value is 0 (meaning that the timer needs disabled)
                 if (stepFreq == 0) {
@@ -300,10 +337,10 @@ void correctMotor() {
                 else {
                     // Set the direction
                     if (pidOutput > 0) {
-                        scheduledStepDir = COUNTER_CLOCKWISE;
+                        scheduledStepDir = POSITIVE;
                     }
                     else {
-                        scheduledStepDir = CLOCKWISE;
+                        scheduledStepDir = NEGATIVE;
                     }
 
                     // Set that we don't want to decrement the counter
@@ -339,22 +376,19 @@ void correctMotor() {
                 }
 
             #else // ! ENABLE_PID
-                // Just "dumb" correction based on direction
-                // Set the stepper to move in the correct direction
-                if (/*motor.getStepPhase() != */ true) {
-                    if (stepDeviation > 0) {
+                // Just "dumb" correction based on error direction
+                // Set the stepper to move to reduce / eliminate the error
+                if (stepDeviation > 0) {
 
-                        // Motor is at a position larger than the desired one
-                        // Use the current angle to find the current step, then subtract 1
-                        motor.step(CLOCKWISE, false, false);
-                        //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) - (motor.getMicrostepping())));
-                    }
-                    else {
-                        // Motor is at a position smaller than the desired one
-                        // Use the current angle to find the current step, then add 1
-                        motor.step(COUNTER_CLOCKWISE, false, false);
-                        //motor.driveCoils(round(getAbsoluteAngle() / (motor.getMicrostepAngle()) + (motor.getMicrostepping())));
-                    }
+                    // Motor is at a position smaller than the desired one
+                    // Use the current angle to find the current step, then add 1
+                    motor.step(POSITIVE, 1);
+
+                }
+                else {
+                    // Motor is at a position larger than the desired one
+                    // Use the current angle to find the current step, then subtract 1
+                    motor.step(NEGATIVE, 1);
                 }
             #endif // ! ENABLE_PID
 
@@ -424,10 +458,12 @@ void correctMotor() {
         }
 
     }
+
     #ifdef CHECK_CORRECT_MOTOR_RATE
         GPIO_WRITE(LED_PIN, LOW);
     #endif
 }
+
 
 
 // Direct stepping
@@ -436,7 +472,9 @@ void correctMotor() {
 void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
 
     // Disable the correctional timer (needed to prevent both using the step timer at once)
+    #ifndef DISABLE_CORRECTION_TIMER
     correctionTimer -> pause();
+    #endif
     syncInstructions();
 
     // Set the count and step direction
@@ -458,7 +496,7 @@ void stepScheduleHandler() {
     if (decrementRemainingSteps) {
 
         // Increment the motor in the correct direction
-        motor.step(scheduledStepDir);
+        motor.step(scheduledStepDir, motor.microstepMultiplier);
 
         // Increment the counter down (we completed a step)
         remainingScheduledSteps--;
@@ -471,14 +509,16 @@ void stepScheduleHandler() {
 
             // Resume the correctional timer if it is enabled
             if (stepCorrection) {
+                #ifndef DISABLE_CORRECTION_TIMER
                 correctionTimer -> resume();
+                #endif
                 syncInstructions();
             }
         }
     }
     else {
         // Just step the motor in the desired direction
-        motor.step(scheduledStepDir, false, false);
+        motor.step(scheduledStepDir, 1);
     }
 }
 

@@ -1,8 +1,8 @@
 #include "motor.h"
 
 // These imports must be here to prevent linking circles
-#include "oled.h"
 #include "flash.h"
+#include "oled.h"
 
 // Optimize for speed
 #pragma GCC optimize ("-Ofast")
@@ -11,45 +11,168 @@
 StepperMotor::StepperMotor() {
 
     // Setup the input pins
-    pinMode(STEP_PIN, INPUT);
-    pinMode(DIRECTION_PIN, INPUT);
-    pinMode(ENABLE_PIN, INPUT);
+    #ifndef USE_MKS_STEP_CNT_SETUP
+    pinMode(STEP_PIN, INPUT_PULLDOWN);
+    pinMode(DIRECTION_PIN, INPUT_PULLDOWN);
+    #endif
 
-    // Setup TIM2 (the base)
+    // Setup enable pin for later assignment as interrupt
+    pinMode(ENABLE_PIN, INPUT_PULLUP);
+
+    /*
+    BTT's code for TIM2 initialization (according to their Github)
+    TIM_DeInit(TIM2); <------------------------------------------------------------------------------- Clear the old config out
+
+	GPIO_InitTypeDef GPIO_InitStructure;
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+
+ 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE); <------------------------------------------- Enabled by the pinMode calls
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); <-------------------------------------------- Enabled by the HAL_TIM_Encoder_Init() call
+
+	GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_0;  //PA0
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA, &GPIO_InitStructure); <---------------------------------------------------------- Done by the pinMode call, although INPUT_PULLDOWN seems better than their use of just INPUT
+
+
+	TIM_TimeBaseStructure.TIM_Period = arr; //
+	TIM_TimeBaseStructure.TIM_Prescaler =psc;
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1; //
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure); <-------------------------------------------------- They configure the timer exactly the same, except they use a prescalar of 0, which seems to break
+                                                                                                        the counting with this project. All of this base setup is done by the HAL_TIM_Encoder_Init() call
+
+    TIM_ARRPreloadConfig(TIM2,DISABLE); <-------------------------------------------------------------- They disable the autoreload preload (basically makes the overflow resets faster by setting them up early)
+                                                                                                        Based on my testing, this doesn't seem to have any impact. Theoretically enabled is better, but I digress
+    TIM2->SMCR |= 1<<14; <----------------------------------------------------------------------------- This enables the external clock (meaning incrementing the timer on an incoming pulse).
+                                                                                                        This can be removed because the external clock's config is erased anyway with the TIM_ETRClockMode2Config() call
+//    TIM2->SMCR &= ~(1<<15);                     //
+//    TIM2->SMCR &= ~(3<<12);                     //
+//    TIM2->SMCR &= ~(0xF<<8);
+
+    TIM_ETRClockMode2Config(TIM2, TIM_ExtTRGPSC_OFF, TIM_ExtTRGPolarity_NonInverted, 7); <------------- They then set the external clock bit again.
+    TIM_SelectOutputTrigger(TIM2, TIM_TRGOSource_Reset);
+    TIM_SelectMasterSlaveMode(TIM2,TIM_MasterSlaveMode_Disable);
+
+    TIM_SetCounter(TIM2 , 0); <------------------------------------------------------------------------- Done by the __HAL_TIM_SET_COUNTER() call
+    TIM_Cmd(TIM2,ENABLE ); <---------------------------------------------------------------------------- Enables the timer, done by the HAL_TIM_Encoder_Start() call
+    */
+
+
+    // Setup base config for TIM2 (for hardware step counter)
     tim2Config.Instance = TIM2;
-    tim2Config.Init.Prescaler = 0;
-    tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP;
-    tim2Config.Init.Period = 0xFFFF;
-    tim2Config.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+    tim2Config.Init.Prescaler = 1; // ! MUST BE EVEN when not using LEGACY_STEP_CNT_SETUP, using formula (prescalar + 1) = actual prescalar
+    tim2Config.Init.CounterMode = TIM_COUNTERMODE_UP; // Default to counting up, this really doesn't matter as PA_1 is going to control the direction
+    tim2Config.Init.Period = (TIM_PERIOD - 1); // This is the largest period possible, reduces the messy overflows
+    tim2Config.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1; // We can just count one for one, no need to divide incoming pulses
+    tim2Config.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE; // This should be enabled, it helps to make smoother overflow transitions
+
+
+    #ifdef USE_LEGACY_STEP_CNT_SETUP
+    // Clear the old config
+    HAL_TIM_Base_DeInit(&tim2Config);
+
+    // Enable the GPIOA and TIM2 clock
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_TIM2_CLK_ENABLE();
+
+    // Setup the step input pins (step and direction)
+    GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitStructure.Pin  = GPIO_PIN_0 | GPIO_PIN_1;  //PA0
+	GPIO_InitStructure.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStructure.Pull = GPIO_PULLDOWN;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+    // Setup the base config of the timer
+	HAL_TIM_Base_Init(&tim2Config);
+
+    // Set to use an external clock source
+    TIM_ClockConfigTypeDef clkConfig;
+    clkConfig.ClockSource = TIM_CLOCKSOURCE_ETRMODE2;
+    clkConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
+    clkConfig.ClockPolarity = TIM_CLOCKPOLARITY_NONINVERTED;
+    clkConfig.ClockFilter = 7;
+    HAL_TIM_ConfigClockSource(&tim2Config, &clkConfig);
+
+    // Set that master/slave mode should be disabled
+    TIM_MasterConfigTypeDef sMasterConfig;
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    HAL_TIMEx_MasterConfigSynchronization(&tim2Config, &sMasterConfig);
+
+    // Reset the counter, the enable it
+    __HAL_TIM_SET_COUNTER(&tim2Config, 0);
+    __HAL_TIM_ENABLE(&tim2Config);
+
+
+    #elif defined(USE_MKS_STEP_CNT_SETUP)
+
+    // Enable the clock for GPIOA and timer 2
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_TIM2_CLK_ENABLE();
+
+    // Setup the step inputs
+    // Clear the pin 0 and 1's config
+    GPIOA->CRL &= 0b11111111111111111111111100000000;
+
+    // Set pin 0 and 1 to input mode
+	GPIOA->CRL |= 0b10001000;
+
+    // Set pin 0 and 1 to pullup
+	GPIOA->ODR |= 0b111;
+
+    // Setup the direction pin interrupt to trigger on polarity change
+    attachInterrupt(DIRECTION_PIN, dirChangeISR, CHANGE);
+    HAL_NVIC_SetPriority(EXTI1_IRQn, DIR_PIN_PREMPT_PRIOR, DIR_PIN_SUB_PRIOR);
+
+    // Write the config to the timer registers
     HAL_TIM_Base_Init(&tim2Config);
 
-    // Set that the step pin should be an external trigger for the timer to count
-    tim2ClkConfig.ClockFilter = 7;
-    tim2ClkConfig.ClockPolarity = TIM_CLOCKPOLARITY_INVERTED;
-    tim2ClkConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
-    tim2ClkConfig.ClockSource = TIM_CLOCKSOURCE_ETRMODE2;
-    HAL_TIM_ConfigClockSource(&tim2Config, &tim2ClkConfig);
+    // Configure the step pin as an external clock source
+    TIM_ClockConfigTypeDef clkConfig;
+    clkConfig.ClockSource = TIM_CLOCKSOURCE_TI1;
+    clkConfig.ClockPrescaler = TIM_CLOCKPRESCALER_DIV1;
+    clkConfig.ClockPolarity = TIM_CLOCKPOLARITY_FALLING;
+    clkConfig.ClockFilter = 5;
+    HAL_TIM_ConfigClockSource(&tim2Config, &clkConfig);
 
-    // Configure the master/slave mode of the timer
-    tim2MSConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-    tim2MSConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-    HAL_TIMEx_MasterConfigSynchronization(&tim2Config, &tim2MSConfig);
+    // Reset the counter, the enable it
+    __HAL_TIM_SET_COUNTER(&tim2Config, 0);
+    __HAL_TIM_ENABLE(&tim2Config);
 
-    // Set that the direction pin should be used as a direction control
-    // Clear the encoder mode bit, then set it
-    tim2Config.Instance -> SMCR &= ~TIM_SMCR_SMS;
-    tim2Config.Instance -> SMCR |= TIM_ENCODERMODE_TI1;
+    #else // ! Hardware stepping using encoder interface
+
+    // Set that we want to use the timer as an encoder counter, using TI1 (the step pin) as the clock pin
+    // Encoders operate identical to how the step/dir interface works
+    tim2EncConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+
+    // Input Capture 1 (step pin)
+    tim2EncConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+    tim2EncConfig.IC1Polarity = TIM_ICPOLARITY_FALLING;
+    tim2EncConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+    tim2EncConfig.IC1Filter = 10; // Must be between 0x0 and 0xF (0-15)
+
+    // Input Capture 2 (direction pin)
+    tim2EncConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+    tim2EncConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
+    tim2EncConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+    tim2EncConfig.IC2Filter = 7; // Must be between 0x0 and 0xF (0-15)
+
+    // First reset the timer's configuration
+    HAL_TIM_Encoder_DeInit(&tim2Config);
+
+    // Initialize the encoder with the created configs
+    HAL_TIM_Encoder_Init(&tim2Config, &tim2EncConfig);
+
+    // Start the encoder
+    HAL_TIM_Encoder_Start(&tim2Config, TIM_CHANNEL_ALL);
 
     // Reset TIM2's counter
     __HAL_TIM_SET_COUNTER(&tim2Config, 0);
-
-    // Enable TIM2
-    __HAL_TIM_ENABLE(&tim2Config);
+    #endif // ! USE_LEGACY_STEP_CNT_SETUP
 
     // Attach the overflow interrupt (has to use HardwareTimer
     // because HardwareTimer library holds all callbacks)
-    tim2HWTim -> setInterruptPriority(5, 0);
+    tim2HWTim -> setInterruptPriority(TIM2_OVERFLOW_PREMPT_PRIOR, TIM2_OVERFLOW_SUB_PRIOR);
     tim2HWTim -> attachInterrupt(overflowHandler);
 
     // Setup the pins as outputs
@@ -71,11 +194,29 @@ StepperMotor::StepperMotor() {
 }
 
 
+#ifdef USE_MKS_STEP_CNT_SETUP
+void dirChangeISR() {
+    // Read the direction pin, comparing it to if the motor is reversed
+    // The flash has to be read because this function cannot access the motor object
+    if (GPIO_READ(DIRECTION_PIN) != readFlashBool(MOTOR_REVERSED_INDEX)) {
+
+        // There's no HAL function to set counter direction, so we can
+        // manually set it to count up by setting bit position 4 to 0
+        TIM2->CR1 &= 0b1111111111101111;
+    }
+    else {
+        // Likewise, we can set bit position 4 to 1 to have the timer count down
+        TIM2->CR1 |= 0b10000;
+    }
+}
+#endif
+
+#ifndef DISABLE_ENCODER
 // Returns the current RPM of the encoder
 float StepperMotor::getEncoderRPM() {
 
     // Convert getSpeed() (in deg/s) to RPM
-    return DPS_TO_RPM(encoder.getSpeed());
+    return DPS_TO_RPM((float)encoder.getSpeed());
 }
 
 
@@ -83,7 +224,15 @@ float StepperMotor::getEncoderRPM() {
 float StepperMotor::getEstimRPM() {
 
     // Convert getEstimSpeed() (in deg/s) to RPM
-    return DPS_TO_RPM(encoder.getEstimSpeed());
+    return DPS_TO_RPM((float)encoder.getEstimSpeed());
+}
+
+
+// Returns the current calculated RPM
+float StepperMotor::getEstimRPM(double currentAbsAngle) {
+
+    // Convert getEstimSpeed() (in deg/s) to RPM
+    return DPS_TO_RPM((float)encoder.getEstimSpeed(currentAbsAngle));
 }
 
 
@@ -92,6 +241,7 @@ float StepperMotor::getEstimRPM() {
 float StepperMotor::getDegreesPS() {
     calc:
     while (isStepping)
+        ; // wait end of stepping calculation
     float velocity = 1000000.0 * angleChange / (nowStepingSampleTime - prevStepingSampleTime);
     if (isStepping)
         goto calc;
@@ -108,15 +258,27 @@ float  StepperMotor::getSteppingRPM() {
 
 // Returns the angular deviation of the motor from the desired angle
 float StepperMotor::getAngleError() {
-    return (encoder.getAbsoluteAngleAvg() - (this -> desiredAngle));
+    return (getDesiredAngle() - encoder.getAbsoluteAngleAvg());
+}
+
+
+// Returns the angular deviation of the motor from the desired angle
+float StepperMotor::getAngleError(double currentAbsAngle) {
+    return (getDesiredAngle() - currentAbsAngle);
 }
 
 
 // Returns the step deviation of the motor from the desired step
 int32_t StepperMotor::getStepError() {
-    return (round(encoder.getAbsoluteAngleAvg() / (this -> microstepAngle)) - getHardStepCNT());
+    return (getDesiredStep() - round(encoder.getAbsoluteAngleAvg() / (this -> microstepAngle)));
 }
 
+
+// Returns the step deviation of the motor from the desired step
+int32_t StepperMotor::getStepError(double currentAbsAngle) {
+    return (getDesiredStep() - round(currentAbsAngle / (this -> microstepAngle)));
+}
+#endif
 
 // Returns the current step of the motor phases (only 1 rotation worth)
 int32_t StepperMotor::getStepPhase() {
@@ -126,33 +288,39 @@ int32_t StepperMotor::getStepPhase() {
 
 // Returns the desired angle of the motor
 float StepperMotor::getDesiredAngle() {
-    return (this -> desiredAngle);
+    return (microstepAngle * getActualStepCNT());
+}
+
+
+// Sets the desired angle of the motor
+void StepperMotor::setDesiredAngle(float newDesiredAngle) {
+    setActualStepCNT(round(newDesiredAngle / microstepAngle));
 }
 
 
 // Returns the desired step of the motor
-int32_t StepperMotor::getSoftStepCNT() {
-    return (this -> softStepCNT);
+int32_t StepperMotor::getDesiredStep() {
+    return getActualStepCNT();
 }
 
 
 // Sets the desired step of the motor
-void StepperMotor::setSoftStepCNT(int32_t newStepCNT) {
-    this -> softStepCNT = newStepCNT;
+void StepperMotor::setDesiredStep(int32_t newDesiredStep) {
+    setActualStepCNT(newDesiredStep);
 }
 
 
 // Returns the count value of the timer-based step counter
-int32_t StepperMotor::getHardStepCNT() const {
+int32_t StepperMotor::getActualStepCNT() const {
     return ((TIM2 -> CNT) + stepOverflowOffset);
 }
 
 
 // Sets the count value of the timer-based step counter
-void StepperMotor::setHardStepCNT(int32_t newCNT) {
+void StepperMotor::setActualStepCNT(int32_t newCNT) {
 
     // Find the remainder for the counter to use
-    uint32_t newClockCNT = (newCNT % 65536);
+    uint32_t newClockCNT = (newCNT % TIM_PERIOD);
 
     // Set the new overflow count
     stepOverflowOffset = (newCNT - newClockCNT);
@@ -166,20 +334,38 @@ void StepperMotor::setHardStepCNT(int32_t newCNT) {
 void overflowHandler() {
 
     // Check which direction the overflow was in
-    if (TIM2 -> CNT < (TIM_MAX_VALUE / 2)) {
+    if ((TIM2 -> CNT) < (TIM_PERIOD / 2)) {
 
         // Overflow
-        motor.stepOverflowOffset += 65536;
+        motor.stepOverflowOffset += TIM_PERIOD;
     }
     else {
         // Underflow
-        motor.stepOverflowOffset -= 65536;
+        motor.stepOverflowOffset -= TIM_PERIOD;
     }
 }
 
 
-#ifdef ENABLE_DYNAMIC_CURRENT
+// Returns the number of handled steps of the motor
+int32_t StepperMotor::getHandledStepCNT() {
+    return (this -> handledStepCNT);
+}
 
+
+// Sets the number of handled steps of the motor
+void StepperMotor::setHandledStepCNT(int32_t newStepCNT) {
+    this -> handledStepCNT = newStepCNT;
+}
+
+
+// Gets the number of unhandled steps (with sign indicating direction)
+// Positive numbers mean more positive steps needed, and vice versa
+int32_t StepperMotor::getUnhandledStepCNT() {
+    return (getActualStepCNT() - getHandledStepCNT());
+}
+
+
+#ifdef ENABLE_DYNAMIC_CURRENT
 // Gets the acceleration factor for dynamic current
 uint16_t StepperMotor::getDynamicAccelCurrent() const {
     return (this -> dynamicAccelCurrent);
@@ -267,22 +453,36 @@ void StepperMotor::setPeakCurrent(uint16_t peakCurrent) {
 #endif // ! ENABLE_DYNAMIC_CURRENT
 
 // Get the microstepping divisor of the motor
-uint16_t StepperMotor::getMicrostepping() const {
+uint8_t StepperMotor::getMicrostepping() {
     return (this -> microstepDivisor);
 }
 
 
 // Set the microstepping divisor of the motor
-void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
+void StepperMotor::setMicrostepping(uint8_t setMicrostepping, bool lock) {
 
     // Make sure that the new value isn't a -1 (all functions that fail should return a -1)
     if (setMicrostepping != -1) {
 
-        // Scale the hardware step counter
-        setHardStepCNT(getHardStepCNT() * (setMicrostepping / this -> microstepDivisor));
+        // Check if the microstepping has been locked and the lock is not enabled
+        if (this -> microstepLocked && !lock) {
 
-        // Scale the software step counter
-        setSoftStepCNT(getSoftStepCNT() * (setMicrostepping / this -> microstepDivisor));
+            // Nothing should be changed, exit the function
+            return;
+        }
+
+        // Calculate the step scaling
+        float stepScalingFactor = (setMicrostepping / this -> microstepDivisor);
+
+        // Scale the step counts (both real and handled)
+        setActualStepCNT(getActualStepCNT() * stepScalingFactor);
+        setHandledStepCNT(getHandledStepCNT() * stepScalingFactor);
+
+        // Scale the microstep multiplier so that the full stepping level is maintained
+        // This needs to be done before the new divisor is set
+        #ifdef MAINTAIN_FULL_STEPPING
+            this -> microstepMultiplier *= stepScalingFactor;
+        #endif
 
         // Set the microstepping divisor
         this -> microstepDivisor = setMicrostepping;
@@ -292,6 +492,12 @@ void StepperMotor::setMicrostepping(uint16_t setMicrostepping) {
 
         // Fix the microsteps per rotation
         this -> microstepsPerRotation = round(360.0 / microstepAngle);
+
+        // Fix the step to sine array factor
+        this -> stepToSineArrayFactor = MAX_MICROSTEP_DIVISOR / setMicrostepping;
+
+        // Set that the microstepping should be locked for future writes
+        this -> microstepLocked = lock;
     }
 }
 
@@ -340,17 +546,26 @@ int32_t StepperMotor::getMicrostepsPerRotation() const {
 // Set if the motor direction should be reversed or not
 void StepperMotor::setReversed(bool reversed) {
 
-    if (reversed)
-        // Set if the motor should be reversed
-        this -> reversed = -1;
-    else
-        this -> reversed = 1;
+    // Set if the motor should be reversed
+    if (reversed) {
+        this -> reversed = NEGATIVE;
+    }
+    else {
+        this -> reversed = POSITIVE;
+    }
 }
 
 
 // Get if the motor direction is reversed
 bool StepperMotor::getReversed() const {
-    return (this -> reversed > 0 ? 1 : 0);
+
+    // Decide if the motor is reversed or not
+    if (this -> reversed > 0) {
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 
 
@@ -388,6 +603,7 @@ float StepperMotor::getMicrostepMultiplier() const {
 }
 
 
+// Simple stepping function, only for testing
 void StepperMotor::simpleStep() {
 
     // Only moving one step in the specified direction
@@ -399,7 +615,7 @@ void StepperMotor::simpleStep() {
 
 
 // Computes the coil values for the next step position and increments the set angle
-void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos) {
+void StepperMotor::step(STEP_DIR dir, int32_t stepChange) {
 
     #ifdef ENABLE_STEPPING_VELOCITY
         isStepping = true;
@@ -407,67 +623,34 @@ void StepperMotor::step(STEP_DIR dir, bool useMultiplier, bool updateDesiredPos)
         // Sample times
         prevStepingSampleTime = nowStepingSampleTime;
         nowStepingSampleTime = micros();
-
-    #else // ! ENABLE_STEPPING_VELOCITY
-        float angleChange;
     #endif
-
-    // Main angle change (any inversions * angle of microstep)
-    angleChange = this -> microstepAngle;
-    int32_t stepChange = 1;
-
-    // Factor in the multiplier if specified
-    if (useMultiplier) {
-        angleChange *= (this -> microstepMultiplier);
-        stepChange *= (this -> microstepMultiplier);
-    }
-
-    // Invert the change based on the direction
-    if (dir == PIN) {
-
-        // Use the DIR_PIN state
-        angleChange *= DIRECTION(GPIO_READ(DIRECTION_PIN)) * (this -> reversed);
-    }
-    //else if (dir == COUNTER_CLOCKWISE) {
-        // Nothing to do here, the value is already positive
-    //}
-    else if (dir == CLOCKWISE) {
-        // Make the angle change in the negative direction
-        angleChange = -angleChange;
-    }
 
     #ifdef ENABLE_STEPPING_VELOCITY
         isStepping = false;
     #endif
 
-    // Fix the step change's sign
-    stepChange *= getSign(angleChange);
+    // Factor direction and motor reversal into step change
+    stepChange *= dir * (this -> reversed);
 
-    // Update the desired angle if specified
-    if (updateDesiredPos) {
+    // Angles are basically just added to handled count, not really much to do here
+    this -> handledStepCNT += stepChange;
 
-        // Angles are basically just added to desired, not really much to do here
-        this -> desiredAngle += angleChange;
-        this -> softStepCNT += stepChange;
-    }
-
-    // Motor's current angle must always be updated to correctly move the coils
-    this -> currentAngle += angleChange;
-    this -> currentStep += stepChange; // Only moving one step in the specified direction
+    // Invert the change based on the direction
+    // Only moving one step in the specified direction
+    this -> currentStep += stepChange;
 
     // Drive the coils to their destination
-    this -> driveCoils(currentStep);
+    this -> driveCoils(this -> currentStep);
 }
 
 
 // Sets the coils of the motor based on the step count
 void StepperMotor::driveCoils(int32_t steps) {
 
-    // Correct the steps so that they're within the valid range
-    //steps %= (4 * (this -> microstepDivisor));
-
-    // Calculate the sine and cosine of the angle
-    uint16_t arrayIndex = steps & (SINE_VAL_COUNT - 1);
+    // Correct the steps to the 32nd microstep range, then
+    // calculate the sine and cosine of the angle
+    // (sine values are based on 32nd microstepping range)
+    uint16_t arrayIndex = (((int64_t)steps) * (this -> stepToSineArrayFactor)) & (SINE_VAL_COUNT - 1);
 
     // Calculate the coil settings
     int16_t coilAPercent = fastSin(arrayIndex);
@@ -492,17 +675,16 @@ void StepperMotor::driveCoils(int32_t steps) {
     if (coilAPower > 0) {
 
         // Set first channel for forward movement
-        setCoilA(COIL_STATE::FORWARD, coilAPower);
+        setCoilA(FORWARD, coilAPower);
     }
     else if (coilAPower < 0) {
 
         // Set first channel for backward movement
-        setCoilA(COIL_STATE::BACKWARD, -coilAPower);
+        setCoilA(BACKWARD, -coilAPower);
     }
     else {
         setCoilA(BRAKE);
     }
-
 
     // Check the if the coil should be energized to move backward or forward
     if (coilBPower > 0) {
@@ -523,14 +705,6 @@ void StepperMotor::driveCoils(int32_t steps) {
 
 // Sets the coils of the motor based on the angle (angle should be in degrees)
 void StepperMotor::driveCoilsAngle(float degAngle) {
-
-    // Should be a faster way of constraining the degAngle back into 0-360
-    if (degAngle < 0) {
-        degAngle += round(abs(degAngle) / 360) * 360;
-    }
-    else if ( degAngle > 360) {
-        degAngle -= round(degAngle / 360) * 360;
-    }
 
     // Constrain the set angle to between 0 and 360
     while (degAngle < 0 || degAngle > 360) {
@@ -561,10 +735,10 @@ void StepperMotor::driveCoilsAngle(float degAngle) {
 void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
-    if (desiredState != previousCoilStateA) {
+    if (previousCoilStateA != desiredState) {
 
-        // Disable the coil
-        analogSet(&PWMCurrentPinInfoA, 0);
+        // Update the previous state of the coil with the new one
+        previousCoilStateA = desiredState;
 
         // Decide the state of the direction pins
         if (desiredState == FORWARD) {
@@ -583,9 +757,6 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
             GPIO_WRITE(COIL_A_DIR_1_PIN, LOW);
             GPIO_WRITE(COIL_A_DIR_2_PIN, LOW);
         }
-
-        // Update the previous state of the coil with the new one
-        previousCoilStateA = desiredState;
     }
 
     // Update the output pin with the correct current
@@ -597,10 +768,10 @@ void StepperMotor::setCoilA(COIL_STATE desiredState, uint16_t current) {
 void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
 
     // Check if the desired coil state is different from the previous, if so, we need to set the output pins
-    if (desiredState != previousCoilStateB) {
+    if (previousCoilStateB != desiredState) {
 
-        // Disable the coil
-        analogSet(&PWMCurrentPinInfoB, 0);
+        // Update the previous state of the coil with the new one
+        previousCoilStateB = desiredState;
 
         // Decide the state of the direction pins
         if (desiredState == FORWARD) {
@@ -619,9 +790,6 @@ void StepperMotor::setCoilB(COIL_STATE desiredState, uint16_t current) {
             GPIO_WRITE(COIL_B_DIR_1_PIN, LOW);
             GPIO_WRITE(COIL_B_DIR_2_PIN, LOW);
         }
-
-        // Update the previous state of the coil with the new one
-        previousCoilStateB = desiredState;
     }
 
     // Update the output pin with the correct current
@@ -651,29 +819,28 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
             switch (newState) {
 
                 // Need to clear the disabled state and start the coils
-                case ENABLED:
+                case ENABLED: {
 
-                    // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(encoder.getRawAngleAvg());
+                    // Enable the motor
+                    enable();
 
-                    // The motor's current angle needs corrected
-                    currentAngle = encoder.getRawAngleAvg();
+                    // Set the new state
                     this -> state = ENABLED;
                     break;
-
+                }
                 // Same as enabled, just forced
-                case FORCED_ENABLED:
+                case FORCED_ENABLED: {
 
-                    // Drive the coils the current angle of the shaft (just locks the output in place)
-                    driveCoilsAngle(encoder.getRawAngleAvg());
+                    // Enable the motor
+                    enable();
 
-                    // The motor's current angle needs corrected
-                    currentAngle = encoder.getRawAngleAvg();
+                    // Set the new state
                     this -> state = FORCED_ENABLED;
                     break;
-
+                }
                 // No other special processing needed, just disable the coils and set the state
                 default:
+                    disableStepCorrection();
                     motor.setCoilA(IDLE_MODE);
                     motor.setCoilB(IDLE_MODE);
                     this -> state = newState;
@@ -688,18 +855,18 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
                 switch (newState) {
 
                     // Need to clear the disabled state and start the coils
-                    case ENABLED:
+                    case ENABLED: {
 
-                        // Drive the coils the current angle of the shaft (just locks the output in place)
-                        driveCoilsAngle(encoder.getRawAngleAvg());
+                        // Enable the motor
+                        enable();
 
-                        // The motor's current angle needs corrected
-                        currentAngle = encoder.getRawAngleAvg();
+                        // Set the new state
                         this -> state = ENABLED;
                         break;
-
+                    }
                     // No other special processing needed, just disable the coils and set the state
                     default:
+                        disableStepCorrection();
                         motor.setCoilA(IDLE_MODE);
                         motor.setCoilB(IDLE_MODE);
                         this -> state = newState;
@@ -708,6 +875,36 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors) {
             }
         }
     }
+}
+
+
+// Private function for enabling the motor
+void StepperMotor::enable() {
+
+    #ifdef STEP_CORRECTION
+    // Clear the old absolute angle averages from the encoder
+    encoder.clearAbsoluteAngleAvg();
+
+    // Note the current angle
+    float encoderAngle = encoder.getAbsoluteAngle();
+
+    // Drive the coils the current angle of the shaft (just locks the output in place)
+    driveCoilsAngle(encoderAngle);
+
+    // The motor's current step needs corrected
+    currentStep = round(encoderAngle / microstepAngle);
+
+    // Reset the motor's desired step to the current
+    // No need to set the desired angle, that is based off of the step
+    setDesiredStep(currentStep);
+
+    #endif
+
+    // Energize the coils of the motor
+    motor.driveCoils(currentStep);
+
+    // Enable the step correction timer
+    enableStepCorrection();
 }
 
 
@@ -743,12 +940,14 @@ void StepperMotor::calibrate() {
     // Delay three seconds, giving the motor time to settle
     delay(3000);
 
+    #ifndef DISABLE_ENCODER
     // Force the encoder to be read a couple of times, wiping the previous position out of the average
     // (this reading needs to be as precise as possible)
-    for (uint8_t readings = 0; readings < (ANGLE_AVG_READINGS * 2); readings++) {
+    for (uint8_t readings = 0; readings < ANGLE_AVG_READINGS; readings++) {
 
         // Get the angle, then wait for 10ms to allow encoder to update
         encoder.getRawAngleAvg();
+        delay(10);
     }
 
     // Measure encoder offset
@@ -761,6 +960,7 @@ void StepperMotor::calibrate() {
     while (stepOffset > (this -> fullStepAngle)) {
         stepOffset -= (this -> fullStepAngle);
     }
+    #endif
 
     // Calibrate PID loop
 
@@ -769,7 +969,11 @@ void StepperMotor::calibrate() {
     eraseParameters();
 
     // Write the step offset into the flash
+    #ifndef DISABLE_ENCODER
     writeFlash(STEP_OFFSET_INDEX, stepOffset);
+    #else
+    writeFlash(STEP_OFFSET_INDEX, (float)0);
+    #endif
 
     // Write that the module is configured
     writeFlash(CALIBRATED_INDEX, true);

@@ -1,11 +1,11 @@
-#ifndef __FLASH_H
-#define __FLASH_H
+#ifndef FLASH_H
+#define FLASH_H
 
-#include "stm32f103xb.h"
 #include "buttons.h"
 #include "canMessaging.h"
-#include "timers.h"
+#include "stm32f103xb.h"
 #include "stm32f1xx_hal_flash.h"
+#include "timers.h"
 
 // Where the parameters are saved
 // This is 1024 bits behind the end of flash

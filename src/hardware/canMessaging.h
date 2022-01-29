@@ -1,5 +1,5 @@
-#ifndef __CANBUS_H__
-#define __CANBUS_H__
+#ifndef CANBUS_H
+#define CANBUS_H
 
 #include "main.h"
 
@@ -16,7 +16,7 @@ typedef enum {
     HOST, // The computer that is connected
     X, X2, X3, X4, X5,
     Y, Y2, Y3, Y4, Y5,
-    Z, Z2, Z3, Z4, Z5, 
+    Z, Z2, Z3, Z4, Z5,
     E, E2, E3, E4, E5, E6, E7
 } AXIS_CAN_ID;
 

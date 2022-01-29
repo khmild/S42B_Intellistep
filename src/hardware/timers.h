@@ -7,6 +7,7 @@
 #include "main.h"
 #include "led.h"
 #include "pid.h"
+#include "stm32f1xx_ll_tim.h"
 
 // Variables
 // Expose the StepperPID instance to other files
@@ -43,6 +44,9 @@ void disableStepCorrection();
 
 // Updates the step correction frequency (called when microstepping is changed)
 void updateCorrectionTimer();
+
+// Function for handling enable pin changes (when using interrupts)
+void enablePinISR();
 
 // Function that steps the motor
 void stepMotor();

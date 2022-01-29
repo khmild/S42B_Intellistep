@@ -93,13 +93,13 @@ void StepperPID::setOutputLimits(float newMin, float newMax) {
 
 
 // Update the PID loop, returning the output
-float StepperPID::compute() {
+float StepperPID::compute(float currentAbsAngle, float newSetpoint) {
 
     // Update the input
-    this -> input = motor.encoder.getAbsoluteAngleAvgFloat();
+    this -> input = currentAbsAngle;
 
     // Update the setpoint
-    this -> setpoint = motor.getDesiredAngle();
+    this -> setpoint = newSetpoint;
 
     // Compute the PID
     // Update the current time

@@ -38,7 +38,7 @@ uint32_t readFlashU32(uint32_t parameterIndex) {
     intData[1] = readFlashAddress(DATA_START_ADDR + (parameterIndex * 4) + 2);
 
     // Create a variable to store the data in
-    uint32_t data;
+    uint32_t data = 0;
 
     // Copy the 4 bytes of the data over (all of it)
     memcpy(&data, &intData, 4);
@@ -204,6 +204,11 @@ void saveParameters() {
     // Save the previous state
     writeFlash(CALIBRATED_INDEX, calibrated);
 
+    // Save the step offset
+    #ifndef DISABLE_ENCODER
+    writeFlash(STEP_OFFSET_INDEX, (float)motor.encoder.getStepOffset());
+    #endif
+
     // Get the motor current
     #ifdef ENABLE_DYNAMIC_CURRENT
         writeFlash(DYNAMIC_ACCEL_CURRENT_INDEX, motor.getDynamicAccelCurrent());
@@ -220,7 +225,7 @@ void saveParameters() {
     writeFlash(FULL_STEP_ANGLE_INDEX, motor.getFullStepAngle());
 
     // Microstepping divisor
-    writeFlash(MICROSTEPPING_INDEX, motor.getMicrostepping());
+    writeFlash(MICROSTEPPING_INDEX, (uint16_t)motor.getMicrostepping());
 
     // Motor Direction Reversed
     writeFlash(MOTOR_REVERSED_INDEX, motor.getReversed());
@@ -301,9 +306,6 @@ bool checkVersionMatch() {
 // Loads the saved parameters from flash and sets them
 String loadParameters() {
 
-    // Create a storage for the output message
-    String outputMessage;
-
     // Check to see if the data is valid
     if (readFlashBool(VALID_FLASH_CONTENTS)) {
 
@@ -313,7 +315,9 @@ String loadParameters() {
         }
 
         // Load the calibration offset
+        #ifndef DISABLE_ENCODER
         motor.encoder.setStepOffset(readFlashFloat(STEP_OFFSET_INDEX));
+        #endif
 
         // Set the motor current
         #ifdef ENABLE_DYNAMIC_CURRENT
@@ -361,15 +365,12 @@ String loadParameters() {
         setDipInverted(readFlashBool(INVERTED_DIPS_INDEX));
 
         // If we made it this far, we can set the message to "ok" and move on
-        outputMessage = FLASH_LOAD_SUCCESSFUL;
+        return FLASH_LOAD_SUCCESSFUL;
     }
     else {
         // The data is invalid, so return a message saying that the load was unsuccessful
-        outputMessage = FLASH_LOAD_UNSUCCESSFUL;
+        return FLASH_LOAD_UNSUCCESSFUL;
     }
-
-    // All done, we can return the result of the process
-    return outputMessage;
 }
 
 

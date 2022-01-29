@@ -5,7 +5,7 @@ void initLED() {
 
     // Initialization structure
     GPIO_InitTypeDef GPIO_InitStructure;
-    
+
     // Enable GPIOC clock
     __HAL_RCC_GPIOC_CLK_ENABLE();
 

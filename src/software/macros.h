@@ -8,6 +8,9 @@
 // Power of 2, N is positive integer
 #define POWER_2(N) (1U << (N))
 
+// Extend the motor steps range to the encoder increment range
+//#define MOTOR_STEP_TO_ENCODER_INCREMENT(steps, stepsPerRev, microstepDivisor) ( (steps) * ((POW_2_15) >> (REJECT_ENCODERS_LSB)) / ((stepsPerRev) * (microstepDivisor)) )
+
 // Bitwise memory modification - ARM bitband
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2))
 #define MEM_ADDR(addr)  *((volatile unsigned long  *)(addr))
@@ -36,6 +39,8 @@
 
 // Direction (for reverse direction)
 #define DIRECTION(x) ((x) > 0 ? 1 : (-1))  // Note: zero 'x' is not allowed
+
+#define SIGN(x) ((x) > 0 ? 1 : (x) < 0 ? (-1) : 0)
 
 // Return angle in range [0..360[ (doesn't include 360)
 #define TO360(A) ((A) - DIRECTION(A) * round(abs(A) / 360) * 360)

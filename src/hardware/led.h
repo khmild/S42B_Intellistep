@@ -1,5 +1,5 @@
-#ifndef __LED_H__
-#define __LED_H__
+#ifndef LED_H
+#define LED_H
 
 // Imports
 #include "Arduino.h"

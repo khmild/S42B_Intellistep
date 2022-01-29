@@ -15,9 +15,9 @@ String parseCommand(String buffer) {
     //  - M93 (ex M93 V1.8 or M93) - Sets the angle of a full step. This value should be 1.8° or 0.9°. If no value is provided, then the current value will be returned.
     //  - M115 (ex M115) - Prints out firmware information, consisting of the version and any enabled features.
     //  - M116 (ex M116 S1 M"A message") - Simple forward command that will forward a message across the CAN bus. Can be used for pinging or allowing a Serial to connect to the CAN network
-    //  - M306 (ex M306 P1 I1 D1 W10 or M306) - Sets or gets the PID values for the motor. W term is the maximum value of the I windup. If no values are provided, then the current values will be returned.
-    //  - M307 (ex M307) - Runs an autotune sequence for the PID loop
-    //  - M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
+    //  - M154 (ex M154 S4) - Runs the manual PID tuning interface. Serial is filled with encoder angles. S term specifies the wait time.
+    //  - M301 (ex M301 P1 I1 D1 W10 or M301) - Sets or gets the PID values for the motor. W term is the maximum value of the I windup. If no values are provided, then the current values will be returned.
+    //  - M303 (ex M303) - Runs an autotune sequence for the PID loop
     //  - M350 (ex M350 V16 or M350) - Sets or gets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32. If no value is provided, then the current microstepping divisor will be returned.
     //  - M352 (ex M352 S1 or M352) - Sets or gets the direction pin inversion for the motor (0 is standard, 1 is inverted). If no value is provided, then the current value will be returned.
     //  - M353 (ex M353 S1 or M353) - Sets or gets the enable pin inversion for the motor (0 is standard, 1 is inverted). If no value is provided, then the current value will be returned.
@@ -44,12 +44,12 @@ String parseCommand(String buffer) {
 
             case 18:
                 // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
-                motor.setState(FORCED_DISABLED);
+                motor.setState(FORCED_DISABLED, true);
                 return FEEDBACK_OK;
 
             case 84:
                 // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
-                motor.setState(FORCED_DISABLED);
+                motor.setState(FORCED_DISABLED, true);
                 return FEEDBACK_OK;
 
             case 93: {
@@ -79,8 +79,40 @@ String parseCommand(String buffer) {
             #endif
 
             #ifdef ENABLE_PID
-            case 306: {
-                // M306 (ex M306 P1 I1 D1 or M306) - Sets or gets the PID values for the motor. If no values are provided, then the current values will be returned.
+            case 154: {
+                // M154 (ex M154) - Runs the manual PID tuning interface. Serial is filled with encoder angles
+
+                // Read the auto-report interval
+                float interval = parseValue(buffer, 'S').toFloat();
+
+                // Sanitize the interval
+                if (interval < 0) {
+                    return FEEDBACK_NO_VALUE;
+                }
+
+                // Print a notice to the user that the PID tuning is starting
+                Serial.println("Notice: The manual PID tuning is now starting. To exit, send any serial data.");
+
+                // Wait for the user to read it
+                delay(1000);
+
+                // Clear the serial buffer
+                while (Serial.available() > 0) {
+                    Serial.read();
+                }
+
+                // Loop forever, until a new value is sent
+                while (!(Serial.available() > 0)) {
+                    Serial.println(motor.encoder.getAbsoluteAngleAvg());
+                    delay(interval);
+                }
+
+                // When all done, the exit is acknowledged
+                return FEEDBACK_OK;
+            }
+
+            case 301: {
+                // M301 (ex M301 P1 I1 D1 or M306) - Sets or gets the PID values for the motor. If no values are provided, then the current values will be returned.
                 float pValue =    parseValue(buffer, 'P').toFloat();
                 float iValue =    parseValue(buffer, 'I').toFloat();
                 float dValue =    parseValue(buffer, 'D').toFloat();
@@ -108,34 +140,13 @@ String parseCommand(String buffer) {
                     return ("P: " + String(pid.getP()) + " | I: " + String(pid.getI()) + " | D: " + String(pid.getD()) + " | W: " + String(pid.getMaxI()));
                 }
             }
-            #endif
 
-            case 307:
-                // M307 (ex M307) - Runs a automatic calibration sequence for the PID loop and encoder
+            case 303:
+                // M303 (ex M303) - Runs a automatic calibration sequence for the PID loop and encoder
                 motor.calibrate();
                 return FEEDBACK_OK;
 
-            case 308:
-                // M308 (ex M308) - Runs the manual PID tuning interface. Serial is filled with encoder angles
-
-                // Print a notice to the user that the PID tuning is starting
-                Serial.println("Notice: The manual PID tuning is now starting. To exit, send any serial data.");
-
-                // Wait for the user to read it
-                delay(1000);
-
-                // Clear the serial buffer
-                while (Serial.available() > 0) {
-                    Serial.read();
-                }
-
-                // Loop forever, until a new value is sent
-                while (!(Serial.available() > 0)) {
-                    Serial.println(motor.encoder.getAbsoluteAngleAvg());
-                }
-
-                // When all done, the exit is acknowledged
-                return FEEDBACK_OK;
+            #endif // ! ENABLE_PID
 
             case 350: {
                 // M350 (ex M350 V16 or M350) - Sets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32. Sets or gets the microstepping divisor for the motor. This value can be 1, 2, 4, 8, 16, or 32. If no value is provided, then the current microstepping divisor will be returned.
@@ -334,9 +345,9 @@ String parseCommand(String buffer) {
                 // Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (no dynamic current) or the accel, idle, and max terms (dynamic current) will be returned.
                 #ifdef ENABLE_DYNAMIC_CURRENT
                     // Read the set values
-                    uint16_t accelCurrent = parseValue(buffer, 'A').toInt();
-                    uint16_t idleCurrent = parseValue(buffer, 'I').toInt();
-                    uint16_t maxCurrent = parseValue(buffer, 'M').toInt();
+                    int16_t accelCurrent = parseValue(buffer, 'A').toInt();
+                    int16_t idleCurrent = parseValue(buffer, 'I').toInt();
+                    int16_t maxCurrent = parseValue(buffer, 'M').toInt();
 
                     // Check to make sure that at least one isn't -1 (there is at least one that is valid)
                     if (!((accelCurrent == -1) && (idleCurrent == -1) && (maxCurrent == -1))) {
@@ -353,8 +364,8 @@ String parseCommand(String buffer) {
 
                 #else
                     // Read the set values (one of them should be -1 (no value exists))
-                    uint16_t rmsCurrent = parseValue(buffer, 'R').toInt();
-                    uint16_t peakCurrent = parseValue(buffer, 'P').toInt();
+                    int16_t rmsCurrent = parseValue(buffer, 'R').toInt();
+                    int16_t peakCurrent = parseValue(buffer, 'P').toInt();
 
                     // Check if RMS current is valid
                     if (rmsCurrent != -1) {
@@ -409,10 +420,10 @@ String parseCommand(String buffer) {
 
                 // Call the steps to be scheduled
                 if (!reverse) {
-                    scheduleSteps(count, rate, COUNTER_CLOCKWISE);
+                    scheduleSteps(count, rate, POSITIVE);
                 }
                 else {
-                    scheduleSteps(count, rate, CLOCKWISE);
+                    scheduleSteps(count, rate, NEGATIVE);
                 }
 
                 // All good, we can exit
