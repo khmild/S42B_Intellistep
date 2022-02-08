@@ -543,15 +543,40 @@ int32_t StepperMotor::getMicrostepsPerRotation() const {
 }
 
 
-// Set if the motor direction should be reversed or not
+// Set if the motor direction should be reversed
 void StepperMotor::setReversed(bool reversed) {
 
     // Set if the motor should be reversed
     if (reversed) {
+
+        // Invert the step handler direction
         this -> reversed = NEGATIVE;
+
+        /* Get the TIMx CCER register value */
+        uint32_t tmpccer = TIM2->CCER;
+
+        // Clear, then set the TI1 and the TI2 Polarities
+        // This inverts the direction of the hardware counter
+        tmpccer &= ~(TIM_CCER_CC1P | TIM_CCER_CC2P);
+        tmpccer |= TIM_ICPOLARITY_FALLING | (TIM_ICPOLARITY_RISING << 4U);
+
+        /* Write the updated TIM2 CCER */
+        TIM2->CCER = tmpccer;
     }
     else {
+        // Invert the step handler direction
         this -> reversed = POSITIVE;
+
+        /* Get the TIMx CCER register value */
+        uint32_t tmpccer = TIM2->CCER;
+
+        // Clear, then set the TI1 and the TI2 Polarities
+        // This inverts the direction of the hardware counter
+        tmpccer &= ~(TIM_CCER_CC1P | TIM_CCER_CC2P);
+        tmpccer |= TIM_ICPOLARITY_FALLING | (TIM_ICPOLARITY_FALLING << 4U);
+
+        /* Write the updated TIM2 CCER */
+        TIM2->CCER = tmpccer;
     }
 }
 

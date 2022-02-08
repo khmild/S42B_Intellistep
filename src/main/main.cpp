@@ -189,7 +189,7 @@ void setup() {
             }
 
             // Check to see if any of the buttons are pressed
-            checkButtons(false, true);
+            checkButtons();
 
             // Check to see if the menu button has been clicked
             if (getMenuDepth() > 0) {
@@ -299,7 +299,7 @@ void loop() {
 
     #ifdef ENABLE_OLED
         // Check the buttons
-        checkButtons(true);
+        checkButtons();
 
         // Only update the display if the motor data is being displayed, buttons update the display when clicked
         if (getMenuDepth() == MOTOR_DATA) {

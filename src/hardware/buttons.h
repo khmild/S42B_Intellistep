@@ -6,9 +6,12 @@
 // Need the timer library
 #include "timers.h"
 
+// Need the OLED library (for getting the menu level)
+#include "oled.h"
+
 // Function definitions
 void initButtons();
-void checkButtons(bool updateScreen, bool onlyAllowSelect = false);
+void checkButtons();
 bool checkButtonState(PinName buttonPin);
 void readDipMicrostepping();
 void checkDips();

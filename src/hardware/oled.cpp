@@ -307,17 +307,11 @@ void selectMenuItem() {
                 #ifndef ENABLE_DYNAMIC_CURRENT
                     currentCursorIndex = constrain(round(motor.getRMSCurrent() / 100), 0, (uint16_t)MAX_RMS_BOARD_CURRENT);
                 #endif
-
-                // Enter the menu
-                menuDepth = SUBMENUS;
                 break;
 
             case MICROSTEP:
                 // Motor microstepping. Need to get the current microstepping setting, then convert it to a cursor value
                 currentCursorIndex = log2(motor.getMicrostepping());
-
-                // Enter the menu
-                menuDepth = SUBMENUS;
                 break;
 
             case ENABLE_LOGIC:
@@ -330,9 +324,6 @@ void selectMenuItem() {
                     // Otherwise set the value to false to start
                     currentCursorIndex = 1;
                 }
-
-                // Enter the menu
-                menuDepth = SUBMENUS;
                 break;
 
             case DIR_LOGIC:
@@ -343,17 +334,11 @@ void selectMenuItem() {
                 else {
                     currentCursorIndex = 1;
                 }
-
-                // Enter the menu
-                menuDepth = SUBMENUS;
                 break;
 
             case SAVED_DATA:
                 // Just set the cursor to zero, no saving of last position
                 currentCursorIndex = 0;
-
-                // Enter the menu
-                menuDepth = SUBMENUS;
                 break;
         }
 
@@ -531,14 +516,17 @@ void moveCursor() {
         else {
             submenu = SUBMENU(submenu + 1);
         }
+
+        // Update the display
+        updateDisplay();
     }
     else if (menuDepth == SUBMENUS) {
         // We are in the submenu, increment the cursor index (submenus handle the display themselves)
         currentCursorIndex++;
-    }
 
-    // Update the display
-    updateDisplay();
+        // Update the display
+        updateDisplay();
+    }
 }
 
 
@@ -548,10 +536,10 @@ void exitCurrentMenu() {
     // Go up in the menu index if we're not already at the motor data screen
     if (menuDepth > (uint8_t)MOTOR_DATA) {
         menuDepth = MENU_DEPTH(menuDepth - 1);
-    }
 
-    // Update the display to match
-    updateDisplay();
+        // Update the display to match
+        updateDisplay();
+    }
 }
 
 // Returns the depth of the menu (helpful for watching the select button)
