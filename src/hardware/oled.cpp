@@ -270,7 +270,7 @@ void displayWarning(String firstLine, String secondLine, String thirdLine, bool 
     writeOLEDString(0, 0,               firstLine,  false);
     writeOLEDString(0, LINE_HEIGHT,     secondLine, false);
     writeOLEDString(0, LINE_HEIGHT * 2, thirdLine,  false);
-    writeOLEDString(0, LINE_HEIGHT * 3, F("Back to exit"), updateScreen);
+    writeOLEDString(0, LINE_HEIGHT * 3, F("Back to cancel"), updateScreen);
 
     // Save the last menu used (for returning later), then move to the new index
     lastMenuDepth = menuDepth;
