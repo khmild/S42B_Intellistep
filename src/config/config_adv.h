@@ -101,7 +101,7 @@ typedef float real_t;
 #endif
 
 // Direct step functionality (used to command motor to move over Serial/CAN)
-//#define ENABLE_DIRECT_STEPPING
+#define ENABLE_DIRECT_STEPPING
 #ifdef ENABLE_DIRECT_STEPPING
 
     // The default stepping rate (in Hz) to move in the event that no parameter is specified
@@ -135,12 +135,12 @@ typedef float real_t;
 
 // If the motor should try to correct after it thinks that steps have been missed
 // ! THIS IS UNLIKELY TO WORK, AND WILL PROBABLY JUST MESS EVERYTHING UP, DON"T ENABLE IT
-//#define STEP_CORRECTION
+#define STEP_CORRECTION
 #ifdef STEP_CORRECTION
 
     // Uses advanced PID control instead of correcting based on error direction
     // ! At this time, this feature is still under development
-    //#define ENABLE_PID
+    #define ENABLE_PID
     #ifdef ENABLE_PID
         // PID settings
 
