@@ -7,6 +7,7 @@
 #include "main.h"
 #include "led.h"
 #include "pid.h"
+#include "serial.h"
 #include "stm32f1xx_ll_tim.h"
 
 // Variables

@@ -301,6 +301,23 @@ void correctMotor() {
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
 
+    #if 1
+        sendSerialMessage("Motor State: ");
+        if (motor.getState() == ENABLED){
+            sendSerialMessage("ENABLED");
+        }
+        if (motor.getState() == FORCED_ENABLED){
+            sendSerialMessage("FORCED ENABLED");
+        }
+        if (motor.getState() == DISABLED){
+            sendSerialMessage("DISABLED");
+        }
+        if (motor.getState() == FORCED_DISABLED){
+            sendSerialMessage("FORCED_DISABLED");
+        }
+        sendSerialMessage("\r\n");
+    #endif
+
     // Make sure that the motor isn't disabled
     if (motor.getState() == ENABLED || motor.getState() == FORCED_ENABLED) {
 
@@ -485,6 +502,9 @@ void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
     // Configure the speed of the timer, then re-enable it
     stepScheduleTimer -> setOverflow(rate, HERTZ_FORMAT);
     enableStepScheduleTimer();
+
+    //enable the motor
+    motor.setState(ENABLED, true);
 }
 #endif
 
