@@ -301,7 +301,8 @@ void correctMotor() {
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
 
-    #if 1
+    #ifdef DISPLAY_MOTOR_STATE
+        // Display motor state for debuging purpouses 
         sendSerialMessage("Motor State: ");
         if (motor.getState() == ENABLED){
             sendSerialMessage("ENABLED");
@@ -316,6 +317,11 @@ void correctMotor() {
             sendSerialMessage("FORCED_DISABLED");
         }
         sendSerialMessage("\r\n");
+    #endif
+
+    #ifdef ENABLE_SERIAL
+        // Check if some command is received
+        //runSerialParser();
     #endif
 
     // Make sure that the motor isn't disabled
@@ -341,6 +347,13 @@ void correctMotor() {
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
 
+                String buffer = String(motor.getDesiredAngle(), 3);
+                sendSerialMessage(buffer);
+                sendSerialMessage("\r\n");
+                buffer = String(motor.getDesiredStep(), DEC);
+                sendSerialMessage(buffer);
+                sendSerialMessage("\r\n");
+                
                 // Run the PID calcalations
                 int32_t pidOutput = round(pid.compute(currentAbsAngle, motor.getDesiredAngle()));
                 uint32_t stepFreq = abs(pidOutput);

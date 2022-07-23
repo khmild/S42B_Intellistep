@@ -294,6 +294,7 @@ void loop() {
 
     // Check to see if serial data is available to read
     #ifdef ENABLE_SERIAL
+        sendSerialMessage("Parser\r\n");
         runSerialParser();
     #endif
 
