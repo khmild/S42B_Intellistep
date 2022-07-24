@@ -903,12 +903,12 @@ void StepperMotor::enable() {
     // Energize the coils of the motor
     motor.driveCoils(currentStep);
 
-        String buffer = String(motor.getDesiredAngle(), 3);
-        sendSerialMessage(buffer);
-        sendSerialMessage("\r\n");
-        buffer = String(motor.getDesiredStep(), DEC);
-        sendSerialMessage(buffer);
-        sendSerialMessage("\r\n");
+        //String buffer = String(motor.getDesiredAngle(), 3);
+        //sendSerialMessage(buffer);
+        //sendSerialMessage("\r\n");
+        //buffer = String(motor.getDesiredStep(), DEC);
+        //sendSerialMessage(buffer);
+        //sendSerialMessage("\r\n");
 
     // Enable the step correction timer
     enableStepCorrection();

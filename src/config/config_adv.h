@@ -145,9 +145,9 @@ typedef float real_t;
         // PID settings
 
         // Default P, I, and D terms
-        #define DEFAULT_P  1000
-        #define DEFAULT_I  2
-        #define DEFAULT_D  0
+        #define DEFAULT_P  1
+        #define DEFAULT_I  1
+        #define DEFAULT_D  1
 
         // I windup protection
         #define DEFAULT_MAX_I 10

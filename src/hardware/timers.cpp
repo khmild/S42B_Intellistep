@@ -326,14 +326,16 @@ void correctMotor() {
 
     // Make sure that the motor isn't disabled
     if (motor.getState() == ENABLED || motor.getState() == FORCED_ENABLED) {
-
+        sendSerialMessage("if Enabled reached\r\n");
         // "Smart" step correction using encoder counts
         #ifdef STEP_CORRECTION
         // Get the current angle of the motor
-        float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat();
+        //float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat(); <- not working, returns to the start position
+        float currentAbsAngle = motor.encoder.getAngle();
 
         // Get the angular deviation
         int32_t stepDeviation = motor.getStepError(currentAbsAngle);
+
         #else
         // Basic step correction using number of currently handled steps
         // ! NOT PROTECTED FROM SKIPPING!
@@ -343,21 +345,14 @@ void correctMotor() {
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
         if (stepDeviation != 0) {
-
+            sendSerialMessage("if step deviation reached\r\n");
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
-
-                String buffer = String(motor.getDesiredAngle(), 3);
-                sendSerialMessage(buffer);
-                sendSerialMessage("\r\n");
-                buffer = String(motor.getDesiredStep(), DEC);
-                sendSerialMessage(buffer);
-                sendSerialMessage("\r\n");
                 
                 // Run the PID calcalations
                 int32_t pidOutput = round(pid.compute(currentAbsAngle, motor.getDesiredAngle()));
                 uint32_t stepFreq = abs(pidOutput);
-
+                
                 // Check if the value is 0 (meaning that the timer needs disabled)
                 if (stepFreq == 0) {
 
