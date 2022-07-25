@@ -319,19 +319,36 @@ void correctMotor() {
         sendSerialMessage("\r\n");
     #endif
 
-    #ifdef ENABLE_SERIAL
-        // Check if some command is received
-        //runSerialParser();
-    #endif
-
     // Make sure that the motor isn't disabled
     if (motor.getState() == ENABLED || motor.getState() == FORCED_ENABLED) {
-        sendSerialMessage("if Enabled reached\r\n");
         // "Smart" step correction using encoder counts
         #ifdef STEP_CORRECTION
         // Get the current angle of the motor
-        //float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat(); <- not working, returns to the start position
-        float currentAbsAngle = motor.encoder.getAngle();
+        float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat(); //<- not working, returns to the start position
+        //float currentAbsAngle = (((float)motor.encoder.getRev()*360) + motor.encoder.getAngle());
+        //float currentAbsAngle = motor.encoder.getAngle();
+
+        /*String buffer = String(currentAbsAngle, 3);
+        sendSerialMessage("Current angle: ");
+        sendSerialMessage(buffer);
+        sendSerialMessage("\r\n");
+
+        buffer = String(motor.getDesiredStep(), DEC);
+        sendSerialMessage("Desired step: ");
+        sendSerialMessage(buffer);
+        sendSerialMessage("\r\n");*/
+        
+        /*buffer = String((((float)motor.encoder.getRev()*360) + motor.encoder.getAngle()), 3);
+        sendSerialMessage("Rev: ");
+        sendSerialMessage(buffer);
+        sendSerialMessage("\r\n");*/
+
+        /*buffer = String(motor.getDesiredAngle(), 3);
+        sendSerialMessage("Request: ");
+        sendSerialMessage(buffer);
+        sendSerialMessage("\r\n");
+
+        sendSerialMessage("\r\n");*/
 
         // Get the angular deviation
         int32_t stepDeviation = motor.getStepError(currentAbsAngle);
@@ -345,7 +362,6 @@ void correctMotor() {
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
         if (stepDeviation != 0) {
-            sendSerialMessage("if step deviation reached\r\n");
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
                 
@@ -510,6 +526,19 @@ void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
     // Configure the speed of the timer, then re-enable it
     stepScheduleTimer -> setOverflow(rate, HERTZ_FORMAT);
     enableStepScheduleTimer();
+
+    // Increase or decrease desired step counter
+    if(stepDir == POSITIVE){
+        motor.setDesiredStep(motor.getDesiredStep() + remainingScheduledSteps);
+    }
+    else{
+        motor.setDesiredStep(motor.getDesiredStep() - remainingScheduledSteps);
+    }
+
+    String buffer = String(motor.getDesiredStep(), DEC);
+    sendSerialMessage("Desired step: ");
+    sendSerialMessage(buffer);
+    sendSerialMessage("\r\n");
 
     //enable the motor
     motor.setState(ENABLED, true);

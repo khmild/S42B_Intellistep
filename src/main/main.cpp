@@ -294,7 +294,6 @@ void loop() {
 
     // Check to see if serial data is available to read
     #ifdef ENABLE_SERIAL
-        sendSerialMessage("Parser\r\n");
         runSerialParser();
     #endif
 
@@ -316,7 +315,7 @@ void loop() {
         // We should delay the time remaining in the loop
         // We can take the set time for a loop and subtract the already taken time from it
         // This helps to stabilize the IO updates
-        delay(MIN_IO_LOOP_TIME - (getCurrentMillis() - startTime)); // ! Maybe remove? This could make the updates much faster
+        //delay(MIN_IO_LOOP_TIME - (getCurrentMillis() - startTime)); // ! Maybe remove? This could make the updates much faster
     #endif
 }
 

@@ -896,19 +896,15 @@ void StepperMotor::enable() {
 
     // Reset the motor's desired step to the current
     // No need to set the desired angle, that is based off of the step
-    setDesiredStep(currentStep);
+    if(motor.getState() == FORCED_ENABLED)
+    {
+        setDesiredStep(currentStep);
+    }
 
     #endif
 
     // Energize the coils of the motor
     motor.driveCoils(currentStep);
-
-        //String buffer = String(motor.getDesiredAngle(), 3);
-        //sendSerialMessage(buffer);
-        //sendSerialMessage("\r\n");
-        //buffer = String(motor.getDesiredStep(), DEC);
-        //sendSerialMessage(buffer);
-        //sendSerialMessage("\r\n");
 
     // Enable the step correction timer
     enableStepCorrection();
