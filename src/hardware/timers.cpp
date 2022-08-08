@@ -367,11 +367,18 @@ void correctMotor() {
                 
                 // Run the PID calcalations
                 int32_t pidOutput = round(pid.compute(currentAbsAngle, motor.getDesiredAngle()));
+
                 uint32_t stepFreq = abs(pidOutput);
                 
+                // Notifi the controller that motor is arrived to the desired position
+                if(stepFreq < 40 && !motor.inPosition())
+                {
+                    sendSerialMessage("Motor in position\r\n");
+                    motor.steppingDone();
+                }
+
                 // Check if the value is 0 (meaning that the timer needs disabled)
                 if (stepFreq == 0) {
-
                     // The timer needs disabled
                     disableStepScheduleTimer();
                 }
@@ -535,10 +542,8 @@ void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
         motor.setDesiredStep(motor.getDesiredStep() - remainingScheduledSteps);
     }
 
-    String buffer = String(motor.getDesiredStep(), DEC);
-    sendSerialMessage("Desired step: ");
-    sendSerialMessage(buffer);
-    sendSerialMessage("\r\n");
+    // Set active stepping flag
+    motor.steppingRequest();
 
     //enable the motor
     motor.setState(ENABLED, true);

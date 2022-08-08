@@ -239,6 +239,15 @@ class StepperMotor {
         // Microstep multiplier (used to move a custom number of microsteps per step pulse)
         uint32_t microstepMultiplier = DEFAULT_MICROSTEP_MULTIPLIER;
 
+        // Called when the motor movement is requested
+        void steppingRequest();
+
+        // Called when motor finishes the movement
+        void steppingDone();
+
+        // Check if motor is already in position
+        uint8_t inPosition();
+
     // Things that shouldn't be accessed by the outside
     private:
 
@@ -248,6 +257,9 @@ class StepperMotor {
         // Function that enables the motor
         void enable();
 
+        // Signals that motor movement was requested. Stays TRUE until motor arrives to the desired position.
+        uint8_t moveRequestFlag = 0;
+        
         // Keeps the number of handled steps of the motor
         int32_t handledStepCNT = 0;
 

@@ -994,3 +994,21 @@ int32_t StepperMotor::getSign(float num) {
         return 1;
     }
 }
+
+// Called when the motor movement is requested
+void StepperMotor::steppingRequest()
+{
+    this->moveRequestFlag = 1;
+}
+
+// Called when motor finishes the movement
+void StepperMotor::steppingDone()
+{
+    this->moveRequestFlag = 0;
+}
+
+// Check if motor is already in position
+uint8_t StepperMotor::inPosition()
+{
+    return !this->moveRequestFlag;
+}

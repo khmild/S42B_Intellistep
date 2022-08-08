@@ -287,7 +287,7 @@ void setup() {
 void loop() {
 
     // Note the loop start time
-    uint32_t startTime = getCurrentMillis();
+    //uint32_t startTime = getCurrentMillis();
 
     // Check the dip switches
     checkDips();
@@ -295,9 +295,11 @@ void loop() {
     // Check to see if serial data is available to read
     #ifdef ENABLE_SERIAL
         runSerialParser();
+        //char buffer[32];
+        //sprintf(buffer, "%.1f/%.1f/%ld\r\n", motor.getDesiredAngle(), motor.encoder.getAbsoluteAngleAvgFloat(), HAL_GetTick()); 
+        //sendSerialMessage(buffer);
     #endif
-
-    #ifdef ENABLE_OLED
+ 
         // Check the buttons
         checkButtons(true);
 
@@ -305,7 +307,7 @@ void loop() {
         if (getMenuDepth() == MOTOR_DATA) {
             displayMotorData();
         }
-    #endif
+
 
     // We need a little delay to allow the motor time to process if it needs it
     #ifdef ENABLE_BLINK

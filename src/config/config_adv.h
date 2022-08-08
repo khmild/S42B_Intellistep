@@ -156,7 +156,7 @@ typedef float real_t;
         //#define PID_MIN_SAMPLE_TIME 10
 
         // Default min and max for step timing (per second)
-        #define DEFAULT_PID_STEP_MAX 50000
+        #define DEFAULT_PID_STEP_MAX 2550
 
         // PID output that the motor should disable at (set to 0 to never disable motor)
         #define DEFAULT_PID_DISABLE_THRESHOLD 0 //1000
