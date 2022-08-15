@@ -324,31 +324,7 @@ void correctMotor() {
         // "Smart" step correction using encoder counts
         #ifdef STEP_CORRECTION
         // Get the current angle of the motor
-        float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat(); //<- not working, returns to the start position
-        //float currentAbsAngle = (((float)motor.encoder.getRev()*360) + motor.encoder.getAngle());
-        //float currentAbsAngle = motor.encoder.getAngle();
-
-        /*String buffer = String(currentAbsAngle, 3);
-        sendSerialMessage("Current angle: ");
-        sendSerialMessage(buffer);
-        sendSerialMessage("\r\n");
-
-        buffer = String(motor.getDesiredStep(), DEC);
-        sendSerialMessage("Desired step: ");
-        sendSerialMessage(buffer);
-        sendSerialMessage("\r\n");*/
-        
-        /*buffer = String((((float)motor.encoder.getRev()*360) + motor.encoder.getAngle()), 3);
-        sendSerialMessage("Rev: ");
-        sendSerialMessage(buffer);
-        sendSerialMessage("\r\n");*/
-
-        /*buffer = String(motor.getDesiredAngle(), 3);
-        sendSerialMessage("Request: ");
-        sendSerialMessage(buffer);
-        sendSerialMessage("\r\n");
-
-        sendSerialMessage("\r\n");*/
+        float currentAbsAngle = motor.encoder.getAbsoluteAngleAvgFloat();
 
         // Get the angular deviation
         int32_t stepDeviation = motor.getStepError(currentAbsAngle);

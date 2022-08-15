@@ -292,12 +292,18 @@ void loop() {
     // Check the dip switches
     checkDips();
 
+    // Check if can data is available
+    #ifdef ENABLE_CAN
+        //checkCANCmd();
+        txCANString(2, "aba");
+    #endif
+
     // Check to see if serial data is available to read
     #ifdef ENABLE_SERIAL
         runSerialParser();
-        //char buffer[32];
-        //sprintf(buffer, "%.1f/%.1f/%ld\r\n", motor.getDesiredAngle(), motor.encoder.getAbsoluteAngleAvgFloat(), HAL_GetTick()); 
-        //sendSerialMessage(buffer);
+        char buffer[32];
+        sprintf(buffer, "%.1f/%.1f/%ld\r\n", motor.getDesiredAngle(), motor.encoder.getAbsoluteAngleAvgFloat(), HAL_GetTick()); 
+        sendSerialMessage(buffer);
     #endif
  
         // Check the buttons

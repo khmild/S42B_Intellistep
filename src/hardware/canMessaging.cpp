@@ -64,7 +64,8 @@ void txCANString(int ID, String string) {
             }
             else {
                 // Send the last CAN message, with a > appended to the end
-                can.transmit(ID, string.c_str() + STRING_END_MARKER, string.length());
+                string = string + ">";
+                can.transmit(ID, string.c_str(), string.length());
 
                 // Break the loop after finishing
                 break;
