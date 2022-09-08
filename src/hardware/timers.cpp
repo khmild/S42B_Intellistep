@@ -52,6 +52,20 @@ static uint8_t interruptBlockCount = 0;
     // Direction of movement for direct steps
     STEP_DIR scheduledStepDir = POSITIVE;
 
+    #ifdef ENABLE_ACCELERATION
+        // Motor starts moving with this stepping rate(Hz)(before the acceleration)
+        #define ACCEL_START_STEP_RATE 5
+    
+        // Maximum stepping rate for the motor
+        int32_t maximumSteppingRate = 0;
+
+        // Actual stepping rate for the motor
+        int32_t actualSteppingRate = 0;
+
+        // Acceleration for the motor
+        uint16_t steppingAcceleration = 0;
+    #endif
+    
     // Remaining step count
     int64_t remainingScheduledSteps = 0;
 
@@ -489,7 +503,6 @@ void correctMotor() {
 }
 
 
-
 // Direct stepping
 #ifdef ENABLE_DIRECT_STEPPING
 // Configure a specific number of steps to execute at a set rate (rate is in Hz)
@@ -506,8 +519,18 @@ void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
     decrementRemainingSteps = true;
     scheduledStepDir = stepDir;
 
-    // Configure the speed of the timer, then re-enable it
-    stepScheduleTimer -> setOverflow(rate, HERTZ_FORMAT);
+    #ifdef ENABLE_ACCELERATION
+        maximumSteppingRate = rate;
+        actualSteppingRate = rate;
+        
+        // Configure the speed of the timer to the start rate
+        stepScheduleTimer -> setOverflow(ACCEL_START_STEP_RATE, HERTZ_FORMAT);
+    #else
+        // Configure the speed of the timer
+        stepScheduleTimer -> setOverflow(rate, HERTZ_FORMAT);
+    #endif
+
+    // Reenable the timer
     enableStepScheduleTimer();
 
     // Increase or decrease desired step counter
@@ -533,6 +556,31 @@ void stepScheduleHandler() {
     // Check if we should be worrying about remaining steps
     if (decrementRemainingSteps) {
 
+        // ACCELERATION/DECELERATION
+        #ifdef ENABLE_ACCELERATION
+            //Calculate when to stop accelerating and start decelerating
+
+
+            // Calculate new stepping rate
+
+            // Increase the speed if needed
+            //if (actualSteppingRate < maximumSteppingRate)
+            //{
+            //    actualSteppingRate += 1;
+
+                // Limit the speed to the maximum value
+            //    if (actualSteppingRate > maximumSteppingRate)
+            //    {
+            //        actualSteppingRate = maximumSteppingRate; 
+            //    }
+            //}
+
+            // Set and apply the new timer settings
+            //stepScheduleTimer -> setOverflow(actualSteppingRate, HERTZ_FORMAT);
+            //enableStepScheduleTimer();
+        #endif
+
+        // STEPPING 
         // Increment the motor in the correct direction
         motor.step(scheduledStepDir, motor.microstepMultiplier);
 
