@@ -20,6 +20,9 @@
     //#define ENABLE_BLINK
 #endif
 
+// Acceleration
+#define ENABLE_ACCELERATION
+
 // OLED (display)
 #define ENABLE_OLED
 #ifdef ENABLE_OLED
