@@ -408,6 +408,9 @@ String parseCommand(String buffer) {
                 // Pull the values from the command
                 bool reverse = parseValue(buffer, 'D').equals("1");
                 int32_t rate = parseValue(buffer, 'R').toInt();
+                #ifdef ENABLE_ACCELERATION
+                    uint16_t acceleration = parseValue(buffer, 'A').toInt();
+                #endif
                 int64_t count = parseValue(buffer, 'S').toInt();
 
                 // Sanitize the inputs
@@ -418,13 +421,25 @@ String parseCommand(String buffer) {
                     return FEEDBACK_NO_VALUE;
                 }
 
-                // Call the steps to be scheduled
-                if (!reverse) {
-                    scheduleSteps(count, rate, POSITIVE);
-                }
-                else {
-                    scheduleSteps(count, rate, NEGATIVE);
-                }
+                #ifdef ENABLE_ACCELERATION
+                    // Call the steps to be scheduled
+                    if (!reverse) {
+                        scheduleSteps(count, rate, acceleration, POSITIVE);
+                    }
+                    else {
+                        scheduleSteps(count, rate, acceleration, NEGATIVE);
+                    }
+                #else
+                    // Call the steps to be scheduled
+                    if (!reverse) {
+                        scheduleSteps(count, rate, POSITIVE);
+                    }
+                    else {
+                        scheduleSteps(count, rate, NEGATIVE);
+                    }
+                #endif
+
+                
 
                 // All good, we can exit
                 return FEEDBACK_OK;

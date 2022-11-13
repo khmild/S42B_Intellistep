@@ -61,7 +61,12 @@ void correctMotor();
 // Direct stepping
 #ifdef ENABLE_DIRECT_STEPPING
 // Schedule steps for the motor to execute (rate is in Hz)
-void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir);
+#ifdef ENABLE_ACCELERATION
+    void scheduleSteps(int64_t count, int32_t rate, uint16_t acceleration, STEP_DIR stepDir);
+#else
+    void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir);
+#endif
+
 #endif // ! ENABLE_DIRECT_STEPPING
 
 #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))

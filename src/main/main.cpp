@@ -295,7 +295,6 @@ void loop() {
     // Check if can data is available
     #ifdef ENABLE_CAN
         //checkCANCmd();
-        txCANString(2, "aba");
     #endif
 
     // Check to see if serial data is available to read

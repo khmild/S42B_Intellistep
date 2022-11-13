@@ -54,7 +54,7 @@ static uint8_t interruptBlockCount = 0;
 
     #ifdef ENABLE_ACCELERATION
         // Motor starts moving with this stepping rate(Hz)(before the acceleration)
-        #define ACCEL_START_STEP_RATE 5
+        #define ACCEL_START_STEP_RATE 10
     
         // Maximum stepping rate for the motor
         int32_t maximumSteppingRate = 0;
@@ -62,8 +62,23 @@ static uint8_t interruptBlockCount = 0;
         // Actual stepping rate for the motor
         int32_t actualSteppingRate = 0;
 
+        // Variable for half way detection
+        int64_t halfStepsScheduled = 0;
+
+        // Number of steps where deceleration starts
+        int64_t decelerationPoint = 0;
+
         // Acceleration for the motor
-        uint16_t steppingAcceleration = 0;
+        //uint16_t steppingAcceleration = 0;
+        
+        // Specifies acceleration status
+        int8_t accelerate = 0;
+
+        // Acceleration per step
+        uint16_t oneStepAcceleration = 0;
+
+        // Variable for measuring time passed for acceleration
+        float timePassed = 0;
     #endif
     
     // Remaining step count
@@ -506,7 +521,12 @@ void correctMotor() {
 // Direct stepping
 #ifdef ENABLE_DIRECT_STEPPING
 // Configure a specific number of steps to execute at a set rate (rate is in Hz)
-void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
+#ifdef ENABLE_ACCELERATION
+    void scheduleSteps(int64_t count, int32_t rate, uint16_t acceleration, STEP_DIR stepDir)
+#else
+    void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir)
+#endif
+ {
 
     // Disable the correctional timer (needed to prevent both using the step timer at once)
     #ifndef DISABLE_CORRECTION_TIMER
@@ -521,8 +541,16 @@ void scheduleSteps(int64_t count, int32_t rate, STEP_DIR stepDir) {
 
     #ifdef ENABLE_ACCELERATION
         maximumSteppingRate = rate;
-        actualSteppingRate = rate;
+        actualSteppingRate = ACCEL_START_STEP_RATE;
+
+        halfStepsScheduled = abs(remainingScheduledSteps/2);
         
+        oneStepAcceleration = abs((5*acceleration)/100);
+
+        accelerate = 1;
+        
+        timePassed = 0;
+
         // Configure the speed of the timer to the start rate
         stepScheduleTimer -> setOverflow(ACCEL_START_STEP_RATE, HERTZ_FORMAT);
     #else
@@ -558,26 +586,68 @@ void stepScheduleHandler() {
 
         // ACCELERATION/DECELERATION
         #ifdef ENABLE_ACCELERATION
-            //Calculate when to stop accelerating and start decelerating
+            
+            // Calculate time
+            timePassed += ((1000/actualSteppingRate));
+            
+            //char buffer[32];
+            //sprintf(buffer, "Time: %ld, step: %ld\r\n", timePassed, actualSteppingRate); 
+            //sendSerialMessage(buffer);
+            
+            // Every 50ms accelerate
+            if (timePassed > 50)
+            {
+                // Accelerate
+                if(accelerate == 1)
+                {
+                    actualSteppingRate += oneStepAcceleration;
 
+                    // limit the speed to the maximum value
+                    if (actualSteppingRate > maximumSteppingRate)
+                    {
+                        actualSteppingRate = maximumSteppingRate;
+                        accelerate = 0;
+                        decelerationPoint = halfStepsScheduled*2 - remainingScheduledSteps;
+                    }
 
-            // Calculate new stepping rate
+                    // If there is not anough space to accelerate, start to decelerate on the half way
+                    if(remainingScheduledSteps <= halfStepsScheduled)
+                    {
+                        accelerate = -1;
+                    }
 
-            // Increase the speed if needed
-            //if (actualSteppingRate < maximumSteppingRate)
-            //{
-            //    actualSteppingRate += 1;
+                    // Set and apply the new timer settings
+                    stepScheduleTimer -> setOverflow(actualSteppingRate, HERTZ_FORMAT);
+                    enableStepScheduleTimer();
+                }
+                // Decelerate
+                else if (accelerate == -1)
+                {
+                    actualSteppingRate -= oneStepAcceleration;
 
-                // Limit the speed to the maximum value
-            //    if (actualSteppingRate > maximumSteppingRate)
-            //    {
-            //        actualSteppingRate = maximumSteppingRate; 
-            //    }
-            //}
+                    // limit the speed to the minimum value
+                    if (actualSteppingRate < ACCEL_START_STEP_RATE)
+                    {
+                        actualSteppingRate = ACCEL_START_STEP_RATE;
+                    }
 
-            // Set and apply the new timer settings
-            //stepScheduleTimer -> setOverflow(actualSteppingRate, HERTZ_FORMAT);
-            //enableStepScheduleTimer();
+                    // Set and apply the new timer settings
+                    stepScheduleTimer -> setOverflow(actualSteppingRate, HERTZ_FORMAT);
+                    enableStepScheduleTimer();
+                }
+                // Constant speed
+                else
+                {
+                    // Wait for deceleration start
+                    if(remainingScheduledSteps <= decelerationPoint)
+                    {
+                        accelerate = -1;
+                    }
+                }
+                
+                // Reset timer
+                timePassed = 0;
+            }
         #endif
 
         // STEPPING 

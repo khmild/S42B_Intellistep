@@ -21,7 +21,7 @@
 #endif
 
 // Acceleration
-#define ENABLE_ACCELERATION
+//#define ENABLE_ACCELERATION
 
 // OLED (display)
 #define ENABLE_OLED
