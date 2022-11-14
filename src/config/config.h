@@ -21,7 +21,7 @@
 #endif
 
 // Acceleration
-//#define ENABLE_ACCELERATION
+#define ENABLE_ACCELERATION
 
 // OLED (display)
 #define ENABLE_OLED
@@ -46,12 +46,9 @@
     #define SERIAL_BAUD 115200
 #endif
 
-// Display motor state for debuging purpouses 
-//#define DISPLAY_MOTOR_STATE
-
 // Motor characteristics
 #define STEP_ANGLE (float)1.8 // ! Check to see for .9 deg motors as well
-#define STEP_UPDATE_FREQ (uint32_t)78 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
+#define STEP_UPDATE_FREQ (uint32_t)50 // in Hz, to step the motor back to the correct position. Multiplied by the microstepping for actual update freq
 
 // Motor settings
 // The number of microsteps to move per step pulse

@@ -57,16 +57,18 @@ static uint8_t interruptBlockCount = 0;
         #define ACCEL_START_STEP_RATE 10
     
         // Maximum stepping rate for the motor
-        int32_t maximumSteppingRate = 0;
+        uint32_t maximumSteppingRate = 0;
 
         // Actual stepping rate for the motor
-        int32_t actualSteppingRate = 0;
+        uint32_t actualSteppingRate = 0;
+
+        uint32_t stepsToAccelerate = 0;
 
         // Variable for half way detection
-        int64_t halfStepsScheduled = 0;
+        uint64_t halfStepsScheduled = 0;
 
         // Number of steps where deceleration starts
-        int64_t decelerationPoint = 0;
+        uint64_t decelerationPoint = 0;
 
         // Acceleration for the motor
         //uint16_t steppingAcceleration = 0;
@@ -330,24 +332,6 @@ void correctMotor() {
         GPIO_WRITE(LED_PIN, HIGH);
     #endif
 
-    #ifdef DISPLAY_MOTOR_STATE
-        // Display motor state for debuging purpouses 
-        sendSerialMessage("Motor State: ");
-        if (motor.getState() == ENABLED){
-            sendSerialMessage("ENABLED");
-        }
-        if (motor.getState() == FORCED_ENABLED){
-            sendSerialMessage("FORCED ENABLED");
-        }
-        if (motor.getState() == DISABLED){
-            sendSerialMessage("DISABLED");
-        }
-        if (motor.getState() == FORCED_DISABLED){
-            sendSerialMessage("FORCED_DISABLED");
-        }
-        sendSerialMessage("\r\n");
-    #endif
-
     // Make sure that the motor isn't disabled
     if (motor.getState() == ENABLED || motor.getState() == FORCED_ENABLED) {
         // "Smart" step correction using encoder counts
@@ -370,12 +354,45 @@ void correctMotor() {
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
                 
-                // Run the PID calcalations
+                // Run the PID calculations
                 int32_t pidOutput = round(pid.compute(currentAbsAngle, motor.getDesiredAngle()));
-
                 uint32_t stepFreq = abs(pidOutput);
+
+                #ifdef ENABLE_ACCELERATION
+                    
+
+                    if (accelerate == 1)
+                    {
+                        stepFreq = constrain(stepFreq, 0, actualSteppingRate);
+                        actualSteppingRate += oneStepAcceleration;
+                        if(actualSteppingRate > maximumSteppingRate)
+                        {
+                            actualSteppingRate = maximumSteppingRate;
+                            accelerate = 0;
+                        }
+                    }
+
+                    if (accelerate == 0)
+                    {
+                        stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
+                        decrementRemainingSteps = false;
+                    }
+
+                    if (accelerate == (-1))
+                    {
+                        stepFreq = constrain(stepFreq, 0, actualSteppingRate);
+                        actualSteppingRate -= oneStepAcceleration;
+                        if(actualSteppingRate < ACCEL_START_STEP_RATE)
+                        {
+                            actualSteppingRate = ACCEL_START_STEP_RATE;
+                            accelerate = 0;
+                        }
+                    }
+                    
+                #endif
+
                 
-                // Notifi the controller that motor is arrived to the desired position
+                // Notify the controller that motor is arrived to the desired position
                 if(stepFreq < 40 && !motor.inPosition())
                 {
                     sendSerialMessage("Motor in position\r\n");
@@ -397,7 +414,7 @@ void correctMotor() {
                     }
 
                     // Set that we don't want to decrement the counter
-                    decrementRemainingSteps = false;
+                    //decrementRemainingSteps = false;
 
                     // Check if there's a movement threshold
                     #if (DEFAULT_PID_DISABLE_THRESHOLD > 0)
@@ -543,9 +560,11 @@ void correctMotor() {
         maximumSteppingRate = rate;
         actualSteppingRate = ACCEL_START_STEP_RATE;
 
+        stepsToAccelerate = 0;
+
         halfStepsScheduled = abs(remainingScheduledSteps/2);
         
-        oneStepAcceleration = abs((5*acceleration)/100);
+        oneStepAcceleration = (uint32_t)acceleration/correctionUpdateFreq;
 
         accelerate = 1;
         
@@ -583,8 +602,40 @@ void stepScheduleHandler() {
 
     // Check if we should be worrying about remaining steps
     if (decrementRemainingSteps) {
+        
+        //disableStepScheduleTimer();
+        correctionTimer -> resume();
+        motor.step(scheduledStepDir, 1);
 
-        // ACCELERATION/DECELERATION
+        // Increment the counter down (we completed a step)
+        remainingScheduledSteps--;
+
+        #ifdef ENABLE_ACCELERATION
+        if(accelerate == 1)
+        {
+            if (abs(remainingScheduledSteps) <= halfStepsScheduled)
+            {
+                accelerate = -1;
+            }
+
+            stepsToAccelerate++;
+
+        }
+
+        if(stepsToAccelerate >= abs(remainingScheduledSteps))
+        {
+            accelerate = -1;
+        }
+
+        // Disable the timer if there are no remaining steps
+        if (remainingScheduledSteps <= 0) { 
+            // Pause the step timer (will be re-enabled by the PID loop)
+            disableStepScheduleTimer();
+            accelerate = 0;
+        }
+        #endif
+
+        /*// ACCELERATION/DECELERATION
         #ifdef ENABLE_ACCELERATION
             
             // Calculate time
@@ -670,7 +721,7 @@ void stepScheduleHandler() {
                 #endif
                 syncInstructions();
             }
-        }
+        }*/
     }
     else {
         // Just step the motor in the desired direction
