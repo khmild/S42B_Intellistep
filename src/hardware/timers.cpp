@@ -84,7 +84,7 @@ static uint8_t interruptBlockCount = 0;
     #endif
     
     // Remaining step count
-    int64_t remainingScheduledSteps = 0;
+    uint64_t remainingScheduledSteps = 0;
 
     // Stores if the timer is enabled
     // Saves large amounts of cycles as the timer only has to be toggled on a change
@@ -350,7 +350,7 @@ void correctMotor() {
         #endif // ! STEP_CORRECTION
 
         // Check to make sure that the motor is in range (it hasn't skipped steps)
-        if (stepDeviation != 0) {
+        if ((stepDeviation > 1) || (stepDeviation < -1)) {
             // Run PID stepping if enabled
             #ifdef ENABLE_PID
                 
@@ -360,37 +360,52 @@ void correctMotor() {
 
                 #ifdef ENABLE_ACCELERATION
                     
-
+                    // ACCELERATION
                     if (accelerate == 1)
                     {
+                        // Limit motor speed to the maximum value at this point
                         stepFreq = constrain(stepFreq, 0, actualSteppingRate);
+                        // Increase speed step by step until maximum value is reached
                         actualSteppingRate += oneStepAcceleration;
-                        if(actualSteppingRate > maximumSteppingRate)
+                        
+                        // Stop acceleration if the speed is reached
+                        if(actualSteppingRate >= maximumSteppingRate)
                         {
                             actualSteppingRate = maximumSteppingRate;
                             accelerate = 0;
                         }
                     }
 
+                    // CONSTANT SPEED
                     if (accelerate == 0)
                     {
                         stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
-                        decrementRemainingSteps = false;
                     }
 
+                    // DECELERATION
                     if (accelerate == (-1))
                     {
+                        // Limit motor speed to the maximum value at this point
                         stepFreq = constrain(stepFreq, 0, actualSteppingRate);
+                        // Decrease speed step by step until minimum value is reached
                         actualSteppingRate -= oneStepAcceleration;
+
+                        // Stop acceleration if the speed is reached
                         if(actualSteppingRate < ACCEL_START_STEP_RATE)
                         {
                             actualSteppingRate = ACCEL_START_STEP_RATE;
                             accelerate = 0;
                         }
                     }
-                    
-                #endif
 
+                    // DONE STEPPING TO THE POSITION
+                    if (accelerate == (-99))
+                    {
+                        stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
+                        decrementRemainingSteps = false;
+                    }
+
+                #endif
                 
                 // Notify the controller that motor is arrived to the desired position
                 if(stepFreq < 40 && !motor.inPosition())
@@ -412,9 +427,6 @@ void correctMotor() {
                     else {
                         scheduledStepDir = NEGATIVE;
                     }
-
-                    // Set that we don't want to decrement the counter
-                    //decrementRemainingSteps = false;
 
                     // Check if there's a movement threshold
                     #if (DEFAULT_PID_DISABLE_THRESHOLD > 0)
@@ -557,17 +569,14 @@ void correctMotor() {
     scheduledStepDir = stepDir;
 
     #ifdef ENABLE_ACCELERATION
+        // Reset all the acceleration helping variables
         maximumSteppingRate = rate;
         actualSteppingRate = ACCEL_START_STEP_RATE;
-
         stepsToAccelerate = 0;
-
-        halfStepsScheduled = abs(remainingScheduledSteps/2);
+        halfStepsScheduled = remainingScheduledSteps/2;
         
         oneStepAcceleration = (uint32_t)acceleration/correctionUpdateFreq;
-
         accelerate = 1;
-        
         timePassed = 0;
 
         // Configure the speed of the timer to the start rate
@@ -591,7 +600,7 @@ void correctMotor() {
     // Set active stepping flag
     motor.steppingRequest();
 
-    //enable the motor
+    // Enable the motor
     motor.setState(ENABLED, true);
 }
 #endif
@@ -599,130 +608,47 @@ void correctMotor() {
 #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
 // Handles a step schedule event
 void stepScheduleHandler() {
-
-    // Check if we should be worrying about remaining steps
+    // If we moving desired number of steps - count number of steps done
     if (decrementRemainingSteps) {
-        
-        //disableStepScheduleTimer();
-        correctionTimer -> resume();
+        // Make a step
         motor.step(scheduledStepDir, 1);
 
-        // Increment the counter down (we completed a step)
+        // Decrement the counter
         remainingScheduledSteps--;
 
         #ifdef ENABLE_ACCELERATION
-        if(accelerate == 1)
-        {
-            if (abs(remainingScheduledSteps) <= halfStepsScheduled)
+            
+            if(accelerate == 1)
+            {
+                // If aaceleration didnt stop halfway - start decelerating
+                if (remainingScheduledSteps <= halfStepsScheduled)
+                {
+                    accelerate = -1;
+                }
+                // Count number of steps needed for acceleration
+                stepsToAccelerate++;
+            }
+
+            // Start decelerating if the point of deceleration reached
+            if(stepsToAccelerate >= remainingScheduledSteps)
             {
                 accelerate = -1;
             }
 
-            stepsToAccelerate++;
-
-        }
-
-        if(stepsToAccelerate >= abs(remainingScheduledSteps))
-        {
-            accelerate = -1;
-        }
-
-        // Disable the timer if there are no remaining steps
-        if (remainingScheduledSteps <= 0) { 
-            // Pause the step timer (will be re-enabled by the PID loop)
-            disableStepScheduleTimer();
-            accelerate = 0;
-        }
-        #endif
-
-        /*// ACCELERATION/DECELERATION
-        #ifdef ENABLE_ACCELERATION
-            
-            // Calculate time
-            timePassed += ((1000/actualSteppingRate));
-            
-            //char buffer[32];
-            //sprintf(buffer, "Time: %ld, step: %ld\r\n", timePassed, actualSteppingRate); 
-            //sendSerialMessage(buffer);
-            
-            // Every 50ms accelerate
-            if (timePassed > 50)
-            {
-                // Accelerate
-                if(accelerate == 1)
-                {
-                    actualSteppingRate += oneStepAcceleration;
-
-                    // limit the speed to the maximum value
-                    if (actualSteppingRate > maximumSteppingRate)
-                    {
-                        actualSteppingRate = maximumSteppingRate;
-                        accelerate = 0;
-                        decelerationPoint = halfStepsScheduled*2 - remainingScheduledSteps;
-                    }
-
-                    // If there is not anough space to accelerate, start to decelerate on the half way
-                    if(remainingScheduledSteps <= halfStepsScheduled)
-                    {
-                        accelerate = -1;
-                    }
-
-                    // Set and apply the new timer settings
-                    stepScheduleTimer -> setOverflow(actualSteppingRate, HERTZ_FORMAT);
-                    enableStepScheduleTimer();
-                }
-                // Decelerate
-                else if (accelerate == -1)
-                {
-                    actualSteppingRate -= oneStepAcceleration;
-
-                    // limit the speed to the minimum value
-                    if (actualSteppingRate < ACCEL_START_STEP_RATE)
-                    {
-                        actualSteppingRate = ACCEL_START_STEP_RATE;
-                    }
-
-                    // Set and apply the new timer settings
-                    stepScheduleTimer -> setOverflow(actualSteppingRate, HERTZ_FORMAT);
-                    enableStepScheduleTimer();
-                }
-                // Constant speed
-                else
-                {
-                    // Wait for deceleration start
-                    if(remainingScheduledSteps <= decelerationPoint)
-                    {
-                        accelerate = -1;
-                    }
-                }
-                
-                // Reset timer
-                timePassed = 0;
+            // Disable the timer if there are no remaining steps
+            if (remainingScheduledSteps <= 0) { 
+                // Pause the step timer (will be re-enabled by the PID loop)
+                disableStepScheduleTimer();
+                accelerate = -99;
             }
         #endif
 
-        // STEPPING 
-        // Increment the motor in the correct direction
-        motor.step(scheduledStepDir, motor.microstepMultiplier);
-
-        // Increment the counter down (we completed a step)
-        remainingScheduledSteps--;
-
-        // Disable the timer if there are no remaining steps
-        if (remainingScheduledSteps <= 0) {
-
-            // Pause the step timer (will be re-enabled by the PID loop)
-            disableStepScheduleTimer();
-
-            // Resume the correctional timer if it is enabled
-            if (stepCorrection) {
-                #ifndef DISABLE_CORRECTION_TIMER
-                correctionTimer -> resume();
-                #endif
-                syncInstructions();
-            }
-        }*/
+        // Enable PID correction timer
+        correctionTimer -> resume();
     }
+    
+    // if PID is just correcting the position
+    // No need to worry about remaining steps
     else {
         // Just step the motor in the desired direction
         motor.step(scheduledStepDir, 1);
