@@ -304,9 +304,7 @@ void selectMenuItem() {
 
             case CURRENT:
                 // Motor mAs. Need to get the current motor mAs, then convert that to a cursor value
-                #ifndef ENABLE_DYNAMIC_CURRENT
-                    currentCursorIndex = constrain(round(motor.getRMSCurrent() / 100), 0, (uint16_t)MAX_RMS_BOARD_CURRENT);
-                #endif
+                currentCursorIndex = constrain(round(motor.getRMSCurrent() / 100), 0, (uint16_t)MAX_RMS_BOARD_CURRENT);
 
                 // Enter the menu
                 menuDepth = SUBMENUS;
@@ -388,9 +386,7 @@ void selectMenuItem() {
                 }
                 else {
                     // Set the value
-                    #ifndef ENABLE_DYNAMIC_CURRENT
-                        motor.setRMSCurrent(rmsCurrentSetting % (uint16_t)MAX_RMS_BOARD_CURRENT);
-                    #endif
+                    motor.setRMSCurrent(rmsCurrentSetting % (uint16_t)MAX_RMS_BOARD_CURRENT);
 
                     // Exit the menu
                     menuDepth = MENU_RETURN_LEVEL;
@@ -492,9 +488,7 @@ void selectMenuItem() {
             case CURRENT:
 
                 // Calculate the setting from the cursor index
-                #ifndef ENABLE_DYNAMIC_CURRENT
-                    motor.setRMSCurrent((100 * currentCursorIndex) % (uint16_t)MAX_RMS_BOARD_CURRENT);
-                #endif
+                motor.setRMSCurrent((100 * currentCursorIndex) % (uint16_t)MAX_RMS_BOARD_CURRENT);
 
             // Need to set the microstep
             case MICROSTEP:

@@ -32,17 +32,9 @@ typedef enum {
     CALIBRATED_INDEX,
     STEP_OFFSET_INDEX,
 
-    // Dynamic current settings
-    #ifdef ENABLE_DYNAMIC_CURRENT
-    DYNAMIC_ACCEL_CURRENT_INDEX,
-    DYNAMIC_IDLE_CURRENT_INDEX,
-    DYNAMIC_MAX_CURRENT_INDEX,
-
-    #else // ! ENABLE_DYNAMIC_CURRENT
     CURRENT_INDEX_0,
     CURRENT_INDEX_1,
     CURRENT_INDEX_2,
-    #endif // ! ENABLE_DYNAMIC_CURRENT
 
     // Motor settings
     FULL_STEP_ANGLE_INDEX,

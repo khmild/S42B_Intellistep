@@ -40,13 +40,14 @@
 #endif
 
 // Check to make sure that at least a peak or RMS default current is defined
-#if !(defined(STATIC_PEAK_CURRENT) || defined(STATIC_RMS_CURRENT)) && !defined(ENABLE_DYNAMIC_CURRENT)
+#if !(defined(STATIC_PEAK_CURRENT) || defined(STATIC_RMS_CURRENT))
     #error "A static peak or static RMS current must be defined!"
 
 // Check to make sure both aren't defined already
-#elif (defined(STATIC_PEAK_CURRENT) && defined(STATIC_RMS_CURRENT)) && !defined(ENABLE_DYNAMIC_CURRENT)
+#elif (defined(STATIC_PEAK_CURRENT) && defined(STATIC_RMS_CURRENT))
     #error "Only max peak or max RMS current can be defined, not both!"
-#elif !defined(ENABLE_DYNAMIC_CURRENT)
+
+#elif 1
     // Calculate the other current maximum
     #ifdef STATIC_PEAK_CURRENT
         #define STATIC_RMS_CURRENT (uint16_t)(STATIC_PEAK_CURRENT * 0.707)
@@ -119,12 +120,6 @@
     #define FIRMWARE_FEATURE_CAN    ""
 #endif
 
-#ifdef ENABLE_DYNAMIC_CURRENT
-    #define FIRMWARE_FEATURE_DYNAMIC_CURRENT    "\nDynamic Current"
-#else
-    #define FIRMWARE_FEATURE_DYNAMIC_CURRENT    ""
-#endif
-
 #ifdef ENABLE_OVERTEMP_PROTECTION
     #define FIRMWARE_FEATURE_OVERTEMP_PROTECTION    "\nOvertemp Protection"
 #else
@@ -132,7 +127,7 @@
 #endif
 
 // Main firmware print string
-#define FIRMWARE_FEATURE_PRINT String(FIRMWARE_FEATURE_VERSION + FIRMWARE_BUILD_INFO + FIRMWARE_FEATURE_HEADER + FIRMWARE_FEATURE_OLED + FIRMWARE_FEATURE_SERIAL + FIRMWARE_FEATURE_CAN + FIRMWARE_FEATURE_DYNAMIC_CURRENT + FIRMWARE_FEATURE_OVERTEMP_PROTECTION)
+#define FIRMWARE_FEATURE_PRINT String(FIRMWARE_FEATURE_VERSION + FIRMWARE_BUILD_INFO + FIRMWARE_FEATURE_HEADER + FIRMWARE_FEATURE_OLED + FIRMWARE_FEATURE_SERIAL + FIRMWARE_FEATURE_CAN + FIRMWARE_FEATURE_OVERTEMP_PROTECTION)
 
 
 // Check for defines that have conflicts
@@ -174,7 +169,7 @@
 #define MICROSTEP_INTERVAL_CNT (uint16_t)(log2(MAX_MICROSTEP_DIVISOR) - log2(MIN_MICROSTEP_DIVISOR) + 1)
 
 // Throw errors if any of the encoder options are enabled while the encoder is disabled
-#if(defined(DISABLE_ENCODER) && (defined(STEP_CORRECTION) || defined(ENABLE_PID) || defined(ENABLE_DYNAMIC_CURRENT)))
+#if(defined(DISABLE_ENCODER) && (defined(STEP_CORRECTION) || defined(ENABLE_PID)))
 
     // TODO: Make this say the option conflicting
     #error "The encoder can't be disabled while any of the encoder features are enabled!"

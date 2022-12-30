@@ -209,17 +209,12 @@ void saveParameters() {
     writeFlash(STEP_OFFSET_INDEX, (float)motor.encoder.getStepOffset());
     #endif
 
-    // Get the motor current
-    #ifdef ENABLE_DYNAMIC_CURRENT
-        writeFlash(DYNAMIC_ACCEL_CURRENT_INDEX, motor.getDynamicAccelCurrent());
-        writeFlash(DYNAMIC_IDLE_CURRENT_INDEX, motor.getDynamicIdleCurrent());
-        writeFlash(DYNAMIC_MAX_CURRENT_INDEX, motor.getDynamicMaxCurrent());
-    #else
-        // Save the static motor current in the idle and max slot of the dynamic current setting, zeroing the acceleration
-        writeFlash(CURRENT_INDEX_0, (uint16_t)0);
-        writeFlash(CURRENT_INDEX_1, motor.getRMSCurrent());
-        writeFlash(CURRENT_INDEX_2, motor.getRMSCurrent());
-    #endif
+
+    // Save the static motor current in the idle and max slot of the dynamic current setting, zeroing the acceleration
+    writeFlash(CURRENT_INDEX_0, (uint16_t)0);
+    writeFlash(CURRENT_INDEX_1, motor.getRMSCurrent());
+    writeFlash(CURRENT_INDEX_2, motor.getRMSCurrent());
+
 
     // Motor stepping angle
     writeFlash(FULL_STEP_ANGLE_INDEX, motor.getFullStepAngle());
@@ -319,15 +314,8 @@ String loadParameters() {
         motor.encoder.setStepOffset(readFlashFloat(STEP_OFFSET_INDEX));
         #endif
 
-        // Set the motor current
-        #ifdef ENABLE_DYNAMIC_CURRENT
-            motor.setDynamicAccelCurrent(readFlashU16(DYNAMIC_ACCEL_CURRENT_INDEX));
-            motor.setDynamicIdleCurrent(readFlashU16(DYNAMIC_IDLE_CURRENT_INDEX));
-            motor.setDynamicMaxCurrent(readFlashU16(DYNAMIC_MAX_CURRENT_INDEX));
-        #else
-            // Just load the motor current from the idle index
-            motor.setRMSCurrent(readFlashU16(CURRENT_INDEX_1));
-        #endif
+        //Load the motor current from the idle index
+        motor.setRMSCurrent(readFlashU16(CURRENT_INDEX_1));
 
         // Motor stepping angle
         motor.setFullStepAngle(readFlashFloat(FULL_STEP_ANGLE_INDEX));

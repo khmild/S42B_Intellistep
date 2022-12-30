@@ -368,60 +368,6 @@ int32_t StepperMotor::getUnhandledStepCNT()
     return (getActualStepCNT() - getHandledStepCNT());
 }
 
-#ifdef ENABLE_DYNAMIC_CURRENT
-// Gets the acceleration factor for dynamic current
-uint16_t StepperMotor::getDynamicAccelCurrent() const
-{
-    return (this->dynamicAccelCurrent);
-}
-
-// Gets the idle factor for dynamic current
-uint16_t StepperMotor::getDynamicIdleCurrent() const
-{
-    return (this->dynamicIdleCurrent);
-}
-
-// Gets the max current factor for dynamic current
-uint16_t StepperMotor::getDynamicMaxCurrent() const
-{
-    return (this->dynamicMaxCurrent);
-}
-
-// Sets the acceleration factor for dynamic current
-void StepperMotor::setDynamicAccelCurrent(uint16_t newAccelFactor)
-{
-
-    // Make sure that the value being set is positive (no negatives allowed)
-    if (newAccelFactor >= 0)
-    {
-        this->dynamicAccelCurrent = newAccelFactor;
-    }
-}
-
-// Sets the idle factor for dynamic current
-void StepperMotor::setDynamicIdleCurrent(uint16_t newIdleFactor)
-{
-
-    // Make sure that the value being set is positive (no negatives allowed)
-    if (newIdleFactor >= 0)
-    {
-        this->dynamicIdleCurrent = newIdleFactor;
-    }
-}
-
-// Sets the max current factor for dynamic current
-void StepperMotor::setDynamicMaxCurrent(uint16_t newMaxCurrent)
-{
-
-    // Make sure that the value being set is positive (no negatives allowed)
-    if (newMaxCurrent >= 0)
-    {
-        this->dynamicMaxCurrent = newMaxCurrent;
-    }
-}
-
-#else  // ! ENABLE_DYNAMIC_CURRENT
-
 // Gets the RMS current of the motor (in mA)
 uint16_t StepperMotor::getRMSCurrent() const
 {
@@ -465,7 +411,6 @@ void StepperMotor::setPeakCurrent(uint16_t peakCurrent)
         this->rmsCurrent = constrain((uint16_t)(peakCurrent * 0.707), 0, MAX_RMS_BOARD_CURRENT);
     }
 }
-#endif // ! ENABLE_DYNAMIC_CURRENT
 
 // Get the microstepping divisor of the motor
 uint8_t StepperMotor::getMicrostepping()
@@ -681,20 +626,9 @@ void StepperMotor::driveCoils(int32_t steps)
     int16_t coilAPercent = fastSin(arrayIndex);
     int16_t coilBPercent = fastCos(arrayIndex);
 
-// Equation comes out to be (effort * -1 to 1) depending on the sine/cosine of the phase angle
-#ifdef ENABLE_DYNAMIC_CURRENT
-
-    // Get the current acceleration
-    double angAccel = abs(motor.encoder.getAccel());
-
-    // Compute the coil power
-    int16_t coilAPower = ((int16_t)(((angAccel * (this->dynamicAccelCurrent)) + (this->dynamicIdleCurrent)) * 1.414) * coilAPercent) >> SINE_POWER;
-    int16_t coilBPower = ((int16_t)(((angAccel * (this->dynamicAccelCurrent)) + (this->dynamicIdleCurrent)) * 1.414) * coilBPercent) >> SINE_POWER;
-#else
     // Just use static current multipiers
     int16_t coilAPower = ((int16_t)(this->peakCurrent) * coilAPercent) >> SINE_POWER; // i.e. / SINE_MAX
     int16_t coilBPower = ((int16_t)(this->peakCurrent) * coilBPercent) >> SINE_POWER; // i.e. / SINE_MAX
-#endif
 
     // Check the if the coil should be energized to move backward or forward
     if (coilAPower > 0)

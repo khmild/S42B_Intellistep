@@ -96,30 +96,19 @@ typedef float real_t;
     #define DEFAULT_STEPPING_RATE 1000
 #endif
 
-// Dynamic current (adjusts motor current based on acceleration (and therefore torque)
-// required from the motor)
-//#define ENABLE_DYNAMIC_CURRENT
-#ifdef ENABLE_DYNAMIC_CURRENT
-    // A dynamically controller current loop. Uses the equation: accel * accelCurrent + idleCurrent
-    // Limited by the max dynamic current, which will limit the maximum that the dynamic loop can output
-    // All current values are in RMS
-    #define DYNAMIC_ACCEL_CURRENT 10 // Multiplied by deg/s/s, in mA
-    #define DYNAMIC_IDLE_CURRENT  500 // In mA
-    #define DYNAMIC_MAX_CURRENT   750 // In mA
-#else
-    // Classic, static current
-    #define STATIC_RMS_CURRENT     (uint16_t)500 // This is the rating of the motor from the manufacturer
 
-    // Overtemperature protection (lowers motor current when motor temperature rises too high)
-    #define ENABLE_OVERTEMP_PROTECTION
-    #ifdef ENABLE_OVERTEMP_PROTECTION
-        #define OVERTEMP_THRESHOLD_TEMP      70 // The temp to trigger a overtemp current reduction (C)
-        #define OVERTEMP_INCREMENT           50 // The increment at which to reduce the current by (RMS mA)
-        #define OVERTEMP_INTERVAL            30 // The minimum interval between current reductions (s)
-        #define OVERTEMP_SHUTDOWN_TEMP       80 // The temp at which to completely shut down the motor, protecting it against burning up
-        #define OVERTEMP_SHUTDOWN_CLEAR_TEMP 70 // Motor can begin movement again once this temp is reached
-    #endif
+//Static current
+#define STATIC_RMS_CURRENT     (uint16_t)500 // This is the rating of the motor from the manufacturer
+// Overtemperature protection (lowers motor current when motor temperature rises too high)
+#define ENABLE_OVERTEMP_PROTECTION
+#ifdef ENABLE_OVERTEMP_PROTECTION
+    #define OVERTEMP_THRESHOLD_TEMP      70 // The temp to trigger a overtemp current reduction (C)
+    #define OVERTEMP_INCREMENT           50 // The increment at which to reduce the current by (RMS mA)
+    #define OVERTEMP_INTERVAL            30 // The minimum interval between current reductions (s)
+    #define OVERTEMP_SHUTDOWN_TEMP       80 // The temp at which to completely shut down the motor, protecting it against burning up
+    #define OVERTEMP_SHUTDOWN_CLEAR_TEMP 70 // Motor can begin movement again once this temp is reached
 #endif
+
 
 // If the motor should try to correct after it thinks that steps have been missed
 // ! THIS IS UNLIKELY TO WORK, AND WILL PROBABLY JUST MESS EVERYTHING UP, DON"T ENABLE IT

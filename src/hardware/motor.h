@@ -123,29 +123,6 @@ class StepperMotor {
         // and vice versa
         int32_t getUnhandledStepCNT();
 
-        // Dynamic current
-        #ifdef ENABLE_DYNAMIC_CURRENT
-
-        // Gets the acceleration factor for dynamic current
-        uint16_t getDynamicAccelCurrent() const;
-
-        // Gets the idle factor for dynamic current
-        uint16_t getDynamicIdleCurrent() const;
-
-        // Gets the max current factor for dynamic current
-        uint16_t getDynamicMaxCurrent() const;
-
-        // Sets the acceleration factor for dynamic current
-        void setDynamicAccelCurrent(uint16_t newAccelFactor);
-
-        // Sets the idle factor for dynamic current
-        void setDynamicIdleCurrent(uint16_t newIdleFactor);
-
-        // Sets the max current factor for dynamic current
-        void setDynamicMaxCurrent(uint16_t newMaxCurrent);
-
-        #else // ! ENABLE_DYNAMIC_CURRENT
-
         // Gets the RMS current of the motor (in mA)
         uint16_t getRMSCurrent() const;
 
@@ -157,8 +134,6 @@ class StepperMotor {
 
         // Sets the peak current of the motor (in mA)(RMS is adjusted to match)
         void setPeakCurrent(uint16_t peakCurrent);
-        #endif
-
 
         // Gets the microstepping mode of the motor
         uint8_t getMicrostepping();
@@ -275,18 +250,10 @@ class StepperMotor {
             bool isStepping = false;
         #endif
 
-        // Motor characteristics
-        #ifdef ENABLE_DYNAMIC_CURRENT
-            // Dynamic current settings
-            uint16_t dynamicAccelCurrent = DYNAMIC_ACCEL_CURRENT;
-            uint16_t dynamicIdleCurrent = DYNAMIC_IDLE_CURRENT;
-            uint16_t dynamicMaxCurrent = DYNAMIC_MAX_CURRENT;
-        #else
-            // RMS Current (in mA)
-            uint16_t rmsCurrent = (uint16_t)STATIC_RMS_CURRENT;
-            // Peak Current (in mA)
-            uint16_t peakCurrent = (rmsCurrent * 1.414);
-        #endif
+        // RMS Current (in mA)
+        uint16_t rmsCurrent = (uint16_t)STATIC_RMS_CURRENT;
+        // Peak Current (in mA)
+        uint16_t peakCurrent = (rmsCurrent * 1.414);
 
         // Microstepping divisor
         uint8_t microstepDivisor = 1;

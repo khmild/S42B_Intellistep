@@ -342,45 +342,28 @@ String parseCommand(String buffer) {
                 // No return here because wipeParameters reboots processor
 
             case 907: {
-                // Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (no dynamic current) or the accel, idle, and max terms (dynamic current) will be returned.
-                #ifdef ENABLE_DYNAMIC_CURRENT
-                    // Read the set values
-                    int16_t accelCurrent = parseValue(buffer, 'A').toInt();
-                    int16_t idleCurrent = parseValue(buffer, 'I').toInt();
-                    int16_t maxCurrent = parseValue(buffer, 'M').toInt();
+                // Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), 
+                // and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (no dynamic current) 
+                // or the accel, idle, and max terms (dynamic current) will be returned.
+                
+                // Read the set values (one of them should be -1 (no value exists))
+                int16_t rmsCurrent = parseValue(buffer, 'R').toInt();
+                int16_t peakCurrent = parseValue(buffer, 'P').toInt();
 
-                    // Check to make sure that at least one isn't -1 (there is at least one that is valid)
-                    if (!((accelCurrent == -1) && (idleCurrent == -1) && (maxCurrent == -1))) {
+                // Check if RMS current is valid
+                if (rmsCurrent != -1) {
+                    motor.setRMSCurrent(rmsCurrent);
+                    return FEEDBACK_OK;
+                }
+                else if (peakCurrent != -1) {
+                    motor.setPeakCurrent(peakCurrent);
+                    return FEEDBACK_OK;
+                }
+                else {
+                    // No value set. Just return the RMS current
+                    return String(motor.getRMSCurrent());
+                }
 
-                        // Set the values
-                        motor.setDynamicAccelCurrent(accelCurrent);
-                        motor.setDynamicIdleCurrent(idleCurrent);
-                        motor.setDynamicMaxCurrent(maxCurrent);
-                    }
-                    else {
-                        // No valid values, therefore just return the current values
-                        return ("A:" + String(motor.getDynamicAccelCurrent()) + " I: " + String(motor.getDynamicIdleCurrent()) + " M: " + String(motor.getDynamicMaxCurrent()) + "\n");
-                    }
-
-                #else
-                    // Read the set values (one of them should be -1 (no value exists))
-                    int16_t rmsCurrent = parseValue(buffer, 'R').toInt();
-                    int16_t peakCurrent = parseValue(buffer, 'P').toInt();
-
-                    // Check if RMS current is valid
-                    if (rmsCurrent != -1) {
-                        motor.setRMSCurrent(rmsCurrent);
-                        return FEEDBACK_OK;
-                    }
-                    else if (peakCurrent != -1) {
-                        motor.setPeakCurrent(peakCurrent);
-                        return FEEDBACK_OK;
-                    }
-                    else {
-                        // No value set. Just return the RMS current
-                        return String(motor.getRMSCurrent());
-                    }
-                #endif
             }
             case 1000: {
                 // Just for testing
