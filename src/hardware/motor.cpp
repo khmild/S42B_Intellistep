@@ -236,26 +236,6 @@ float StepperMotor::getEstimRPM(double currentAbsAngle)
     return DPS_TO_RPM((float)encoder.getEstimSpeed(currentAbsAngle));
 }
 
-#ifdef ENABLE_STEPPING_VELOCITY
-// Compute the stepping interface velocity in deg/s
-float StepperMotor::getDegreesPS()
-{
-calc:
-    while (isStepping)
-        ; // wait end of stepping calculation
-    float velocity = 1000000.0 * angleChange / (nowStepingSampleTime - prevStepingSampleTime);
-    if (isStepping)
-        goto calc;
-    return velocity;
-}
-
-// Compute the stepping interface RPM
-float StepperMotor::getSteppingRPM()
-{
-    return DPS_TO_RPM(getDegreesPS());
-}
-#endif // ! ENABLE_STEPPING_VELOCITY
-
 // Returns the angular deviation of the motor from the desired angle
 float StepperMotor::getAngleError()
 {
@@ -586,19 +566,6 @@ void StepperMotor::simpleStep()
 // Computes the coil values for the next step position and increments the set angle
 void StepperMotor::step(STEP_DIR dir, int32_t stepChange)
 {
-
-#ifdef ENABLE_STEPPING_VELOCITY
-    isStepping = true;
-
-    // Sample times
-    prevStepingSampleTime = nowStepingSampleTime;
-    nowStepingSampleTime = micros();
-#endif
-
-#ifdef ENABLE_STEPPING_VELOCITY
-    isStepping = false;
-#endif
-
     // Factor direction and motor reversal into step change
     stepChange *= dir * (this->reversed);
 

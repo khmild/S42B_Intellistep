@@ -223,7 +223,6 @@ typedef float real_t;
 
 // --------------  Debugging  --------------
 
-//#define ENABLE_STEPPING_VELOCITY
 //#define IGNORE_FLASH_VERSION
 #ifndef STEP_CORRECTION
     //#define DISABLE_CORRECTION_TIMER
