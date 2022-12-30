@@ -29,12 +29,6 @@ uint16_t outOfPosCount = 0;
 // interrupts before the uninterruptible function 2 that called the first function finishes.
 static uint8_t interruptBlockCount = 0;
 
-// Create a boolean to store if the StallFault pin has been enabled.
-// Pin is only setup after the first StallFault. This prevents programming interruptions
-#ifdef ENABLE_STALLFAULT
-    bool stallFaultPinSetup = false;
-#endif
-
 
 // Setup everything related to the PID timer if needed
 #ifdef ENABLE_PID
@@ -109,15 +103,6 @@ void setupMotorTimers() {
     // - 6.2 - step pin change
     // - 7.0 - position correction (or PID interval update)
     // - 7.1 - scheduled steps (if ENABLE_DIRECT_STEPPING or ENABLE_PID)
-
-    // Check if StallFault is enabled
-    #ifdef ENABLE_STALLFAULT
-
-        // Make sure that StallFault is enabled
-        #ifdef STALLFAULT_PIN
-            //pinMode(STALLFAULT_PIN, OUTPUT);
-        #endif
-    #endif
 
     // Attach the interupt to the enable pin
     attachInterrupt(ENABLE_PIN, enablePinISR, CHANGE); // input is pull-upped to VDD
@@ -473,44 +458,6 @@ void correctMotor() {
                     motor.step(NEGATIVE, 1);
                 }
             #endif // ! ENABLE_PID
-
-
-            // Only use StallFault code if needed
-            #ifdef ENABLE_STALLFAULT
-
-                // Check to see if the out of position faults have exceeded the maximum amounts
-                if (outOfPosCount > (STEP_FAULT_TIME * ((STEP_UPDATE_FREQ * motor.getMicrostepping()) - 1)) || abs(stepDeviation) > STEP_FAULT_STEP_COUNT) {
-
-                    // Setup the StallFault pin if it isn't already
-                    // We need to wait for a fault because otherwise the programmer will be unable to program the board
-                    #ifdef STALLFAULT_PIN
-                    if (!stallFaultPinSetup) {
-
-                        // Setup the StallFault pin
-                        LL_GPIO_InitTypeDef GPIO_InitStruct;
-                        GPIO_InitStruct.Pin = STM_LL_GPIO_PIN(STALLFAULT_PIN);
-                        GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-                        GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-                        GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-                        GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
-                        LL_GPIO_Init(get_GPIO_Port(STM_PORT(STALLFAULT_PIN)), &GPIO_InitStruct);
-
-                        // The StallFault pin is all set up
-                        stallFaultPinSetup = true;
-                    }
-
-                    // The maximum count has been exceeded, trigger an endstop pulse
-                    GPIO_WRITE(STALLFAULT_PIN, HIGH);
-                    #endif
-
-                    // Also give an indicator on the LED
-                    GPIO_WRITE(LED_PIN, HIGH);
-                }
-                else {
-                    // Just count up, motor is out of position but not out of faults
-                    outOfPosCount++;
-                }
-            #endif
         }
         else { // Motor is in correct position
 
@@ -518,27 +465,7 @@ void correctMotor() {
             #ifdef ENABLE_PID
                 disableStepScheduleTimer();
             #endif
-
-            // Only if StallFault is enabled
-            #ifdef ENABLE_STALLFAULT
-
-            // Reset the out of position count and the StallFault pin
-            outOfPosCount = 0;
-
-            // Pull the StallFault low if it's setup
-            // No need to check the validity of the pin here, it wouldn't be setup if it wasn't valid
-            #ifdef STALLFAULT_PIN
-            if (stallFaultPinSetup) {
-                GPIO_WRITE(STALLFAULT_PIN, LOW);
-            }
-            #endif
-
-            // Also toggle the LED for visual purposes
-            GPIO_WRITE(LED_PIN, LOW);
-
-            #endif // ! ENABLE_STALLFAULT
         }
-
     }
 
     #ifdef CHECK_CORRECT_MOTOR_RATE

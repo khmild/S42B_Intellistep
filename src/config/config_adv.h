@@ -88,18 +88,6 @@ typedef float real_t;
 #define STRING_START_MARKER '<'
 #define STRING_END_MARKER '>'
 
-// Future features... need to be tested/fixed
-// Stallfault
-//#define ENABLE_STALLFAULT
-#ifdef ENABLE_STALLFAULT
-    #define STEP_FAULT_TIME         1 // The maximum allowable time (sec) for a step fault (meaning motor is out of position)
-    #define STEP_FAULT_STEP_COUNT   10 // The maximum allowable deviation between the actual and set steps before StallFault is triggered
-
-    // StallFault connection (to mainboard)
-    // Pulls high on a stepper misalignment after the set period or angular deviation
-    #define STALLFAULT_PIN PA_13 //output(GPIOA_BASE_BASE, 13)
-#endif
-
 // Direct step functionality (used to command motor to move over Serial/CAN)
 #define ENABLE_DIRECT_STEPPING
 #ifdef ENABLE_DIRECT_STEPPING
