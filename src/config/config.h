@@ -21,7 +21,13 @@
 #endif
 
 // Acceleration
-//#define ENABLE_ACCELERATION
+#define ENABLE_ACCELERATION
+
+// Diagnostic data over UART
+#define DIAG_INFO_SERIAL
+
+// Communication over UART
+//#define ENABLE_CAN_COMMUNICATION
 
 // OLED (display)
 #define ENABLE_OLED
