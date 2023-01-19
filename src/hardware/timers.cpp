@@ -46,12 +46,12 @@ static uint8_t interruptBlockCount = 0;
     // Direction of movement for direct steps
     STEP_DIR scheduledStepDir = POSITIVE;
 
+    // Maximum stepping rate for the motor
+    uint32_t maximumSteppingRate = 0;
+
     #ifdef ENABLE_ACCELERATION
         // Motor starts moving with this stepping rate(Hz)(before the acceleration)
         #define ACCEL_START_STEP_RATE 10
-    
-        // Maximum stepping rate for the motor
-        uint32_t maximumSteppingRate = 0;
 
         // Actual stepping rate for the motor
         uint32_t actualSteppingRate = 0;
@@ -60,21 +60,19 @@ static uint8_t interruptBlockCount = 0;
 
         // Variable for half way detection
         uint64_t halfStepsScheduled = 0;
-
-        // Number of steps where deceleration starts
-        uint64_t decelerationPoint = 0;
-
-        // Acceleration for the motor
-        //uint16_t steppingAcceleration = 0;
         
         // Specifies acceleration status
         int8_t accelerate = 0;
+        
+        #ifdef RAMP_ACCELERATION
+            // Acceleration per step
+            uint16_t oneStepAcceleration = 0;
+        #endif
 
-        // Acceleration per step
-        uint16_t oneStepAcceleration = 0;
-
-        // Variable for measuring time passed for acceleration
-        float timePassed = 0;
+        #ifdef S_CURVE_ACCELERATION
+            uint16_t sCurveElementsNum = 0;
+            uint16_t sCurveActualIndex = 0;
+        #endif
     #endif
     
     // Remaining step count
@@ -309,6 +307,40 @@ void stepMotor() {
     #endif
 }
 
+#define S_CURVE_SIZE 2000
+uint32_t S_curve[S_CURVE_SIZE];
+
+void generateSCurve(uint16_t numOfElements, uint16_t maxSpeed)
+{
+    /* CONFIGURATION VARIABLES */
+    float mn = 0;      // start point
+    float mx = 10;     // stop point
+    
+    float a1 = 3;      // acceleration slope
+    float a2 = 2;      // deceleration slope
+    
+    float c1 = 2;    // half point of slope
+    float c2 = 8.5;    // half point of slope
+    
+    /* TEMP VARIABLES */
+    float y1;          
+    float y2;
+    float temp;
+    
+    float f[numOfElements];
+    int n = numOfElements; 
+    int i;
+
+    for (i = 0; i < n ; i++)  
+    {
+        temp = float((mx-mn)/(n));
+        f[i] = mn + temp * i;
+        
+        y1 = 1/(1 + exp(-a1*(f[i]-c1)));        /* acceleration */
+        y2 = 1/(1 + exp(-a2*(f[i]-c2)));        /* deceleration */
+        S_curve[i] = abs((y1)- y2)*maxSpeed;    /* scale to max speed */          
+    }
+}
 
 
 // Need to declare a function to power the motor coils for the step interrupt
@@ -344,54 +376,102 @@ void correctMotor() {
                 uint32_t stepFreq = abs(pidOutput);
 
                 #ifdef ENABLE_ACCELERATION
-                    
-                    // ACCELERATION
-                    if (accelerate == 1)
-                    {
-                        // Limit motor speed to the maximum value at this point
-                        stepFreq = constrain(stepFreq, 0, actualSteppingRate);
-                        // Increase speed step by step until maximum value is reached
-                        actualSteppingRate += oneStepAcceleration;
-                        
-                        // Stop acceleration if the speed is reached
-                        if(actualSteppingRate >= maximumSteppingRate)
+                    #ifdef RAMP_ACCELERATION
+                        // ACCELERATION
+                        if (accelerate == 1)
                         {
-                            actualSteppingRate = maximumSteppingRate;
-                            accelerate = 0;
+                            // Limit motor speed to the maximum value at this point
+                            stepFreq = constrain(stepFreq, 0, actualSteppingRate);
+                            // Increase speed step by step until maximum value is reached
+                            actualSteppingRate += oneStepAcceleration;
+
+                            // Stop acceleration if the speed is reached
+                            if(actualSteppingRate >= maximumSteppingRate)
+                            {
+                                actualSteppingRate = maximumSteppingRate;
+                                accelerate = 0;
+                            }
                         }
-                    }
 
-                    // CONSTANT SPEED
-                    if (accelerate == 0)
-                    {
-                        stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
-                    }
-
-                    // DECELERATION
-                    if (accelerate == (-1))
-                    {
-                        // Limit motor speed to the maximum value at this point
-                        stepFreq = constrain(stepFreq, 0, actualSteppingRate);
-                        // Decrease speed step by step until minimum value is reached
-                        actualSteppingRate -= oneStepAcceleration;
-
-                        // Stop acceleration if the speed is reached
-                        if(actualSteppingRate < ACCEL_START_STEP_RATE)
+                        // CONSTANT SPEED
+                        if (accelerate == 0)
                         {
-                            actualSteppingRate = ACCEL_START_STEP_RATE;
-                            accelerate = 0;
+                            stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
                         }
-                    }
 
-                    // DONE STEPPING TO THE POSITION
-                    if (accelerate == (-99))
-                    {
-                        stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
-                        decrementRemainingSteps = false;
-                    }
+                        // DECELERATION
+                        if (accelerate == (-1))
+                        {
+                            // Limit motor speed to the maximum value at this point
+                            stepFreq = constrain(stepFreq, 0, actualSteppingRate);
+                            // Decrease speed step by step until minimum value is reached
+                            actualSteppingRate -= oneStepAcceleration;
 
+                            // Stop acceleration if the speed is reached
+                            if(actualSteppingRate < ACCEL_START_STEP_RATE+50)
+                            {
+                                actualSteppingRate = ACCEL_START_STEP_RATE+50;
+                                accelerate = 0;
+                            }
+                        }
+
+                        // DONE STEPPING TO THE POSITION
+                        if (accelerate == (-99))
+                        {
+                            stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
+                            decrementRemainingSteps = false;
+                        }
+                    #endif
+
+                    #ifdef S_CURVE_ACCELERATION
+                        char buffer[32];
+                        // ACCELERATION
+                        if (accelerate == 1)
+                        {
+                            sprintf(buffer, "Accelerating %ld %ld\r\n", S_curve[sCurveActualIndex], stepFreq);
+                            //sendSerialMessage(buffer);
+                            stepFreq = constrain(stepFreq, 0, S_curve[sCurveActualIndex]);
+                            sCurveActualIndex++;
+                            if(sCurveActualIndex > sCurveElementsNum/2)
+                            {
+                                accelerate = 0;
+                            }
+                        }
+
+                        // CONSTANT SPEED
+                        if (accelerate == 0)
+                        {
+                            sprintf(buffer, "Const speed %ld %ld\r\n", S_curve[sCurveActualIndex], stepFreq);
+                            //sendSerialMessage(buffer);
+                            stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
+                        }
+
+                        // DECELERATION
+                        if (accelerate == -1)
+                        {
+                            sprintf(buffer, "Decelerating %ld %ld\r\n", S_curve[sCurveActualIndex], stepFreq);
+                            //sendSerialMessage(buffer);
+                            stepFreq = constrain(stepFreq, 0, S_curve[sCurveActualIndex]);
+                            sCurveActualIndex++;
+                            if (sCurveActualIndex >= sCurveElementsNum)
+                            {
+                                accelerate = 0;
+                            }
+                            
+                        }
+
+                        // DONE STEPPING TO THE POSITION
+                        if (accelerate == -99)
+                        {
+                            stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
+                            decrementRemainingSteps = false;
+                        }
+                    #endif
+                #else
+                    stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
                 #endif
                 
+
                 // Notify the controller that motor is arrived to the desired position
                 if(stepFreq < 40 && !motor.inPosition())
                 {
@@ -494,17 +574,29 @@ void correctMotor() {
     remainingScheduledSteps = abs(count);
     decrementRemainingSteps = true;
     scheduledStepDir = stepDir;
-
+    maximumSteppingRate = rate;
+    
     #ifdef ENABLE_ACCELERATION
+
         // Reset all the acceleration helping variables
-        maximumSteppingRate = rate;
         actualSteppingRate = ACCEL_START_STEP_RATE;
         stepsToAccelerate = 0;
         halfStepsScheduled = remainingScheduledSteps/2;
         
-        oneStepAcceleration = (uint32_t)acceleration/correctionUpdateFreq;
+        #ifdef RAMP_ACCELERATION
+            oneStepAcceleration = (uint32_t)acceleration/correctionUpdateFreq;
+        #endif
+        
         accelerate = 1;
-        timePassed = 0;
+
+        #ifdef S_CURVE_ACCELERATION
+            sCurveElementsNum = (uint16_t)(2*acceleration/(1000/correctionUpdateFreq));
+            char buffer[32];
+            //sprintf(buffer, "Elem num %d\r\n", sCurveElementsNum);
+            sendSerialMessage(buffer);
+            sCurveActualIndex = 0;
+            generateSCurve(sCurveElementsNum, rate);
+        #endif
 
         // Configure the speed of the timer to the start rate
         stepScheduleTimer -> setOverflow(ACCEL_START_STEP_RATE, HERTZ_FORMAT);
@@ -547,7 +639,7 @@ void stepScheduleHandler() {
             
             if(accelerate == 1)
             {
-                // If aaceleration didnt stop halfway - start decelerating
+                // If acceleration didnt stop halfway - start decelerating
                 if (remainingScheduledSteps <= halfStepsScheduled)
                 {
                     accelerate = -1;
@@ -568,12 +660,12 @@ void stepScheduleHandler() {
                 disableStepScheduleTimer();
                 accelerate = -99;
             }
+
         #endif
 
         // Enable PID correction timer
         correctionTimer -> resume();
     }
-    
     // if PID is just correcting the position
     // No need to worry about remaining steps
     else {

@@ -655,19 +655,19 @@ bool Encoder::sampleTimeExceeded() {
 int16_t Encoder::getRawSpeed() {
 
     // Prepare the variables to store data in
-	int16_t rawData;
+	uint16_t rawData;
 
     // Read the encoder
-    while (readRegister(ENCODER_SPEED_REG, (uint16_t &)rawData) != NO_ERROR);
+    while (readRegister(ENCODER_SPEED_REG, rawData) != NO_ERROR);
 
-    // Delete everything before the 14 LSB's
+    /*// Delete everything before the 14 LSB's
     rawData <<= 1;
 
     // If bit 14 is set, the value is negative
     // Propagate sign of integer
-    rawData >>= 1;
+    rawData >>= 1;*/
 
-    return rawData;
+    return (uint8_t)rawData;
 }
 
 // Reads the speed of the encoder in deg/s
