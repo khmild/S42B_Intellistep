@@ -55,7 +55,7 @@ void stepMotor();
 // Function that steps motor without adjusting the desired angle
 void stepMotorNoDesiredAngle();
 
-void generateSCurve(uint16_t accelTime, uint16_t maxSpeed);
+void generateSCurve(uint32_t accelTime, uint16_t sampleTime, uint16_t maxSpeed);
 
 // Function to correct motor position if it is out of place
 void correctMotor();

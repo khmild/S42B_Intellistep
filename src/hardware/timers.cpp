@@ -71,7 +71,10 @@ static uint8_t interruptBlockCount = 0;
 
         #ifdef S_CURVE_ACCELERATION
             uint16_t sCurveElementsNum = 0;
-            uint16_t sCurveActualIndex = 0;
+            int32_t sCurveActualIndex = 0;
+            bool decelerationFlag = false;
+            uint32_t accel_st = 0;
+            uint32_t decel_st = 0;
         #endif
     #endif
     
@@ -310,35 +313,25 @@ void stepMotor() {
 #define S_CURVE_SIZE 2000
 uint32_t S_curve[S_CURVE_SIZE];
 
-void generateSCurve(uint16_t numOfElements, uint16_t maxSpeed)
+void generateSCurve(uint32_t accelTime, uint16_t sampleTime, uint16_t maxSpeed)
 {
     /* CONFIGURATION VARIABLES */
     float mn = 0;      // start point
-    float mx = 10;     // stop point
+    float mx = (float)accelTime/1000.0;     // stop point
     
-    float a1 = 3;      // acceleration slope
-    float a2 = 2;      // deceleration slope
+    float a1 = 1400/(accelTime/10);      // acceleration slope
+    float c1 = mx/2;    // half point of slope
     
-    float c1 = 2;    // half point of slope
-    float c2 = 8.5;    // half point of slope
-    
-    /* TEMP VARIABLES */
-    float y1;          
-    float y2;
-    float temp;
-    
-    float f[numOfElements];
-    int n = numOfElements; 
-    int i;
+    sCurveElementsNum = accelTime/sampleTime;
+    float f;
+    float temp= float((mx-mn)/(sCurveElementsNum));
 
-    for (i = 0; i < n ; i++)  
+    for (int i = 0; i < sCurveElementsNum ; i++)  
     {
-        temp = float((mx-mn)/(n));
-        f[i] = mn + temp * i;
-        
-        y1 = 1/(1 + exp(-a1*(f[i]-c1)));        /* acceleration */
-        y2 = 1/(1 + exp(-a2*(f[i]-c2)));        /* deceleration */
-        S_curve[i] = abs((y1)- y2)*maxSpeed;    /* scale to max speed */          
+        f = mn + temp * i;
+    
+        S_curve[i] = maxSpeed/(1 + exp(-a1*(f-c1)))+10;
+        if (S_curve[i] > maxSpeed) S_curve[i] = maxSpeed;
     }
 }
 
@@ -374,6 +367,7 @@ void correctMotor() {
                 // Run the PID calculations
                 int32_t pidOutput = round(pid.compute(currentAbsAngle, motor.getDesiredAngle()));
                 uint32_t stepFreq = abs(pidOutput);
+                //uint32_t stepFreq = 2000;
 
                 #ifdef ENABLE_ACCELERATION
                     #ifdef RAMP_ACCELERATION
@@ -428,43 +422,55 @@ void correctMotor() {
                         // ACCELERATION
                         if (accelerate == 1)
                         {
-                            sprintf(buffer, "Accelerating %ld %ld\r\n", S_curve[sCurveActualIndex], stepFreq);
-                            //sendSerialMessage(buffer);
+
                             stepFreq = constrain(stepFreq, 0, S_curve[sCurveActualIndex]);
                             sCurveActualIndex++;
-                            if(sCurveActualIndex > sCurveElementsNum/2)
+                            if(sCurveActualIndex == (sCurveElementsNum-1))
                             {
                                 accelerate = 0;
                             }
+                            //sprintf(buffer, "Accelerating %d - %ld %ld\r\n",sCurveActualIndex, S_curve[sCurveActualIndex], stepFreq);
+                            //sendSerialMessage(buffer);
+
                         }
 
                         // CONSTANT SPEED
                         if (accelerate == 0)
                         {
-                            sprintf(buffer, "Const speed %ld %ld\r\n", S_curve[sCurveActualIndex], stepFreq);
+                            stepFreq = constrain(stepFreq, 0, S_curve[sCurveActualIndex]);
+                            //sprintf(buffer, "Const speed %d - %ld %ld\r\n", sCurveActualIndex, S_curve[sCurveActualIndex], stepFreq);
                             //sendSerialMessage(buffer);
-                            stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
                         }
 
                         // DECELERATION
-                        if (accelerate == -1)
+                        if ((accelerate == -1))
                         {
-                            sprintf(buffer, "Decelerating %ld %ld\r\n", S_curve[sCurveActualIndex], stepFreq);
-                            //sendSerialMessage(buffer);
                             stepFreq = constrain(stepFreq, 0, S_curve[sCurveActualIndex]);
-                            sCurveActualIndex++;
-                            if (sCurveActualIndex >= sCurveElementsNum)
+                            if (stepFreq < S_curve[sCurveActualIndex])
+                            {
+                                accelerate = -99;
+                            }
+                            
+                            sCurveActualIndex--;
+                            if(sCurveActualIndex < 0) sCurveActualIndex = 0;
+                            if (sCurveActualIndex == 0)
                             {
                                 accelerate = 0;
                             }
                             
+                            
+                            //sprintf(buffer, "Decelerating %d - %ld %ld\r\n", sCurveActualIndex, S_curve[sCurveActualIndex], stepFreq);
+                            //sendSerialMessage(buffer);
                         }
+
+                        //sprintf(buffer, "%i - %ld - %ld\r\n",accelerate, stepFreq, remainingScheduledSteps);
+                        //sprintf(buffer, "%ld %ld\r\n", accel_st, decel_st);
+                        //sendSerialMessage(buffer);
 
                         // DONE STEPPING TO THE POSITION
                         if (accelerate == -99)
                         {
                             stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
-                            decrementRemainingSteps = false;
                         }
                     #endif
                 #else
@@ -590,12 +596,9 @@ void correctMotor() {
         accelerate = 1;
 
         #ifdef S_CURVE_ACCELERATION
-            sCurveElementsNum = (uint16_t)(2*acceleration/(1000/correctionUpdateFreq));
-            char buffer[32];
-            //sprintf(buffer, "Elem num %d\r\n", sCurveElementsNum);
-            sendSerialMessage(buffer);
             sCurveActualIndex = 0;
-            generateSCurve(sCurveElementsNum, rate);
+            decelerationFlag = false;
+            generateSCurve(acceleration, (1000/correctionUpdateFreq), rate);
         #endif
 
         // Configure the speed of the timer to the start rate
@@ -624,6 +627,8 @@ void correctMotor() {
 }
 #endif
 
+
+
 #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
 // Handles a step schedule event
 void stepScheduleHandler() {
@@ -636,6 +641,9 @@ void stepScheduleHandler() {
         remainingScheduledSteps--;
 
         #ifdef ENABLE_ACCELERATION
+            if(accelerate == 1) accel_st++;
+            if(accelerate == -1) decel_st++;
+
             
             if(accelerate == 1)
             {
@@ -649,18 +657,20 @@ void stepScheduleHandler() {
             }
 
             // Start decelerating if the point of deceleration reached
-            if(stepsToAccelerate >= remainingScheduledSteps)
+            if(stepsToAccelerate >= remainingScheduledSteps && !decelerationFlag)
             {
+                sendSerialMessage("Decelerating from stepScheduleHandler\r\n");
+                decelerationFlag = true;
                 accelerate = -1;
             }
 
             // Disable the timer if there are no remaining steps
             if (remainingScheduledSteps <= 0) { 
                 // Pause the step timer (will be re-enabled by the PID loop)
+                decrementRemainingSteps = false;
                 disableStepScheduleTimer();
                 accelerate = -99;
             }
-
         #endif
 
         // Enable PID correction timer
