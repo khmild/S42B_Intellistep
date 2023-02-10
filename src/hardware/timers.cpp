@@ -56,6 +56,7 @@ static uint8_t interruptBlockCount = 0;
         // Actual stepping rate for the motor
         uint32_t actualSteppingRate = 0;
 
+        // Number of steps to accelerate, used to find a deceleration point
         uint32_t stepsToAccelerate = 0;
 
         // Variable for half way detection
@@ -63,6 +64,8 @@ static uint8_t interruptBlockCount = 0;
         
         // Specifies acceleration status
         int8_t accelerate = 0;
+
+        bool decelerationFlag = false;
         
         #ifdef RAMP_ACCELERATION
             // Acceleration per step
@@ -70,11 +73,10 @@ static uint8_t interruptBlockCount = 0;
         #endif
 
         #ifdef S_CURVE_ACCELERATION
+            #define S_CURVE_SIZE 2000
+            uint32_t S_curve[S_CURVE_SIZE];
             uint16_t sCurveElementsNum = 0;
             int32_t sCurveActualIndex = 0;
-            bool decelerationFlag = false;
-            uint32_t accel_st = 0;
-            uint32_t decel_st = 0;
         #endif
     #endif
     
@@ -310,31 +312,29 @@ void stepMotor() {
     #endif
 }
 
-#define S_CURVE_SIZE 2000
-uint32_t S_curve[S_CURVE_SIZE];
-
-void generateSCurve(uint32_t accelTime, uint16_t sampleTime, uint16_t maxSpeed)
-{
-    /* CONFIGURATION VARIABLES */
-    float mn = 0;      // start point
-    float mx = (float)accelTime/1000.0;     // stop point
-    
-    float a1 = 1400/(accelTime/10);      // acceleration slope
-    float c1 = mx/2;    // half point of slope
-    
-    sCurveElementsNum = accelTime/sampleTime;
-    float f;
-    float temp= float((mx-mn)/(sCurveElementsNum));
-
-    for (int i = 0; i < sCurveElementsNum ; i++)  
+#ifdef S_CURVE_ACCELERATION
+    void generateSCurve(uint32_t accelTime, uint16_t sampleTime, uint16_t maxSpeed)
     {
-        f = mn + temp * i;
-    
-        S_curve[i] = maxSpeed/(1 + exp(-a1*(f-c1)))+10;
-        if (S_curve[i] > maxSpeed) S_curve[i] = maxSpeed;
-    }
-}
+        /* CONFIGURATION VARIABLES */
+        float mn = 0;      // start point
+        float mx = (float)accelTime/1000.0;     // stop point
 
+        float a1 = 1400/(accelTime/10);      // acceleration slope
+        float c1 = mx/2;    // half point of slope
+
+        sCurveElementsNum = accelTime/sampleTime;
+        float f;
+        float temp= float((mx-mn)/(sCurveElementsNum));
+
+        for (int i = 0; i < sCurveElementsNum ; i++)  
+        {
+            f = mn + temp * i;
+
+            S_curve[i] = maxSpeed/(1 + exp(-a1*(f-c1)))+10;
+            if (S_curve[i] > maxSpeed) S_curve[i] = maxSpeed;
+        }
+    }
+#endif
 
 // Need to declare a function to power the motor coils for the step interrupt
 void correctMotor() {
@@ -418,7 +418,6 @@ void correctMotor() {
                     #endif
 
                     #ifdef S_CURVE_ACCELERATION
-                        char buffer[32];
                         // ACCELERATION
                         if (accelerate == 1)
                         {
@@ -429,17 +428,12 @@ void correctMotor() {
                             {
                                 accelerate = 0;
                             }
-                            //sprintf(buffer, "Accelerating %d - %ld %ld\r\n",sCurveActualIndex, S_curve[sCurveActualIndex], stepFreq);
-                            //sendSerialMessage(buffer);
-
                         }
 
                         // CONSTANT SPEED
                         if (accelerate == 0)
                         {
                             stepFreq = constrain(stepFreq, 0, S_curve[sCurveActualIndex]);
-                            //sprintf(buffer, "Const speed %d - %ld %ld\r\n", sCurveActualIndex, S_curve[sCurveActualIndex], stepFreq);
-                            //sendSerialMessage(buffer);
                         }
 
                         // DECELERATION
@@ -458,14 +452,7 @@ void correctMotor() {
                                 accelerate = 0;
                             }
                             
-                            
-                            //sprintf(buffer, "Decelerating %d - %ld %ld\r\n", sCurveActualIndex, S_curve[sCurveActualIndex], stepFreq);
-                            //sendSerialMessage(buffer);
                         }
-
-                        //sprintf(buffer, "%i - %ld - %ld\r\n",accelerate, stepFreq, remainingScheduledSteps);
-                        //sprintf(buffer, "%ld %ld\r\n", accel_st, decel_st);
-                        //sendSerialMessage(buffer);
 
                         // DONE STEPPING TO THE POSITION
                         if (accelerate == -99)
@@ -476,10 +463,15 @@ void correctMotor() {
                 #else
                     stepFreq = constrain(stepFreq, 0, maximumSteppingRate);
                 #endif
-                
 
+                if(!motor.inPosition() && (motor.getUnhandledStepCNT() > 1000) && remainingScheduledSteps < 5)
+                {
+                    sendSerialMessage("Error while moving\r\n");
+                    motor.steppingDone();
+                }
+                
                 // Notify the controller that motor is arrived to the desired position
-                if(stepFreq < 40 && !motor.inPosition())
+                if(remainingScheduledSteps < 5 && !motor.inPosition())
                 {
                     sendSerialMessage("Motor in position\r\n");
                     motor.steppingDone();
@@ -641,10 +633,6 @@ void stepScheduleHandler() {
         remainingScheduledSteps--;
 
         #ifdef ENABLE_ACCELERATION
-            if(accelerate == 1) accel_st++;
-            if(accelerate == -1) decel_st++;
-
-            
             if(accelerate == 1)
             {
                 // If acceleration didnt stop halfway - start decelerating
@@ -657,9 +645,8 @@ void stepScheduleHandler() {
             }
 
             // Start decelerating if the point of deceleration reached
-            if(stepsToAccelerate >= remainingScheduledSteps && !decelerationFlag)
+            if((stepsToAccelerate >= remainingScheduledSteps) && !decelerationFlag)
             {
-                sendSerialMessage("Decelerating from stepScheduleHandler\r\n");
                 decelerationFlag = true;
                 accelerate = -1;
             }

@@ -302,13 +302,9 @@ void loop() {
     #endif
 
     #ifdef DIAG_INFO_SERIAL
-        //char buffer[32];
-        //sprintf(buffer, "%.1f/%.1f/%ld\r\n", motor.getDesiredAngle(), motor.encoder.getAbsoluteAngleAvgFloat(), HAL_GetTick()); 
-        //sprintf(buffer, "%.1f/%.1f/%ld\r\n", motor.encoder.getEstimSpeed() , motor.encoder.getAbsoluteAngleAvgFloat(), HAL_GetTick());
-        //sprintf(buffer, "%.1f\r\n", motor.encoder.getSpeed());
-        //sendSerialMessage(buffer);
-        //motor.encoder.getSpeed();
-        //motor.encoder.getRawSpeed();
+        char buffer[32];
+        sprintf(buffer, "%.1f/%.1f/%ld\r\n", motor.encoder.getEstimSpeed() , motor.encoder.getAbsoluteAngleAvgFloat(), HAL_GetTick());
+        sendSerialMessage(buffer);
     #endif
  
         // Check the buttons
@@ -325,10 +321,8 @@ void loop() {
         // ! Only for testing
         blink();
     #else
-        // We should delay the time remaining in the loop
-        // We can take the set time for a loop and subtract the already taken time from it
-        // This helps to stabilize the IO updates
-        //delay(MIN_IO_LOOP_TIME - (getCurrentMillis() - startTime)); // ! Maybe remove? This could make the updates much faster
+        // Delay for the main cycle, helps with the interrupt routines stability.
+        //delay(MIN_IO_LOOP_TIME - (getCurrentMillis() - startTime));
     #endif
 }
 

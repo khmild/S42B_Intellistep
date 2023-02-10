@@ -22,8 +22,11 @@
 
 // Acceleration
 #define ENABLE_ACCELERATION
-//#define RAMP_ACCELERATION
-#define S_CURVE_ACCELERATION
+
+#ifdef ENABLE_ACCELERATION
+    //#define RAMP_ACCELERATION
+    #define S_CURVE_ACCELERATION
+#endif
 
 // Diagnostic data over UART
 #define DIAG_INFO_SERIAL
