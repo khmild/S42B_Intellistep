@@ -151,8 +151,8 @@ typedef float real_t;
     // Y:7, Y2:8...
     // Z:11 Z2:12...
     // E:17, E1:18...
-    #define DEFAULT_CAN_ID X
-
+    #define DEFAULT_CAN_ID BELT_DRIVER_RX
+    #define TRANSMIT_CAN_ID BELT_DRIVER_TX
     // ! Maybe higher later? (Up to 1MHz for fast transmissions)
     #define CAN_BITRATE BR125K
 #endif

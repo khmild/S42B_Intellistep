@@ -290,10 +290,10 @@ void loop() {
 
     // Check the dip switches
     checkDips();
-
+    sendSerialMessage("here");
     // Check if can data is available
     #ifdef ENABLE_CAN_COMMUNICATION
-        checkCANCmd();
+        //checkCANCmd();
     #endif
 
     // Check to see if serial data is available to read

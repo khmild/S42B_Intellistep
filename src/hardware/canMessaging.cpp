@@ -21,6 +21,9 @@ uint8_t receiveBuffer[8];
 
 // CAN ID of the motor driver
 AXIS_CAN_ID canID = DEFAULT_CAN_ID;
+AXIS_CAN_ID txCanID = TRANSMIT_CAN_ID;
+
+uint8_t uart_buffer[8];
 
 // The main can object for the file
 eXoCAN can;
@@ -81,12 +84,11 @@ void txCANString(AXIS_CAN_ID ID, String string) {
 
 // Receive a message over the CAN bus (only uses characters)
 void rxCANFrame() {
-
     // Read the CAN buffer into the command buffer, see if it contains anything of value
     if (can.receive(id, filterIDx, receiveBuffer) > -1) {
-
         // We have valid data, continue with reading it
         CANCommandString.concat(reinterpret_cast<char*>(receiveBuffer));
+        //sendSerialMessage(reinterpret_cast<char*>(receiveBuffer));
     }
 }
 
@@ -94,6 +96,7 @@ void rxCANFrame() {
 void checkCANCmd() {
 
     // Check to see if the command buffer is full ('>' is the termanator)
+    //sendSerialMessage("here"/*CANCommandString*/);
     if (CANCommandString.indexOf(STRING_END_MARKER) != -1) {
 
         // Parse the command

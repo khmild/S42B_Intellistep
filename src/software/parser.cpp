@@ -237,65 +237,17 @@ String parseCommand(String buffer) {
                     if (axisValue.toInt() == 0) {
 
                         // Compare the values of the received value with the expected ones
-                        if (axisValue == "X" || axisValue == "X1") {
-                            setCANID(X);
+                        if (axisValue == "X") {
+                            setCANID(X_DRIVER_RX);
                         }
-                        else if (axisValue == "X2") {
-                            setCANID(X2);
+                        else if (axisValue == "Y") {
+                            setCANID(Y_DRIVER_RX);
                         }
-                        else if (axisValue == "X3") {
-                            setCANID(X3);
+                        else if (axisValue == "Z") {
+                            setCANID(Z_DRIVER_RX);
                         }
-                        else if (axisValue == "X4") {
-                            setCANID(X4);
-                        }
-                        else if (axisValue == "X5") {
-                            setCANID(X5);
-                        }
-                        else if (axisValue == "Y" || axisValue == "Y1") {
-                            setCANID(Y);
-                        }
-                        else if (axisValue == "Y2") {
-                            setCANID(Y2);
-                        }
-                        else if (axisValue == "Y3") {
-                            setCANID(Y3);
-                        }
-                        else if (axisValue == "Y4") {
-                            setCANID(Y4);
-                        }
-                        else if (axisValue == "Y5") {
-                            setCANID(Y5);
-                        }
-                        else if (axisValue == "Z" || axisValue == "Z1") {
-                            setCANID(Z);
-                        }
-                        else if (axisValue == "Z2") {
-                            setCANID(Z2);
-                        }
-                        else if (axisValue == "Z3") {
-                            setCANID(Z3);
-                        }
-                        else if (axisValue == "Z4") {
-                            setCANID(Z4);
-                        }
-                        else if (axisValue == "Z5") {
-                            setCANID(Z5);
-                        }
-                        else if (axisValue == "E" || axisValue == "E1") {
-                            setCANID(E);
-                        }
-                        else if (axisValue == "E2") {
-                            setCANID(E2);
-                        }
-                        else if (axisValue == "E3") {
-                            setCANID(E3);
-                        }
-                        else if (axisValue == "E4") {
-                            setCANID(E4);
-                        }
-                        else if (axisValue == "E5") {
-                            setCANID(E5);
+                        else if (axisValue == "B") {
+                            setCANID(BELT_DRIVER_RX);
                         }
                         else {
                             return FEEDBACK_NO_VALUE;

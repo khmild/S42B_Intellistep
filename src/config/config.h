@@ -29,10 +29,10 @@
 #endif
 
 // Diagnostic data over UART
-#define DIAG_INFO_SERIAL
+//#define DIAG_INFO_SERIAL
 
 // Communication over UART
-//#define ENABLE_CAN_COMMUNICATION
+#define ENABLE_CAN_COMMUNICATION
 
 // OLED (display)
 #define ENABLE_OLED
