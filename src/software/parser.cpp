@@ -30,7 +30,7 @@ String parseCommand(String buffer) {
     //  - M907 (ex M907 R750, M907 I500) - Sets or gets the RMS(R) or Peak(P) current in mA. If dynamic current is enabled, then the accel(A), idle(I), and/or max(M) can be set or retrieved. If no value is set, then the current RMS current (no dynamic current) or the accel, idle, and max terms (dynamic current) will be returned.
 
     // ! Check to see if the string contains another set of gcode, if so call the function recursively
-
+    
     // Check to see if the letter is an M (for mcodes)
     if (parseValue(buffer, 'M') != "-1") {
 
@@ -39,12 +39,17 @@ String parseCommand(String buffer) {
 
             case 17:
                 // M17 (ex M17) - Enables the motor (overrides enable pin)
-                motor.setState(FORCED_ENABLED, true);
+                motor.setState(ENABLED, true);
                 return FEEDBACK_OK;
 
             case 18:
                 // M18 / M84 (ex M18 or M84) - Disables the motor (overrides enable pin)
                 motor.setState(FORCED_DISABLED, true);
+                return FEEDBACK_OK;
+
+            case 19:
+                // Stop motion
+                motor.stopMotion();
                 return FEEDBACK_OK;
 
             case 84:
@@ -377,6 +382,13 @@ String parseCommand(String buffer) {
                 
 
                 // All good, we can exit
+                return FEEDBACK_OK;
+            }
+
+            case 7: {
+                uint32_t steps = parseValue(buffer, 'S').toInt();
+                motor.finishMove(steps);
+                setRemainingSteps(steps);
                 return FEEDBACK_OK;
             }
 

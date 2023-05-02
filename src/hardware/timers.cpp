@@ -469,11 +469,16 @@ void correctMotor() {
                     sendSerialMessage("Error while moving\r\n");
                     motor.steppingDone();
                 }
+
+                //char buffer[32];
+                //sprintf(buffer, "%ld\r\n", remainingScheduledSteps);
+                //sendSerialMessage(buffer);
                 
                 // Notify the controller that motor is arrived to the desired position
                 if(remainingScheduledSteps < 5 && !motor.inPosition())
                 {
                     sendSerialMessage("Motor in position\r\n");
+                    txCANString(TRANSMIT_CAN_ID, "M120");
                     motor.steppingDone();
                 }
 
@@ -622,6 +627,24 @@ void correctMotor() {
 
 
 #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
+
+void setRemainingSteps(uint64_t steps)
+{
+    remainingScheduledSteps = steps;
+}
+
+bool getMotorDir()
+{
+    if(scheduledStepDir == POSITIVE)
+    {
+        return true;
+    }
+    else 
+    {
+        return false;
+    }
+}
+
 // Handles a step schedule event
 void stepScheduleHandler() {
     // If we moving desired number of steps - count number of steps done

@@ -31,7 +31,7 @@
 // Diagnostic data over UART
 //#define DIAG_INFO_SERIAL
 
-// Communication over UART
+// Communication over CAN
 #define ENABLE_CAN_COMMUNICATION
 
 // OLED (display)

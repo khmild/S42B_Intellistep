@@ -185,6 +185,12 @@ class StepperMotor {
         // Calculates the correct PWM setting based on an input current
         uint32_t currentToPWM(uint16_t current) const;
 
+        // Stop movemrnt
+        void stopMotion();
+
+        // Stop in N steps (reschedule stepping)
+        void finishMove(uint32_t steps);
+
         // Sets the current state of the motor
         void setState(MOTOR_STATE newState, bool clearErrors = false);
 

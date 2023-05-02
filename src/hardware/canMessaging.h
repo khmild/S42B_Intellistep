@@ -12,10 +12,10 @@
 // Enumeration for CAN IDs with axis characters
 typedef enum {
     NONE = -1,
-    X_DRIVER_RX = 0x01,
-    X_DRIVER_TX = 0x02,
-    Y_DRIVER_RX = 0x05,
-    Y_DRIVER_TX = 0x06,
+    X_DRIVER_RX = 0x05,
+    X_DRIVER_TX = 0x06,
+    Y_DRIVER_RX = 0x01,
+    Y_DRIVER_TX = 0x02,
     Z_DRIVER_RX = 0x07,
     Z_DRIVER_TX = 0x08,
     BELT_DRIVER_RX = 0x09,

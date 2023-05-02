@@ -21,7 +21,7 @@ uint8_t receiveBuffer[8];
 
 // CAN ID of the motor driver
 AXIS_CAN_ID canID = DEFAULT_CAN_ID;
-AXIS_CAN_ID txCanID = TRANSMIT_CAN_ID;
+AXIS_CAN_ID txCanID = DEFAULT_CAN_ID;//TRANSMIT_CAN_ID;
 
 uint8_t uart_buffer[8];
 
@@ -33,7 +33,7 @@ void initCAN() {
 
     // Initialize the CAN interface
     can.begin(STD_ID_LEN, CAN_BITRATE, PORTA_11_12_XCVR);
-
+    
     // Set the listening IDs
     can.filterList16Init(0, canID);
 
@@ -86,9 +86,11 @@ void txCANString(AXIS_CAN_ID ID, String string) {
 void rxCANFrame() {
     // Read the CAN buffer into the command buffer, see if it contains anything of value
     if (can.receive(id, filterIDx, receiveBuffer) > -1) {
+        
         // We have valid data, continue with reading it
-        CANCommandString.concat(reinterpret_cast<char*>(receiveBuffer));
-        //sendSerialMessage(reinterpret_cast<char*>(receiveBuffer));
+        if(id == DEFAULT_CAN_ID){
+            CANCommandString.concat(reinterpret_cast<char*>(receiveBuffer));
+        }
     }
 }
 
@@ -96,9 +98,7 @@ void rxCANFrame() {
 void checkCANCmd() {
 
     // Check to see if the command buffer is full ('>' is the termanator)
-    //sendSerialMessage("here"/*CANCommandString*/);
     if (CANCommandString.indexOf(STRING_END_MARKER) != -1) {
-
         // Parse the command
         parseCommand(CANCommandString.substring(0, CANCommandString.indexOf(STRING_END_MARKER)));
 

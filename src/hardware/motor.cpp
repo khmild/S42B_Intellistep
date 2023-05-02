@@ -752,6 +752,25 @@ uint32_t StepperMotor::currentToPWM(uint16_t current) const
     return constrain(PWMValue, 0, PWM_MAX_VALUE);
 }
 
+// Stop movement
+void StepperMotor::stopMotion()
+{
+    motor.setDesiredStep(motor.currentStep);
+}
+
+// Finish in N steps
+void StepperMotor::finishMove(uint32_t steps)
+{
+    if(getMotorDir())
+    {
+        motor.setDesiredStep(motor.currentStep + steps);
+    }
+    else
+    {
+        motor.setDesiredStep(motor.currentStep - steps);
+    }
+}
+
 // Sets a new motor state
 void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors)
 {
@@ -791,6 +810,7 @@ void StepperMotor::setState(MOTOR_STATE newState, bool clearErrors)
             // No other special processing needed, just disable the coils and set the state
             default:
                 disableStepCorrection();
+                motor.setDesiredStep(motor.currentStep);
                 motor.setCoilA(IDLE_MODE);
                 motor.setCoilB(IDLE_MODE);
                 this->state = newState;

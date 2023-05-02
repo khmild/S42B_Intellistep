@@ -72,6 +72,8 @@ void correctMotor();
 #endif // ! ENABLE_DIRECT_STEPPING
 
 #if (defined(ENABLE_DIRECT_STEPPING) || defined(ENABLE_PID))
+void setRemainingSteps(uint64_t steps);
+bool getMotorDir();
 // Step schedule handler (runs when the interrupt is triggered)
 void stepScheduleHandler();
 
